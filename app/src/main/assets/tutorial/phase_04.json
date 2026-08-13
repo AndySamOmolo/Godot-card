@@ -1,0 +1,100 @@
+{
+  "id": "phase_04_play_validation",
+  "order": 4,
+  "title": "Basic Play Validation",
+  "summary": "Encode Kadi's play rules with Godot's `match` statement and custom Resources: decide whether a card is legal given the top of the discard pile.",
+  "estimatedMinutes": 45,
+  "concepts": ["Match statements", "Custom Resources"],
+  "programmingConcepts": ["Pattern matching", "Switch/branching", "Validation"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_04_01_match",
+      "order": 1,
+      "title": "Match Statements for Card Rules",
+      "bodyMarkdown": "# Match Statements\n\nGDScript's `match` is a cleaner `switch`. It compares one expression against a series of patterns and runs the matching block. For Kadi's per-card rules, where each rank triggers different behaviour, `match` is the right tool.\n\n```gdscript\nfunc classify(card: CardData) -> String:\n    match card.rank:\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE, CardTypes.Ranks.JOKER:\n            return \"penalty\"\n        CardTypes.Ranks.JACK:\n            return \"jump\"\n        CardTypes.Ranks.KING:\n            return \"kickback\"\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT:\n            return \"question\"\n        CardTypes.Ranks.FOUR, CardTypes.Ranks.FIVE, CardTypes.Ranks.SIX, \\\n        CardTypes.Ranks.SEVEN, CardTypes.Ranks.NINE, CardTypes.Ranks.TEN, \\\n        CardTypes.Ranks.ACE:\n            return \"answer\"\n        _:\n            return \"normal\"\n```\n\nGroup multiple values on one line with commas. The `_` wildcard catches anything unmatched — always include it so unhandled ranks fail loudly instead of silently dropping.\n\n`match` works on ints, Strings, enums, arrays, and dictionaries. It does NOT fall through — only the matched block runs.\n\n> [!WHY]\n> `match` lays every card rule out like a lookup table. Adding a new special card (say, a custom rank) is one new line — and the compiler does not need to re-evaluate every `if/elif` above it. Compared to a long if/elif chain, match makes the rule book visually parallel to the code, which is invaluable when a designer is reviewing the logic beside you.\n\nUse `match` when one value selects among many discrete branches; use `if/elif` when each test is its own boolean expression.",
+      "codeSnippets": [
+        {
+          "id": "cs_04_01_a",
+          "language": "gdscript",
+          "code": "func classify(card: CardData) -> String:\n    match card.rank:\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE, CardTypes.Ranks.JOKER:\n            return \"penalty\"\n        CardTypes.Ranks.JACK:\n            return \"jump\"\n        CardTypes.Ranks.KING:\n            return \"kickback\"\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT:\n            return \"question\"\n        _:\n            return \"answer-or-normal\"",
+          "caption": "A match statement classifying cards by rank."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a `match` on `card.suit` returning the strings \"red\" for HEARTS/DIAMONDS and \"black\" for CLUBS/SPADES, with a `_` default returning \"unknown\".",
+        "hint": "Group the red suits on one line and the black on another.",
+        "solutionCode": "func suit_color(card: CardData) -> String:\n    match card.suit:\n        CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS:\n            return \"red\"\n        CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES:\n            return \"black\"\n        _:\n            return \"unknown\""
+      },
+      "quizQuestions": [
+        {
+          "id": "q_04_01_a",
+          "prompt": "What does the `_` pattern in a match statement match?",
+          "choices": ["Only zero", "Any value (wildcard default)", "Only null", "Only empty strings"],
+          "correctChoiceIndex": 1,
+          "explanation": "`_` is the wildcard; it matches anything and should be the last branch to catch unhandled cases loudly.",
+          "concept": "Match statements"
+        },
+        {
+          "id": "q_04_01_b",
+          "prompt": "Does a `match` branch fall through to the next branch if it has no return?",
+          "choices": ["Yes, it always falls through", "No — only the matched block runs, there is no fall-through", "Only if you use `continue`", "Only for enum values"],
+          "correctChoiceIndex": 1,
+          "explanation": "Godot's `match` does not fall through. Each branch is independent; you must explicitly `return` or fall out.",
+          "concept": "Match statements"
+        }
+      ]
+    },
+    {
+      "id": "l_04_02_drawing_invalid",
+      "order": 2,
+      "title": "Drawing Cards and Handling Invalid Plays",
+      "bodyMarkdown": "# Drawing Cards and Handling Invalid Plays\n\nValidation is only half of Kadi's play loop — the other half is what happens when a play does *not* go through. The rulebook is precise: if a player **cannot** play a card, they must draw one from the draw pile; if a player plays a card that does **not** match the suit or rank of the top card, they are penalised by picking a card from the draw pile and the game proceeds to the next player.\n\nBoth cases funnel through one function, `draw_card(player)`. It also handles the empty-pile rule: when the draw pile runs out, the discard pile — excluding its top card — is reshuffled to become the new draw pile.\n\n```gdscript\nfunc draw_card(player: int) -> CardData:\n    if GameState.deck.is_empty():\n        var top: CardData = GameState.discard_pile.pop_back()\n        GameState.deck = GameState.discard_pile\n        GameState.deck.shuffle()\n        GameState.discard_pile = [top]\n    var card: CardData = GameState.deck.pop_back()\n    GameState.hands[player].append(card)\n    return card\n```\n\nThe player triggers a voluntary draw through a **Draw button** — a `Button` node whose `pressed` signal we connect in `_ready()`. Attempted plays route through `try_play`, which uses the `is_playable` validator from the previous lesson: a legal card moves to the discard pile, an illegal one costs the player a penalty draw and their turn.\n\n```gdscript\n@onready var draw_button: Button = $UI/DrawButton\n@onready var feedback_label: Label = $UI/FeedbackLabel\n\nfunc _ready() -> void:\n    draw_button.pressed.connect(_on_draw_pressed)\n\nfunc _on_draw_pressed() -> void:\n    draw_card(TurnManager.current_player_index)\n    feedback_label.text = \"Card drawn — no playable card.\"\n    TurnManager.advance_turn()\n\nfunc try_play(player: int, card: CardData) -> void:\n    if is_playable(card, GameState.discard_pile.back()):\n        GameState.hands[player].erase(card)\n        GameState.discard_pile.append(card)\n    else:\n        draw_card(player)\n        feedback_label.text = \"Invalid play! Penalty card drawn.\"\n        TurnManager.advance_turn()\n```\n\nNotice that the invalid branch never crashes and never silently ignores the click. It applies the rulebook's penalty (one drawn card), tells the player exactly what happened through the `feedback_label`, and passes the turn — the same three beats a human dealer would perform at a real table.\n\n> [!WHY]\n> Invalid input is not an error condition in Kadi — it is a rule with a defined consequence. Coding the penalty path as deliberately as the happy path keeps the game fair and the player informed. A silent rejection teaches nothing; a crash ruins the match. UI feedback plus a rulebook-accurate penalty turns every mistake into a lesson about which cards match, which is exactly how people learn Kadi at a real table.\n\nWith drawing and penalties wired, the play loop is complete: match, play, or draw — and the turn always moves on.",
+      "codeSnippets": [
+        {
+          "id": "cs_04_02_a",
+          "language": "gdscript",
+          "code": "func draw_card(player: int) -> CardData:\n    if GameState.deck.is_empty():\n        var top: CardData = GameState.discard_pile.pop_back()\n        GameState.deck = GameState.discard_pile\n        GameState.deck.shuffle()\n        GameState.discard_pile = [top]\n    var card: CardData = GameState.deck.pop_back()\n    GameState.hands[player].append(card)\n    return card",
+          "caption": "draw_card handles the empty draw pile by reshuffling the discard pile (minus its top card)."
+        },
+        {
+          "id": "cs_04_02_b",
+          "language": "gdscript",
+          "code": "@onready var draw_button: Button = $UI/DrawButton\n@onready var feedback_label: Label = $UI/FeedbackLabel\n\nfunc _ready() -> void:\n    draw_button.pressed.connect(_on_draw_pressed)\n\nfunc _on_draw_pressed() -> void:\n    draw_card(TurnManager.current_player_index)\n    feedback_label.text = \"Card drawn — no playable card.\"\n    TurnManager.advance_turn()\n\nfunc try_play(player: int, card: CardData) -> void:\n    if is_playable(card, GameState.discard_pile.back()):\n        GameState.hands[player].erase(card)\n        GameState.discard_pile.append(card)\n    else:\n        draw_card(player)\n        feedback_label.text = \"Invalid play! Penalty card drawn.\"\n        TurnManager.advance_turn()",
+          "caption": "The Draw button's pressed signal and the penalty branch for invalid plays."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a helper `has_playable_card(player: int) -> bool` that returns true if any card in the player's hand passes is_playable against the top of the discard pile. The UI will use it to enable the Draw button only when the player is truly stuck.",
+        "hint": "Loop over GameState.hands[player] and return true on the first playable card; return false after the loop.",
+        "solutionCode": "func has_playable_card(player: int) -> bool:\n    var top: CardData = GameState.discard_pile.back()\n    for card in GameState.hands[player]:\n        if is_playable(card, top):\n            return true\n    return false"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_04_02_a",
+          "prompt": "Per the Kadi rules, what happens when a player plays a card that matches neither the suit nor the rank of the top card?",
+          "choices": ["The card is played anyway", "They draw a penalty card from the draw pile and the turn passes to the next player", "They are eliminated from the game", "The deck is reshuffled"],
+          "correctChoiceIndex": 1,
+          "explanation": "An invalid play is penalised with one drawn card, and the game proceeds to the next player — the try_play else-branch encodes exactly this rule.",
+          "concept": "Validation"
+        },
+        {
+          "id": "q_04_02_b",
+          "prompt": "How do you react to a Button being clicked in Godot 4?",
+          "choices": ["Poll button.is_clicked() every frame", "Connect its `pressed` signal to a handler: `draw_button.pressed.connect(_on_draw_pressed)`", "Override the button's _process()", "Set button.on_click = true"],
+          "correctChoiceIndex": 1,
+          "explanation": "Buttons emit the `pressed` signal when clicked; connecting a callback in _ready() is the idiomatic Godot 4 pattern.",
+          "concept": "Signals"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_04_play_validation",
+    "brokenCode": "func is_playable(card: CardData, top: CardData) -> bool:\n    if card.suit == top.suit or card.rank == top.rank:\n        return true\n    if card.rank == CardTypes.Ranks.JOKER:\n        return true\n    return false",
+    "bugDescription": "In Kadi an Ace is special: a player may play it even when it does not match the top card, because an Ace lets them declare a new suit (and can also be used to escape a penalty). This validation treats an Ace like an ordinary card, so a player holding only an off-suit Ace is wrongly stuck and the game stalls.",
+    "fixedCode": "func is_playable(card: CardData, top: CardData) -> bool:\n    if card.suit == top.suit or card.rank == top.rank:\n        return true\n    if card.rank == CardTypes.Ranks.JOKER or card.rank == CardTypes.Ranks.ACE:\n        return true\n    return false",
+    "explanation": "The missing `or card.rank == CardTypes.Ranks.ACE` clause meant an Ace was rejected unless it happened to match the suit or rank. Adding the check restores the rule that an Ace (like a Joker) may be played regardless of the top card, after which the player declares the next suit."
+  }
+}

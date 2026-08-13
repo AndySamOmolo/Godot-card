@@ -1,0 +1,17 @@
+# Build artifacts
+build/
+.gradle/
+.idea/
+local.properties
+*.iml
+
+# Gradle wrapper JAR is REQUIRED (don't ignore it)
+!gradle/wrapper/gradle-wrapper.jar
+
+# Keystore
+*.keystore
+*.jks
+
+# OS
+.DS_Store
+Thumbs.db

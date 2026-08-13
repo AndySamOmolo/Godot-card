@@ -1,0 +1,168 @@
+{
+  "id": "phase_02_dealing_scenes",
+  "order": 2,
+  "title": "Dealing & Scenes",
+  "summary": "Turn the deck into visible cards: learn Godot scenes, instantiate card scenes at runtime, run a dealing function inside _ready(), and enforce Kadi's rule about which cards may legally start the discard pile.",
+  "estimatedMinutes": 55,
+  "concepts": ["Scenes", "Instancing", "Validation"],
+  "programmingConcepts": ["Object instantiation", "Lifecycle methods", "Functions", "Membership tests"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_02_01_scenes_instancing",
+      "order": 1,
+      "title": "Scenes and Instancing",
+      "bodyMarkdown": "# Scenes and Instancing\n\nA **scene** in Godot is a tree of nodes saved as a `.tscn` file. The magic of Godot is that any scene can be loaded as a *packed* resource and **instanced** at runtime, like a class.\n\nFor Kadi we build a `CardScene.tscn` once — a `TextureRect` for the art, a `Label` for the rank, a script that listens for clicks. Then we instance it 4 times per player:\n\n```gdscript\nconst CardScene := preload(\"res://card/CardScene.tscn\")\n\nfunc spawn_card(card_data: CardData) -> Node:\n    var card: Node = CardScene.instantiate()\n    card.setup(card_data)\n    return card\n```\n\n`preload` reads the scene file at compile time (use it for assets the script always needs). `instantiate()` makes a fresh copy of the node tree; you then `add_child()` it to attach it to the live scene.\n\nInstancing is the Godot way to clone. Instead of building 54 cards by hand in the editor, you build one and stamp out 54 copies from code.\n\n> [!WHY]\n> A single scene template means a fix to the card's look (bigger art, new font) propagates to all 54 instances automatically. Without instancing you would hand-edit each card node — a maintenance nightmare and a sure source of inconsistency. The template + data model is the canonical Godot pattern for repeatable UI.\n\nAlways call `instantiate()` before `add_child()` — Godot will warn if you add the packed scene itself.",
+      "codeSnippets": [
+        {
+          "id": "cs_02_01_a",
+          "language": "gdscript",
+          "code": "extends Node2D\n\nconst CardScene := preload(\"res://card/CardScene.tscn\")\n\nfunc spawn_card(card_data: CardData) -> Node:\n    var card: Node = CardScene.instantiate()\n    card.setup(card_data)\n    add_child(card)\n    return card",
+          "caption": "Preload a card scene and instance copies at runtime."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `spawn_n(count: int)` that instances `count` copies of CardScene and returns them in an Array.",
+        "hint": "Loop with range and call instantiate() inside.",
+        "solutionCode": "func spawn_n(count: int) -> Array:\n    var cards: Array = []\n    for _ in range(count):\n        cards.append(CardScene.instantiate())\n    return cards"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_02_01_a",
+          "prompt": "What does `instantiate()` do to a PackedScene?",
+          "choices": ["Deletes it", "Creates a new Node tree copy you can add to the live scene", "Saves it to disk", "Compiles it"],
+          "correctChoiceIndex": 1,
+          "explanation": "`instantiate()` produces a fresh node tree from the packed template; you then `add_child()` to attach it.",
+          "concept": "Instancing"
+        },
+        {
+          "id": "q_02_01_b",
+          "prompt": "Why use `preload` instead of `load` for a scene the script always needs?",
+          "choices": ["preload is async", "preload reads the asset at compile time, so there is no runtime hitch when the scene is first used", "preload is required by Godot", "load does not exist"],
+          "correctChoiceIndex": 1,
+          "explanation": "`preload` resolves the asset at parse time, avoiding a frame stutter the first time the scene is needed.",
+          "concept": "Scenes"
+        }
+      ]
+    },
+    {
+      "id": "l_02_02_ready_dealing",
+      "order": 2,
+      "title": "_ready() and the Dealing Function",
+      "bodyMarkdown": "# _ready() and Dealing\n\nEvery Node has a `_ready()` lifecycle method that Godot calls once, after the node and all its children enter the scene tree. It is the right place to start a match: build the deck, shuffle, deal.\n\n```gdscript\nextends Node2D\n\nfunc _ready() -> void:\n    GameState.deck = build_deck()\n    GameState.deck.shuffle()\n    GameState.hands = [[], [], [], []]\n    deal_round()\n    update_ui()\n\nfunc deal_round() -> void:\n    for player in range(4):\n        for _ in range(4):\n            var card := GameState.deck.pop_back()\n            GameState.hands[player].append(card)\n```\n\nKadi deals 3 or 4 cards to each player depending on how many are playing; with four players we deal 4. `_ready()` runs after `_enter_tree()` and before the first `_process()`. Use it for one-off setup; do not put per-frame logic here.\n\nNotice how `deal_round` reads from and writes to `GameState` — the Autoload we built in Phase 1. The dealing function does not own the state; it just mutates the global.\n\n> [!WHY]\n> Co-locating setup in `_ready()` keeps each scene self-bootstrapping. Reload the table scene and the match restarts cleanly — no external orchestrator needed. Splitting the actual dealing into `deal_round()` means a debug button can call it again later (re-deal mid-test) without re-running the whole `_ready()`.\n\nKeep `_ready()` short — orchestrate, do not implement. Move the work into named functions you can call independently.",
+      "codeSnippets": [
+        {
+          "id": "cs_02_02_a",
+          "language": "gdscript",
+          "code": "extends Node2D\n\nfunc _ready() -> void:\n    GameState.deck = build_deck()\n    GameState.deck.shuffle()\n    GameState.hands = [[], [], [], []]\n    deal_round()\n    update_ui()\n\nfunc deal_round() -> void:\n    for player in range(4):\n        for _ in range(4):\n            var card := GameState.deck.pop_back()\n            GameState.hands[player].append(card)",
+          "caption": "Bootstrap the match in _ready() and deal via a named function."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Add a function `deal_top_card()` that pops one card from the deck, appends it to the current player's hand, and returns it.",
+        "hint": "Use GameState.current_player to index hands.",
+        "solutionCode": "func deal_top_card() -> CardData:\n    var card: CardData = GameState.deck.pop_back()\n    GameState.hands[GameState.current_player].append(card)\n    return card"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_02_02_a",
+          "prompt": "When does Godot call `_ready()`?",
+          "choices": ["Every frame", "Once, after the node and its children enter the scene tree", "Before _enter_tree()", "Only on user input"],
+          "correctChoiceIndex": 1,
+          "explanation": "`_ready()` fires once when the node is fully in the tree — the canonical place for setup logic.",
+          "concept": "Lifecycle methods"
+        },
+        {
+          "id": "q_02_02_b",
+          "prompt": "Why move dealing logic into `deal_round()` rather than inlining it in `_ready()`?",
+          "choices": ["_ready() is slow", "So the function can be called again later (re-deal, debug) and stays testable in isolation", "Godot forbids loops in _ready()", "It saves memory"],
+          "correctChoiceIndex": 1,
+          "explanation": "Named, single-purpose functions are reusable and testable; _ready() becomes a thin orchestrator instead of a monolith.",
+          "concept": "Functions"
+        }
+      ]
+    },
+    {
+      "id": "l_02_03_valid_starter",
+      "order": 3,
+      "title": "Choosing a Valid Starting Card",
+      "bodyMarkdown": "# The Opening Card\n\nBefore the first turn, the dealer flips the top of the draw pile onto the discard pile to start play. But Kadi forbids certain cards from opening the game: a **2** or **3**, any **Question** card (Q or 8), a **Kickback** (K), a **Jump** (J), a **Joker**, or an **Ace**. If the flipped card is one of these, it is returned to the deck, the deck is reshuffled, and another card is drawn until a plain answer card appears.\n\n```gdscript\nfunc is_valid_starter(card: CardData) -> bool:\n    var forbidden := [\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE,\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT,\n        CardTypes.Ranks.KING, CardTypes.Ranks.JACK,\n        CardTypes.Ranks.JOKER, CardTypes.Ranks.ACE,\n    ]\n    return card.rank not in forbidden\n\nfunc draw_starting_card() -> CardData:\n    var card: CardData = GameState.deck.pop_back()\n    while not is_valid_starter(card):\n        GameState.deck.push_front(card)\n        GameState.deck.shuffle()\n        card = GameState.deck.pop_back()\n    return card\n```\n\nThe `in` / `not in` operator tests membership in an array — far cleaner than a long chain of `or` comparisons. The `while` loop keeps drawing until `is_valid_starter` is satisfied, returning each rejected card to the deck and reshuffling first, exactly as the rulebook describes.\n\n> [!WHY]\n> If the opening card were a penalty or a question, the very first player would face a rule with no preceding move to respond to — the game would begin mid-consequence. Encoding the 'valid starter' rule as data (the `forbidden` array) plus a bounded retry keeps the opening legal and deterministic. The loop terminates because a standard deck always holds plenty of answer cards, so `is_valid_starter` eventually returns true.\n\nWhen a rule reads 'anything except this set', reach for `not in` with an array instead of a long `and`/`or` ladder.",
+      "codeSnippets": [
+        {
+          "id": "cs_02_03_a",
+          "language": "gdscript",
+          "code": "func is_valid_starter(card: CardData) -> bool:\n    var forbidden := [\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE,\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT,\n        CardTypes.Ranks.KING, CardTypes.Ranks.JACK,\n        CardTypes.Ranks.JOKER, CardTypes.Ranks.ACE,\n    ]\n    return card.rank not in forbidden\n\nfunc draw_starting_card() -> CardData:\n    var card: CardData = GameState.deck.pop_back()\n    while not is_valid_starter(card):\n        GameState.deck.push_front(card)\n        GameState.deck.shuffle()\n        card = GameState.deck.pop_back()\n    return card",
+          "caption": "Draw a legal opening card, reshuffling any forbidden flip back in."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a boolean `can_open(rank)` that returns true ONLY for the answer ranks 4, 5, 6, 7, 9, and 10 (Aces are answer cards but are not allowed to open), using the `in` operator.",
+        "hint": "Return `rank in [...]` with just the six legal opener ranks.",
+        "solutionCode": "func can_open(rank: int) -> bool:\n    return rank in [4, 5, 6, 7, 9, 10]"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_02_03_a",
+          "prompt": "Which expression best captures 'the card's rank is NOT one of a set of forbidden ranks'?",
+          "choices": ["A long chain of `and`", "`rank not in forbidden` where forbidden is an array", "A single `!=`", "A `match` with no default"],
+          "correctChoiceIndex": 1,
+          "explanation": "`not in` tests array membership in one readable expression, and adding a new forbidden rank is a one-item data edit rather than another `and` clause.",
+          "concept": "Validation"
+        },
+        {
+          "id": "q_02_03_b",
+          "prompt": "Why can't a Question, Jump, Kickback, Penalty, Joker, or Ace card start the discard pile?",
+          "choices": ["They are too rare", "They demand a response to a previous move, which does not exist on the opening flip", "Godot cannot render them", "They have no suit"],
+          "correctChoiceIndex": 1,
+          "explanation": "Each of these cards modifies or responds to the prior play. On the opening flip there is no prior play, so the game must start on a plain answer card.",
+          "concept": "Validation"
+        }
+      ]
+    },
+    {
+      "id": "l_02_04_cards_on_screen",
+      "order": 4,
+      "title": "Showing Cards on Screen",
+      "bodyMarkdown": "# Showing Cards on Screen\n\nSo far the deck lives only in arrays — time to make Kadi visible. We build the `CardScene.tscn` template in the editor: a `Node2D` root named `Card`, a `ColorRect` (or `Sprite2D` once you have art) as the white card face, and a `Label` child that displays the rank and suit. Save it under `res://card/CardScene.tscn`.\n\nAttach a script to the root that fills in the visuals from a `CardData`. The `@onready` annotation grabs child nodes once the card enters the tree, so the references are ready before `setup()` runs:\n\n```gdscript\nextends Node2D\n\n@onready var rank_label: Label = $RankLabel\n\nvar data: CardData\n\nfunc setup(card_data: CardData) -> void:\n    data = card_data\n    rank_label.text = data.display_name\n```\n\nNow the table scene stamps out one instance per card in a hand. `preload(...).instantiate()` clones the template, `add_child()` attaches it to the live tree, and a `Vector2` position fans the cards out horizontally — each card 40 pixels right of the previous one.\n\n```gdscript\nconst CardScene := preload(\"res://card/CardScene.tscn\")\n\nfunc show_hand(hand: Array, origin: Vector2) -> void:\n    for i in range(hand.size()):\n        var card := CardScene.instantiate()\n        card.position = origin + Vector2(i * 40, 0)\n        add_child(card)\n        card.setup(hand[i])\n```\n\nNote the order: `add_child()` before `setup()`. `@onready` variables are assigned only when the node enters the tree, so calling `setup()` on a detached instance would hit a null `rank_label`.\n\n> [!WHY]\n> Positioning with `Vector2` math instead of hand-placing nodes means the layout scales with the data. A Kadi hand grows and shrinks every turn — draw a penalty and you hold seven cards, play a Jump cascade and you hold two. Computing each card's position from its index redraws any hand size correctly, while hand-placed nodes would break the moment the hand changes.\n\nRun the scene: four fanned hands appear, each card labelled. Kadi finally looks like a card game.",
+      "codeSnippets": [
+        {
+          "id": "cs_02_04_a",
+          "language": "gdscript",
+          "code": "extends Node2D\n\n@onready var rank_label: Label = $RankLabel\n\nvar data: CardData\n\nfunc setup(card_data: CardData) -> void:\n    data = card_data\n    rank_label.text = data.display_name",
+          "caption": "CardScene's script: @onready grabs the Label, setup() fills it from CardData."
+        },
+        {
+          "id": "cs_02_04_b",
+          "language": "gdscript",
+          "code": "const CardScene := preload(\"res://card/CardScene.tscn\")\n\nfunc show_hand(hand: Array, origin: Vector2) -> void:\n    for i in range(hand.size()):\n        var card := CardScene.instantiate()\n        card.position = origin + Vector2(i * 40, 0)\n        add_child(card)\n        card.setup(hand[i])",
+          "caption": "Instance a card per element of the hand and fan them out with Vector2 offsets."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `show_discard_top(card_data: CardData)` that instances one CardScene, positions it at Vector2(400, 300) (the table centre), adds it as a child, and calls setup().",
+        "hint": "Same instantiate/position/add_child/setup sequence, but for a single card at a fixed position.",
+        "solutionCode": "func show_discard_top(card_data: CardData) -> void:\n    var card := CardScene.instantiate()\n    card.position = Vector2(400, 300)\n    add_child(card)\n    card.setup(card_data)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_02_04_a",
+          "prompt": "Why must `add_child()` run before calling `setup()` on the card instance?",
+          "choices": ["add_child() compiles the script", "@onready variables are assigned only when the node enters the tree, so setup() would hit null references on a detached node", "Godot forbids method calls on detached nodes", "setup() is a lifecycle method"],
+          "correctChoiceIndex": 1,
+          "explanation": "`@onready` runs when the node enters the scene tree. Call setup() first and `rank_label` is still null — a crash waiting to happen.",
+          "concept": "Instancing"
+        },
+        {
+          "id": "q_02_04_b",
+          "prompt": "How does `origin + Vector2(i * 40, 0)` position the cards in a hand?",
+          "choices": ["It stacks all cards at the origin", "Each card is placed 40 pixels to the right of the previous one, fanning the hand horizontally", "It rotates each card by 40 degrees", "It scales the cards by index"],
+          "correctChoiceIndex": 1,
+          "explanation": "The x offset grows with the index i, so card 0 sits at the origin and each subsequent card shifts 40 pixels right — a horizontal fan of any hand size.",
+          "concept": "Scenes"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": null
+}

@@ -1,0 +1,88 @@
+{
+  "id": "phase_03_turn_signals",
+  "order": 3,
+  "title": "Turn Structure & Signals",
+  "summary": "Decouple the table UI from the rules with Godot signals: announce turn changes, card plays, and penalty updates without hard references between nodes.",
+  "estimatedMinutes": 40,
+  "concepts": ["Signals", "State machines"],
+  "programmingConcepts": ["Observer pattern", "Events", "Enums"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_03_01_signals",
+      "order": 1,
+      "title": "Signals for Turn Events",
+      "bodyMarkdown": "# Signals\n\nA **signal** is a message a node can emit; other nodes connect callbacks to react. Signals implement the **observer pattern** — the rules engine shouts \"turn changed\" without knowing who is listening.\n\n```gdscript\nclass_name TurnManager\nextends Node\n\nsignal turn_changed(player_index: int)\nsignal card_played(player_index: int, card: CardData)\nsignal penalty_updated(new_total: int)\n\nvar current_player: int = 0\nvar penalty_stack: int = 0\n\nfunc advance_turn() -> void:\n    current_player = (current_player + 1) % 4\n    turn_changed.emit(current_player)\n\nfunc play_card(card: CardData) -> void:\n    card_played.emit(current_player, card)\n    if card.is_penalty():\n        penalty_stack += card.penalty_value()  # 2, 3, or 5 (Joker)\n        penalty_updated.emit(penalty_stack)\n```\n\n`card.penalty_value()` returns the Kadi penalty a card demands — a 2 is worth 2, a 3 worth 3, and a Joker worth 5 — never the raw rank, or a Joker (rank 15) would wrongly force the next player to pick up 15 cards.\n\nDeclare signals with `signal name(args)`. Emit them with `.emit(...)`. Connect from a listener using `turn_manager.turn_changed.connect(_on_turn_changed)` in `_ready()`.\n\nGodot 4 lets you pass typed arguments on signals, so the editor and autocomplete know what each event carries. Connect signals in code (not just the editor) so connections survive renames.\n\n> [!WHY]\n> Signals break the dependency cycle. The TurnManager does not import the UI; the UI does not import the TurnManager. The manager emits; whoever cares connects. You can swap the human HUD for an AI-driven debug overlay without touching a line of the rules engine. This is the single biggest decoupling in the project — without it every node would `get_node(\"../UI/Label\")` and the scene graph would be uneditable.\n\nUse signals for one-to-many notifications; use direct function calls for one-to-one commands.",
+      "codeSnippets": [
+        {
+          "id": "cs_03_01_a",
+          "language": "gdscript",
+          "code": "class_name TurnManager\nextends Node\n\nsignal turn_changed(player_index: int)\nsignal card_played(player_index: int, card: CardData)\nsignal penalty_updated(new_total: int)\n\nvar current_player: int = 0\nvar penalty_stack: int = 0\n\nfunc advance_turn() -> void:\n    current_player = (current_player + 1) % 4\n    turn_changed.emit(current_player)",
+          "caption": "A TurnManager that announces turn changes via a typed signal."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Declare a `signal game_won(player_index: int)` on TurnManager and emit it from a method `declare_winner(p)`.",
+        "hint": "Use `signal name(args)` then `name.emit(value)`.",
+        "solutionCode": "signal game_won(player_index: int)\n\nfunc declare_winner(p: int) -> void:\n    game_won.emit(p)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_03_01_a",
+          "prompt": "How do you emit a signal named `turn_changed` with one integer argument?",
+          "choices": ["turn_changed(current_player)", "turn_changed.emit(current_player)", "emit(turn_changed, current_player)", "turn_changed.fire(current_player)"],
+          "correctChoiceIndex": 1,
+          "explanation": "In Godot 4, signals are first-class objects — call `.emit(...)` on them with the arguments.",
+          "concept": "Signals"
+        },
+        {
+          "id": "q_03_01_b",
+          "prompt": "Why prefer signals over direct method calls between nodes?",
+          "choices": ["Signals are faster", "They decouple emitter from listener — the emitter does not know who is listening, so you can swap UIs without touching the rules", "Signals are required by Godot", "Direct calls crash"],
+          "correctChoiceIndex": 1,
+          "explanation": "Signals implement the observer pattern: the emitter stays ignorant of subscribers, enabling clean swaps and one-to-many notifications.",
+          "concept": "Signals"
+        }
+      ]
+    },
+    {
+      "id": "l_03_02_turn_manager",
+      "order": 2,
+      "title": "Building the Turn Manager",
+      "bodyMarkdown": "# Building the Turn Manager\n\nKadi's turns are trickier than \"next player, please\". Kickback Kings reverse the direction of play, Jump Jacks skip players, and the table can seat 2 to 5 people. All of that lives in one dedicated script: the **TurnManager**, registered as an Autoload so every scene sees the same turn state.\n\nTwo variables carry the whole system: `current_player_index`, and `direction`, which is `1` for clockwise and `-1` for counter-clockwise. A Kickback simply flips the sign: `direction = -direction`.\n\n```gdscript\nextends Node\n\nsignal turn_changed(player_index: int)\n\nvar current_player_index: int = 0\nvar direction: int = 1\nvar player_count: int = 4\n\nfunc advance_turn() -> void:\n    current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)\n```\n\nThe advance formula deserves a close read: `(current + direction + player_count) % player_count`. The modulo `%` wraps the index around the table — player 3 plus 1 becomes player 0 in a four-player game. But GDScript's `%` can return a negative result for negative operands, so when `direction` is `-1` and the index is `0`, plain `(0 - 1) % 4` would give `-1` — an invalid seat. Adding `player_count` before the modulo keeps the left side non-negative, so the wrap is always into `0..player_count - 1`.\n\nEvery time the turn moves, the manager emits `turn_changed`. The HUD highlights the active player's hand, an AI player wakes up, a timer restarts — all as listeners, none hard-wired into the manager.\n\n> [!WHY]\n> Centralising turn order in one Autoload means Kickback and Jump cards are one-liners: `direction = -direction` for a King, one extra `advance_turn()` call for a Jack. If each scene tracked its own idea of whose turn it was, a single reversal would desynchronise the table — the HUD showing player 2 while the rules engine waits on player 3. One writer, many listeners: that is the TurnManager contract.\n\nWith turns wrapping correctly in both directions, the special cards of Phase 5 become small tweaks instead of rewrites.",
+      "codeSnippets": [
+        {
+          "id": "cs_03_02_a",
+          "language": "gdscript",
+          "code": "extends Node\n\nsignal turn_changed(player_index: int)\n\nvar current_player_index: int = 0\nvar direction: int = 1  # 1 = clockwise, -1 = counter-clockwise\nvar player_count: int = 4\n\nfunc advance_turn() -> void:\n    current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)\n\nfunc reverse_direction() -> void:\n    direction = -direction",
+          "caption": "The TurnManager Autoload: wraparound advancing plus a Kickback-ready reversal."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Add a method `skip_player()` to the TurnManager that advances the turn twice (the Jump Card effect: the next player is skipped), reusing advance_turn().",
+        "hint": "Call advance_turn() twice — the second call lands on the player after the skipped one.",
+        "solutionCode": "func skip_player() -> void:\n    advance_turn()\n    advance_turn()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_03_02_a",
+          "prompt": "Why does advance_turn add `player_count` before taking the modulo: `(current + direction + player_count) % player_count`?",
+          "choices": ["It makes the game faster", "It keeps the result non-negative when direction is -1, since GDScript's % can return negative values", "player_count must appear in every formula", "It doubles the wraparound range"],
+          "correctChoiceIndex": 1,
+          "explanation": "With direction -1 and index 0, `(0 - 1) % 4` would yield -1 — an invalid seat. Adding player_count first guarantees the wrap lands in 0..player_count-1.",
+          "concept": "Operators"
+        },
+        {
+          "id": "q_03_02_b",
+          "prompt": "A Kickback (King) is played. What single change does the TurnManager need?",
+          "choices": ["Reset current_player_index to 0", "Flip the sign of direction: `direction = -direction`", "Shuffle the players array", "Emit turn_changed twice"],
+          "correctChoiceIndex": 1,
+          "explanation": "Reversal is just negating direction; the existing advance formula then walks the table the other way automatically.",
+          "concept": "State machines"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": null
+}

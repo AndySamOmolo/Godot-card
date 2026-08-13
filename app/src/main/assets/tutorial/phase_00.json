@@ -1,0 +1,316 @@
+{
+  "id": "phase_00_foundations",
+  "order": 0,
+  "title": "Programming Foundations",
+  "summary": "The seven primitives every Kadi rule builds on: variables, operators, conditionals, loops, functions, arrays, dictionaries, and classes.",
+  "estimatedMinutes": 60,
+  "concepts": ["Variables", "Operators", "Conditionals", "Loops", "Functions", "Arrays", "Dictionaries", "Classes"],
+  "programmingConcepts": ["Variables", "if/else", "for/while", "Functions", "Arrays", "Dictionaries", "Classes"],
+  "isSkippableForTrack": ["EXPERIENCED_DEV", "GODOT_REFERENCE"],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_00_01_variables",
+      "order": 1,
+      "title": "Variables and Types",
+      "bodyMarkdown": "# Variables in GDScript\n\nA **variable** is a named slot that holds a value. In GDScript 4.3 you declare one with `var` and you should annotate its type so the editor catches mistakes the moment you type them.\n\nA Kadi card has a **rank** (2 through Ace) and a **suit** (Hearts, Diamonds, Clubs, Spades). We model those directly:\n\n```gdscript\nvar rank: int = 7\nvar suit: String = \"Hearts\"\nvar is_penalty: bool = false\n```\n\nUse `const` for values that never change — the four suits, the maximum hand size, the penalty value of a 3. Constants document intent and let Godot inline them.\n\nGDScript is dynamically typed at runtime but statically checked wherever you annotate. Mixing them up — assigning a String to an int — throws a runtime error instead of silently corrupting your turn state.\n\n> [!WHY]\n> Type annotations convert an entire class of bugs (\"I passed a String where an int was expected\") into compile-time errors. In a turn-based game, a single bad cast mid-tournament can freeze the round — annotations make that impossible.\n\nVariables carry Kadi's per-turn state: whose turn it is, the current penalty stack, the top card on the discard pile. Get the types right and the rules fall out naturally.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_01_a",
+          "language": "gdscript",
+          "code": "var rank: int = 7\nvar suit: String = \"Hearts\"\nvar is_penalty: bool = false\nconst MAX_HAND_SIZE: int = 5\n\nfunc describe() -> String:\n    return \"Card: %d of %s\" % [rank, suit]",
+          "caption": "Declaring typed variables and a constant for a Kadi card."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Declare a typed variable `top_card_rank` set to 14 (Ace) and a boolean `can_play` set to true.",
+        "hint": "Use `var name: Type = value` syntax.",
+        "solutionCode": "var top_card_rank: int = 14\nvar can_play: bool = true"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_01_a",
+          "prompt": "Which keyword declares a value that cannot change after initialization?",
+          "choices": ["var", "const", "static", "let"],
+          "correctChoiceIndex": 1,
+          "explanation": "`const` binds a name to a value at compile time and forbids reassignment, perfect for fixed game constants like MAX_HAND_SIZE.",
+          "concept": "Variables"
+        },
+        {
+          "id": "q_00_01_b",
+          "prompt": "What happens if you assign a String to a variable annotated `: int`?",
+          "choices": ["It silently coerces to 0", "It throws a runtime type error", "Godot refuses to compile", "It becomes NaN"],
+          "correctChoiceIndex": 1,
+          "explanation": "GDScript checks annotated types at runtime; assigning an incompatible type raises an error rather than corrupting state.",
+          "concept": "Variables"
+        }
+      ]
+    },
+    {
+      "id": "l_00_02_operators",
+      "order": 2,
+      "title": "Operators and Booleans",
+      "bodyMarkdown": "# Operators and Booleans\n\nA **boolean** is a value that is either `true` or `false`. Booleans are the glue of every rule in Kadi: \"is this card playable?\", \"is the player out of cards?\", \"is the penalty stack empty?\"\n\nGDScript gives you the comparison operators `==`, `!=`, `<`, `>`, `<=`, `>=` and the logical operators `and`, `or`, `not`. They short-circuit: `and` stops at the first `false`, `or` stops at the first `true`.\n\n```gdscript\nvar same_suit: bool = card.suit == top.suit\nvar same_rank: bool = card.rank == top.rank\nvar playable: bool = same_suit or same_rank\nvar is_penalty: bool = card.rank == 2 or card.rank == 3\n```\n\nKadi leans heavily on `or`: a card is playable when it matches the suit **or** the rank of the top card. Use `and` only when both conditions must hold, like \"is it a penalty card AND the stack is non-empty\".\n\n> [!WHY]\n> Choosing `and` versus `or` is the most common logic bug in card games. `and` requires both conditions; `or` requires either. A playable-card check written with `and` would let almost nothing through, freezing the game — so we read each rule out loud before coding it.\n\nParenthesise compound expressions even when precedence would save you; readers should not have to recall operator tables.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_02_a",
+          "language": "gdscript",
+          "code": "func is_playable(card: Dictionary, top: Dictionary) -> bool:\n    var same_suit: bool = card[\"suit\"] == top[\"suit\"]\n    var same_rank: bool = card[\"rank\"] == top[\"rank\"]\n    return same_suit or same_rank",
+          "caption": "Playable check uses `or` — match suit OR rank."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a boolean expression `is_face_card` that is true when `rank` is 11 (Jack), 12 (Queen), 13 (King), or 14 (Ace).",
+        "hint": "Chain comparisons with `or`.",
+        "solutionCode": "var is_face_card: bool = rank == 11 or rank == 12 or rank == 13 or rank == 14"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_02_a",
+          "prompt": "In Kadi, a card is playable if it shares the suit OR the rank of the top card. Which operator should the check use?",
+          "choices": ["and", "or", "not", "xor"],
+          "correctChoiceIndex": 1,
+          "explanation": "Either condition is sufficient, so `or` is correct. `and` would require both to match, which only the identical card satisfies.",
+          "concept": "Operators"
+        },
+        {
+          "id": "q_00_02_b",
+          "prompt": "What does `not (a or b)` evaluate to when a is true and b is false?",
+          "choices": ["true", "false", "nil", "error"],
+          "correctChoiceIndex": 1,
+          "explanation": "`a or b` is true, and `not true` is false. De Morgan's laws are worth memorising for rule inversions.",
+          "concept": "Operators"
+        }
+      ]
+    },
+    {
+      "id": "l_00_03_conditionals",
+      "order": 3,
+      "title": "Conditionals: if / elif / else",
+      "bodyMarkdown": "# Conditionals\n\nA **conditional** lets your code branch. GDScript uses `if`, `elif`, and `else`. Indentation defines the block — four spaces, no tabs.\n\nKadi's penalty rules are a perfect fit. When the top card is a penalty card, the next player must either pick up the stack or play a counter-penalty:\n\n```gdscript\nif card.rank == 2:\n    penalty += 2\nelif card.rank == 3:\n    penalty += 3\nelif card.rank == Ranks.JOKER:\n    penalty += 5\nelse:\n    penalty = 0\n```\n\nOrder matters: `elif` checks run only if previous `if`/`elif` were false. Put the most specific case first.\n\nGodot 4 also offers `match` (covered in Phase 4) for switching on a single value with many branches. Prefer `match` when you compare one expression against several constants; prefer `if/elif` when each test is a distinct boolean.\n\n> [!WHY]\n> Branching is where rules live. By isolating each card's effect in its own `elif`, you make adding a new card a one-line change — no risk of accidentally altering the logic for existing cards. Flat branches keep the rules table-readable.\n\nAlways include an `else` for unexpected input during development so silent failures become loud crashes.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_03_a",
+          "language": "gdscript",
+          "code": "func penalty_for(rank: int) -> int:\n    if rank == 2:\n        return 2\n    elif rank == 3:\n        return 3\n    elif rank == Ranks.JOKER:\n        return 5\n    else:\n        return 0",
+          "caption": "Branching on rank to compute penalty."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `is_jump_card(rank)` returning true for Jack (11) and false otherwise, using a single if/else.",
+        "hint": "Jack is rank 11.",
+        "solutionCode": "func is_jump_card(rank: int) -> bool:\n    if rank == 11:\n        return true\n    else:\n        return false"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_03_a",
+          "prompt": "When does an `elif` branch execute?",
+          "choices": ["Always", "Only if all previous if/elif were false and its condition is true", "Only if the if was true", "Never"],
+          "correctChoiceIndex": 1,
+          "explanation": "`elif` is short for 'else if' — it runs only when earlier branches failed AND its own test passes.",
+          "concept": "Conditionals"
+        },
+        {
+          "id": "q_00_03_b",
+          "prompt": "Why put the most specific case first in an if/elif chain?",
+          "choices": ["It runs faster", "So general cases do not shadow specific ones", "It is required by the compiler", "It saves memory"],
+          "correctChoiceIndex": 1,
+          "explanation": "Earlier true branches win; a general test first would intercept specific cases that should run instead.",
+          "concept": "Conditionals"
+        }
+      ]
+    },
+    {
+      "id": "l_00_04_loops",
+      "order": 4,
+      "title": "Loops: for and while",
+      "bodyMarkdown": "# Loops\n\nA **loop** repeats a block of code. `for` iterates over a known range or collection; `while` repeats until a condition becomes false.\n\nDealing 4 cards to each of 4 players is a classic nested `for` (Kadi deals 3 or 4 cards depending on how many players sit down):\n\n```gdscript\nfor player in range(4):\n    for _ in range(4):\n        hands[player].append(deck.pop_back())\n```\n\nUse `while` when you cannot predict the count — drawing until the deck runs out, or cascading jump cards until none remain.\n\n```gdscript\nwhile deck.size() > 0 and not has_match(hand, top):\n    hand.append(deck.pop_back())\n```\n\nEvery `while` loop must have a guaranteed exit. If the body never makes the condition false, you get an infinite loop and the game freezes.\n\n> [!WHY]\n> `for` loops over `range()` are bounded by construction — they always terminate. `while` loops require you to prove the condition will eventually fail. In Kadi, jump-card cascades use `while` because the chain length depends on what players hold, but you must cap iterations to avoid a stuck game.\n\nPrefer `for` whenever the count is computable up front; reach for `while` only when termination is data-driven.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_04_a",
+          "language": "gdscript",
+          "code": "func deal_round(hands: Array, deck: Array) -> void:\n    for player in range(4):\n        for _ in range(4):\n            hands[player].append(deck.pop_back())",
+          "caption": "Nested for loops deal 4 cards to each of 4 players."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a `while` loop that pops cards from `deck` into `hand` until `deck` is empty.",
+        "hint": "Check `deck.size() > 0` as the condition.",
+        "solutionCode": "while deck.size() > 0:\n    hand.append(deck.pop_back())"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_04_a",
+          "prompt": "Which loop is safest when the iteration count is known in advance?",
+          "choices": ["while", "for", "do-while", "repeat"],
+          "correctChoiceIndex": 1,
+          "explanation": "`for` over a bounded range cannot run forever — termination is guaranteed by the range itself.",
+          "concept": "Loops"
+        },
+        {
+          "id": "q_00_04_b",
+          "prompt": "What MUST every `while` loop guarantee to avoid freezing the game?",
+          "choices": ["A break statement", "That the condition eventually becomes false", "A counter variable", "An await call"],
+          "correctChoiceIndex": 1,
+          "explanation": "Without guaranteed termination, the loop spins forever and the game hangs. Always verify the body advances toward the exit condition.",
+          "concept": "Loops"
+        }
+      ]
+    },
+    {
+      "id": "l_00_05_functions",
+      "order": 5,
+      "title": "Functions",
+      "bodyMarkdown": "# Functions\n\nA **function** is a named, reusable block of code. Declare it with `func`, optionally annotate parameters and return type, and `return` a value.\n\n```gdscript\nfunc can_play(card: Dictionary, top: Dictionary) -> bool:\n    return card[\"suit\"] == top[\"suit\"] or card[\"rank\"] == top[\"rank\"]\n```\n\nFunctions are the smallest unit of testable behaviour. Keep them short — under 20 lines when you can — and give them one job. A function called `apply_penalty` should adjust the penalty stack and nothing else; reporting the result to the UI is a separate function.\n\nGDScript 4 supports default arguments and return-type inference, but explicit types on public functions make refactor safe. Default arguments let callers omit optional parameters, so `draw(deck)` and `draw(deck, 5)` are both legal — convenient without overloads.\n\n```gdscript\nfunc draw(deck: Array, count: int = 1) -> Array:\n    var drawn: Array = []\n    for _ in range(count):\n        drawn.append(deck.pop_back())\n    return drawn\n```\n\n> [!WHY]\n> Small, single-purpose functions compose into rules. `can_play` + `apply_penalty` + `advance_turn` read like a sentence and each can be tested in isolation. When a rule changes, you edit one function — not a 200-line `play_card` monolith.\n\nPrefer pure functions (no side effects) for rule logic; reserve state mutation for clearly-named `apply_*` functions.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_05_a",
+          "language": "gdscript",
+          "code": "func draw(deck: Array, count: int = 1) -> Array:\n    var drawn: Array = []\n    for _ in range(count):\n        drawn.append(deck.pop_back())\n    return drawn\n\nfunc can_play(card: Dictionary, top: Dictionary) -> bool:\n    return card[\"suit\"] == top[\"suit\"] or card[\"rank\"] == top[\"rank\"]",
+          "caption": "Two small functions: draw and can_play."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `is_penalty_card(rank)` that returns true when rank is 2, 3, or 15 (Joker).",
+        "hint": "Use `or` to combine three comparisons.",
+        "solutionCode": "func is_penalty_card(rank: int) -> bool:\n    return rank == 2 or rank == 3 or rank == 15"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_05_a",
+          "prompt": "What does the `->` arrow in a function signature specify?",
+          "choices": ["The function is async", "The return type", "A pointer", "The parameter type"],
+          "correctChoiceIndex": 1,
+          "explanation": "`func f() -> bool` declares that f returns a bool. Godot enforces this at runtime if you annotate it.",
+          "concept": "Functions"
+        },
+        {
+          "id": "q_00_05_b",
+          "prompt": "Why prefer pure functions for game rules?",
+          "choices": ["They are faster", "They are testable in isolation and have no hidden side effects", "They are required by Godot", "They use less memory"],
+          "correctChoiceIndex": 1,
+          "explanation": "Pure functions depend only on their inputs and produce only a return value, so unit tests do not need to set up global state.",
+          "concept": "Functions"
+        }
+      ]
+    },
+    {
+      "id": "l_00_06_arrays",
+      "order": 6,
+      "title": "Arrays",
+      "bodyMarkdown": "# Arrays\n\nAn **array** is an ordered, indexed collection. In GDScript you declare one with `[]` and grow it with `append`, `pop_back`, `erase`, and so on.\n\nA Kadi hand is naturally an array of cards; the draw pile is an array; the discard pile is an array. Mastering array methods is mastering half the game.\n\n```gdscript\nvar hand: Array = []\nhand.append({\"suit\": \"Hearts\", \"rank\": 7})\nhand.append({\"suit\": \"Clubs\", \"rank\": 11})\n\nvar top_card: Dictionary = hand.pop_back()  # Jack of Clubs\nvar count: int = hand.size()  # 1\n```\n\n`pop_back()` removes and returns the last element — ideal for a stack-like draw pile. `pop_front()` and `push_front()` exist too but are O(n); avoid them in hot loops.\n\nIterate with `for card in hand:` or by index with `for i in range(hand.size()):`. Use `clear()` to empty a hand at round end.\n\n> [!WHY]\n> Arrays model ordered collections whose order matters. The discard pile's top card is `pile[-1]` (or `pile.back()`); the draw pile is LIFO. Picking the right structure — array vs dictionary vs set — saves you from off-by-one bugs and reshuffle disasters later.\n\nAlways check `size() > 0` before `pop_back()` — popping an empty array crashes.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_06_a",
+          "language": "gdscript",
+          "code": "var hand: Array = []\nhand.append({\"suit\": \"Hearts\", \"rank\": 7})\nhand.append({\"suit\": \"Clubs\", \"rank\": 11})\n\nvar top: Dictionary = hand.back()\nvar drawn: Dictionary = hand.pop_back()\nprint(hand.size())  # 1",
+          "caption": "Array operations on a Kadi hand."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Create an empty array `discard_pile`, append a card dictionary for Ace of Spades (rank 14), then read the top card with `.back()`.",
+        "hint": "Use append and back.",
+        "solutionCode": "var discard_pile: Array = []\ndiscard_pile.append({\"suit\": \"Spades\", \"rank\": 14})\nvar top: Dictionary = discard_pile.back()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_06_a",
+          "prompt": "Which method removes AND returns the last element of an array?",
+          "choices": ["back()", "pop_back()", "remove_last()", "erase()"],
+          "correctChoiceIndex": 1,
+          "explanation": "`pop_back()` returns the last element and shrinks the array by one. `back()` reads without removing.",
+          "concept": "Arrays"
+        },
+        {
+          "id": "q_00_06_b",
+          "prompt": "What happens if you call `pop_back()` on an empty array?",
+          "choices": ["Returns null", "Returns an empty Dictionary", "Crashes with an error", "Returns false"],
+          "correctChoiceIndex": 2,
+          "explanation": "Godot raises an error: index out of bounds. Always guard with `if arr.size() > 0:` before popping.",
+          "concept": "Arrays"
+        }
+      ]
+    },
+    {
+      "id": "l_00_07_dictionaries",
+      "order": 7,
+      "title": "Dictionaries",
+      "bodyMarkdown": "# Dictionaries\n\nA **dictionary** maps keys to values. Declare one with `{}` and read with `dict[key]` or the safer `dict.get(key, default)`.\n\nIn Kadi we use dictionaries to model cards themselves (`{\"suit\": ..., \"rank\": ...}`) and to look up rules, like which ranks count as questions:\n\n```gdscript\nvar PENALTY_VALUES: Dictionary = {\n    2: 2,\n    3: 3,\n    15: 5  # Joker\n}\n\nfunc penalty_for(rank: int) -> int:\n    return PENALTY_VALUES.get(rank, 0)\n```\n\nKeys can be any hashable type — ints, Strings, even enum values. Dictionaries do not preserve insertion order in Godot 4, so never rely on it for sequence; use an array when order matters.\n\n`has(key)` tells you whether a key exists. Use it before reading when the key might be absent.\n\n> [!WHY]\n> Dictionaries replace long if/elif chains. Instead of branching on every rank to find its penalty, you look it up in O(1). Adding a new penalty card is a one-line table edit, not a code change — the data, not the control flow, encodes the rule.\n\nWhen you find yourself writing `if rank == 2: ... elif rank == 3: ...`, ask whether a dictionary lookup would be clearer.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_07_a",
+          "language": "gdscript",
+          "code": "var PENALTY_VALUES: Dictionary = {\n    2: 2,\n    3: 3,\n    15: 5\n}\n\nfunc penalty_for(rank: int) -> int:\n    return PENALTY_VALUES.get(rank, 0)\n\nfunc is_question(rank: int) -> bool:\n    return rank == 12 or rank == 8",
+          "caption": "Dictionary lookup for penalty values plus a question check."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Build a dictionary `SUIT_NAMES` mapping ints 0-3 to the strings \"Hearts\", \"Diamonds\", \"Clubs\", \"Spades\".",
+        "hint": "Keys are ints, values are Strings.",
+        "solutionCode": "var SUIT_NAMES: Dictionary = {\n    0: \"Hearts\",\n    1: \"Diamonds\",\n    2: \"Clubs\",\n    3: \"Spades\"\n}"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_07_a",
+          "prompt": "What does `dict.get(key, default)` return when `key` is not present?",
+          "choices": ["null", "An error", "The default value", "An empty string"],
+          "correctChoiceIndex": 2,
+          "explanation": "`get` returns the supplied default instead of crashing, making it safer than `dict[key]` for optional keys.",
+          "concept": "Dictionaries"
+        },
+        {
+          "id": "q_00_07_b",
+          "prompt": "Why prefer a dictionary over a long if/elif chain for rank-to-value lookups?",
+          "choices": ["It uses less memory", "O(1) lookup and adding a card is a data edit, not a code change", "It is required by Godot", "It preserves order"],
+          "correctChoiceIndex": 1,
+          "explanation": "Dictionaries separate data from control flow, making rules table-readable and trivially extensible.",
+          "concept": "Dictionaries"
+        }
+      ]
+    },
+    {
+      "id": "l_00_08_classes",
+      "order": 8,
+      "title": "Classes and Objects",
+      "bodyMarkdown": "# Classes\n\nA **class** bundles data and the functions that operate on it into one unit. In GDScript every script file is a class; you can also declare inner classes with `class_name`.\n\nA Kadi card is a perfect candidate for a class:\n\n```gdscript\nclass_name Card\nextends RefCounted\n\nvar suit: String\nvar rank: int\n\nfunc _init(s: String = \"\", r: int = 0) -> void:\n    suit = s\n    rank = r\n\nfunc is_penalty() -> bool:\n    return rank == 2 or rank == 3 or rank == 15\n```\n\nClasses give you **encapsulation**: the outside world calls `is_penalty()` without caring how rank maps to penalty. Change the internals later and callers keep working.\n\n`extends RefCounted` means Godot frees the object automatically when nothing references it — perfect for short-lived cards. Use `extends Node` only when the object lives in the scene tree.\n\n> [!WHY]\n> Classes turn ad-hoc dictionaries into typed, behaviour-bearing objects. A `Card` knows whether it is a penalty; a `Player` knows its hand; a `Game` knows whose turn it is. Encapsulation localises change — when a rule shifts, you edit one class, not a web of free functions.\n\nPrefer `class_name` so other scripts can `var c := Card.new(\"Hearts\", 7)` without `preload`.",
+      "codeSnippets": [
+        {
+          "id": "cs_00_08_a",
+          "language": "gdscript",
+          "code": "class_name Card\nextends RefCounted\n\nvar suit: String\nvar rank: int\n\nfunc _init(s: String = \"\", r: int = 0) -> void:\n    suit = s\n    rank = r\n\nfunc is_penalty() -> bool:\n    return rank == 2 or rank == 3 or rank == 15\n\nfunc _to_string() -> String:\n    return \"%d of %s\" % [rank, suit]",
+          "caption": "A Kadi Card class with constructor and helpers."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Add a method `is_face()` to the Card class returning true for ranks 11-14.",
+        "hint": "Use a single `or` chain or a range check.",
+        "solutionCode": "func is_face() -> bool:\n    return rank >= 11 and rank <= 14"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_00_08_a",
+          "prompt": "What does `extends RefCounted` guarantee about an object?",
+          "choices": ["It is a singleton", "Godot frees it automatically when no references remain", "It cannot be subclassed", "It lives in the scene tree"],
+          "correctChoiceIndex": 1,
+          "explanation": "RefCounted objects are garbage-collected by reference count, so you never manually `free()` them — ideal for transient cards.",
+          "concept": "Classes"
+        },
+        {
+          "id": "q_00_08_b",
+          "prompt": "Why use `class_name Card` at the top of a script?",
+          "choices": ["It speeds up the script", "It registers the type globally so other scripts can use `Card.new()` without preload", "It is required to extend RefCounted", "It makes the class private"],
+          "correctChoiceIndex": 1,
+          "explanation": "`class_name` exposes the type to the global namespace, removing the need for `preload(\"res://card.gd\")` everywhere.",
+          "concept": "Classes"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_00_card_comparison",
+    "brokenCode": "func can_play(card: Dictionary, top: Dictionary) -> bool:\n    if card[\"suit\"] == top[\"suit\"] and card[\"rank\"] == top[\"rank\"]:\n        return true\n    return false",
+    "bugDescription": "The function only returns true when BOTH the suit and the rank match the top card. In Kadi a card is playable when it matches the suit OR the rank of the top card — so with this code almost nothing is playable and the game stalls.",
+    "fixedCode": "func can_play(card: Dictionary, top: Dictionary) -> bool:\n    if card[\"suit\"] == top[\"suit\"] or card[\"rank\"] == top[\"rank\"]:\n        return true\n    return false",
+    "explanation": "The boolean operator must be `or`, not `and`. `and` requires both conditions to hold (only the identical card would pass), while `or` correctly allows any card that shares the suit or the rank of the top card — the foundational Kadi play rule."
+  }
+}

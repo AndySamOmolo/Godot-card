@@ -1,0 +1,94 @@
+{
+  "id": "phase_07_jump_kickback",
+  "order": 7,
+  "title": "Jump & Kickback Cards",
+  "summary": "Resolve chains of Jacks (jumps) and Kings (kickbacks) with an iterative counter — and learn why a forgotten increment turns a tidy loop into an infinite freeze.",
+  "estimatedMinutes": 60,
+  "concepts": ["Recursion", "Iterative counters", "Direction state"],
+  "programmingConcepts": ["Iteration", "Recursion", "Loop invariants", "State variables", "Modulo arithmetic"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_07_01_chain_resolution",
+      "order": 1,
+      "title": "Resolving Jump Chains with a Counter",
+      "bodyMarkdown": "# Iterative Chain Resolution\n\nIn Kadi, a Jack **jumps** the next player (skips them); a King **kicks back** (reverses turn order). When several jumps land in sequence the effect compounds: each Jack skips one more player. Resolving the chain is a natural iterative problem.\n\n```gdscript\nfunc resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4\n```\n\nWe iterate with an explicit `i` counter so we can stop the moment a non-jump card appears. The accumulator `skips` tallies how many players to skip; the final return advances past them.\n\nThe same problem *could* be solved recursively (`resolve(chain[1:])`), but iteration here is clearer: there is no branching structure, just a linear walk. Recursion shines when each step reduces the problem in a structural way (trees, nested data); a flat list prefers a loop.\n\n> [!WHY]\n> Iterative counters expose the **loop invariant** — the condition that must hold every iteration for the loop to terminate. Here the invariant is `i` grows by 1 each step, so eventually `i >= chain.size()` and we exit. Forget the `i += 1` in one branch and the invariant breaks: `i` never changes, the loop never ends, the game freezes. Naming the invariant out loud before writing the loop catches this class of bug.\n\nAlways re-read each branch of a `while` loop and confirm the loop variable advances toward termination.",
+      "codeSnippets": [
+        {
+          "id": "cs_07_01_a",
+          "language": "gdscript",
+          "code": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
+          "caption": "Iterative chain resolver that counts Jacks and handles Kings."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a recursive version `recursive_skips(chain, i)` that returns the number of Jacks in `chain` starting at index `i`, stopping at the first non-Jack.",
+        "hint": "Base case: i >= chain.size() or chain[i].rank != JACK returns 0. Recursive case: 1 + recursive_skips(chain, i + 1).",
+        "solutionCode": "func recursive_skips(chain: Array, i: int) -> int:\n    if i >= chain.size():\n        return 0\n    if chain[i].rank != CardTypes.Ranks.JACK:\n        return 0\n    return 1 + recursive_skips(chain, i + 1)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_07_01_a",
+          "prompt": "What is the loop invariant that guarantees `resolve_jump_chain` terminates?",
+          "choices": ["skips grows by 1", "`i` advances toward chain.size() on every iteration, so eventually the condition `i < chain.size()` becomes false", "The chain has no Kings", "skips stays below 4"],
+          "correctChoiceIndex": 1,
+          "explanation": "Termination depends on `i` reaching `chain.size()`. Every branch must advance `i` (or `break`) or the loop spins forever.",
+          "concept": "Loop invariants"
+        },
+        {
+          "id": "q_07_01_b",
+          "prompt": "When is recursion preferable to iteration?",
+          "choices": ["Always", "When the problem has a self-similar sub-structure (trees, nested data) rather than a flat list", "When speed matters most", "Never"],
+          "correctChoiceIndex": 1,
+          "explanation": "Recursion suits structurally-nested problems. Flat linear walks are clearer as loops and avoid stack overflow on long inputs.",
+          "concept": "Recursion"
+        }
+      ]
+    },
+    {
+      "id": "l_07_02_kickback_direction",
+      "order": 2,
+      "title": "Reversing Direction with Kickback",
+      "bodyMarkdown": "# Reversing Direction with Kickback\n\nA King is Kadi's **Kickback Card**: play it and the direction of the game reverses. If turns were flowing clockwise, they now flow anti-clockwise — and the player who *just* played goes again, because the turn bounces straight back toward them.\n\nThe cleanest encoding of direction is a single integer that is either `1` (clockwise) or `-1` (anti-clockwise). Reversing is then one multiplication, and advancing the turn is plain arithmetic:\n\n```gdscript\nvar direction: int = 1  # 1 = clockwise, -1 = anti-clockwise\n\nfunc apply_kickback() -> void:\n    direction *= -1\n\nfunc apply_kickbacks(count: int) -> void:\n    for _ in range(count):\n        direction *= -1\n\nfunc next_player(current: int, player_count: int) -> int:\n    return (current + direction + player_count) % player_count\n```\n\n`direction *= -1` flips `1` to `-1` and back — no if/else needed. The extra `+ player_count` in `next_player` matters: GDScript's `%` can return a negative result for negative operands, so `(0 - 1) % 4` is `-1`, not `3`. Adding `player_count` first keeps the index in range whichever way the game flows.\n\nCountering works exactly like Jump Cards: the player about to be kicked back can play their **own** King, which reverses direction *again* — back to the original flow. And because each King is just another `*= -1`, multiple Kickbacks compose by parity: an **even** number of Kings leaves direction unchanged, an **odd** number reverses it. `apply_kickbacks(3)` and `apply_kickbacks(1)` end in the same state.\n\n> [!WHY]\n> Encoding direction as `1`/`-1` instead of a string like `\"clockwise\"` makes the maths do the work. Reversal is multiplication, turn advance is addition, and stacked Kickbacks reduce to counting parity — three rules for the price of one integer. A string-based direction would need an if/else at every reversal and every turn advance, four places for the same bug to hide.\n\nKeep `direction` in your central game state alongside `current_player`; every rule that moves the turn should go through `next_player` so the Kickback logic lives in exactly one place.",
+      "codeSnippets": [
+        {
+          "id": "cs_07_02_a",
+          "language": "gdscript",
+          "code": "var direction: int = 1\n\nfunc apply_kickback() -> void:\n    direction *= -1\n\nfunc apply_kickbacks(count: int) -> void:\n    for _ in range(count):\n        direction *= -1\n\nfunc next_player(current: int, player_count: int) -> int:\n    return (current + direction + player_count) % player_count",
+          "caption": "Direction as 1/-1: reversal is multiplication, turn advance is modulo arithmetic."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `direction_after(kickback_count: int)` that returns the final direction (1 or -1) after `kickback_count` Kings are played, starting from clockwise (1) — without a loop.",
+        "hint": "Even counts leave direction at 1; odd counts flip it. Use the `%` operator.",
+        "solutionCode": "func direction_after(kickback_count: int) -> int:\n    if kickback_count % 2 == 0:\n        return 1\n    return -1"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_07_02_a",
+          "prompt": "After THREE Kickback Cards are played in a row, what has happened to the direction of play?",
+          "choices": ["It is unchanged", "It is reversed — an odd number of flips is one net reversal", "The game skips two players", "The direction becomes 0"],
+          "correctChoiceIndex": 1,
+          "explanation": "Each King multiplies direction by -1. Three flips: 1 → -1 → 1 → -1. Odd counts reverse, even counts cancel out — pure parity.",
+          "concept": "Direction state"
+        },
+        {
+          "id": "q_07_02_b",
+          "prompt": "Why does `next_player` add `player_count` before taking `% player_count`?",
+          "choices": ["To make the game harder", "GDScript's % can return a negative result, so `(0 - 1) % 4` is -1; adding player_count first keeps the index valid when direction is -1", "It is required by Godot", "To skip the dealer"],
+          "correctChoiceIndex": 1,
+          "explanation": "Moving anti-clockwise from player 0 must land on the last player, not index -1. The `+ player_count` guarantees a non-negative operand before the modulo.",
+          "concept": "Iterative counters"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_07_infinite_chain",
+    "brokenCode": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
+    "bugDescription": "The JACK branch increments `skips` but never advances `i`. As long as the top of the chain is a Jack, the loop reads the same Jack forever — `skips` climbs without bound and `i` never reaches `chain.size()`. The game freezes on any Jack-led chain.",
+    "fixedCode": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
+    "explanation": "Every branch of a `while` loop must advance the loop variable toward termination. Adding `i += 1` to the JACK branch restores the invariant: `i` grows by 1 per iteration regardless of which card type was seen, so the loop exits when `i` reaches the chain length."
+  }
+}

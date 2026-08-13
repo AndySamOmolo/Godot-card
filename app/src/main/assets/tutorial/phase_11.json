@@ -1,0 +1,131 @@
+{
+  "id": "phase_11_polish_ui",
+  "order": 11,
+  "title": "Polish & UI",
+  "summary": "Bring Kadi to life with Godot 4 Tweens: animate card deals, penalty stack pulses, and win-screen confetti — all without blocking the rules engine.",
+  "estimatedMinutes": 75,
+  "concepts": ["Tweens", "Animations", "Audio", "Exporting"],
+  "programmingConcepts": ["Interpolation", "Async patterns", "Await", "Signals", "Build pipelines"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_11_01_tweens",
+      "order": 1,
+      "title": "Animating Cards with Tweens",
+      "bodyMarkdown": "# Tweens\n\nA **Tween** interpolates a property from one value to another over time. Godot 4's `create_tween()` returns a Tween you chain calls on — no manual `_process` math required.\n\n```gdscript\nfunc animate_deal(card_node: Node2D, target: Vector2) -> void:\n    var start_pos: Vector2 = card_node.position\n    card_node.position = start_pos + Vector2(0, -200)\n    card_node.modulate.a = 0.0\n    var tween: Tween = create_tween()\n    tween.set_parallel(true)\n    tween.tween_property(card_node, \"position\", target, 0.4) \\\n        .set_trans(Tween.TRANS_SINE) \\\n        .set_ease(Tween.EASE_OUT)\n    tween.tween_property(card_node, \"modulate:a\", 1.0, 0.2)\n    tween.chain().tween_callback(card_node.enable_input)\n```\n\n`set_parallel(true)` runs the position and alpha tweens simultaneously — the card flies in AND fades in together. `set_trans` picks the curve (`SINE` is smooth, `BACK` overshoots for a playful bounce). `set_ease` picks direction (`EASE_OUT` decelerates into the target, which feels natural for arrivals).\n\n`chain()` forces the next tween to wait for the previous ones; here we enable input only after the card has landed.\n\nTo block on a tween, `await tween.finished` — useful when the rules engine must wait for an animation before advancing the turn.\n\n> [!WHY]\n> Tweens run on Godot's render loop, independent of the rules engine. The card visually flies in while the rules engine has already moved on — animations never block gameplay logic. Choosing `EASE_OUT` over linear interpolation is a deliberate feel choice: cards decelerate as they arrive, which reads as \"settling\" into the hand, far more satisfying than a robotic constant speed. The whole polish budget for Kadi is in these tiny curve choices; the rules are unaffected.\n\nKeep tween durations under 0.5s — anything longer feels laggy in a turn-based game.",
+      "codeSnippets": [
+        {
+          "id": "cs_11_01_a",
+          "language": "gdscript",
+          "code": "func animate_deal(card_node: Node2D, target: Vector2) -> void:\n    card_node.position = target + Vector2(0, -200)\n    card_node.modulate.a = 0.0\n    var tween: Tween = create_tween()\n    tween.set_parallel(true)\n    tween.tween_property(card_node, \"position\", target, 0.4) \\\n        .set_trans(Tween.TRANS_SINE) \\\n        .set_ease(Tween.EASE_OUT)\n    tween.tween_property(card_node, \"modulate:a\", 1.0, 0.2)\n    tween.chain().tween_callback(card_node.enable_input)",
+          "caption": "A deal animation: fly in and fade in together, then enable input."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `pulse_penalty(label: Label)` that scales the label to 1.4 then back to 1.0, each over 0.15 seconds, using a Tween.",
+        "hint": "Use tween_property with \"scale\" and chain the two tweens.",
+        "solutionCode": "func pulse_penalty(label: Label) -> void:\n    var tween: Tween = create_tween()\n    tween.tween_property(label, \"scale\", Vector2(1.4, 1.4), 0.15)\n    tween.tween_property(label, \"scale\", Vector2(1.0, 1.0), 0.15)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_11_01_a",
+          "prompt": "What does `set_parallel(true)` do on a Tween?",
+          "choices": ["Runs tweens on a separate thread", "Runs subsequent tween calls simultaneously instead of sequentially", "Loops the tween forever", "Disables the tween"],
+          "correctChoiceIndex": 1,
+          "explanation": "`set_parallel(true)` makes chained tween_property calls overlap in time rather than queue one after another.",
+          "concept": "Tweens"
+        },
+        {
+          "id": "q_11_01_b",
+          "prompt": "Why choose `EASE_OUT` over linear interpolation for a card flying into the hand?",
+          "choices": ["It is faster", "It decelerates into the target, reading as the card \"settling\" — more natural and satisfying than constant speed", "It is required by Godot", "It saves memory"],
+          "correctChoiceIndex": 1,
+          "explanation": "Ease curves shape perceived motion. EASE_OUT slows the card as it arrives, mimicking physical deceleration and feeling far more polished.",
+          "concept": "Animations"
+        }
+      ]
+    },
+    {
+      "id": "l_11_02_sound_feedback",
+      "order": 2,
+      "title": "Sound and Feedback",
+      "bodyMarkdown": "# Sound and Feedback\n\nA real Kadi table is loud: cards **slap** the pile, the deck rasps as it shuffles, and \"Niko Kadi!\" cuts through the chatter. Our game is silent — let us fix that with **AudioStreamPlayer**, Godot's node for playing a sound.\n\nAdd one AudioStreamPlayer per sound to your table scene, drop a `.ogg` or `.wav` into each node's `stream` property, and call `play()` when the moment arrives. The elegant part: the rules engine already *announces* every moment via signals, so the audio layer just listens.\n\n```gdscript\n@onready var slap_sound: AudioStreamPlayer = $Sounds/SlapSound\n@onready var shuffle_sound: AudioStreamPlayer = $Sounds/ShuffleSound\n@onready var flash_rect: ColorRect = $FlashRect\n@onready var event_label: Label = $HUD/EventLabel\n\nfunc _ready() -> void:\n    GameState.card_played.connect(_on_card_played)\n    GameState.pile_recycled.connect(_on_pile_recycled)\n    GameState.penalty_applied.connect(_on_penalty)\n\nfunc _on_card_played(_card: CardData) -> void:\n    slap_sound.play()\n\nfunc _on_pile_recycled(_new_size: int) -> void:\n    shuffle_sound.play()\n\nfunc _on_penalty(amount: int) -> void:\n    event_label.text = \"Pick %d!\" % amount\n    flash_rect.modulate.a = 0.6\n    var tween: Tween = create_tween()\n    tween.tween_property(flash_rect, \"modulate:a\", 0.0, 0.3)\n```\n\nSound alone is not enough — players glance away, phones sit muted. Pair each audio cue with **visual feedback**: `_on_penalty` sets a full-screen `ColorRect` to 60% opacity and tweens it back to invisible, a red flash that says \"something just hit you\" even with the volume off. The label spells out what: \"Pick 5!\" for a Joker, or a bold \"NIKO KADI!\" banner when the announcement signal fires.\n\nUse a dedicated player per sound rather than swapping one node's stream: a slap and a shuffle can then overlap naturally when a play triggers a recycle on the same frame.\n\n> [!WHY]\n> Because feedback subscribes to the SAME signals the rules engine already emits, the audio-visual layer is a pure listener — delete every sound node and the game still plays perfectly. That one-way dependency (rules never know feedback exists) means you can iterate on juice endlessly, swap sound packs, or add screen shake, all with zero risk of breaking a rule. Signals turn polish into a plug-in.\n\nKeep feedback fast: a 0.3-second flash and a short slap sample. Anything longer starts to *feel* like input lag in a turn-based game.",
+      "codeSnippets": [
+        {
+          "id": "cs_11_02_a",
+          "language": "gdscript",
+          "code": "@onready var slap_sound: AudioStreamPlayer = $Sounds/SlapSound\n@onready var shuffle_sound: AudioStreamPlayer = $Sounds/ShuffleSound\n@onready var flash_rect: ColorRect = $FlashRect\n@onready var event_label: Label = $HUD/EventLabel\n\nfunc _ready() -> void:\n    GameState.card_played.connect(_on_card_played)\n    GameState.pile_recycled.connect(_on_pile_recycled)\n    GameState.penalty_applied.connect(_on_penalty)\n\nfunc _on_card_played(_card: CardData) -> void:\n    slap_sound.play()\n\nfunc _on_pile_recycled(_new_size: int) -> void:\n    shuffle_sound.play()\n\nfunc _on_penalty(amount: int) -> void:\n    event_label.text = \"Pick %d!\" % amount\n    flash_rect.modulate.a = 0.6\n    var tween: Tween = create_tween()\n    tween.tween_property(flash_rect, \"modulate:a\", 0.0, 0.3)",
+          "caption": "The feedback layer subscribes to rules-engine signals: sounds, a penalty flash, and a label."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `_on_niko_announced(player: int)` that plays `niko_sound`, sets event_label to \"NIKO KADI!\", and pulses the label's scale to 1.5 and back with a Tween (0.15s each way).",
+        "hint": "Combine an AudioStreamPlayer.play() call with the pulse pattern from the Tweens lesson.",
+        "solutionCode": "func _on_niko_announced(_player: int) -> void:\n    niko_sound.play()\n    event_label.text = \"NIKO KADI!\"\n    var tween: Tween = create_tween()\n    tween.tween_property(event_label, \"scale\", Vector2(1.5, 1.5), 0.15)\n    tween.tween_property(event_label, \"scale\", Vector2(1.0, 1.0), 0.15)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_11_02_a",
+          "prompt": "Why connect the feedback layer to the rules engine's existing signals instead of calling `slap_sound.play()` inside `play_card()`?",
+          "choices": ["Signals sound better", "The rules engine stays feedback-agnostic: delete every sound node and the game still runs, and polish can be iterated with zero risk to the rules", "play() cannot be called from the rules engine", "It saves memory"],
+          "correctChoiceIndex": 1,
+          "explanation": "A one-way dependency keeps gameplay logic pure. The feedback layer is a listener you can rewrite freely — signals turn polish into a plug-in.",
+          "concept": "Audio"
+        },
+        {
+          "id": "q_11_02_b",
+          "prompt": "Why pair every sound cue with a visual cue like the penalty flash?",
+          "choices": ["Godot requires it", "Players glance away and phones sit muted — redundant channels make sure the event lands even when one channel is missed", "It makes the game louder", "Flashes are faster than sounds"],
+          "correctChoiceIndex": 1,
+          "explanation": "Accessibility and real-world play conditions demand redundancy: the red flash communicates the penalty even at zero volume.",
+          "concept": "Audio"
+        }
+      ]
+    },
+    {
+      "id": "l_11_03_exporting",
+      "order": 3,
+      "title": "Exporting & Sharing Your Game",
+      "bodyMarkdown": "# Exporting & Sharing Your Game\n\nEleven phases ago, Kadi was a `var rank: int = 7`. Now it deals, jumps, kicks back, demands suits, announces \"Niko Kadi\", recycles its deck, and slaps cards with sound. One step remains: getting it off your machine and onto your friends' — because a card game with no opponents is just solitaire with extra rules.\n\nFirst, download the **export templates**: `Editor > Manage Export Templates > Download and Install`. Templates are the precompiled Godot runtimes for each platform, matched to your editor version (4.3) — without them, no export.\n\nThen open `Project > Export...` and click `Add...` to create a **preset** per platform. For Kadi three matter most: **Windows Desktop** produces an `.exe` you can zip and send; **Android** builds an `.apk` for the phones your friends actually carry (this one needs the Android SDK and a debug keystore — Godot's export dialog flags anything missing); **Web** exports an HTML5 build that runs in a browser, the lowest-friction way to share — upload to a host like itch.io and send a link.\n\nBefore exporting, make sure your game behaves like a finished product. A version label is the classic touch — and a reminder that `assert()` calls from Phase 10 vanish in release exports:\n\n```gdscript\n@onready var version_label: Label = $HUD/VersionLabel\n\nfunc _ready() -> void:\n    var version: String = ProjectSettings.get_setting(\"application/config/version\", \"1.0\")\n    version_label.text = \"Kadi v%s (%s)\" % [version, OS.get_name()]\n    if OS.is_debug_build():\n        version_label.text += \" [debug]\"\n```\n\n`OS.is_debug_build()` returns false in a release export — handy for hiding debug overlays and test buttons in the shipped game. Pick `Export Project...` in the preset dialog, choose a path, and Godot packs your scenes, scripts, and sounds into a single distributable build.\n\n> [!WHY]\n> Exporting early and often — not just at the end — catches platform-only bugs while they are cheap to fix: a touch input that works with a mouse but not a thumb, a font that renders differently on the web, a file path with the wrong case. More importantly, putting a build in a friend's hands closes the loop this whole course has been about: rules you encoded in Phase 0 booleans are now judged by a real player slapping a real (virtual) Joker down. That feedback is the most valuable test suite you will ever run.\n\nExport the Windows build, zip it, and send it to someone who knows the game. When they argue about a rule, you can open the exact function that enforces it — you built every line.",
+      "codeSnippets": [
+        {
+          "id": "cs_11_03_a",
+          "language": "gdscript",
+          "code": "@onready var version_label: Label = $HUD/VersionLabel\n\nfunc _ready() -> void:\n    var version: String = ProjectSettings.get_setting(\"application/config/version\", \"1.0\")\n    version_label.text = \"Kadi v%s (%s)\" % [version, OS.get_name()]\n    if OS.is_debug_build():\n        version_label.text += \" [debug]\"",
+          "caption": "A version label that also reveals whether you are running a debug or release build."
+        },
+        {
+          "id": "cs_11_03_b",
+          "language": "text",
+          "code": "1. Editor > Manage Export Templates > Download and Install (matches Godot 4.3)\n2. Project > Export... > Add... > Windows Desktop / Android / Web\n3. Fill preset options (Android needs SDK path + debug keystore)\n4. Export Project... > choose output folder\n5. Windows: zip the .exe + .pck | Android: install the .apk | Web: upload to itch.io",
+          "caption": "The export checklist, from templates to a shareable build."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `debug_tools_visible()` returning true only in debug builds, and use it in _ready() to hide a `test_panel` Control in release exports.",
+        "hint": "OS.is_debug_build() is the check; Control nodes have a `visible` property.",
+        "solutionCode": "func debug_tools_visible() -> bool:\n    return OS.is_debug_build()\n\nfunc _ready() -> void:\n    test_panel.visible = debug_tools_visible()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_11_03_a",
+          "prompt": "What must be installed before Godot can export your project to ANY platform?",
+          "choices": ["Visual Studio", "The export templates matching your Godot version, via Editor > Manage Export Templates", "A signing certificate", "The Android SDK"],
+          "correctChoiceIndex": 1,
+          "explanation": "Export templates are the precompiled runtimes Godot wraps around your project. They are version-matched — 4.3 templates for a 4.3 editor — and required for every platform. The Android SDK is needed only for Android presets.",
+          "concept": "Exporting"
+        },
+        {
+          "id": "q_11_03_b",
+          "prompt": "Why export and share builds early rather than only when the game feels finished?",
+          "choices": ["Exports get slower over time", "Platform-only bugs (touch input, web fonts, path casing) surface while they are cheap to fix, and real players exercise the rules better than any test", "Godot licences expire", "Templates only work once"],
+          "correctChoiceIndex": 1,
+          "explanation": "Each platform has quirks invisible in the editor. Frequent exports plus real players form a feedback loop no in-editor test can replace.",
+          "concept": "Exporting"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": null
+}

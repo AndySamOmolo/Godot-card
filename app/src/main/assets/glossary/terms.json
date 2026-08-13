@@ -1,0 +1,280 @@
+{
+  "terms": [
+    {
+      "term": "Variable",
+      "shortDefinition": "A named container that holds one value, which can be read or changed while the program runs. In GDScript you declare one with `var name = value`.",
+      "relatedLessonIds": ["l_00_01_variables"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "String",
+      "shortDefinition": "A piece of text, written between quotes, e.g. `\"Niko Kadi\"`. It stores words, labels, and messages shown to the player.",
+      "relatedLessonIds": ["l_00_01_variables"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "int",
+      "shortDefinition": "A whole-number type with no decimal point, e.g. `7` or `-3`. Used for card ranks, player counts, and array indexes.",
+      "relatedLessonIds": ["l_00_01_variables", "l_01_01_enums"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "float",
+      "shortDefinition": "A number that can have a fractional part, e.g. `0.5` or `3.14`. Used for timing, animation progress, and smooth motion.",
+      "relatedLessonIds": ["l_00_01_variables", "l_11_01_tweens"],
+      "relatedDocClassNames": ["Tween"]
+    },
+    {
+      "term": "bool",
+      "shortDefinition": "A value that is either `true` or `false`. Used to track states like whose turn it is or whether a card is playable.",
+      "relatedLessonIds": ["l_00_02_operators", "l_09_01_win_detection"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Conditionals",
+      "shortDefinition": "`if`, `elif`, and `else` statements that run different code depending on whether a condition is true. They let the game branch on card rules.",
+      "relatedLessonIds": ["l_00_03_conditionals", "l_04_01_match"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Loops",
+      "shortDefinition": "`for` and `while` blocks that repeat code, once per item or until a condition fails. Used to build a deck, deal cards, and walk a hand.",
+      "relatedLessonIds": ["l_00_04_loops", "l_01_03_deck_builder"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Functions",
+      "shortDefinition": "Named, reusable blocks of code that take inputs (parameters) and may return a result. They keep the codebase organized and avoid repetition.",
+      "relatedLessonIds": ["l_00_05_functions"],
+      "relatedDocClassNames": ["Callable"]
+    },
+    {
+      "term": "Arrays",
+      "shortDefinition": "Ordered, mutable lists accessed by index, written `[a, b, c]`. They hold a player's hand, the draw pile, or a list of card nodes.",
+      "relatedLessonIds": ["l_00_06_arrays"],
+      "relatedDocClassNames": ["Array"]
+    },
+    {
+      "term": "Dictionaries",
+      "shortDefinition": "Collections of key/value pairs, written `{ \"key\": value }`. Used to look things up by name, like mapping a suit string to its colour.",
+      "relatedLessonIds": ["l_00_07_dictionaries"],
+      "relatedDocClassNames": ["Dictionary"]
+    },
+    {
+      "term": "Classes",
+      "shortDefinition": "Blueprints that bundle data (properties) and behaviour (methods) into one type. You create instances with `ClassName.new()`.",
+      "relatedLessonIds": ["l_00_08_classes"],
+      "relatedDocClassNames": ["Object", "Resource"]
+    },
+    {
+      "term": "Enums",
+      "shortDefinition": "A named set of constant integers, e.g. `enum Suit { CLUBS, DIAMONDS, HEARTS, SPADES }`. They make code readable and type-safe.",
+      "relatedLessonIds": ["l_01_01_enums"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Recursion",
+      "shortDefinition": "When a function calls itself to break a big problem into smaller copies of the same problem. Useful for resolving chains of jump cards.",
+      "relatedLessonIds": ["l_07_01_chain_resolution"],
+      "relatedDocClassNames": ["Callable"]
+    },
+    {
+      "term": "Compound boolean conditions",
+      "shortDefinition": "Expressions that combine several true/false checks with `and`, `or`, and `not`. Used to test all the requirements for a valid play or a win.",
+      "relatedLessonIds": ["l_00_02_operators", "l_09_01_win_detection"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Function composition",
+      "shortDefinition": "Calling one function inside another so small helpers combine into bigger operations. Question/answer card pairing is built this way.",
+      "relatedLessonIds": ["l_06_01_qa_composition"],
+      "relatedDocClassNames": ["Callable"]
+    },
+    {
+      "term": "Null-handling",
+      "shortDefinition": "Checking whether a value is `null` (nothing) before using it, so the game never crashes on a missing card or empty pile.",
+      "relatedLessonIds": ["l_00_05_functions", "l_02_02_ready_dealing"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Randomness",
+      "shortDefinition": "Unpredictable number generation used to shuffle the deck. Godot provides `randf()`, `randi()`, and `RandomNumberGenerator`.",
+      "relatedLessonIds": ["l_01_03_deck_builder", "l_10_01_reshuffle"],
+      "relatedDocClassNames": ["RandomNumberGenerator"]
+    },
+    {
+      "term": "Accumulator variable",
+      "shortDefinition": "A variable that grows by adding to it each loop, e.g. a running penalty total. It collects a result across many steps.",
+      "relatedLessonIds": ["l_05_01_accumulator"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Iterative counter",
+      "shortDefinition": "A variable that increments each loop to track position or how many times something happened, e.g. counting cards in a jump chain.",
+      "relatedLessonIds": ["l_07_01_chain_resolution"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "GDScript",
+      "shortDefinition": "Godot's built-in, Python-like scripting language. It is dynamically typed, concise, and designed for game logic and nodes.",
+      "relatedLessonIds": ["l_00_01_variables", "l_01_01_enums"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Node",
+      "shortDefinition": "The base building block of a Godot scene; every game object is a Node. Nodes form a tree and can have children, a parent, and a name.",
+      "relatedLessonIds": ["l_02_01_scenes_instancing", "l_02_02_ready_dealing"],
+      "relatedDocClassNames": ["Node"]
+    },
+    {
+      "term": "Control",
+      "shortDefinition": "The base class for all 2D UI nodes such as buttons, labels, and panels. Controls lay out and receive mouse/keyboard input.",
+      "relatedLessonIds": ["l_08_01_declaration_popup", "l_11_01_tweens"],
+      "relatedDocClassNames": ["Control"]
+    },
+    {
+      "term": "Resource",
+      "shortDefinition": "A sharable data object, often saved to a `.tres` file. Card data (suit, rank, effect) is stored as a custom Resource.",
+      "relatedLessonIds": ["l_01_02_resources"],
+      "relatedDocClassNames": ["Resource"]
+    },
+    {
+      "term": "Autoloads",
+      "shortDefinition": "Globally-accessible singletons loaded automatically by Godot on startup. The game-state manager (turn, piles) is an Autoload.",
+      "relatedLessonIds": ["l_01_04_autoloads"],
+      "relatedDocClassNames": ["Node", "ProjectSettings"]
+    },
+    {
+      "term": "Scenes",
+      "shortDefinition": "Saved trees of nodes, stored as `.tscn` files, that you can instance and reuse. A card, a player area, or the whole table can be a scene.",
+      "relatedLessonIds": ["l_02_01_scenes_instancing"],
+      "relatedDocClassNames": ["PackedScene", "Node"]
+    },
+    {
+      "term": "_ready()",
+      "shortDefinition": "A virtual method called once when a Node enters the tree and is ready. It is the standard place to set up initial state and deal cards.",
+      "relatedLessonIds": ["l_02_02_ready_dealing"],
+      "relatedDocClassNames": ["Node"]
+    },
+    {
+      "term": "Signals",
+      "shortDefinition": "Named events a node can emit; other nodes connect functions to react. Signals decouple the emitter from the listener, like a turn-changed ping.",
+      "relatedLessonIds": ["l_03_01_signals"],
+      "relatedDocClassNames": ["Signal", "Object"]
+    },
+    {
+      "term": "State Machines",
+      "shortDefinition": "A design where an object is always in one of several states (e.g. DEAL, PLAY, RESOLVE) and rules govern transitions between them.",
+      "relatedLessonIds": ["l_03_01_signals"],
+      "relatedDocClassNames": ["Node"]
+    },
+    {
+      "term": "match statements",
+      "shortDefinition": "A switch-like construct that runs code based on which pattern a value matches. Used to dispatch on a card's effect type.",
+      "relatedLessonIds": ["l_04_01_match"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Tweens",
+      "shortDefinition": "Objects that interpolate a property over time, easing cards into position. Created with `create_tween()` and chained with `tween_property()`.",
+      "relatedLessonIds": ["l_11_01_tweens"],
+      "relatedDocClassNames": ["Tween"]
+    },
+    {
+      "term": "PackedScene",
+      "shortDefinition": "The in-memory representation of a saved scene file. You call `instantiate()` on it to spawn a copy, e.g. a new card node.",
+      "relatedLessonIds": ["l_02_01_scenes_instancing"],
+      "relatedDocClassNames": ["PackedScene", "Resource"]
+    },
+    {
+      "term": "Object",
+      "shortDefinition": "The root class of most Godot types; provides properties, methods, signals, and metadata. Everything node- or resource-like derives from it.",
+      "relatedLessonIds": ["l_00_08_classes"],
+      "relatedDocClassNames": ["Object"]
+    },
+    {
+      "term": "Button",
+      "shortDefinition": "A pressable UI control that emits `pressed` when clicked. Used for confirm/draw/declare actions and popup choices.",
+      "relatedLessonIds": ["l_08_01_declaration_popup"],
+      "relatedDocClassNames": ["Button"]
+    },
+    {
+      "term": "Label",
+      "shortDefinition": "A control that displays non-editable text. Used for the player's name, hand count, penalty total, and status messages.",
+      "relatedLessonIds": ["l_08_01_declaration_popup", "l_11_01_tweens"],
+      "relatedDocClassNames": ["Label"]
+    },
+    {
+      "term": "Timer",
+      "shortDefinition": "A node that counts down and emits `timeout` at an interval. Used for AI think-delays, turn limits, and reshuffle pauses.",
+      "relatedLessonIds": ["l_03_01_signals"],
+      "relatedDocClassNames": ["Timer"]
+    },
+    {
+      "term": "Kadi",
+      "shortDefinition": "A popular Kenyan shedding card game played with a standard 52-card deck. Players try to empty their hand while managing penalty, jump, kickback, and Q/A cards.",
+      "relatedLessonIds": ["l_01_01_enums", "l_09_01_win_detection"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Penalty Cards",
+      "shortDefinition": "Cards (often 2, 3, and Kings) that force the next player to draw a number of cards, accumulating until someone cannot answer.",
+      "relatedLessonIds": ["l_05_01_accumulator"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Jump Cards",
+      "shortDefinition": "Special cards (often Jacks) that let a player skip the next participant. Multiple jumps can chain, skipping several players.",
+      "relatedLessonIds": ["l_07_01_chain_resolution"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Kickback Cards",
+      "shortDefinition": "Cards that reverse the direction of play, sending the turn back to the previous player. They change who acts next.",
+      "relatedLessonIds": ["l_07_01_chain_resolution"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Question Cards",
+      "shortDefinition": "Cards that pose a question to the next player, who must respond with the matching Answer Card or draw a penalty.",
+      "relatedLessonIds": ["l_06_01_qa_composition"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Answer Cards",
+      "shortDefinition": "Cards paired to a Question Card. Playing one cancels the question; failing to answer forces a draw.",
+      "relatedLessonIds": ["l_06_01_qa_composition"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Niko Kadi",
+      "shortDefinition": "The call a player makes when they are about to play their second-to-last card. Forgetting to call it incurs a penalty.",
+      "relatedLessonIds": ["l_09_01_win_detection"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Draw Pile",
+      "shortDefinition": "The face-down stack players draw from. When it runs out, the discard pile (minus the top card) is reshuffled into it.",
+      "relatedLessonIds": ["l_10_01_reshuffle", "l_01_03_deck_builder"],
+      "relatedDocClassNames": ["Array"]
+    },
+    {
+      "term": "Discard Pile",
+      "shortDefinition": "The face-up stack of played cards; only the top card matters for matching the next play. It recycles into the draw pile on reshuffle.",
+      "relatedLessonIds": ["l_04_01_match", "l_10_01_reshuffle"],
+      "relatedDocClassNames": ["Array"]
+    },
+    {
+      "term": "Suit",
+      "shortDefinition": "One of the four categories of a playing card: Clubs, Diamonds, Hearts, or Spades. Stored as an enum in code.",
+      "relatedLessonIds": ["l_01_01_enums", "l_08_01_declaration_popup"],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Rank",
+      "shortDefinition": "The value of a card within its suit, from Ace through King. Determines most play and penalty rules.",
+      "relatedLessonIds": ["l_01_01_enums"],
+      "relatedDocClassNames": []
+    }
+  ]
+}

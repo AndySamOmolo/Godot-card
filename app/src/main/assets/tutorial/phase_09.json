@@ -1,0 +1,94 @@
+{
+  "id": "phase_09_niko_win",
+  "order": 9,
+  "title": "\"Niko Kadi\" & Win Detection",
+  "summary": "Detect a Kadi win with compound booleans and an explicit invariant: empty hand, valid Niko Kadi declaration, legal final play, and no opponent simultaneously cardless.",
+  "estimatedMinutes": 60,
+  "concepts": ["Compound booleans", "Invariants", "UI signals"],
+  "programmingConcepts": ["Compound conditions", "Invariants", "Validation", "Signals", "Boolean flags"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_09_01_win_detection",
+      "order": 1,
+      "title": "Four Conditions for a Win",
+      "bodyMarkdown": "# Win Detection with Compound Booleans\n\nA Kadi win is not a single test — it is the conjunction of four conditions. Encoding them as one compound boolean makes the rule auditable at a glance.\n\n```gdscript\nfunc has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var no_opponent_cardless: bool = true\n    for other in range(4):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and no_opponent_cardless\n```\n\nEach named boolean reads like a rule clause. The final `return` is just the rule itself joined with `and` — all four must hold.\n\nThe **invariant** is: *exactly one* player can be cardless at the moment of victory. The loop checks that no opponent shares the empty-hand state, because if two players hit zero on the same trick the round is a tie, not a win. Naming that invariant as its own boolean makes the intent explicit; inlining the loop into the return would hide it.\n\n> [!WHY]\n> Compound booleans get dangerous when inlined: `return a and (b or c) and not d` is hard to read and impossible to debug. Splitting each condition into a named variable lets you `print()` each one during testing, and each becomes a self-documenting clause of the rule. When the designer asks \"why didn't the game end?\", you have four booleans to inspect instead of one opaque expression.\n\nMissing the `no_opponent_cardless` check is the classic bug: two players empty on the same trick, the first to be tested is wrongly declared winner. Make the invariant explicit.",
+      "codeSnippets": [
+        {
+          "id": "cs_09_01_a",
+          "language": "gdscript",
+          "code": "func has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var no_opponent_cardless: bool = true\n    for other in range(4):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and no_opponent_cardless",
+          "caption": "Four named booleans combined with `and` for a complete win check."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Add a fifth condition `deck_was_not_empty_at_start` (a bool on GameState) to the compound return. Name it as a local boolean first.",
+        "hint": "Declare a var, then add it to the `and` chain.",
+        "solutionCode": "var deck_was_not_empty: bool = GameState.deck_was_not_empty_at_start\nreturn hand_empty and declared_niko and final_play_legal and no_opponent_cardless and deck_was_not_empty"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_09_01_a",
+          "prompt": "Why split each win condition into its own named boolean rather than inlining them in the return?",
+          "choices": ["It runs faster", "Each clause is self-documenting and printable for debugging; the compound return reads like the rule itself", "Inlining is forbidden by Godot", "It saves memory"],
+          "correctChoiceIndex": 1,
+          "explanation": "Named booleans make the rule auditable and debuggable — you can log each one when a win is missed.",
+          "concept": "Compound booleans"
+        },
+        {
+          "id": "q_09_01_b",
+          "prompt": "What invariant does the `no_opponent_cardless` check enforce?",
+          "choices": ["That the winner has the most cards", "That exactly one player is cardless — no simultaneous empty hands (a tie scenario)", "That the deck is empty", "That Niko Kadi was declared"],
+          "correctChoiceIndex": 1,
+          "explanation": "Two players emptying on the same trick is a tie, not a win. The check guarantees the tested player is the sole cardless one.",
+          "concept": "Invariants"
+        }
+      ]
+    },
+    {
+      "id": "l_09_02_niko_button",
+      "order": 2,
+      "title": "The Niko Kadi Button",
+      "bodyMarkdown": "# The Niko Kadi Button\n\nIn Kadi, spotting a winning hand is not enough — you must **announce** it. A player who realises they can win on their next round must say \"Niko Kadi\" out loud; without that announcement in the previous round, they cannot win. Our digital table needs a way to say it: a Button.\n\nThe announcement is per-player state, so we store one boolean flag for each seat and wire the Button's `pressed` signal to set it:\n\n```gdscript\n@onready var niko_button: Button = $HUD/NikoKadiButton\n@onready var niko_label: Label = $HUD/NikoKadiLabel\n\nvar announced_kadi: Array[bool] = [false, false, false, false]\n\nfunc _ready() -> void:\n    niko_button.pressed.connect(_on_niko_pressed)\n\nfunc _on_niko_pressed() -> void:\n    announced_kadi[GameState.current_player] = true\n    niko_label.text = \"Niko Kadi!\"\n\nfunc on_player_drew(player: int) -> void:\n    announced_kadi[player] = false  # a draw voids the announcement\n```\n\n`announced_kadi` is an `Array[bool]` indexed by player — the same pattern as `hands`. When the human presses the button, the flag flips for the current player and the label broadcasts it to the table, exactly like calling it out loud.\n\nThe win check from the last lesson already reads this flag as its `declared_niko` clause: `has_won` only passes when `announced_kadi[player]` was set on the **previous round**. The order matters — announce first, win on a later turn. Pressing the button on the same move you empty your hand is too late.\n\nJust as important is **resetting** the flag. If a player announces but then has to draw a card, their hand has grown — the claim of \"one round from winning\" no longer holds, so `on_player_drew` clears it. They must press the button again once they are genuinely back on the brink.\n\n> [!WHY]\n> The announcement flag is a promise about the *future* (\"I will win next round\"), and promises must be revocable when circumstances change. Setting a flag is easy; the discipline is enumerating every event that should clear it — drawing a card, picking up a penalty stack. For each boolean flag you add to game state, immediately ask: \"what unsets this?\" A flag with no clearing path is a rule violation waiting to happen.\n\nWith the button wired, the flag stored, and the reset in place, the social heart of Kadi — the tension of hearing \"Niko Kadi!\" across the table — now lives in your game.",
+      "codeSnippets": [
+        {
+          "id": "cs_09_02_a",
+          "language": "gdscript",
+          "code": "@onready var niko_button: Button = $HUD/NikoKadiButton\n@onready var niko_label: Label = $HUD/NikoKadiLabel\n\nvar announced_kadi: Array[bool] = [false, false, false, false]\n\nfunc _ready() -> void:\n    niko_button.pressed.connect(_on_niko_pressed)\n\nfunc _on_niko_pressed() -> void:\n    announced_kadi[GameState.current_player] = true\n    niko_label.text = \"Niko Kadi!\"\n\nfunc on_player_drew(player: int) -> void:\n    announced_kadi[player] = false",
+          "caption": "Button, per-player flag, and the draw event that revokes the announcement."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `reset_announcements()` that clears every player's announced_kadi flag and blanks niko_label — called at the start of each new round.",
+        "hint": "Loop over the array indices with range(), set each entry to false, then clear the label text.",
+        "solutionCode": "func reset_announcements() -> void:\n    for i in range(announced_kadi.size()):\n        announced_kadi[i] = false\n    niko_label.text = \"\""
+      },
+      "quizQuestions": [
+        {
+          "id": "q_09_02_a",
+          "prompt": "Per the Kadi rules, when must a player announce \"Niko Kadi\" in order to win?",
+          "choices": ["On the same move they play their winning cards", "In the round BEFORE the winning move — without the prior announcement, they cannot win", "At the start of the game", "Only if another player asks"],
+          "correctChoiceIndex": 1,
+          "explanation": "The announcement is a promise made one round ahead. The has_won check reads announced_kadi from the previous round; pressing the button as you win is too late.",
+          "concept": "UI signals"
+        },
+        {
+          "id": "q_09_02_b",
+          "prompt": "Why does `on_player_drew` reset the player's announced_kadi flag to false?",
+          "choices": ["To punish the player", "Drawing grows the hand, so the claim of being one round from winning no longer holds — the promise must be revoked and re-announced", "Godot clears booleans automatically", "Because the label needs updating"],
+          "correctChoiceIndex": 1,
+          "explanation": "A flag describing a future state must be cleared whenever that future becomes false. For every boolean flag you add, enumerate the events that unset it.",
+          "concept": "Invariants"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_09_missing_opponent_check",
+    "brokenCode": "func has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    return hand_empty and declared_niko and final_play_legal",
+    "bugDescription": "The win check omits the `no_opponent_cardless` invariant. If two players empty their hands on the same trick (a known edge case in four-player Kadi), the first one tested is wrongly declared winner — the round ends with an incorrect result and the tie-break rule is silently broken.",
+    "fixedCode": "func has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var no_opponent_cardless: bool = true\n    for other in range(4):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and no_opponent_cardless",
+    "explanation": "Adding the `no_opponent_cardless` invariant restores the tie-break rule: a player only wins if they are the SOLE cardless player at that instant. The compound boolean now expresses the full four-clause win condition, including the structural invariant that prevents false victories."
+  }
+}

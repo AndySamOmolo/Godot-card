@@ -1,0 +1,94 @@
+{
+  "id": "phase_10_reshuffle",
+  "order": 10,
+  "title": "Reshuffling & Draw Pile Recycling",
+  "summary": "When the draw pile empties, recycle the discard pile — preserving the top card so play continues seamlessly. Practise array slicing, randomness, and the `randomize()` call.",
+  "estimatedMinutes": 55,
+  "concepts": ["Array manipulation", "Randomness", "Testing"],
+  "programmingConcepts": ["Array slicing", "Randomisation", "State transitions", "Assertions", "Debugging"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_10_01_reshuffle",
+      "order": 1,
+      "title": "Reshuffle, Preserving the Top Card",
+      "bodyMarkdown": "# Reshuffling the Discard Pile\n\nWhen the draw deck runs out mid-match, Kadi recycles the discard pile into a fresh draw deck — **except** the top card, which stays in place so the next player still has something to match against.\n\n```gdscript\nfunc reshuffle_if_empty() -> void:\n    if GameState.deck.size() > 0:\n        return\n    if GameState.discard_pile.size() <= 1:\n        return  # nothing to recycle\n    var top_card: CardData = GameState.discard_pile.pop_back()\n    GameState.deck = GameState.discard_pile.duplicate()\n    GameState.deck.shuffle()\n    GameState.discard_pile = [top_card]\n    randomize()\n```\n\n`pop_back()` lifts the top card off the discard pile. `duplicate()` makes a shallow copy of the remaining pile — important, because assigning `GameState.deck = GameState.discard_pile` would alias the same array and corrupt both. `shuffle()` randomises in place; `randomize()` reseeds the RNG so each reshuffle differs.\n\nThe two early returns are **guard clauses**: bail out if there is nothing to do. Guard clauses keep the happy path unindented and readable.\n\n> [!WHY]\n> Preserving the top card is what makes the recycle invisible to the player. If you shuffled the whole discard pile, the top of the pile would jump to a random card mid-turn, breaking whatever rule (penalty, question, jump) was in force. Slicing the top off before shuffling is a one-line fix that keeps the match continuous. The `duplicate()` call avoids aliasing — a bug where editing `deck` later would silently mutate `discard_pile` and vice versa, which is fiendish to debug.\n\nAlways `duplicate()` arrays you intend to reassign; aliasing is the source of half the array bugs in card games.",
+      "codeSnippets": [
+        {
+          "id": "cs_10_01_a",
+          "language": "gdscript",
+          "code": "func reshuffle_if_empty() -> void:\n    if GameState.deck.size() > 0:\n        return\n    if GameState.discard_pile.size() <= 1:\n        return\n    var top_card: CardData = GameState.discard_pile.pop_back()\n    GameState.deck = GameState.discard_pile.duplicate()\n    GameState.deck.shuffle()\n    GameState.discard_pile = [top_card]\n    randomize()",
+          "caption": "Recycle the discard pile, preserving the top card."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Modify reshuffle_if_empty to also emit a signal `pile_recycled(new_deck_size: int)` after the shuffle. Declare the signal at the top.",
+        "hint": "Declare `signal pile_recycled(new_deck_size: int)` and call `.emit()` after the shuffle.",
+        "solutionCode": "signal pile_recycled(new_deck_size: int)\n\n# ... after GameState.deck.shuffle():\npile_recycled.emit(GameState.deck.size())"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_10_01_a",
+          "prompt": "Why call `duplicate()` instead of assigning `GameState.deck = GameState.discard_pile`?",
+          "choices": ["It is faster", "Plain assignment would alias the same array, so mutating deck would also mutate discard_pile (and vice versa)", "Godot requires it", "It sorts the array"],
+          "correctChoiceIndex": 1,
+          "explanation": "Without duplicate, both variables point at the same underlying array. Edits to one silently affect the other — a classic source of card-game bugs.",
+          "concept": "Array manipulation"
+        },
+        {
+          "id": "q_10_01_b",
+          "prompt": "Why preserve the top card of the discard pile during reshuffle?",
+          "choices": ["To save memory", "So the next player still has a card to match against — the rule in force (penalty, question, jump) continues uninterrupted", "It is required by Godot", "To make the shuffle faster"],
+          "correctChoiceIndex": 1,
+          "explanation": "Removing the top card would change the active rule mid-turn. Keeping it makes the recycle transparent to gameplay.",
+          "concept": "Array manipulation"
+        }
+      ]
+    },
+    {
+      "id": "l_10_02_edge_cases",
+      "order": 2,
+      "title": "Testing Edge Cases",
+      "bodyMarkdown": "# Testing Edge Cases\n\nThe reshuffle function *looks* correct — but \"looks correct\" has ended more Kadi matches than bad luck ever has. The nastiest moment to get it wrong is **mid-penalty**: a Joker demands five cards, the deck empties after two, and the recycle must fire seamlessly so the remaining three can still be drawn. We will not hope; we will test.\n\nA test in Godot can be a plain function that builds a known state, calls the code under test, and checks the outcome with `assert()`. An assert takes a condition and an optional message; if the condition is false in a debug build, the game stops right there and shows you the message.\n\n```gdscript\nfunc test_reshuffle_mid_penalty() -> void:\n    GameState.deck = [make_card(\"Clubs\", 9), make_card(\"Hearts\", 4)]\n    GameState.discard_pile = build_pile_of(10)\n    var expected_top: CardData = GameState.discard_pile.back()\n    print(\"before: deck=%d discard=%d\" % [GameState.deck.size(), GameState.discard_pile.size()])\n    draw_cards(GameState.current_player, 5)  # Joker penalty empties the deck mid-draw\n    print(\"after: deck=%d discard=%d\" % [GameState.deck.size(), GameState.discard_pile.size()])\n    assert(GameState.discard_pile.size() == 1, \"discard must keep exactly the top card\")\n    assert(GameState.discard_pile.back() == expected_top, \"top card must survive the reshuffle\")\n    assert(hand_size(GameState.current_player) >= 5, \"all 5 penalty cards must be drawn\")\n```\n\nThe recipe is always the same: **arrange** a tiny, hand-built state (a two-card deck, a ten-card discard pile), **act** by triggering the edge case, **assert** on every property that must hold. The `print()` lines are cheap print-debugging — when an assert fires, the before/after sizes in the Output panel tell you instantly whether the recycle ran at all.\n\nNote that `assert()` only runs in debug builds; exported release builds strip it entirely. That makes asserts free to sprinkle generously — they cost nothing in the shipped game — but it also means they are a development tool, not a substitute for handling real runtime errors.\n\nWhile we are hunting edge cases, remember the rulebook's quiet one: **a player cannot win while any player is cardless**. It deserves the same treatment — arrange a state where an opponent holds zero cards, act by playing a would-be winning move, and assert that `has_won()` returns false.\n\n> [!WHY]\n> Edge cases like an empty deck mid-penalty happen maybe once in fifty matches — far too rarely to find by playtesting, and exactly often enough to enrage real players. A test function makes the rare case happen on demand, every single run. Simulating the improbable cheaply is the entire point of automated testing: you compress fifty matches of bad luck into one function call.\n\nRun your test functions from a debug keybinding or a `_ready()` in a test scene, and re-run them after every change to the deck code.",
+      "codeSnippets": [
+        {
+          "id": "cs_10_02_a",
+          "language": "gdscript",
+          "code": "func test_reshuffle_mid_penalty() -> void:\n    GameState.deck = [make_card(\"Clubs\", 9), make_card(\"Hearts\", 4)]\n    GameState.discard_pile = build_pile_of(10)\n    var expected_top: CardData = GameState.discard_pile.back()\n    print(\"before: deck=%d discard=%d\" % [GameState.deck.size(), GameState.discard_pile.size()])\n    draw_cards(GameState.current_player, 5)\n    print(\"after: deck=%d discard=%d\" % [GameState.deck.size(), GameState.discard_pile.size()])\n    assert(GameState.discard_pile.size() == 1, \"discard must keep exactly the top card\")\n    assert(GameState.discard_pile.back() == expected_top, \"top card must survive the reshuffle\")\n    assert(hand_size(GameState.current_player) >= 5, \"all 5 penalty cards must be drawn\")",
+          "caption": "Arrange-act-assert: empty the deck mid-penalty and prove the top card survives."
+        },
+        {
+          "id": "cs_10_02_b",
+          "language": "gdscript",
+          "code": "func test_no_win_while_opponent_cardless() -> void:\n    GameState.hands[1] = []  # opponent is cardless\n    GameState.hands[0] = [make_card(\"Hearts\", 7)]\n    GameState.niko_declared[0] = true\n    play_card(0, GameState.hands[0][0])\n    assert(not has_won(0), \"cannot win while any player is cardless\")",
+          "caption": "The cardless-opponent rule gets its own test."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `test_reshuffle_skipped_when_pile_tiny()` that sets an empty deck and a ONE-card discard pile, calls reshuffle_if_empty(), and asserts both piles are unchanged (deck still 0, discard still 1).",
+        "hint": "The guard clause `if GameState.discard_pile.size() <= 1: return` should make the function a no-op. Assert both sizes afterwards.",
+        "solutionCode": "func test_reshuffle_skipped_when_pile_tiny() -> void:\n    GameState.deck = []\n    GameState.discard_pile = [make_card(\"Spades\", 9)]\n    reshuffle_if_empty()\n    assert(GameState.deck.size() == 0, \"deck must stay empty\")\n    assert(GameState.discard_pile.size() == 1, \"discard must keep its single card\")"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_10_02_a",
+          "prompt": "What happens to `assert()` calls in an exported release build of a Godot game?",
+          "choices": ["They crash the game on failure", "They are stripped out entirely — asserts run only in debug builds", "They log warnings silently", "They pause the game"],
+          "correctChoiceIndex": 1,
+          "explanation": "Godot removes asserts from release exports, so they cost nothing in the shipped game. Use them freely during development, but never for handling real runtime errors.",
+          "concept": "Testing"
+        },
+        {
+          "id": "q_10_02_b",
+          "prompt": "Why write a test function for the empty-deck-mid-penalty scenario instead of relying on playtesting?",
+          "choices": ["Playtesting is against the rules", "The edge case occurs too rarely to hit reliably by playing; a test makes the rare state happen on demand, every run", "Tests make the game run faster", "Godot requires a test scene"],
+          "correctChoiceIndex": 1,
+          "explanation": "Automated tests compress dozens of matches of bad luck into one repeatable function call — the improbable becomes routine, and regressions surface immediately.",
+          "concept": "Testing"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": null
+}

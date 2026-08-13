@@ -1,0 +1,88 @@
+{
+  "id": "phase_08_ace_declarations",
+  "order": 8,
+  "title": "Ace Declarations",
+  "summary": "When an Ace hits the pile, the player declares a new suit. Build the declaration popup with Godot Control nodes, an enum-backed OptionButton, and a signal that carries the choice back to the rules engine.",
+  "estimatedMinutes": 55,
+  "concepts": ["Control nodes", "UI popups", "Game state"],
+  "programmingConcepts": ["Event handling", "Callbacks", "Enums", "State management"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_08_01_declaration_popup",
+      "order": 1,
+      "title": "A Suit-Declaration Popup",
+      "bodyMarkdown": "# Control Nodes and the Declaration Popup\n\nA **Control** node is Godot's base class for UI — buttons, labels, dialogs. When a player plays an Ace they must declare the next suit; that is a perfect fit for a popup built from Control nodes.\n\n```gdscript\nclass_name DeclareSuitDialog\nextends Control\n\nsignal suit_declared(suit: int)\n\n@onready var option_button: OptionButton = $Panel/OptionButton\n@onready var confirm_button: Button = $Panel/ConfirmButton\n\nfunc _ready() -> void:\n    option_button.add_item(\"Hearts\", CardTypes.Suits.HEARTS)\n    option_button.add_item(\"Diamonds\", CardTypes.Suits.DIAMONDS)\n    option_button.add_item(\"Clubs\", CardTypes.Suits.CLUBS)\n    option_button.add_item(\"Spades\", CardTypes.Suits.SPADES)\n    confirm_button.pressed.connect(_on_confirm)\n\nfunc _on_confirm() -> void:\n    var suit: int = option_button.get_selected_id()\n    suit_declared.emit(suit)\n    hide()\n```\n\n`@onready` resolves the node reference after the scene is ready, safer than `$Panel/OptionButton` at the top of the script (the child might not exist yet). `OptionButton.add_item(label, id)` lets us store the enum value as the item's id, so `get_selected_id()` returns the enum directly — no string parsing, no lookup table.\n\nThe dialog emits `suit_declared` and hides itself. The rules engine connects to `suit_declared` and updates the required suit. The dialog has no idea what the rules do with the answer — pure decoupling.\n\n> [!WHY]\n> Storing the enum value as the OptionButton id means a rename of the suit string never breaks the rules. If we had string-matched on `\"Hearts\"`, a typo or localisation would silently break the game. The enum-as-id pattern keeps UI text and rule logic independent — translate the labels freely; the selected id is always a valid `Suits` member.\n\nHide dialogs rather than `queue_free()`-ing them if you will reuse them; recreating nodes each turn is wasteful.",
+      "codeSnippets": [
+        {
+          "id": "cs_08_01_a",
+          "language": "gdscript",
+          "code": "class_name DeclareSuitDialog\nextends Control\n\nsignal suit_declared(suit: int)\n\n@onready var option_button: OptionButton = $Panel/OptionButton\n@onready var confirm_button: Button = $Panel/ConfirmButton\n\nfunc _ready() -> void:\n    option_button.add_item(\"Hearts\", CardTypes.Suits.HEARTS)\n    option_button.add_item(\"Diamonds\", CardTypes.Suits.DIAMONDS)\n    option_button.add_item(\"Clubs\", CardTypes.Suits.CLUBS)\n    option_button.add_item(\"Spades\", CardTypes.Suits.SPADES)\n    confirm_button.pressed.connect(_on_confirm)\n\nfunc _on_confirm() -> void:\n    suit_declared.emit(option_button.get_selected_id())\n    hide()",
+          "caption": "A popup that lets the player declare a suit and emits the enum value."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Add a Cancel button that emits nothing but hides the dialog. Wire it up in _ready() and write the handler.",
+        "hint": "Use a second @onready var and connect its pressed signal.",
+        "solutionCode": "@onready var cancel_button: Button = $Panel/CancelButton\n\n# inside _ready():\ncancel_button.pressed.connect(_on_cancel)\n\nfunc _on_cancel() -> void:\n    hide()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_08_01_a",
+          "prompt": "Why use `@onready` instead of initialising the node reference at the top of the script?",
+          "choices": ["It runs faster", "Children may not exist when the script loads; @onready defers resolution until _ready() runs after the tree is built", "@onready is required by Godot", "It allows null values"],
+          "correctChoiceIndex": 1,
+          "explanation": "Node paths resolve only after the scene tree is constructed. @onready guarantees the reference is fetched at the right moment.",
+          "concept": "Control nodes"
+        },
+        {
+          "id": "q_08_01_b",
+          "prompt": "What is the advantage of storing the enum value as the OptionButton item id?",
+          "choices": ["It saves memory", "`get_selected_id()` returns the enum directly, so UI text can be translated without affecting rule logic", "It is required by Godot", "It sorts items automatically"],
+          "correctChoiceIndex": 1,
+          "explanation": "Decoupling the displayed label from the underlying value means localisation and rule logic never interfere — the id is always a valid Suits member.",
+          "concept": "UI popups"
+        }
+      ]
+    },
+    {
+      "id": "l_08_02_declared_suit",
+      "order": 2,
+      "title": "Enforcing the Declared Suit",
+      "bodyMarkdown": "# Enforcing the Declared Suit\n\nThe popup from the last lesson collects the player's choice — but a declaration means nothing until the rules engine **enforces** it. When an Ace is played and a suit declared, the next player must play that suit; the ordinary match-suit-or-rank rule is suspended until the demand is met.\n\nWe model this with one extra piece of game state: `declared_suit`. A sentinel value of `-1` means \"no declaration active\", so the variable doubles as its own on/off switch.\n\n```gdscript\nvar declared_suit: int = -1  # -1 = no active declaration\n\nfunc _on_suit_declared(suit: int) -> void:\n    declared_suit = suit\n\nfunc is_playable(card: CardData, top: CardData) -> bool:\n    if declared_suit != -1:\n        return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE\n    return card.suit == top.suit or card.rank == top.rank\n\nfunc on_card_played(card: CardData) -> void:\n    if declared_suit != -1 and card.suit == declared_suit:\n        declared_suit = -1  # demand satisfied — clear it\n```\n\n`is_playable` now has two modes. While a declaration is active, only the declared suit (or another Ace, which lets a player re-declare) gets through; the top card's suit and rank are irrelevant. Once no declaration is active, the familiar Phase 0 rule takes over.\n\nThe third function is the easy one to forget: **clearing** the declaration. The moment a card of the declared suit lands, the demand is satisfied and `declared_suit` returns to `-1`. Skip this step and the declaration haunts every later turn, locking the whole game to one suit forever.\n\n> [!WHY]\n> Temporary rule modifiers like a suit declaration have a full **lifecycle**: set, enforce, clear. Bugs cluster at the edges — a declaration that is never cleared, or one cleared too early (before any matching card was played). Writing the three lifecycle functions side by side, and naming the sentinel (`-1`) explicitly, makes each stage visible and testable. Any future modifier — an active penalty, a pending question — follows the same set/enforce/clear shape.\n\nConnect the dialog's `suit_declared` signal to `_on_suit_declared` and the loop is closed: UI collects the choice, state stores it, `is_playable` enforces it, and the first conforming card clears it.",
+      "codeSnippets": [
+        {
+          "id": "cs_08_02_a",
+          "language": "gdscript",
+          "code": "var declared_suit: int = -1\n\nfunc _on_suit_declared(suit: int) -> void:\n    declared_suit = suit\n\nfunc is_playable(card: CardData, top: CardData) -> bool:\n    if declared_suit != -1:\n        return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE\n    return card.suit == top.suit or card.rank == top.rank\n\nfunc on_card_played(card: CardData) -> void:\n    if declared_suit != -1 and card.suit == declared_suit:\n        declared_suit = -1",
+          "caption": "The declaration lifecycle: store on Ace, enforce in is_playable, clear when satisfied."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `has_declaration()` returning true while a declaration is active, and `describe_demand()` returning e.g. \"Play Hearts\" using a SUIT_NAMES dictionary, or \"No demand\" when inactive.",
+        "hint": "Compare declared_suit against the -1 sentinel; use SUIT_NAMES[declared_suit] for the label.",
+        "solutionCode": "func has_declaration() -> bool:\n    return declared_suit != -1\n\nfunc describe_demand() -> String:\n    if not has_declaration():\n        return \"No demand\"\n    return \"Play %s\" % SUIT_NAMES[declared_suit]"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_08_02_a",
+          "prompt": "Why does `declared_suit` use -1 as its inactive value instead of a separate `has_declaration: bool` flag?",
+          "choices": ["-1 uses less memory", "A sentinel keeps the state in ONE variable, so it can never disagree with a companion flag — two variables can drift out of sync", "Godot forbids two state variables", "-1 is a valid suit"],
+          "correctChoiceIndex": 1,
+          "explanation": "With a value-plus-flag pair, a bug can set the flag without the value (or vice versa). A single sentinel-bearing variable makes the invalid combination unrepresentable.",
+          "concept": "Game state"
+        },
+        {
+          "id": "q_08_02_b",
+          "prompt": "What goes wrong if `on_card_played` never resets `declared_suit` to -1?",
+          "choices": ["Nothing — the declaration expires automatically", "The declaration stays active forever, so every future turn is locked to that one suit and the game effectively jams", "The game crashes", "The Ace becomes unplayable"],
+          "correctChoiceIndex": 1,
+          "explanation": "State modifiers must be cleared when satisfied. A stale declaration keeps overriding is_playable on every later turn — the classic 'forgot the clear step' lifecycle bug.",
+          "concept": "Game state"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": null
+}

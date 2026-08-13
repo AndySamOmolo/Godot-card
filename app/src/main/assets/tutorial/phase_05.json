@@ -1,0 +1,88 @@
+{
+  "id": "phase_05_penalty_cards",
+  "order": 5,
+  "title": "Penalty Cards",
+  "summary": "Stack penalties with an accumulator variable: a 2 adds two cards, a 3 adds three, a Joker adds five, and the next player either counters (same-rank penalty or an Ace) or picks up the lot.",
+  "estimatedMinutes": 50,
+  "concepts": ["Accumulators", "Enums", "Guard clauses"],
+  "programmingConcepts": ["Accumulator pattern", "State variables", "Compound assignment", "Early returns"],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "lessons": [
+    {
+      "id": "l_05_01_accumulator",
+      "order": 1,
+      "title": "The Accumulator Pattern for Penalties",
+      "bodyMarkdown": "# The Accumulator Pattern\n\nAn **accumulator** is a variable that grows (or shrinks) across iterations or events. In Kadi the penalty stack is the canonical accumulator: each penalty card adds its value, and the next player must either counter or pick up the running total.\n\n```gdscript\nvar penalty_stack: int = 0\n\nfunc apply_penalty_card(card: CardData) -> void:\n    match card.rank:\n        CardTypes.Ranks.TWO:\n            penalty_stack += 2\n        CardTypes.Ranks.THREE:\n            penalty_stack += 3\n        CardTypes.Ranks.JOKER:\n            penalty_stack += 5\n        _:\n            pick_up(penalty_stack)\n            penalty_stack = 0\n\nfunc pick_up(count: int) -> void:\n    for _ in range(count):\n        if GameState.deck.size() > 0:\n            GameState.hands[GameState.current_player].append(\n                GameState.deck.pop_back())\n```\n\n`+=` is compound assignment — shorthand for `penalty_stack = penalty_stack + 2`. Use it for any variable that changes by a delta.\n\nThe accumulator persists across turns because it lives on the TurnManager (a Node in the scene tree, not a local). When a player picks up, the accumulator **resets to 0** — that reset is the rule, not an optimisation.\n\n> [!WHY]\n> Penalties are the heart of Kadi's tension. By making `penalty_stack` an explicit, observable variable rather than recomputing it from history, every UI element (a stack counter, an animation, an AI's threat assessment) can read it directly via a signal. The accumulator turns \"what is the current threat?\" into an O(1) field read, not a scan of the discard pile.\n\nAlways reset accumulators at the documented rule boundary — here, when a player picks up — or the stack leaks into the next round.",
+      "codeSnippets": [
+        {
+          "id": "cs_05_01_a",
+          "language": "gdscript",
+          "code": "var penalty_stack: int = 0\n\nfunc apply_penalty_card(card: CardData) -> void:\n    match card.rank:\n        CardTypes.Ranks.TWO:\n            penalty_stack += 2\n        CardTypes.Ranks.THREE:\n            penalty_stack += 3\n        CardTypes.Ranks.JOKER:\n            penalty_stack += 5\n        _:\n            pick_up(penalty_stack)\n            penalty_stack = 0",
+          "caption": "Accumulating penalty values, resetting on pick-up."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Add a `total_cards_picked_up: int` accumulator and increment it by `count` inside `pick_up` so we can display lifetime stats.",
+        "hint": "Declare a new field and use `+=`.",
+        "solutionCode": "var total_cards_picked_up: int = 0\n\nfunc pick_up(count: int) -> void:\n    total_cards_picked_up += count\n    for _ in range(count):\n        if GameState.deck.size() > 0:\n            GameState.hands[GameState.current_player].append(GameState.deck.pop_back())"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_05_01_a",
+          "prompt": "What does `penalty_stack += 3` do?",
+          "choices": ["Sets penalty_stack to 3", "Adds 3 to penalty_stack (equivalent to penalty_stack = penalty_stack + 3)", "Multiplies penalty_stack by 3", "Compares penalty_stack to 3"],
+          "correctChoiceIndex": 1,
+          "explanation": "`+=` is compound assignment: it adds the right operand to the left variable and stores the result back.",
+          "concept": "Accumulators"
+        },
+        {
+          "id": "q_05_01_b",
+          "prompt": "Why must the penalty stack be reset to 0 when a player picks up?",
+          "choices": ["To free memory", "Because the rule says the stack is cleared once picked up — otherwise the same penalty haunts the next round", "To make the game faster", "Godot requires it"],
+          "correctChoiceIndex": 1,
+          "explanation": "The Kadi rule is that picking up consumes the entire stack. Failing to reset leaks the penalty into subsequent turns, breaking the game balance.",
+          "concept": "Accumulators"
+        }
+      ]
+    },
+    {
+      "id": "l_05_02_countering",
+      "order": 2,
+      "title": "Countering a Penalty",
+      "bodyMarkdown": "# Countering a Penalty\n\nA penalty stack is not a sentence — the next player has ways out. In Kadi, when you face a live penalty you may **avoid picking up** by either playing another **penalty card of the same rank** (which forwards the whole stack to the *next* player) or playing an **Ace** (which cancels the pick-up; play then continues with the suit that was in force before the penalty). If you can do neither, you draw the full stack and it resets to zero.\n\n```gdscript\nfunc can_counter(card: CardData, top_penalty: CardData) -> bool:\n    if top_penalty == null:\n        return false\n    if card.rank == CardTypes.Ranks.ACE:\n        return true\n    return card.rank == top_penalty.rank\n\nfunc resolve_penalty(card: CardData) -> void:\n    if not can_counter(card, GameState.top_penalty):\n        pick_up(GameState.penalty_stack)\n        GameState.penalty_stack = 0\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0  # Ace cancels the stack\n        return\n    GameState.penalty_stack += penalty_value(card.rank)  # same-rank forwards it on\n```\n\nNotice the **guard clauses**: each `return` handles one outcome and exits, so the happy path never nests three levels deep. Reading top to bottom, the function says: 'can't counter? pick up and stop. Ace? clear the stack and stop. Otherwise forward the penalty.'\n\nAn important subtlety from the rules: forwarding with a same-rank penalty only *moves* the obligation — it does not clear it — while an Ace *cancels* it outright. Modelling those two counters as separate branches keeps each rule honest.\n\n> [!WHY]\n> Early-return guard clauses turn a tangled `if/else` tree into a checklist. Each branch owns exactly one rule outcome and is independently testable, so when a designer asks 'what happens if I play an Ace on a 3?' you point at one line. Bundling all three outcomes into nested conditionals is how subtle penalty-leak bugs — the stack surviving when it should have cleared — sneak in.\n\nPrefer 'handle-and-return' for each special case; leave the ordinary path unindented at the bottom.",
+      "codeSnippets": [
+        {
+          "id": "cs_05_02_a",
+          "language": "gdscript",
+          "code": "func can_counter(card: CardData, top_penalty: CardData) -> bool:\n    if top_penalty == null:\n        return false\n    if card.rank == CardTypes.Ranks.ACE:\n        return true\n    return card.rank == top_penalty.rank\n\nfunc resolve_penalty(card: CardData) -> void:\n    if not can_counter(card, GameState.top_penalty):\n        pick_up(GameState.penalty_stack)\n        GameState.penalty_stack = 0\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0\n        return\n    GameState.penalty_stack += penalty_value(card.rank)",
+          "caption": "Guard clauses resolve the three penalty responses: pick up, cancel with Ace, or forward."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `is_ace_escape(card)` returning true when the card is an Ace, using a single guard-clause return. This is the counter that cancels a penalty outright.",
+        "hint": "One line: return card.rank == CardTypes.Ranks.ACE.",
+        "solutionCode": "func is_ace_escape(card: CardData) -> bool:\n    return card.rank == CardTypes.Ranks.ACE"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_05_02_a",
+          "prompt": "A player facing a penalty plays a card of the SAME rank as the penalty card. What happens?",
+          "choices": ["The stack is cleared", "The whole penalty stack is forwarded to the next player", "The player still picks up", "The game ends"],
+          "correctChoiceIndex": 1,
+          "explanation": "Playing a same-rank penalty does not cancel the penalty; it adds to and forwards the entire stack to the next player, who must then respond.",
+          "concept": "Guard clauses"
+        },
+        {
+          "id": "q_05_02_b",
+          "prompt": "Why express the three penalty responses as early-return guard clauses instead of nested if/else?",
+          "choices": ["It runs faster", "Each outcome is handled and exited in one place, keeping the happy path flat and each rule independently testable", "Godot forbids else", "It saves memory"],
+          "correctChoiceIndex": 1,
+          "explanation": "Guard clauses give every special case its own exit, so the logic reads as a checklist and penalty-leak bugs are far harder to introduce.",
+          "concept": "Guard clauses"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": null
+}

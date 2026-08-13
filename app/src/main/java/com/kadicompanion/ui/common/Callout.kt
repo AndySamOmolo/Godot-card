@@ -1,0 +1,107 @@
+package com.kadicompanion.ui.common
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.kadicompanion.ui.theme.CalloutColors
+import com.kadicompanion.ui.theme.isDarkScheme
+
+enum class CalloutType { WHY, MISTAKE }
+
+private data class CalloutStyle(
+    val background: Color,
+    val border: Color,
+    val accent: Color,
+    val body: Color,
+    val title: String,
+    val icon: ImageVector
+)
+
+/**
+ * Inline teaching callout. A colored rail on the leading edge plus a soft tinted
+ * body — deliberately calmer than a full-bleed alert so it can sit inside long
+ * lesson prose without shouting.
+ */
+@Composable
+fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
+    val dark = isDarkScheme()
+    val style = when (type) {
+        CalloutType.WHY -> CalloutStyle(
+            background = if (dark) CalloutColors.whyBackgroundDark else CalloutColors.whyBackgroundLight,
+            border = if (dark) CalloutColors.whyBorderDark else CalloutColors.whyBorderLight,
+            accent = if (dark) CalloutColors.whyIconDark else CalloutColors.whyIconLight,
+            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            title = "Why this matters",
+            icon = Icons.Outlined.Lightbulb
+        )
+        CalloutType.MISTAKE -> CalloutStyle(
+            background = if (dark) CalloutColors.mistakeBackgroundDark else CalloutColors.mistakeBackgroundLight,
+            border = if (dark) CalloutColors.mistakeBorderDark else CalloutColors.mistakeBorderLight,
+            accent = if (dark) CalloutColors.mistakeIconDark else CalloutColors.mistakeIconLight,
+            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            title = "Common mistake",
+            icon = Icons.Outlined.WarningAmber
+        )
+    }
+    val shape = RoundedCornerShape(18.dp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .clip(shape)
+            .background(style.background)
+            .border(1.dp, style.border.copy(alpha = 0.55f), shape)
+    ) {
+        Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(style.accent))
+        Row(modifier = Modifier.padding(14.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(style.accent.copy(alpha = 0.20f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(style.icon, contentDescription = null, tint = style.accent, modifier = Modifier.size(17.dp))
+            }
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = style.title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = style.accent
+                )
+                Text(
+                    text = body,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = style.body,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
+        }
+    }
+}
