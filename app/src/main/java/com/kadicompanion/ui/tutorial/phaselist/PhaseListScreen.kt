@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.R
+import com.kadicompanion.domain.usecase.PhaseWithProgress
 import com.kadicompanion.ui.common.EmptyState
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
@@ -91,8 +91,8 @@ fun PhaseListScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
 
-    val totalLessons = state.phases.sumOf { it.total }
-    val completedLessons = state.phases.sumOf { it.completed }
+    val totalLessons = state.phases.sumOf { it.totalLessons }
+    val completedLessons = state.phases.sumOf { it.completedLessons }
     val overallFraction = if (totalLessons > 0) completedLessons.toFloat() / totalLessons else 0f
 
     val filteredPhases = state.phases.filter { item ->
@@ -103,9 +103,9 @@ fun PhaseListScreen(
                 it.title.contains(searchQuery, ignoreCase = true) ||
                     (it.targetFile?.contains(searchQuery, ignoreCase = true) == true)
             }
-        val isDone = item.total > 0 && item.completed >= item.total
-        val isInProgress = item.completed in 1 until item.total
-        val isTodo = item.completed == 0
+        val isDone = item.totalLessons > 0 && item.completedLessons >= item.totalLessons
+        val isInProgress = item.completedLessons in 1 until item.totalLessons
+        val isTodo = item.completedLessons == 0
         val matchesFilter = when (selectedFilter) {
             1 -> isInProgress
             2 -> isTodo
@@ -334,9 +334,9 @@ private fun TimelinePhaseRow(
     isLast: Boolean,
     onClick: () -> Unit
 ) {
-    val fraction = if (item.total == 0) 0f else item.completed.toFloat() / item.total
-    val isDone = item.total > 0 && item.completed >= item.total
-    val isInProgress = item.completed in 1 until item.total
+    val fraction = if (item.totalLessons == 0) 0f else item.completedLessons.toFloat() / item.totalLessons
+    val isDone = item.totalLessons > 0 && item.completedLessons >= item.totalLessons
+    val isInProgress = item.completedLessons in 1 until item.totalLessons
     val nodeColor = when {
         item.isLocked -> MaterialTheme.colorScheme.outline
         isDone -> successColor()
@@ -411,7 +411,7 @@ private fun TimelinePhaseRow(
 
         // Right Studio Module Card
         Box(modifier = Modifier.weight(1f).padding(bottom = 12.dp)) {
-            val targetFilesCount = item.phase.lessons.mapNotNull { it.targetFile }.distinct().size
+            val targetFilesCount = item.phase.lessons.mapNotNull { lesson -> lesson.targetFile }.distinct().size
             KadiCard(
                 onClick = if (item.isLocked) null else onClick,
                 accent = when {
@@ -436,8 +436,8 @@ private fun TimelinePhaseRow(
                         text = when {
                             item.isLocked -> "Locked"
                             isDone -> "Completed"
-                            isInProgress -> "${item.completed}/${item.total} Done"
-                            else -> "${item.total} Lessons"
+                            isInProgress -> "${item.completedLessons}/${item.totalLessons} Done"
+                            else -> "${item.totalLessons} Lessons"
                         },
                         color = when {
                             item.isLocked -> MaterialTheme.colorScheme.outline
@@ -469,7 +469,7 @@ private fun TimelinePhaseRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Pill(
-                        text = "${item.total} lessons",
+                        text = "${item.totalLessons} lessons",
                         color = MaterialTheme.colorScheme.primary,
                         icon = Icons.AutoMirrored.Outlined.MenuBook
                     )
