@@ -27,8 +27,13 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK Licenses & Ensure Build Tools 34
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          SDKMANAGER=$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager | sort -V | tail -n 1)
+          echo "Using sdkmanager at: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -84,7 +89,8 @@ jobs:
               K_PASS="kadi123456"
             fi
 
-            BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+            SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+            BUILD_TOOLS_DIR=$(ls -d "$SDK_ROOT"/build-tools/* | sort -V | tail -n 1)
             "$BUILD_TOOLS_DIR/zipalign" -v -p 4 "$UNSIGNED_APK" /tmp/app-release-aligned.apk
             "$BUILD_TOOLS_DIR/apksigner" sign \
               --ks "$KS_PATH" \
