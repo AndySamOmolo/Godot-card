@@ -4,8 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.kadicompanion.ui.theme.CalloutColors
 import com.kadicompanion.ui.theme.isDarkScheme
 
-enum class CalloutType { WHY, MISTAKE }
+enum class CalloutType { WHY, MISTAKE, GODOT, KADI, TIP }
 
 private data class CalloutStyle(
     val background: Color,
@@ -43,13 +46,17 @@ private data class CalloutStyle(
 )
 
 /**
- * Inline teaching callout. A colored rail on the leading edge plus a soft tinted
- * body — deliberately calmer than a full-bleed alert so it can sit inside long
- * lesson prose without shouting.
+ * Inline teaching callout. Supports 5 distinct pedagogical callouts:
+ * - WHY: architectural & design rationale
+ * - MISTAKE: common beginner pitfalls & how to avoid them
+ * - GODOT: exact step-by-step instructions inside the Godot 4.3 Editor
+ * - KADI: Kenyan Kadi table rule being modeled
+ * - TIP: debugging & workflow shortcuts
  */
 @Composable
 fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
     val dark = isDarkScheme()
+    val scheme = MaterialTheme.colorScheme
     val style = when (type) {
         CalloutType.WHY -> CalloutStyle(
             background = if (dark) CalloutColors.whyBackgroundDark else CalloutColors.whyBackgroundLight,
@@ -64,8 +71,32 @@ fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
             border = if (dark) CalloutColors.mistakeBorderDark else CalloutColors.mistakeBorderLight,
             accent = if (dark) CalloutColors.mistakeIconDark else CalloutColors.mistakeIconLight,
             body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
-            title = "Common mistake",
+            title = "Common mistake to avoid",
             icon = Icons.Outlined.WarningAmber
+        )
+        CalloutType.GODOT -> CalloutStyle(
+            background = scheme.primary.copy(alpha = if (dark) 0.13f else 0.09f),
+            border = scheme.primary.copy(alpha = 0.50f),
+            accent = scheme.primary,
+            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            title = "In the Godot 4.3 Editor",
+            icon = Icons.Outlined.Build
+        )
+        CalloutType.KADI -> CalloutStyle(
+            background = scheme.secondary.copy(alpha = if (dark) 0.13f else 0.09f),
+            border = scheme.secondary.copy(alpha = 0.50f),
+            accent = scheme.secondary,
+            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            title = "Kadi Table Rule",
+            icon = Icons.Outlined.Style
+        )
+        CalloutType.TIP -> CalloutStyle(
+            background = scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f),
+            border = scheme.tertiary.copy(alpha = 0.45f),
+            accent = scheme.tertiary,
+            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            title = "Pro Tip",
+            icon = Icons.Outlined.Bolt
         )
     }
     val shape = RoundedCornerShape(18.dp)

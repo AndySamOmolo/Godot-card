@@ -1,88 +1,321 @@
 {
   "id": "phase_03_turn_signals",
   "order": 3,
-  "title": "Turn Structure & Signals",
-  "summary": "Decouple the table UI from the rules with Godot signals: announce turn changes, card plays, and penalty updates without hard references between nodes.",
-  "estimatedMinutes": 40,
-  "concepts": ["Signals", "State machines"],
-  "programmingConcepts": ["Observer pattern", "Events", "Enums"],
+  "title": "Turn Structure, Signals & AI Opponents",
+  "summary": "Create the `TurnManager` Autoload singleton to track turn order and direction, decouple the HUD with Godot signals, and wire an `AITurnTimer` so 3 computer opponents play back automatically!",
+  "estimatedMinutes": 65,
+  "concepts": [
+    "Signals",
+    "State machines",
+    "Timer",
+    "AI Turn Loop"
+  ],
+  "programmingConcepts": [
+    "Observer pattern",
+    "Events",
+    "Modulo arithmetic",
+    "Async timers"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/turn_manager.gd",
+    "res://scenes/table/table.tscn",
+    "res://scenes/table/table.gd"
+  ],
+  "sceneTreeBlueprint": "Table (Node2D)\n├── ... (Background, DiscardSlot, PlayerHandContainer, HUD)\n└── AITurnTimer (Timer)  [Wait Time: 0.75s | One Shot: On]",
+  "learningObjectives": [
+    "Create and register `res://scripts/turn_manager.gd` as the `TurnManager` Autoload singleton.",
+    "Advance turns in both clockwise (`direction = 1`) and counter-clockwise (`direction = -1`) directions using safe non-negative modulo math.",
+    "Emit `turn_changed(player_index: int)` and connect `Table.gd` so human buttons lock during AI turns and an `AITurnTimer` triggers seats 1, 2, and 3."
+  ],
   "lessons": [
     {
       "id": "l_03_01_signals",
       "order": 1,
-      "title": "Signals for Turn Events",
-      "bodyMarkdown": "# Signals\n\nA **signal** is a message a node can emit; other nodes connect callbacks to react. Signals implement the **observer pattern** — the rules engine shouts \"turn changed\" without knowing who is listening.\n\n```gdscript\nclass_name TurnManager\nextends Node\n\nsignal turn_changed(player_index: int)\nsignal card_played(player_index: int, card: CardData)\nsignal penalty_updated(new_total: int)\n\nvar current_player: int = 0\nvar penalty_stack: int = 0\n\nfunc advance_turn() -> void:\n    current_player = (current_player + 1) % 4\n    turn_changed.emit(current_player)\n\nfunc play_card(card: CardData) -> void:\n    card_played.emit(current_player, card)\n    if card.is_penalty():\n        penalty_stack += card.penalty_value()  # 2, 3, or 5 (Joker)\n        penalty_updated.emit(penalty_stack)\n```\n\n`card.penalty_value()` returns the Kadi penalty a card demands — a 2 is worth 2, a 3 worth 3, and a Joker worth 5 — never the raw rank, or a Joker (rank 15) would wrongly force the next player to pick up 15 cards.\n\nDeclare signals with `signal name(args)`. Emit them with `.emit(...)`. Connect from a listener using `turn_manager.turn_changed.connect(_on_turn_changed)` in `_ready()`.\n\nGodot 4 lets you pass typed arguments on signals, so the editor and autocomplete know what each event carries. Connect signals in code (not just the editor) so connections survive renames.\n\n> [!WHY]\n> Signals break the dependency cycle. The TurnManager does not import the UI; the UI does not import the TurnManager. The manager emits; whoever cares connects. You can swap the human HUD for an AI-driven debug overlay without touching a line of the rules engine. This is the single biggest decoupling in the project — without it every node would `get_node(\"../UI/Label\")` and the scene graph would be uneditable.\n\nUse signals for one-to-many notifications; use direct function calls for one-to-one commands.",
+      "title": "Typed Signals for Turn & Table Events",
+      "targetFile": "res://scripts/turn_manager.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Declare custom signals near the top of your script with `signal signal_name(arg_name: Type)`.",
+        "Emit the signal when the event happens using `signal_name.emit(value)`.",
+        "In any listener node's `_ready()`, subscribe with `emitter.signal_name.connect(_on_event_handler)`."
+      ],
+      "keyTakeaways": [
+        "Signals implement the **Observer Pattern**: `TurnManager` announces *what* happened without needing hard-coded node paths to the HUD.",
+        "Godot 4 signals are first-class properties: use `.emit(...)` to fire them and `.connect(callable)` to listen.",
+        "Connecting signals in `_ready()` code (rather than hidden editor dialogs) makes every connection visible when reading the script."
+      ],
+      "bodyMarkdown": "# Signals: Decoupling the Rules from the Screen\n\nA **[[Signals|Signal]]** is Godot's built-in event broadcaster. When the turn advances from Player 0 to Player 1, three things need to react:\n1. The HUD's `StatusLabel` needs to say `\"Player 2's Turn\"`.\n2. Player 0's `PlaySelectedButton` and `DrawButton` need to disable so the human can't play out of turn.\n3. The `AITurnTimer` needs to start a 0.75-second pause before Player 1 plays a card.\n\nInstead of hard-coding `$HUD/StatusLabel` inside our turn script, `TurnManager` simply emits a **signal**:\n\n```gdscript\nsignal turn_changed(player_index: int)\nsignal direction_changed(new_direction: int)\n\nfunc advance_turn(extra_skips: int = 0) -> void:\n    var steps: int = 1 + extra_skips\n    for _i in range(steps):\n        current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)\n```\n\n> [!WHY]\n> Because `TurnManager` only emits `turn_changed(current_player_index)` and never touches UI nodes directly, it can run as a pure Autoload singleton! You can redesign the entire `Table.tscn` HUD tomorrow without changing a single line of `turn_manager.gd`.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 3 (Turn Structure, Signals & AI Opponents) — Lesson 1: *Typed Signals for Turn & Table Events* |\n| **Which File Do I Edit?** | `res://scripts/turn_manager.gd` |\n| **Scene / Node Context** | `Table (Node2D)` |\n| **What Problem Does It Solve?** | Signals implement the **Observer Pattern**: `TurnManager` announces *what* happened without needing hard-coded node paths to the HUD. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Declare custom signals near the top of your script with `signal signal_name(arg_name: Type)`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Emit the signal when the event happens using `signal_name.emit(value)`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n3. **In any listener node's `_ready()`, subscribe with `emitter.signal_name.connect(_on_event_handler)`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Typed Signals for Turn & Table Events` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/turn_manager.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Signals implement the **Observer Pattern**: `TurnManager` announces *what* happened without needing hard-coded node paths to the HUD.\n- **Core Principle 2**: Godot 4 signals are first-class properties: use `.emit(...)` to fire them and `.connect(callable)` to listen.\n- **Core Principle 3**: Connecting signals in `_ready()` code (rather than hidden editor dialogs) makes every connection visible when reading the script.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **How do you emit a signal named `turn_changed` with `current_player_index` in Godot 4.3?** | **turn_changed.emit(current_player_index)** — In Godot 4, signals are first-class objects with a `.emit(...)` method. |\n| **How do you connect `TurnManager.turn_changed` to `_on_turn_changed` in `table.gd`?** | **TurnManager.turn_changed.connect(_on_turn_changed)** — Call `.connect(handler_callable)` directly on the signal property. |\n| **Why shouldn't `TurnManager` directly access `$HUD/StatusLabel`?** | **Because `TurnManager` is an Autoload outside `Table.tscn`; emitting a signal lets `Table` update its own HUD without coupling `TurnManager` to scene node paths** — Autoloads live at `/root/` and should never hard-code paths into a specific scene's UI hierarchy. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Declare `signal game_won(winner_index: int)` and write a function `declare_winner(p: int) -> void` that emits `game_won` with `p`.\n- **How Godot Evaluates It**: When your script runs `signal game_won(winner_index: int)`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Broadcasts the winning seat index to any connected UI or sound node.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# Emitter (inside TurnManager):` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `signal turn_changed(player_index: int)` | Declares custom typed signal `turn_changed(player_index: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 4** | `# Listener (inside table.gd _ready()):` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 5** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 6** | `TurnManager.turn_changed.connect(_on_turn_changed)` | Subscribes a callback function to a signal so the function runs automatically whenever the signal emits. |\n| **Line 8** | `func _on_turn_changed(player_index: int) -> void:` | Defines function `_on_turn_changed()` returning `void`. |\n| **Line 9** | `print(\"Now it is Player %d's turn!\" % player_index)` | Logs the formatted message to Godot's bottom **Output** panel for inspection. |",
       "codeSnippets": [
         {
           "id": "cs_03_01_a",
           "language": "gdscript",
-          "code": "class_name TurnManager\nextends Node\n\nsignal turn_changed(player_index: int)\nsignal card_played(player_index: int, card: CardData)\nsignal penalty_updated(new_total: int)\n\nvar current_player: int = 0\nvar penalty_stack: int = 0\n\nfunc advance_turn() -> void:\n    current_player = (current_player + 1) % 4\n    turn_changed.emit(current_player)",
-          "caption": "A TurnManager that announces turn changes via a typed signal."
+          "code": "# Emitter (inside TurnManager):\nsignal turn_changed(player_index: int)\n\n# Listener (inside table.gd _ready()):\nfunc _ready() -> void:\n    TurnManager.turn_changed.connect(_on_turn_changed)\n\nfunc _on_turn_changed(player_index: int) -> void:\n    print(\"Now it is Player %d's turn!\" % player_index)",
+          "caption": "Declaring, connecting, and handling a typed signal in Godot 4.3."
         }
       ],
       "practicePrompt": {
-        "instructions": "Declare a `signal game_won(player_index: int)` on TurnManager and emit it from a method `declare_winner(p)`.",
-        "hint": "Use `signal name(args)` then `name.emit(value)`.",
-        "solutionCode": "signal game_won(player_index: int)\n\nfunc declare_winner(p: int) -> void:\n    game_won.emit(p)"
+        "instructions": "Declare `signal game_won(winner_index: int)` and write a function `declare_winner(p: int) -> void` that emits `game_won` with `p`.",
+        "hint": "Write `signal game_won(winner_index: int)` then `func declare_winner(p: int) -> void:` and `game_won.emit(p)`.",
+        "starterCode": "# 1. Declare signal game_won(winner_index: int)\n# 2. Write func declare_winner(p: int) -> void that emits it:\n",
+        "requiredTokens": [
+          "signal",
+          "game_won",
+          "func",
+          "declare_winner",
+          "game_won.emit"
+        ],
+        "expectedOutput": "Broadcasts the winning seat index to any connected UI or sound node.",
+        "solutionCode": "signal game_won(winner_index: int)\n\nfunc declare_winner(p: int) -> void:\n    game_won.emit(p)"
       },
       "quizQuestions": [
         {
           "id": "q_03_01_a",
-          "prompt": "How do you emit a signal named `turn_changed` with one integer argument?",
-          "choices": ["turn_changed(current_player)", "turn_changed.emit(current_player)", "emit(turn_changed, current_player)", "turn_changed.fire(current_player)"],
+          "prompt": "How do you emit a signal named `turn_changed` with `current_player_index` in Godot 4.3?",
+          "choices": [
+            "emit_signal(\"turn_changed\", current_player_index) only",
+            "turn_changed.emit(current_player_index)",
+            "turn_changed.fire(current_player_index)",
+            "send(turn_changed)"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "In Godot 4, signals are first-class objects — call `.emit(...)` on them with the arguments.",
+          "explanation": "In Godot 4, signals are first-class objects with a `.emit(...)` method.",
           "concept": "Signals"
         },
         {
           "id": "q_03_01_b",
-          "prompt": "Why prefer signals over direct method calls between nodes?",
-          "choices": ["Signals are faster", "They decouple emitter from listener — the emitter does not know who is listening, so you can swap UIs without touching the rules", "Signals are required by Godot", "Direct calls crash"],
+          "prompt": "How do you connect `TurnManager.turn_changed` to `_on_turn_changed` in `table.gd`?",
+          "choices": [
+            "TurnManager.turn_changed = _on_turn_changed",
+            "TurnManager.turn_changed.connect(_on_turn_changed)",
+            "connect(TurnManager, _on_turn_changed)",
+            "TurnManager.listen(_on_turn_changed)"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Signals implement the observer pattern: the emitter stays ignorant of subscribers, enabling clean swaps and one-to-many notifications.",
+          "explanation": "Call `.connect(handler_callable)` directly on the signal property.",
+          "concept": "Signals"
+        },
+        {
+          "id": "q_03_01_c",
+          "prompt": "Why shouldn't `TurnManager` directly access `$HUD/StatusLabel`?",
+          "choices": [
+            "Labels cannot be accessed from scripts",
+            "Because `TurnManager` is an Autoload outside `Table.tscn`; emitting a signal lets `Table` update its own HUD without coupling `TurnManager` to scene node paths",
+            "Because `$` only works in 3D",
+            "Because signals use zero CPU"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Autoloads live at `/root/` and should never hard-code paths into a specific scene's UI hierarchy.",
           "concept": "Signals"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/turn_manager.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Typed Signals for Turn & Table Events`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_03_02_turn_manager",
       "order": 2,
-      "title": "Building the Turn Manager",
-      "bodyMarkdown": "# Building the Turn Manager\n\nKadi's turns are trickier than \"next player, please\". Kickback Kings reverse the direction of play, Jump Jacks skip players, and the table can seat 2 to 5 people. All of that lives in one dedicated script: the **TurnManager**, registered as an Autoload so every scene sees the same turn state.\n\nTwo variables carry the whole system: `current_player_index`, and `direction`, which is `1` for clockwise and `-1` for counter-clockwise. A Kickback simply flips the sign: `direction = -direction`.\n\n```gdscript\nextends Node\n\nsignal turn_changed(player_index: int)\n\nvar current_player_index: int = 0\nvar direction: int = 1\nvar player_count: int = 4\n\nfunc advance_turn() -> void:\n    current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)\n```\n\nThe advance formula deserves a close read: `(current + direction + player_count) % player_count`. The modulo `%` wraps the index around the table — player 3 plus 1 becomes player 0 in a four-player game. But GDScript's `%` can return a negative result for negative operands, so when `direction` is `-1` and the index is `0`, plain `(0 - 1) % 4` would give `-1` — an invalid seat. Adding `player_count` before the modulo keeps the left side non-negative, so the wrap is always into `0..player_count - 1`.\n\nEvery time the turn moves, the manager emits `turn_changed`. The HUD highlights the active player's hand, an AI player wakes up, a timer restarts — all as listeners, none hard-wired into the manager.\n\n> [!WHY]\n> Centralising turn order in one Autoload means Kickback and Jump cards are one-liners: `direction = -direction` for a King, one extra `advance_turn()` call for a Jack. If each scene tracked its own idea of whose turn it was, a single reversal would desynchronise the table — the HUD showing player 2 while the rules engine waits on player 3. One writer, many listeners: that is the TurnManager contract.\n\nWith turns wrapping correctly in both directions, the special cards of Phase 5 become small tweaks instead of rewrites.",
+      "title": "Creating & Registering `TurnManager` (`turn_manager.gd`)",
+      "targetFile": "res://scripts/turn_manager.gd",
+      "sceneTree": "Project -> Project Settings -> Globals -> Autoload\n├── GameState    -> res://scripts/game_state.gd\n└── TurnManager  -> res://scripts/turn_manager.gd",
+      "editorSteps": [
+        "In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**, name it `turn_manager.gd` (`res://scripts/turn_manager.gd`), and click **Create**.",
+        "Paste the complete `turn_manager.gd` code below and press **Ctrl+S**.",
+        "Open **Project -> Project Settings -> Globals -> Autoload**, select `res://scripts/turn_manager.gd`, verify **Node Name** is `TurnManager`, and click **+ Add**.",
+        "Close Project Settings."
+      ],
+      "keyTakeaways": [
+        "`direction` is `1` for clockwise and `-1` for counter-clockwise; a Kickback (King) simply flips `direction *= -1`.",
+        "`(current_player_index + direction + player_count) % player_count` wraps cleanly around seats `0..3` in BOTH directions without ever producing `-1`.",
+        "`advance_turn(extra_skips)` handles normal turns (`extra_skips = 0`) and Jump chains (`extra_skips = 1, 2...`) in one unified method!"
+      ],
+      "bodyMarkdown": "# Building `res://scripts/turn_manager.gd`\n\nIn Kadi, turn order is dynamic: **Kickback Cards (Kings)** reverse the direction of play, and **Jump Cards (Jacks)** skip one or more players in the current direction of play.\n\nWe encapsulate all turn math in **`res://scripts/turn_manager.gd`** and register it as our second Autoload singleton: **`TurnManager`**.\n\n```gdscript\n# File: res://scripts/turn_manager.gd\n# Register in Project Settings -> Globals -> Autoload as: TurnManager\nextends Node\n\nsignal turn_changed(player_index: int)\nsignal direction_changed(new_direction: int)\n\nvar current_player_index: int = 0\nvar direction: int = 1  # 1 = clockwise, -1 = counter-clockwise\nvar player_count: int = 4\n\nfunc reset_turns(num_players: int = 4) -> void:\n    player_count = num_players\n    current_player_index = 0\n    direction = 1\n    turn_changed.emit(current_player_index)\n\nfunc advance_turn(extra_skips: int = 0) -> void:\n    var total_steps: int = 1 + extra_skips\n    for _i in range(total_steps):\n        current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)\n\nfunc reverse_direction() -> void:\n    direction *= -1\n    direction_changed.emit(direction)\n```\n\n> [!WHY]\n> Why do we add `+ player_count` inside `(current_player_index + direction + player_count) % player_count`? Because in GDScript, the `%` remainder operator preserves the sign of a negative left operand! When `current_player_index` is `0` and `direction` is `-1` (counter-clockwise), `(0 - 1) % 4` evaluates to **`-1`** — which would crash `GameState.hands[-1]` or desynchronize seat indices! Adding `+ player_count` makes it `(0 - 1 + 4) % 4 = 3`, wrapping cleanly to Seat 3.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 3 (Turn Structure, Signals & AI Opponents) — Lesson 2: *Creating & Registering `TurnManager` (`turn_manager.gd`)* |\n| **Which File Do I Edit?** | `res://scripts/turn_manager.gd` |\n| **Scene / Node Context** | `Project -> Project Settings -> Globals -> Autoload` |\n| **What Problem Does It Solve?** | `direction` is `1` for clockwise and `-1` for counter-clockwise; a Kickback (King) simply flips `direction *= -1`. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**, name it `turn_manager.gd` (`res://scripts/turn_manager.gd`), and click **Create**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Paste the complete `turn_manager.gd` code below and press **Ctrl+S**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Open **Project -> Project Settings -> Globals -> Autoload**, select `res://scripts/turn_manager.gd`, verify **Node Name** is `TurnManager`, and click **+ Add**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n4. **Close Project Settings.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Creating & Registering `TurnManager` (`turn_manager.gd`)` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/turn_manager.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `direction` is `1` for clockwise and `-1` for counter-clockwise; a Kickback (King) simply flips `direction *= -1`.\n- **Core Principle 2**: `(current_player_index + direction + player_count) % player_count` wraps cleanly around seats `0..3` in BOTH directions without ever producing `-1`.\n- **Core Principle 3**: `advance_turn(extra_skips)` handles normal turns (`extra_skips = 0`) and Jump chains (`extra_skips = 1, 2...`) in one unified method!\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why does `advance_turn()` compute `(current_player_index + direction + player_count) % player_count` instead of `(current_player_index + direction) % player_count`?** | **Because GDScript's `%` operator returns `-1` for `(0 - 1) % 4`; adding `+ player_count` guarantees a valid seat index `0..3` when moving counter-clockwise** — Adding `player_count` before `% player_count` ensures the dividend is positive even when `current_player_index == 0` and `direction == -1`. |\n| **If `current_player_index` is `1`, `direction` is `1` (clockwise), and Player 1 plays a single Jump Card (Jack), which seat plays next in a 4-player game?** | **Seat 3 (Seat 2 is skipped)** — A Jump card skips Seat 2 (`extra_skips = 1`, so `1 + 2 = 3`), landing on Seat 3. |\n| **How does `reverse_direction()` flip between clockwise (`1`) and counter-clockwise (`-1`)?** | **direction *= -1 (or direction = -direction)** — Multiplying by `-1` flips `1` to `-1` and `-1` back to `1` without needing an `if/else`. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a method `skip_player() -> void` on `TurnManager` that skips the next player by calling `advance_turn(1)` (or calling `advance_turn()` twice).\n- **How Godot Evaluates It**: When your script runs `func skip_player() -> void:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Advances the turn two seats forward in the active direction, skipping the next player.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/turn_manager.gd` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `# Register in Project Settings -> Globals -> Autoload as: TurnManager` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 3** | `extends Node` | Inherits all properties, signals, and lifecycle methods from Godot's `Node` class. |\n| **Line 5** | `signal turn_changed(player_index: int)` | Declares custom typed signal `turn_changed(player_index: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 6** | `signal direction_changed(new_direction: int)` | Declares custom typed signal `direction_changed(new_direction: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 8** | `var current_player_index: int = 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 9** | `var direction: int = 1  # 1 = clockwise, -1 = counter-clockwise` | Declares a mutable typed variable to store state in memory. |\n| **Line 10** | `var player_count: int = 4` | Declares a mutable typed variable to store state in memory. |\n| **Line 12** | `func reset_turns(num_players: int = 4) -> void:` | Defines function `reset_turns()` returning `void`. |\n| **Line 13** | `player_count = num_players` | Assigns the computed right-hand value into `player_count`. |\n| **Line 14** | `current_player_index = 0` | Assigns the computed right-hand value into `current_player_index`. |\n| **Line 15** | `direction = 1` | Assigns the computed right-hand value into `direction`. |\n| **Line 16** | `turn_changed.emit(current_player_index)` | Broadcasts the signal to all connected listener nodes along with any arguments. |\n| **Line 18** | `func advance_turn(extra_skips: int = 0) -> void:` | Defines function `advance_turn()` returning `void`. |\n| **Line 19** | `var total_steps: int = 1 + extra_skips` | Declares a mutable typed variable to store state in memory. |\n| **Line 20** | `for _i in range(total_steps):` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 21** | `current_player_index = (current_player_index + direction + player_count) % player_count` | Assigns the computed right-hand value into `current_player_index`. |\n| **Line 22** | `turn_changed.emit(current_player_index)` | Broadcasts the signal to all connected listener nodes along with any arguments. |\n| **Line 24** | `func reverse_direction() -> void:` | Defines function `reverse_direction()` returning `void`. |\n| **Line 25** | `direction *= -1` | Compound assignment that updates the variable in place. |\n| **Line 26** | `direction_changed.emit(direction)` | Broadcasts the signal to all connected listener nodes along with any arguments. |\n| **Line 28** | `func skip_player(jump_count: int = 1) -> void:` | Defines function `skip_player()` returning `void`. |\n| **Line 29** | `advance_turn(jump_count)` | Executes this statement as part of the current block. |",
       "codeSnippets": [
         {
           "id": "cs_03_02_a",
           "language": "gdscript",
-          "code": "extends Node\n\nsignal turn_changed(player_index: int)\n\nvar current_player_index: int = 0\nvar direction: int = 1  # 1 = clockwise, -1 = counter-clockwise\nvar player_count: int = 4\n\nfunc advance_turn() -> void:\n    current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)\n\nfunc reverse_direction() -> void:\n    direction = -direction",
-          "caption": "The TurnManager Autoload: wraparound advancing plus a Kickback-ready reversal."
+          "code": "# File: res://scripts/turn_manager.gd\n# Register in Project Settings -> Globals -> Autoload as: TurnManager\nextends Node\n\nsignal turn_changed(player_index: int)\nsignal direction_changed(new_direction: int)\n\nvar current_player_index: int = 0\nvar direction: int = 1  # 1 = clockwise, -1 = counter-clockwise\nvar player_count: int = 4\n\nfunc reset_turns(num_players: int = 4) -> void:\n    player_count = num_players\n    current_player_index = 0\n    direction = 1\n    turn_changed.emit(current_player_index)\n\nfunc advance_turn(extra_skips: int = 0) -> void:\n    var total_steps: int = 1 + extra_skips\n    for _i in range(total_steps):\n        current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)\n\nfunc reverse_direction() -> void:\n    direction *= -1\n    direction_changed.emit(direction)\n\nfunc skip_player(jump_count: int = 1) -> void:\n    advance_turn(jump_count)",
+          "caption": "Save as res://scripts/turn_manager.gd and add as Autoload 'TurnManager'."
         }
       ],
       "practicePrompt": {
-        "instructions": "Add a method `skip_player()` to the TurnManager that advances the turn twice (the Jump Card effect: the next player is skipped), reusing advance_turn().",
-        "hint": "Call advance_turn() twice — the second call lands on the player after the skipped one.",
-        "solutionCode": "func skip_player() -> void:\n    advance_turn()\n    advance_turn()"
+        "instructions": "Write a method `skip_player() -> void` on `TurnManager` that skips the next player by calling `advance_turn(1)` (or calling `advance_turn()` twice).",
+        "hint": "Inside `func skip_player() -> void:`, call `advance_turn(1)` or `advance_turn()`.",
+        "starterCode": "func skip_player() -> void:\n    # Advance past the skipped player:\n",
+        "requiredTokens": [
+          "func",
+          "skip_player()",
+          "advance_turn"
+        ],
+        "expectedOutput": "Advances the turn two seats forward in the active direction, skipping the next player.",
+        "solutionCode": "func skip_player() -> void:\n    advance_turn(1)"
       },
       "quizQuestions": [
         {
           "id": "q_03_02_a",
-          "prompt": "Why does advance_turn add `player_count` before taking the modulo: `(current + direction + player_count) % player_count`?",
-          "choices": ["It makes the game faster", "It keeps the result non-negative when direction is -1, since GDScript's % can return negative values", "player_count must appear in every formula", "It doubles the wraparound range"],
+          "prompt": "Why does `advance_turn()` compute `(current_player_index + direction + player_count) % player_count` instead of `(current_player_index + direction) % player_count`?",
+          "choices": [
+            "To skip Player 0",
+            "Because GDScript's `%` operator returns `-1` for `(0 - 1) % 4`; adding `+ player_count` guarantees a valid seat index `0..3` when moving counter-clockwise",
+            "To double the turn speed",
+            "Because `player_count` is a float"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "With direction -1 and index 0, `(0 - 1) % 4` would yield -1 — an invalid seat. Adding player_count first guarantees the wrap lands in 0..player_count-1.",
+          "explanation": "Adding `player_count` before `% player_count` ensures the dividend is positive even when `current_player_index == 0` and `direction == -1`.",
           "concept": "Operators"
         },
         {
           "id": "q_03_02_b",
-          "prompt": "A Kickback (King) is played. What single change does the TurnManager need?",
-          "choices": ["Reset current_player_index to 0", "Flip the sign of direction: `direction = -direction`", "Shuffle the players array", "Emit turn_changed twice"],
+          "prompt": "If `current_player_index` is `1`, `direction` is `1` (clockwise), and Player 1 plays a single Jump Card (Jack), which seat plays next in a 4-player game?",
+          "choices": [
+            "Seat 2",
+            "Seat 3 (Seat 2 is skipped)",
+            "Seat 0",
+            "Seat 1 again"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Reversal is just negating direction; the existing advance formula then walks the table the other way automatically.",
+          "explanation": "A Jump card skips Seat 2 (`extra_skips = 1`, so `1 + 2 = 3`), landing on Seat 3.",
+          "concept": "State machines"
+        },
+        {
+          "id": "q_03_02_c",
+          "prompt": "How does `reverse_direction()` flip between clockwise (`1`) and counter-clockwise (`-1`)?",
+          "choices": [
+            "direction = 0",
+            "direction *= -1 (or direction = -direction)",
+            "direction += 2",
+            "direction = player_count"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Multiplying by `-1` flips `1` to `-1` and `-1` back to `1` without needing an `if/else`.",
           "concept": "State machines"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/turn_manager.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Creating & Registering `TurnManager` (`turn_manager.gd`)`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ]
+    },
+    {
+      "id": "l_03_03_ai_opponents",
+      "order": 3,
+      "title": "Adding `AITurnTimer` so Computer Opponents Play Back",
+      "targetFile": "res://scenes/table/table.tscn + res://scenes/table/table.gd",
+      "sceneTree": "Table (Node2D)\n├── ... (Background, DiscardSlot, PlayerHandContainer, HUD)\n└── AITurnTimer (Timer)  [Wait Time: 0.75 | One Shot: On]",
+      "editorSteps": [
+        "Open `res://scenes/table/table.tscn` in the Godot editor.",
+        "Select the root `Table` node, click **+ (Add Child Node)**, search for `Timer`, and create it.",
+        "Rename the `Timer` node to `AITurnTimer`.",
+        "In the **Inspector** (right) with `AITurnTimer` selected, set **Wait Time** to `0.75` sec and check **One Shot = On**.",
+        "In `table.gd`, connect `TurnManager.turn_changed` to `_on_turn_changed(player_idx)`: when `player_idx != 0`, disable the human buttons and call `ai_turn_timer.start()`!"
+      ],
+      "keyTakeaways": [
+        "Without a `Timer` delay, all 3 AI opponents would execute their turns in 0.001 milliseconds on the exact same frame, making it impossible for the human player to see what cards were played!",
+        "Setting `One Shot = On` on `AITurnTimer` ensures the timer fires once per AI turn instead of repeating infinitely.",
+        "Disabling `PlaySelectedButton` and `DrawButton` when `TurnManager.current_player_index != 0` prevents the human from clicking cards during an AI opponent's turn."
+      ],
+      "bodyMarkdown": "# Making the Table Playable: AI Turn Timer & HUD Locking\n\nA card game is no fun if you are the only one taking turns! In our 4-player Kadi table:\n- **Seat 0** is **You** (the human player whose hand is fanned at the bottom).\n- **Seats 1, 2, and 3** are **Computer (AI) Opponents**.\n\nIf Seat 1, Seat 2, and Seat 3 played their cards immediately inside `_on_turn_changed()`, all three AI moves would happen in less than a millisecond — you wouldn't even see who played the Penalty 2 or Jump Jack! By adding a **`[[Timer]]`** node named **`AITurnTimer`** (`Wait Time = 0.75s`, `One Shot = true`), each AI opponent pauses for 0.75 seconds before making its move.\n\n```gdscript\n@onready var ai_turn_timer: Timer = $AITurnTimer\n@onready var play_button: Button = $HUD/PlaySelectedButton\n@onready var draw_button: Button = $HUD/DrawButton\n\nfunc _on_turn_changed(player_index: int) -> void:\n    var is_human_turn: bool = (player_index == 0)\n    play_button.disabled = not is_human_turn\n    draw_button.disabled = not is_human_turn\n    refresh_table_ui()\n    if not is_human_turn:\n        ai_turn_timer.start(0.75)\n\nfunc _on_ai_turn_timer_timeout() -> void:\n    var ai_seat: int = TurnManager.current_player_index\n    if ai_seat != 0:\n        _execute_ai_turn(ai_seat)\n```\n\n> [!WHY]\n> Look how clean that signal loop is: when the human finishes a turn, `TurnManager.advance_turn()` emits `turn_changed(1)`. `_on_turn_changed(1)` locks the human buttons and starts `ai_turn_timer`. When 0.75s elapses, `_on_ai_turn_timer_timeout()` runs Seat 1's move and calls `TurnManager.advance_turn()`, which triggers Seat 2, then Seat 3, and finally unlocks the HUD when `turn_changed(0)` returns to you!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 3 (Turn Structure, Signals & AI Opponents) — Lesson 3: *Adding `AITurnTimer` so Computer Opponents Play Back* |\n| **Which File Do I Edit?** | `res://scenes/table/table.tscn + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)` |\n| **What Problem Does It Solve?** | Without a `Timer` delay, all 3 AI opponents would execute their turns in 0.001 milliseconds on the exact same frame, making it impossible for the human player to see what cards were played! |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Open `res://scenes/table/table.tscn` in the Godot editor.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Select the root `Table` node, click **+ (Add Child Node)**, search for `Timer`, and create it.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Rename the `Timer` node to `AITurnTimer`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n4. **In the **Inspector** (right) with `AITurnTimer` selected, set **Wait Time** to `0.75` sec and check **One Shot = On**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n5. **In `table.gd`, connect `TurnManager.turn_changed` to `_on_turn_changed(player_idx)`: when `player_idx != 0`, disable the human buttons and call `ai_turn_timer.start()`!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Adding `AITurnTimer` so Computer Opponents Play Back` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.tscn + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Without a `Timer` delay, all 3 AI opponents would execute their turns in 0.001 milliseconds on the exact same frame, making it impossible for the human player to see what cards were played!\n- **Core Principle 2**: Setting `One Shot = On` on `AITurnTimer` ensures the timer fires once per AI turn instead of repeating infinitely.\n- **Core Principle 3**: Disabling `PlaySelectedButton` and `DrawButton` when `TurnManager.current_player_index != 0` prevents the human from clicking cards during an AI opponent's turn.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why do we set `one_shot = true` on `AITurnTimer`?** | **So the timer fires once after 0.75s instead of firing repeatedly forever** — By default a Godot `Timer` repeats continuously; `one_shot = true` makes it fire once per `start()` call. |\n| **Which signal does a Godot `Timer` emit when its countdown reaches zero?** | **timeout** — `Timer` emits the `timeout` signal when its wait time elapses. |\n| **Why do we set `play_button.disabled = not is_human` inside `_on_turn_changed()`?** | **To prevent the human player from clicking Play or Draw while an AI opponent is thinking** — Locking the action buttons during Seats 1..3 prevents out-of-turn human moves while the AI timer is counting down. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `is_human_turn() -> bool` that returns `true` when `TurnManager.current_player_index == 0`.\n- **How Godot Evaluates It**: When your script runs `func is_human_turn() -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns true on Seat 0's turn and false during AI turns (Seats 1..3).\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# Inside res://scenes/table/table.gd:` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `@onready var ai_turn_timer: Timer = $AITurnTimer` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 3** | `@onready var play_button: Button = $HUD/PlaySelectedButton` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 4** | `@onready var draw_button: Button = $HUD/DrawButton` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 6** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 7** | `ai_turn_timer.one_shot = true` | Assigns the computed right-hand value into `ai_turn_timer.one_shot`. |\n| **Line 8** | `ai_turn_timer.timeout.connect(_on_ai_turn_timer_timeout)` | Subscribes a callback function to a signal so the function runs automatically whenever the signal emits. |\n| **Line 9** | `TurnManager.turn_changed.connect(_on_turn_changed)` | Subscribes a callback function to a signal so the function runs automatically whenever the signal emits. |\n| **Line 10** | `GameState.state_updated.connect(refresh_table_ui)` | Subscribes a callback function to a signal so the function runs automatically whenever the signal emits. |\n| **Line 11** | `GameState.start_new_match(4, 4)` | Executes this statement as part of the current block. |\n| **Line 12** | `TurnManager.reset_turns(4)` | Executes this statement as part of the current block. |\n| **Line 14** | `func _on_turn_changed(player_index: int) -> void:` | Defines function `_on_turn_changed()` returning `void`. |\n| **Line 15** | `var is_human: bool = (player_index == 0)` | Declares a mutable typed variable to store state in memory. |\n| **Line 16** | `play_button.disabled = not is_human` | Assigns the computed right-hand value into `play_button.disabled`. |\n| **Line 17** | `draw_button.disabled = not is_human` | Assigns the computed right-hand value into `draw_button.disabled`. |\n| **Line 18** | `refresh_table_ui()` | Executes this statement as part of the current block. |\n| **Line 19** | `if not is_human:` | Branches into the indented block only when `not is_human` evaluates to `true`. |\n| **Line 20** | `ai_turn_timer.start(0.75)` | Executes this statement as part of the current block. |\n| **Line 22** | `func _on_ai_turn_timer_timeout() -> void:` | Defines function `_on_ai_turn_timer_timeout()` returning `void`. |\n| **Line 23** | `var seat: int = TurnManager.current_player_index` | Declares a mutable typed variable to store state in memory. |\n| **Line 24** | `if seat != 0:` | Branches into the indented block only when `seat != 0` evaluates to `true`. |\n| **Line 25** | `_execute_ai_turn(seat)` | Executes this statement as part of the current block. |",
+      "codeSnippets": [
+        {
+          "id": "cs_03_03_a",
+          "language": "gdscript",
+          "code": "# Inside res://scenes/table/table.gd:\n@onready var ai_turn_timer: Timer = $AITurnTimer\n@onready var play_button: Button = $HUD/PlaySelectedButton\n@onready var draw_button: Button = $HUD/DrawButton\n\nfunc _ready() -> void:\n    ai_turn_timer.one_shot = true\n    ai_turn_timer.timeout.connect(_on_ai_turn_timer_timeout)\n    TurnManager.turn_changed.connect(_on_turn_changed)\n    GameState.state_updated.connect(refresh_table_ui)\n    GameState.start_new_match(4, 4)\n    TurnManager.reset_turns(4)\n\nfunc _on_turn_changed(player_index: int) -> void:\n    var is_human: bool = (player_index == 0)\n    play_button.disabled = not is_human\n    draw_button.disabled = not is_human\n    refresh_table_ui()\n    if not is_human:\n        ai_turn_timer.start(0.75)\n\nfunc _on_ai_turn_timer_timeout() -> void:\n    var seat: int = TurnManager.current_player_index\n    if seat != 0:\n        _execute_ai_turn(seat)",
+          "caption": "Wiring AITurnTimer and TurnManager.turn_changed in table.gd."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `is_human_turn() -> bool` that returns `true` when `TurnManager.current_player_index == 0`.",
+        "hint": "Use `return TurnManager.current_player_index == 0`.",
+        "starterCode": "func is_human_turn() -> bool:\n    # Return true when TurnManager.current_player_index is 0:\n",
+        "requiredTokens": [
+          "func",
+          "is_human_turn()",
+          "bool",
+          "return",
+          "TurnManager.current_player_index",
+          "0"
+        ],
+        "expectedOutput": "Returns true on Seat 0's turn and false during AI turns (Seats 1..3).",
+        "solutionCode": "func is_human_turn() -> bool:\n    return TurnManager.current_player_index == 0"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_03_03_a",
+          "prompt": "Why do we set `one_shot = true` on `AITurnTimer`?",
+          "choices": [
+            "So the game ends after one turn",
+            "So the timer fires once after 0.75s instead of firing repeatedly forever",
+            "To make the timer run faster",
+            "Because Godot requires it for 2D nodes"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "By default a Godot `Timer` repeats continuously; `one_shot = true` makes it fire once per `start()` call.",
+          "concept": "Timer"
+        },
+        {
+          "id": "q_03_03_b",
+          "prompt": "Which signal does a Godot `Timer` emit when its countdown reaches zero?",
+          "choices": [
+            "pressed",
+            "timeout",
+            "finished",
+            "turn_changed"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "`Timer` emits the `timeout` signal when its wait time elapses.",
+          "concept": "Timer"
+        },
+        {
+          "id": "q_03_03_c",
+          "prompt": "Why do we set `play_button.disabled = not is_human` inside `_on_turn_changed()`?",
+          "choices": [
+            "To hide the button permanently",
+            "To prevent the human player from clicking Play or Draw while an AI opponent is thinking",
+            "To reset the deck",
+            "To change the button color to red"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Locking the action buttons during Seats 1..3 prevents out-of-turn human moves while the AI timer is counting down.",
+          "concept": "AI Turn Loop"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.tscn + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Adding `AITurnTimer` so Computer Opponents Play Back`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.tscn + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
-  "debugChallenge": null
+  "debugChallenge": {
+    "id": "dbg_03_negative_modulo",
+    "brokenCode": "func advance_turn() -> void:\n    current_player_index = (current_player_index + direction) % player_count\n    turn_changed.emit(current_player_index)",
+    "bugDescription": "When a King (Kickback) reverses `direction` to `-1` and it is Player 0's turn, calling `advance_turn()` sets `current_player_index` to `-1` instead of `3`, causing the UI and AI turn logic to break!",
+    "fixedCode": "func advance_turn() -> void:\n    current_player_index = (current_player_index + direction + player_count) % player_count\n    turn_changed.emit(current_player_index)",
+    "explanation": "In GDScript, `(-1) % 4` evaluates to `-1`, not `3`! On line 2, when `current_player_index` is `0` and `direction` is `-1`, `(0 + -1) % 4` produces `-1`. Adding `+ player_count` inside the parentheses (`(0 - 1 + 4) % 4`) keeps the number positive so it wraps cleanly to Seat `3`.",
+    "buggyLineNumber": 2,
+    "hint": "Check the modulo formula on line 2: what does `(0 + -1) % 4` evaluate to in GDScript when `player_count` is not added before `%`?"
+  }
 }

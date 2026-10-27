@@ -2,284 +2,720 @@
   "id": "phase_01_project_deck",
   "order": 1,
   "title": "Project Setup & Deck Model",
-  "summary": "Start from zero: install Godot 4.3, create the Kadi project and tour the editor, write your first script on a node — then lay the project's skeleton: enums for suits and ranks, custom Resources for card data, a deck builder using nested loops, and Autoloads for shared game state.",
-  "estimatedMinutes": 85,
-  "concepts": ["Godot Editor", "Nodes", "Scenes", "Scripts", "Enums", "Resources", "Autoloads"],
-  "programmingConcepts": ["Development environment", "Functions", "Enums", "Classes", "Nested loops", "Singletons"],
+  "summary": "Install Godot 4.3, set up the Kadi project folder structure (`res://scripts/`, `res://scenes/`), and build the complete 54-card data layer: `CardTypes`, `CardData`, and the `GameState` Autoload singleton.",
+  "estimatedMinutes": 95,
+  "concepts": [
+    "Godot Editor",
+    "Nodes",
+    "Scenes",
+    "Scripts",
+    "Enums",
+    "Resources",
+    "Autoloads"
+  ],
+  "programmingConcepts": [
+    "Development environment",
+    "Functions",
+    "Enums",
+    "Classes",
+    "Nested loops",
+    "Singletons"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://project.godot",
+    "res://scripts/card_types.gd",
+    "res://scripts/card_data.gd",
+    "res://scripts/game_state.gd"
+  ],
+  "sceneTreeBlueprint": "root (Viewport)  [Godot Runtime SceneTree]\n├── GameState (Node)        [Autoload Singleton: res://scripts/game_state.gd]\n└── Main (Node2D)           [Boot Scene: res://scenes/table/table.tscn]",
+  "learningObjectives": [
+    "Create a clean Godot 4.3 project with Compatibility rendering and organized `res://scripts/` and `res://scenes/` folders.",
+    "Write `res://scripts/card_types.gd` (`CardTypes`) with Suits and Ranks enums anchored to card face values (`2..15`).",
+    "Write `res://scripts/card_data.gd` (`CardData`) as a custom `Resource` with display helpers and Kadi rule classifications.",
+    "Build and register `res://scripts/game_state.gd` (`GameState`) as a global Autoload singleton that generates and shuffles the 54-card Kadi deck."
+  ],
   "lessons": [
     {
       "id": "l_01_00a_install_godot",
       "order": 1,
-      "title": "Installing Godot 4.3",
-      "bodyMarkdown": "# Installing Godot 4.3\n\nBefore a single card hits the table, we need the tool we will build Kadi with: **Godot 4.3**, a free, open-source game engine. Download it from the official site, [godotengine.org](https://godotengine.org) — never from third-party mirrors, which may bundle outdated or tampered builds.\n\nOn the download page you will see two builds: **Standard** and **.NET**. The .NET build adds C# support; the Standard build ships GDScript, Godot's own Python-like language. Kadi is written entirely in GDScript, so choose **Standard**. Pick the version matching your OS — Windows, macOS, or Linux are all first-class citizens.\n\nHere is the surprise: there is **no installer**. Godot is a single portable executable around 100 MB. Unzip it anywhere — your Desktop, a `tools` folder, a USB stick — and double-click. Nothing is written to the registry; deleting the file uninstalls it completely.\n\n```gdscript\n# Once Godot is running, this is the kind of code we will write:\nfunc _ready() -> void:\n    print(\"Godot 4.3 ready — time to build Kadi!\")\n```\n\nOn first launch you land in the **Project Manager** — a window listing your projects (empty for now) with buttons to create, import, or scan for projects. This is Godot's front door; the editor itself opens only after you pick a project.\n\n> [!WHY]\n> We pin the exact version — 4.3 Standard — because engine versions change APIs. A tutorial written for 4.3 (`instantiate()`, `@onready`, typed signals) will confuse you on 3.x, where those are spelled differently. Locking the version now means every snippet in this course runs exactly as printed, so any error you see is a learning moment, not a version mismatch.\n\nWith the Project Manager open, you are ready to create the Kadi project — that is the next lesson.",
+      "title": "Installing Godot 4.3 Standard",
+      "targetFile": "Godot_v4.3-stable (Portable Executable)",
+      "sceneTree": null,
+      "editorSteps": [
+        "Open godotengine.org/download in your browser.",
+        "Download **Godot 4.3 Standard** (NOT the .NET version — Kadi uses pure GDScript).",
+        "Extract the downloaded `.zip` archive to a folder on your computer (e.g. `Desktop/Godot/`).",
+        "Double-click the extracted Godot executable to open the **Godot Project Manager** window."
+      ],
+      "keyTakeaways": [
+        "Godot 4.3 Standard includes full GDScript support in a single ~100 MB portable executable with zero installation wizard.",
+        "Pinning version 4.3 ensures every node property, signal syntax, and `@onready` annotation in this course matches your editor 100%."
+      ],
+      "bodyMarkdown": "# Installing Godot 4.3 Standard\n\nBefore writing a single line of Kadi code, let's get **Godot 4.3** running on your machine. Download it directly from the official site ([godotengine.org](https://godotengine.org)).\n\nOn the download page you will see two editions:\n- **Godot 4.3 Standard** (includes GDScript — **choose this one!**)\n- **Godot 4.3 .NET** (adds C# support, requires external .NET SDK)\n\nBecause our entire Kadi game is written in **[[GDScript]]**, the **Standard** edition is smaller, faster to launch, and needs zero external SDKs to run on Windows, macOS, Linux, or Android.\n\n```gdscript\n# Once Godot is open, this 4-line script is all it takes to verify your setup:\nextends Node\n\nfunc _ready() -> void:\n    print(\"Godot 4.3 ready — time to build Kadi!\")\n```\n\n> [!GODOT]\n> Godot does not have an installer wizard! The downloaded `.zip` contains the entire engine in one portable executable file. Unzip it anywhere (such as `Documents/Godot/`), double-click the executable, and the **Project Manager** window opens immediately.\n\n> [!WHY]\n> Why lock onto **Godot 4.3** specifically? Because Godot 4 replaced Godot 3's old APIs (`instance()` became `instantiate()`, `onready var` became `@onready var`, `connect(\"pressed\", self, ...)` became `button.pressed.connect(...)`). Using Godot 4.3 guarantees that every snippet in this companion app works on the first try without version confusion.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 1: *Installing Godot 4.3 Standard* |\n| **Which File Do I Edit?** | `Godot_v4.3-stable (Portable Executable)` |\n| **Scene / Node Context** | `root (Viewport)  [Godot Runtime SceneTree]` |\n| **What Problem Does It Solve?** | Godot 4.3 Standard includes full GDScript support in a single ~100 MB portable executable with zero installation wizard. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Open godotengine.org/download in your browser.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`Godot_v4.3-stable (Portable Executable)`), and node references match what the runtime expects when you press `F5`.\n2. **Download **Godot 4.3 Standard** (NOT the .NET version — Kadi uses pure GDScript).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`Godot_v4.3-stable (Portable Executable)`), and node references match what the runtime expects when you press `F5`.\n3. **Extract the downloaded `.zip` archive to a folder on your computer (e.g. `Desktop/Godot/`).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`Godot_v4.3-stable (Portable Executable)`), and node references match what the runtime expects when you press `F5`.\n4. **Double-click the extracted Godot executable to open the **Godot Project Manager** window.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`Godot_v4.3-stable (Portable Executable)`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Installing Godot 4.3 Standard` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `Godot_v4.3-stable (Portable Executable)` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Godot 4.3 Standard includes full GDScript support in a single ~100 MB portable executable with zero installation wizard.\n- **Core Principle 2**: Pinning version 4.3 ensures every node property, signal syntax, and `@onready` annotation in this course matches your editor 100%.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Which Godot 4.3 edition should you download for this Kadi tutorial, and why?** | **Standard edition, because Kadi is built 100% in GDScript and needs no external .NET SDK** — The Standard edition has GDScript built right in with zero extra dependencies. |\n| **How is Godot 4.3 installed after downloading the `.zip` archive?** | **Simply extract the `.zip` and double-click the portable executable** — Godot is a self-contained portable executable — unzipping the file is the entire installation. |\n| **What is the very first window that appears when you launch the Godot executable?** | **The Project Manager (where you create or open a project)** — Godot opens to the Project Manager first; once you create or select a project, the full editor opens. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a `_ready()` function that prints `\"Godot 4.3 ready!\"` to the Output panel.\n- **How Godot Evaluates It**: When your script runs `extends Node`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Prints 'Godot 4.3 ready!' in the bottom Output panel when you press F5.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `Setup Checklist:` | Executes this statement as part of the current block. |\n| **Line 2** | `[1] Visit godotengine.org -> Download` | Executes this statement as part of the current block. |\n| **Line 3** | `[2] Select Godot 4.3 — STANDARD build (GDScript)` | Executes this statement as part of the current block. |\n| **Line 4** | `[3] Extract the .zip file to a folder you can easily find` | Executes this statement as part of the current block. |\n| **Line 5** | `[4] Double-click the Godot executable` | Executes this statement as part of the current block. |\n| **Line 6** | `[5] Verify the 'Godot Engine - Project Manager' window opens` | Executes this statement as part of the current block. |",
       "codeSnippets": [
         {
           "id": "cs_01_00a_a",
           "language": "text",
-          "code": "Setup checklist:\n[ ] Visit godotengine.org and open the Download page\n[ ] Choose Godot 4.3 — STANDARD build (GDScript), not .NET\n[ ] Pick your OS: Windows / macOS / Linux\n[ ] Unzip the download — no installer needed, it is portable\n[ ] Double-click the executable\n[ ] Confirm the Project Manager window appears",
-          "caption": "The complete Godot 4.3 setup — six steps, zero installers."
-        },
-        {
-          "id": "cs_01_00a_b",
-          "language": "gdscript",
-          "code": "extends Node\n\nfunc _ready() -> void:\n    print(\"Godot 4.3 ready — time to build Kadi!\")",
-          "caption": "A taste of GDScript — the language we chose the Standard build for."
+          "code": "Setup Checklist:\n[1] Visit godotengine.org -> Download\n[2] Select Godot 4.3 — STANDARD build (GDScript)\n[3] Extract the .zip file to a folder you can easily find\n[4] Double-click the Godot executable\n[5] Verify the 'Godot Engine - Project Manager' window opens",
+          "caption": "Five quick steps from download to the Project Manager."
         }
       ],
       "practicePrompt": {
-        "instructions": "Download Godot 4.3 Standard from godotengine.org, unzip it, launch it, and confirm you see the Project Manager. Then write down (as a comment) which build you chose and why.",
-        "hint": "Kadi uses GDScript only — you do not need the .NET build.",
-        "solutionCode": "# Build chosen: Godot 4.3 STANDARD\n# Why: Kadi is written in GDScript; the .NET build is only needed for C#.\n# Launch result: Project Manager opened — no installation was required."
+        "instructions": "Write a `_ready()` function that prints `\"Godot 4.3 ready!\"` to the Output panel.",
+        "hint": "Use `func _ready() -> void:` and `print(\"Godot 4.3 ready!\")`.",
+        "starterCode": "extends Node\n\n# Write _ready() below:\n",
+        "requiredTokens": [
+          "func",
+          "_ready()",
+          "void",
+          "print",
+          "Godot 4.3 ready!"
+        ],
+        "expectedOutput": "Prints 'Godot 4.3 ready!' in the bottom Output panel when you press F5.",
+        "solutionCode": "extends Node\n\nfunc _ready() -> void:\n    print(\"Godot 4.3 ready!\")"
       },
       "quizQuestions": [
         {
           "id": "q_01_00a_a",
-          "prompt": "Which Godot 4.3 build should you download for this Kadi course, and why?",
-          "choices": [".NET, because C# is faster", "Standard, because the course uses GDScript and needs no C# support", "Either — they are identical", "The server build, for multiplayer"],
+          "prompt": "Which Godot 4.3 edition should you download for this Kadi tutorial, and why?",
+          "choices": [
+            ".NET edition, because Kadi uses C#",
+            "Standard edition, because Kadi is built 100% in GDScript and needs no external .NET SDK",
+            "Godot 3.5 LTS, because 2D only works in Godot 3",
+            "Server edition"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "The Standard build includes GDScript, which is all Kadi needs. The .NET build only adds C# support we will not use.",
+          "explanation": "The Standard edition has GDScript built right in with zero extra dependencies.",
           "concept": "Godot Editor"
         },
         {
           "id": "q_01_00a_b",
-          "prompt": "What happens when you 'install' Godot?",
-          "choices": ["A wizard writes files across your system", "Nothing — Godot is a single portable executable you unzip and run", "It requires admin rights and a reboot", "It installs via an app store only"],
+          "prompt": "How is Godot 4.3 installed after downloading the `.zip` archive?",
+          "choices": [
+            "Run a 20-step registry installer and reboot",
+            "Simply extract the `.zip` and double-click the portable executable",
+            "Compile it from C++ source code",
+            "Install it inside Android Studio"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Godot ships as one portable executable. Unzipping is the whole installation; deleting the file is the whole uninstall.",
+          "explanation": "Godot is a self-contained portable executable — unzipping the file is the entire installation.",
+          "concept": "Godot Editor"
+        },
+        {
+          "id": "q_01_00a_c",
+          "prompt": "What is the very first window that appears when you launch the Godot executable?",
+          "choices": [
+            "The 3D Shader Editor",
+            "The Project Manager (where you create or open a project)",
+            "The Export APK dialog",
+            "The Audio Bus mixer"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Godot opens to the Project Manager first; once you create or select a project, the full editor opens.",
           "concept": "Godot Editor"
         }
+      ],
+      "verificationSteps": [
+        "Save `Godot_v4.3-stable (Portable Executable)` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Installing Godot 4.3 Standard`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `Godot_v4.3-stable (Portable Executable)` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_01_00b_project_tour",
       "order": 2,
-      "title": "Creating the Kadi Project & Editor Tour",
-      "bodyMarkdown": "# Creating the Kadi Project\n\nIn the Project Manager click **New Project**. Name it `Kadi`, pick an empty folder (Godot fills it with the project files), and choose a **renderer**. Godot 4.3 offers **Forward+** (desktop-class 3D lighting) and **Compatibility** (runs everywhere, including old GPUs and the web). Kadi is a 2D card game with zero fancy lighting — choose **Compatibility**. You can switch later without losing work.\n\nClick **Create & Edit** and the full editor opens. It looks busy at first; there are really only five regions to learn. The **Scene dock** (top-left) shows the tree of nodes in the currently open scene. The **FileSystem dock** (bottom-left) lists every file in your project folder — scripts, scenes, art — rooted at `res://`. The **Inspector** (right) shows every property of whatever node you select: position, texture, custom exported variables.\n\nThe centre is the **main viewport**, where you see and arrange your game visually. Along the bottom sits the **bottom panel** with tabs like **Output** (where `print()` text appears) and **Debugger** (errors and breakpoints). You will live in Output constantly while building Kadi's rules.\n\n```gdscript\n# Everything in the FileSystem dock is addressed with res:// paths:\nconst CARD_SCENE_PATH := \"res://card/CardScene.tscn\"\nconst CARD_BACK_ART := \"res://art/card_back.png\"\n```\n\nPress **F5** to run the project. The first time, Godot asks you to pick a **main scene** — the scene that boots when the game starts. Once you save a scene (next lesson) you can select it here, or set it later in **Project Settings → Application → Run → Main Scene**.\n\n> [!WHY]\n> Choosing Compatibility over Forward+ is not just simplicity — it is reach. Kadi should run on the aging laptop in a Nairobi cyber café as smoothly as on a gaming rig, and Compatibility's OpenGL backend guarantees that, plus effortless web export for sharing the game with friends. Forward+ buys advanced 3D lighting a flat card table will never use.\n\nSpend two minutes clicking each dock now. Knowing where the Scene dock, Inspector, and Output live will save you hours across this course.",
+      "title": "Creating the Kadi Project & Folder Structure",
+      "targetFile": "res://project.godot",
+      "sceneTree": "res:// (FileSystem Dock — Create these folders now!)\n├── scripts/\n├── scenes/\n│   ├── card/\n│   ├── table/\n│   └── ui/\n└── audio/",
+      "editorSteps": [
+        "In the Project Manager, click **+ New** (or **New Project**).",
+        "Set Project Name to `Kadi`, click **Create Folder**, and select the **Compatibility** renderer. Click **Create & Edit**.",
+        "In the **FileSystem dock** (bottom-left), right-click `res://` -> **Create New -> Folder** and create `scripts`, `scenes`, and `audio`.",
+        "Right-click `res://scenes` -> **Create New -> Folder** and create three subfolders: `card`, `table`, and `ui`.",
+        "Locate the 5 key editor areas: **Scene dock** (top-left), **FileSystem dock** (bottom-left), **Main Viewport** (center, switch to **2D** at the top), **Inspector** (right), and **Output / Debugger** (bottom bar)."
+      ],
+      "keyTakeaways": [
+        "Every file path in Godot starts with `res://`, which points to your project's root folder.",
+        "Creating `res://scripts/` and `res://scenes/` upfront prevents a messy project root as we add cards, popups, and table scripts.",
+        "`F5` runs the main project scene; `F6` runs whichever scene tab is currently open in the editor."
+      ],
+      "bodyMarkdown": "# Creating the Kadi Project & Organizing `res://`\n\nOne of the biggest reasons beginners get lost halfway through building a game is not knowing *where* each new script or scene file should be saved. We are going to solve that right now by creating a clean, permanent folder layout inside `res://`.\n\n### Step 1: Create the Project\nIn the Project Manager, click **New Project**, name it `Kadi`, click **Create Folder**, choose the **Compatibility** renderer, and click **Create & Edit**.\n\n### Step 2: Create Our Folder Layout in the FileSystem Dock\nLook at the **FileSystem dock** in the bottom-left corner of the Godot editor. Right-click `res://` and select **Create New → Folder** to create this exact structure:\n\n```text\nres://\n├── scripts/          # Pure GDScript files (CardTypes, CardData, GameState, TurnManager, RuleValidator)\n├── scenes/\n│   ├── card/         # CardScene.tscn + card_scene.gd\n│   ├── table/        # Table.tscn + table.gd (Main game board)\n│   └── ui/           # DeclareSuitDialog.tscn + declare_suit_dialog.gd\n└── audio/            # Sound effects (Phase 11)\n```\n\n> [!GODOT]\n> At the very top center of the Godot window, you will see workspace switcher buttons: **2D**, **3D**, **Script**, and **AssetLib**. Because Kadi is a 2D card game, click **2D** now so you are looking at the 2D canvas (outlined by a thin purple/blue rectangle representing the 1152×648 game window).\n\n> [!WHY]\n> Why choose the **Compatibility** renderer over **Forward+**? Forward+ is built for heavy 3D desktop lighting. Compatibility uses OpenGL ES 3, which starts up faster, runs smoothly on any laptop or budget Android phone, and exports cleanly to HTML5 Web builds!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 2: *Creating the Kadi Project & Folder Structure* |\n| **Which File Do I Edit?** | `res://project.godot` |\n| **Scene / Node Context** | `res:// (FileSystem Dock — Create these folders now!)` |\n| **What Problem Does It Solve?** | Every file path in Godot starts with `res://`, which points to your project's root folder. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the Project Manager, click **+ New** (or **New Project**).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot`), and node references match what the runtime expects when you press `F5`.\n2. **Set Project Name to `Kadi`, click **Create Folder**, and select the **Compatibility** renderer. Click **Create & Edit**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot`), and node references match what the runtime expects when you press `F5`.\n3. **In the **FileSystem dock** (bottom-left), right-click `res://` -> **Create New -> Folder** and create `scripts`, `scenes`, and `audio`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot`), and node references match what the runtime expects when you press `F5`.\n4. **Right-click `res://scenes` -> **Create New -> Folder** and create three subfolders: `card`, `table`, and `ui`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot`), and node references match what the runtime expects when you press `F5`.\n5. **Locate the 5 key editor areas: **Scene dock** (top-left), **FileSystem dock** (bottom-left), **Main Viewport** (center, switch to **2D** at the top), **Inspector** (right), and **Output / Debugger** (bottom bar).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Creating the Kadi Project & Folder Structure` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://project.godot` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Every file path in Godot starts with `res://`, which points to your project's root folder.\n- **Core Principle 2**: Creating `res://scripts/` and `res://scenes/` upfront prevents a messy project root as we add cards, popups, and table scripts.\n- **Core Principle 3**: `F5` runs the main project scene; `F6` runs whichever scene tab is currently open in the editor.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Which dock in the Godot 4.3 editor shows your project's folders (`res://scripts/`, `res://scenes/`)?** | **The FileSystem dock (bottom-left)** — The FileSystem dock in the bottom-left displays all files and folders on disk rooted at `res://`. |\n| **Where does text from `print()` appear when you run your game with `F5`?** | **In the Output tab of the Bottom Panel** — The Output tab along the bottom panel displays all `print()` output and engine messages. |\n| **What is the difference between pressing `F5` and pressing `F6` in Godot?** | **F5 runs the project's Main Scene; F6 runs only the currently open scene tab** — `F5` launches the whole game starting from the configured Main Scene, while `F6` is a handy shortcut to test just the currently open scene in isolation. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Define a constant `CARD_SCENE_PATH` of type `String` set to `\"res://scenes/card/card_scene.tscn\"`.\n- **How Godot Evaluates It**: When your script runs `const CARD_SCENE_PATH: String = \"res://scenes/card/card_scene.tscn\"`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: A compile-time constant pointing to our CardScene file in res://scenes/card/.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# Every file in our project has a predictable res:// address:` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `const CARD_SCENE_PATH: String = \"res://scenes/card/card_scene.tscn\"` | Declares a compile-time constant that can never be accidentally overwritten at runtime. |\n| **Line 3** | `const TABLE_SCENE_PATH: String = \"res://scenes/table/table.tscn\"` | Declares a compile-time constant that can never be accidentally overwritten at runtime. |\n| **Line 4** | `const SUIT_DIALOG_PATH: String = \"res://scenes/ui/declare_suit_dialog.tscn\"` | Declares a compile-time constant that can never be accidentally overwritten at runtime. |",
       "codeSnippets": [
         {
           "id": "cs_01_00b_a",
           "language": "text",
-          "code": "Editor map — the five regions:\n1. Scene dock (top-left)    — the node tree of the open scene\n2. FileSystem dock (bottom-left) — every project file, rooted at res://\n3. Inspector (right)        — properties of the selected node\n4. Main viewport (centre)   — visual view of your scene\n5. Bottom panel             — Output (print text) and Debugger (errors)\n\nRun the project: F5 (asks for a main scene on first run)\nRun current scene: F6",
-          "caption": "The five editor regions plus the two run shortcuts you will use daily."
+          "code": "The 5 Regions of the Godot 4.3 Editor:\n1. Scene Dock (Top-Left)       -> Shows the tree of Nodes inside the open scene\n2. FileSystem Dock (Bot-Left)  -> Shows all files & folders inside res://\n3. Main Viewport (Center)      -> Switch between 2D canvas and Script editor at top\n4. Inspector Dock (Right)      -> Edits properties & Signals (Node tab) of selected Node\n5. Bottom Panel (Bottom)       -> Output (print logs) and Debugger (error stack traces)",
+          "caption": "Bookmark this map — every editor instruction in the course refers to these 5 regions."
         },
         {
           "id": "cs_01_00b_b",
           "language": "gdscript",
-          "code": "# res:// is the root of your project folder, as shown in the FileSystem dock.\nconst CARD_SCENE_PATH := \"res://card/CardScene.tscn\"\nconst CARD_BACK_ART := \"res://art/card_back.png\"",
-          "caption": "res:// paths map directly to the FileSystem dock."
+          "code": "# Every file in our project has a predictable res:// address:\nconst CARD_SCENE_PATH: String = \"res://scenes/card/card_scene.tscn\"\nconst TABLE_SCENE_PATH: String = \"res://scenes/table/table.tscn\"\nconst SUIT_DIALOG_PATH: String = \"res://scenes/ui/declare_suit_dialog.tscn\"",
+          "caption": "How our scripts will reference scenes inside the folders you just created."
         }
       ],
       "practicePrompt": {
-        "instructions": "Create the Kadi project with the Compatibility renderer, then locate all five editor regions. As a comment block, name each region and one thing it shows.",
-        "hint": "Scene dock, FileSystem dock, Inspector, main viewport, bottom panel (Output/Debugger).",
-        "solutionCode": "# Scene dock      — the node tree of the open scene\n# FileSystem dock — project files under res://\n# Inspector       — properties of the selected node\n# Main viewport   — the visual layout of the scene\n# Bottom panel    — Output tab shows print() text; Debugger shows errors"
+        "instructions": "Define a constant `CARD_SCENE_PATH` of type `String` set to `\"res://scenes/card/card_scene.tscn\"`.",
+        "hint": "Use `const CARD_SCENE_PATH: String = \"res://scenes/card/card_scene.tscn\"`.",
+        "starterCode": "# Define the constant path to our CardScene below:\n",
+        "requiredTokens": [
+          "const",
+          "CARD_SCENE_PATH",
+          "res://scenes/card/card_scene.tscn"
+        ],
+        "expectedOutput": "A compile-time constant pointing to our CardScene file in res://scenes/card/.",
+        "solutionCode": "const CARD_SCENE_PATH: String = \"res://scenes/card/card_scene.tscn\""
       },
       "quizQuestions": [
         {
           "id": "q_01_00b_a",
-          "prompt": "Why is the Compatibility renderer the right choice for Kadi?",
-          "choices": ["It has better 3D lighting", "A 2D card game needs no advanced lighting, and Compatibility runs on old hardware and the web", "Forward+ cannot render 2D", "Compatibility is the only free renderer"],
+          "prompt": "Which dock in the Godot 4.3 editor shows your project's folders (`res://scripts/`, `res://scenes/`)?",
+          "choices": [
+            "The Scene dock (top-left)",
+            "The FileSystem dock (bottom-left)",
+            "The Inspector dock (right)",
+            "The Animation panel"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Compatibility trades high-end 3D features Kadi never uses for maximum device reach, including web export.",
+          "explanation": "The FileSystem dock in the bottom-left displays all files and folders on disk rooted at `res://`.",
           "concept": "Godot Editor"
         },
         {
           "id": "q_01_00b_b",
-          "prompt": "Where does the text from `print()` appear when you run the project?",
-          "choices": ["In the Inspector", "In the Output tab of the bottom panel", "In the Scene dock", "In a popup window"],
+          "prompt": "Where does text from `print()` appear when you run your game with `F5`?",
+          "choices": [
+            "In the Inspector dock",
+            "In the Output tab of the Bottom Panel",
+            "In the FileSystem dock",
+            "On the game's title bar"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "The Output tab in the bottom panel collects all print() text and engine messages — your first debugging tool.",
+          "explanation": "The Output tab along the bottom panel displays all `print()` output and engine messages.",
+          "concept": "Godot Editor"
+        },
+        {
+          "id": "q_01_00b_c",
+          "prompt": "What is the difference between pressing `F5` and pressing `F6` in Godot?",
+          "choices": [
+            "F5 saves the project; F6 deletes it",
+            "F5 runs the project's Main Scene; F6 runs only the currently open scene tab",
+            "F5 runs in 3D; F6 runs in 2D",
+            "There is no difference"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "`F5` launches the whole game starting from the configured Main Scene, while `F6` is a handy shortcut to test just the currently open scene in isolation.",
           "concept": "Godot Editor"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://project.godot` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Creating the Kadi Project & Folder Structure`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://project.godot` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_01_00c_first_script",
       "order": 3,
       "title": "Nodes, Scenes, and Your First Script",
-      "bodyMarkdown": "# Nodes, Scenes, and Your First Script\n\nEverything in Godot is a **node**: a sprite is a node, a label is a node, a sound player is a node. Nodes nest into a **tree** — a card node might contain a sprite node for its art and a label node for its rank. A **scene** is simply a tree of nodes saved to a `.tscn` file, and a **script** (`.gd` file) is behaviour you attach to a node.\n\nLet's build the root of Kadi. In the Scene dock click **Other Node**, search for `Node2D` (the basic 2D node with a position), and create it. Double-click its name and rename it to `Main`. Press **Ctrl+S** to save the scene as `main.tscn` — this is the tree the whole game will hang from.\n\nNow give it behaviour. With `Main` selected, click the **attach-script button** (the scroll-with-a-plus icon at the top of the Scene dock). Accept the defaults — `main.gd`, extending `Node2D` — and the script editor opens. Add a `_ready()` function, which Godot calls once when the node enters the running scene tree:\n\n```gdscript\nextends Node2D\n\nfunc _ready() -> void:\n    print(\"Karibu Kadi!\")\n```\n\nPress **F5**, choose `main.tscn` as the main scene when asked, and watch the **Output** tab: `Karibu Kadi!` — welcome to Kadi. That one line proves the whole pipeline works: scene loads, node enters the tree, script runs.\n\n> [!WHY]\n> Scene = saved tree of nodes (`.tscn`); script = behaviour attached to a node (`.gd`). Keeping structure and behaviour separate is Godot's core design: the same Card scene can carry different scripts (a face-up playable card versus a face-down opponent card), and the same script can drive many scenes. Every Kadi feature from here on — the deck, hands, the discard pile — is just nodes in trees with scripts attached.\n\nFrom now on, when a lesson says \"create a scene\" or \"attach a script\", this is exactly the workflow: add node, rename, attach script, save, F5, read Output.",
+      "targetFile": "res://scenes/table/table.tscn + res://scenes/table/table.gd",
+      "sceneTree": "Table (Node2D)  [script: res://scenes/table/table.gd]",
+      "editorSteps": [
+        "In the **Scene dock** (top-left), click **2D Scene** to create a `Node2D` root node.",
+        "Double-click `Node2D` in the Scene dock and rename it to `Table`.",
+        "Press **Ctrl+S** (or **Cmd+S** on Mac), navigate into `res://scenes/table/`, and save the scene as `table.tscn`.",
+        "With `Table` selected in the Scene dock, click the **Attach Script** icon (the little scroll with a green `+` at the top-right of the Scene dock).",
+        "Confirm the path is `res://scenes/table/table.gd` and click **Create**.",
+        "Paste the `_ready()` script below, press **F5**, click **Select Current** when Godot asks for the Main Scene, and verify `Karibu Kadi!` appears in the **Output** panel!"
+      ],
+      "keyTakeaways": [
+        "A **Node** is a single building block (`Node2D`, `Control`, `Label`, `Button`); a **Scene** (`.tscn`) is a saved tree of nodes.",
+        "A **Script** (`.gd`) attaches GDScript behavior to a node and responds to lifecycle hooks like `_ready()`.",
+        "Setting `res://scenes/table/table.tscn` as the Main Scene means pressing `F5` boots directly into our game table."
+      ],
+      "bodyMarkdown": "# Nodes, Scenes, and Your First Script\n\nEverything you see or hear in Godot is a **[[Node]]**. Nodes are arranged in a parent-child hierarchy called a **tree**. When you save a tree of nodes to disk, Godot saves it as a **[[Scenes|Scene]]** file (`.tscn`). To make a node *do* something, you attach a **[[GDScript|Script]]** file (`.gd`) to it.\n\nLet's create the main scene of our Kadi game right now: `res://scenes/table/table.tscn`.\n\n> [!GODOT]\n> Follow the **Do This in Godot** checklist above: click **2D Scene** in the Scene dock, rename the root node to `Table`, save it at `res://scenes/table/table.tscn`, and click the **Attach Script** icon (scroll with a green `+`) to create `res://scenes/table/table.gd`.\n\nWhen the Script Editor opens, replace its contents with:\n\n```gdscript\nextends Node2D\n\nvar player_count: int = 4\n\nfunc _ready() -> void:\n    print(\"Karibu Kadi! Setting up table for %d players...\" % player_count)\n```\n\nNow press **F5**. Because this is your first time running the project, Godot pops up a dialog asking: *\"No main scene has ever been defined, select one?\"* Click **Select Current** (which selects `res://scenes/table/table.tscn`).\n\nA game window opens, and down in the **Output** panel at the bottom of the editor you will see:\n`Karibu Kadi! Setting up table for 4 players...`\n\n> [!WHY]\n> Why does `table.gd` start with `extends Node2D`? Because the script is attached to the `Table` node, which is a `Node2D`! `extends Node2D` means our script inherits every property (`position`, `visible`) and lifecycle method (`_ready()`) of a `Node2D`.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 3: *Nodes, Scenes, and Your First Script* |\n| **Which File Do I Edit?** | `res://scenes/table/table.tscn + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [script: res://scenes/table/table.gd]` |\n| **What Problem Does It Solve?** | A **Node** is a single building block (`Node2D`, `Control`, `Label`, `Button`); a **Scene** (`.tscn`) is a saved tree of nodes. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the **Scene dock** (top-left), click **2D Scene** to create a `Node2D` root node.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Double-click `Node2D` in the Scene dock and rename it to `Table`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Press **Ctrl+S** (or **Cmd+S** on Mac), navigate into `res://scenes/table/`, and save the scene as `table.tscn`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n4. **With `Table` selected in the Scene dock, click the **Attach Script** icon (the little scroll with a green `+` at the top-right of the Scene dock).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n5. **Confirm the path is `res://scenes/table/table.gd` and click **Create**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n6. **Paste the `_ready()` script below, press **F5**, click **Select Current** when Godot asks for the Main Scene, and verify `Karibu Kadi!` appears in the **Output** panel!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.tscn + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Nodes, Scenes, and Your First Script` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.tscn + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: A **Node** is a single building block (`Node2D`, `Control`, `Label`, `Button`); a **Scene** (`.tscn`) is a saved tree of nodes.\n- **Core Principle 2**: A **Script** (`.gd`) attaches GDScript behavior to a node and responds to lifecycle hooks like `_ready()`.\n- **Core Principle 3**: Setting `res://scenes/table/table.tscn` as the Main Scene means pressing `F5` boots directly into our game table.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What is the relationship between `.tscn` files and `.gd` files in Godot?** | **A `.tscn` file stores a saved tree of Nodes (scene structure); a `.gd` file stores GDScript behavior attached to a Node** — Scenes (`.tscn`) hold the node tree and Inspector properties; scripts (`.gd`) hold the GDScript code attached to nodes. |\n| **When does Godot automatically call `func _ready() -> void:` on your `Table` node?** | **Once, right after the `Table` node and all its children enter the running scene tree** — `_ready()` is the initialization lifecycle hook that runs once when the node enters the active scene tree. |\n| **How do you change the project's Main Scene later if you ever want a different scene to boot on `F5`?** | **Project -> Project Settings -> General -> Application -> Run -> Main Scene** — The Main Scene setting lives under `Project Settings -> Application -> Run -> Main Scene`. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write the `table.gd` script extending `Node2D` with `var player_count: int = 4` and a `_ready()` function that prints `player_count`.\n- **How Godot Evaluates It**: When your script runs `extends Node2D`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Prints the player count to the Output panel when the Table scene starts.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scenes/table/table.gd` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `extends Node2D` | Inherits all properties, signals, and lifecycle methods from Godot's `Node2D` class. |\n| **Line 4** | `var player_count: int = 4` | Declares a mutable typed variable to store state in memory. |\n| **Line 6** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 7** | `print(\"Karibu Kadi! Setting up table for %d players...\" % player_count)` | Logs the formatted message to Godot's bottom **Output** panel for inspection. |",
       "codeSnippets": [
         {
           "id": "cs_01_00c_a",
           "language": "gdscript",
-          "code": "extends Node2D\n\nfunc _ready() -> void:\n    print(\"Karibu Kadi!\")",
-          "caption": "main.gd — your first script, attached to the Main (Node2D) root."
+          "code": "# File: res://scenes/table/table.gd\nextends Node2D\n\nvar player_count: int = 4\n\nfunc _ready() -> void:\n    print(\"Karibu Kadi! Setting up table for %d players...\" % player_count)",
+          "caption": "Your first live scene script at res://scenes/table/table.gd."
         }
       ],
       "practicePrompt": {
-        "instructions": "Extend main.gd so _ready() also prints the number of players (a typed int variable `player_count` set to 4) using string formatting.",
-        "hint": "Declare `var player_count: int = 4` and use `%d` with the `%` operator inside print().",
-        "solutionCode": "extends Node2D\n\nvar player_count: int = 4\n\nfunc _ready() -> void:\n    print(\"Karibu Kadi!\")\n    print(\"Players at the table: %d\" % player_count)"
+        "instructions": "Write the `table.gd` script extending `Node2D` with `var player_count: int = 4` and a `_ready()` function that prints `player_count`.",
+        "hint": "Start with `extends Node2D`, declare `var player_count: int = 4`, then write `func _ready() -> void:` with `print(...)`.",
+        "starterCode": "extends Node2D\n\n# Declare player_count = 4 and print it inside _ready():\n",
+        "requiredTokens": [
+          "extends",
+          "Node2D",
+          "var",
+          "player_count",
+          "4",
+          "func",
+          "_ready()",
+          "print"
+        ],
+        "expectedOutput": "Prints the player count to the Output panel when the Table scene starts.",
+        "solutionCode": "extends Node2D\n\nvar player_count: int = 4\n\nfunc _ready() -> void:\n    print(\"Players at the table: %d\" % player_count)"
       },
       "quizQuestions": [
         {
           "id": "q_01_00c_a",
-          "prompt": "What is the relationship between a scene and a script in Godot?",
-          "choices": ["They are the same file", "A scene is a saved tree of nodes (.tscn); a script is behaviour attached to a node (.gd)", "Scripts contain scenes", "Scenes only exist at runtime"],
+          "prompt": "What is the relationship between `.tscn` files and `.gd` files in Godot?",
+          "choices": [
+            "They are identical",
+            "A `.tscn` file stores a saved tree of Nodes (scene structure); a `.gd` file stores GDScript behavior attached to a Node",
+            "A `.gd` file stores audio; `.tscn` stores code",
+            "Only `.gd` files can be saved in `res://`"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Scenes store structure (which nodes, how nested); scripts store behaviour. A node in a scene may or may not carry a script.",
-          "concept": "Nodes"
+          "explanation": "Scenes (`.tscn`) hold the node tree and Inspector properties; scripts (`.gd`) hold the GDScript code attached to nodes.",
+          "concept": "Scenes"
         },
         {
           "id": "q_01_00c_b",
-          "prompt": "When does Godot call the `_ready()` function on your Main node?",
-          "choices": ["Every frame", "Once, when the node enters the running scene tree", "Only when you click the node", "When the project is exported"],
+          "prompt": "When does Godot automatically call `func _ready() -> void:` on your `Table` node?",
+          "choices": [
+            "60 times per second",
+            "Once, right after the `Table` node and all its children enter the running scene tree",
+            "Only when the player clicks a button",
+            "Only when closing the game"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "`_ready()` fires once when the node (and its children) are in the tree — the perfect place for setup like printing a greeting or, later, dealing cards.",
+          "explanation": "`_ready()` is the initialization lifecycle hook that runs once when the node enters the active scene tree.",
           "concept": "Scripts"
+        },
+        {
+          "id": "q_01_00c_c",
+          "prompt": "How do you change the project's Main Scene later if you ever want a different scene to boot on `F5`?",
+          "choices": [
+            "Reinstall Godot",
+            "Project -> Project Settings -> General -> Application -> Run -> Main Scene",
+            "Rename the folder in Windows Explorer",
+            "Edit the Audio bus"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "The Main Scene setting lives under `Project Settings -> Application -> Run -> Main Scene`.",
+          "concept": "Godot Editor"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.tscn + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Nodes, Scenes, and Your First Script`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.tscn + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_01_01_enums",
       "order": 4,
-      "title": "Enums for Suits and Ranks",
-      "bodyMarkdown": "# Enums\n\nAn **enum** (enumeration) is a set of named integer constants. In Kadi every suit and rank has a fixed identity — perfect for an enum.\n\n```gdscript\nclass_name CardTypes\nextends RefCounted\n\nenum Suits { HEARTS, DIAMONDS, CLUBS, SPADES }\nenum Ranks {\n    TWO = 2, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN,\n    JACK = 11, QUEEN = 12, KING = 13, ACE = 14, JOKER = 15\n}\n```\n\nBy default enums count up from 0, but you can assign explicit values. Here we map rank values to their card face value so a 7 is 7, not 5. This single choice lets us reuse integers across the whole game: penalty math, sorting, comparison.\n\nAccess an enum member as `CardTypes.Ranks.ACE`. Use them everywhere instead of magic numbers — `card.rank == Ranks.JOKER` reads itself; `card.rank == 15` does not.\n\n> [!WHY]\n> Enums replace magic numbers with names. When you later add a new special card — say a custom \"Wizard\" rank — you add one enum entry and the compiler flags every place you forgot to handle it (with a `match` statement). Magic numbers give you no such safety net.\n\nKeep enums in their own `class_name` script so other files import them as `CardTypes.Ranks.ACE` without preload gymnastics.",
+      "title": "Enums for Suits, Ranks & Card Kinds (`card_types.gd`)",
+      "targetFile": "res://scripts/card_types.gd",
+      "sceneTree": "res://scripts/card_types.gd  (Pure class_name script — not attached to a node)",
+      "editorSteps": [
+        "In the **FileSystem dock** (bottom-left), right-click the `res://scripts` folder and choose **Create New -> Script**.",
+        "Name the script `card_types.gd` (so the path is `res://scripts/card_types.gd`) and click **Create**.",
+        "Double-click `card_types.gd` to open it in the Script Editor and paste the complete `CardTypes` script below.",
+        "Press **Ctrl+S** to save. Because line 1 is `class_name CardTypes`, every other script in the project can now access `CardTypes.Suits` and `CardTypes.Ranks`!"
+      ],
+      "keyTakeaways": [
+        "`res://scripts/card_types.gd` defines `class_name CardTypes`, making our enums globally available.",
+        "Anchoring `TWO = 2` through `ACE = 14` and `JOKER = 15` means every card's enum value matches its real card number.",
+        "Never use raw magic numbers like `11` or `15` in rule scripts — write `CardTypes.Ranks.JACK` and `CardTypes.Ranks.JOKER`."
+      ],
+      "bodyMarkdown": "# Creating `res://scripts/card_types.gd`\n\nNow we start building the real Kadi codebase! Our first script is **`res://scripts/card_types.gd`**. It defines the **[[Enums]]** (named integer constants) for all four suits, all 14 ranks (2 through Ace plus Joker), and the 6 functional categories of Kadi cards.\n\n> [!GODOT]\n> Right-click `res://scripts` in the FileSystem dock → **Create New → Script**, name it `card_types.gd`, and paste this exact code:\n\n```gdscript\n# File: res://scripts/card_types.gd\nclass_name CardTypes\nextends RefCounted\n\nenum Suits {\n    HEARTS = 0,\n    DIAMONDS = 1,\n    CLUBS = 2,\n    SPADES = 3\n}\n\nenum Ranks {\n    TWO = 2, THREE = 3, FOUR = 4, FIVE = 5, SIX = 6, SEVEN = 7,\n    EIGHT = 8, NINE = 9, TEN = 10,\n    JACK = 11, QUEEN = 12, KING = 13, ACE = 14, JOKER = 15\n}\n\nenum CardKind {\n    ANSWER,\n    QUESTION,\n    JUMP,\n    KICKBACK,\n    PENALTY,\n    WILD_ACE\n}\n```\n\n> [!KADI]\n> Look at how `CardKind` maps 1-to-1 to `KADI.md`:\n> - **`PENALTY`**: 2, 3, and Joker (`Ranks.TWO`, `Ranks.THREE`, `Ranks.JOKER`)\n> - **`QUESTION`**: Queen and 8 (`Ranks.QUEEN`, `Ranks.EIGHT`)\n> - **`JUMP`**: Jack (`Ranks.JACK`)\n> - **`KICKBACK`**: King (`Ranks.KING`)\n> - **`ANSWER`**: 4, 5, 6, 7, 9, 10, and Ace (`Ranks.ACE` also acts as `WILD_ACE` for suit declarations and penalty blocking).\n\n> [!WHY]\n> Why start `Ranks` at `TWO = 2` instead of the default `0`? Because when `TWO` is `2` and `SEVEN` is `7`, debugging in the Output console is effortless: seeing `rank = 7` means a 7, not a 9!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 4: *Enums for Suits, Ranks & Card Kinds (`card_types.gd`)* |\n| **Which File Do I Edit?** | `res://scripts/card_types.gd` |\n| **Scene / Node Context** | `res://scripts/card_types.gd  (Pure class_name script — not attached to a node)` |\n| **What Problem Does It Solve?** | `res://scripts/card_types.gd` defines `class_name CardTypes`, making our enums globally available. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the **FileSystem dock** (bottom-left), right-click the `res://scripts` folder and choose **Create New -> Script**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_types.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Name the script `card_types.gd` (so the path is `res://scripts/card_types.gd`) and click **Create**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_types.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Double-click `card_types.gd` to open it in the Script Editor and paste the complete `CardTypes` script below.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_types.gd`), and node references match what the runtime expects when you press `F5`.\n4. **Press **Ctrl+S** to save. Because line 1 is `class_name CardTypes`, every other script in the project can now access `CardTypes.Suits` and `CardTypes.Ranks`!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_types.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Enums for Suits, Ranks & Card Kinds (`card_types.gd`)` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/card_types.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `res://scripts/card_types.gd` defines `class_name CardTypes`, making our enums globally available.\n- **Core Principle 2**: Anchoring `TWO = 2` through `ACE = 14` and `JOKER = 15` means every card's enum value matches its real card number.\n- **Core Principle 3**: Never use raw magic numbers like `11` or `15` in rule scripts — write `CardTypes.Ranks.JACK` and `CardTypes.Ranks.JOKER`.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why do we anchor `enum Ranks` with `TWO = 2` instead of letting it start at `0`?** | **So every rank's integer value matches its real card face value (2 is 2, 10 is 10)** — Anchoring `TWO = 2` keeps integer values aligned with the actual numbers printed on the playing cards. |\n| **How do you access the `JOKER` rank from another script like `table.gd`?** | **CardTypes.Ranks.JOKER** — Because `enum Ranks` is declared inside `class_name CardTypes`, you reference it as `CardTypes.Ranks.JOKER`. |\n| **Where should `card_types.gd` be saved in your Godot project?** | **res://scripts/card_types.gd** — All shared data and rule scripts live cleanly inside `res://scripts/`. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a helper function `is_special(kind: int) -> bool` that returns `true` for any `CardKind` that is NOT `CardKind.ANSWER`.\n- **How Godot Evaluates It**: When your script runs `enum CardKind { ANSWER, QUESTION, JUMP, KICKBACK, PENALTY, WILD_ACE }`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns true for Question, Jump, Kickback, Penalty, and Wild Ace cards.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/card_types.gd` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `class_name CardTypes` | Registers `CardTypes` as a global type across the entire Godot project so any script can reference `CardTypes` without `preload()`. |\n| **Line 3** | `extends RefCounted` | Inherits all properties, signals, and lifecycle methods from Godot's `RefCounted` class. |\n| **Line 5** | `enum Suits {` | Executes this statement as part of the current block. |\n| **Line 6** | `HEARTS = 0,` | Assigns the computed right-hand value into `HEARTS`. |\n| **Line 7** | `DIAMONDS = 1,` | Assigns the computed right-hand value into `DIAMONDS`. |\n| **Line 8** | `CLUBS = 2,` | Assigns the computed right-hand value into `CLUBS`. |\n| **Line 9** | `SPADES = 3` | Assigns the computed right-hand value into `SPADES`. |\n| **Line 10** | `}` | Executes this statement as part of the current block. |\n| **Line 12** | `enum Ranks {` | Executes this statement as part of the current block. |\n| **Line 13** | `TWO = 2, THREE = 3, FOUR = 4, FIVE = 5, SIX = 6, SEVEN = 7,` | Assigns the computed right-hand value into `TWO`. |\n| **Line 14** | `EIGHT = 8, NINE = 9, TEN = 10,` | Assigns the computed right-hand value into `EIGHT`. |\n| **Line 15** | `JACK = 11, QUEEN = 12, KING = 13, ACE = 14, JOKER = 15` | Assigns the computed right-hand value into `JACK`. |\n| **Line 16** | `}` | Executes this statement as part of the current block. |\n| **Line 18** | `enum CardKind {` | Executes this statement as part of the current block. |\n| **Line 19** | `ANSWER,` | Executes this statement as part of the current block. |\n| **Line 20** | `QUESTION,` | Executes this statement as part of the current block. |\n| **Line 21** | `JUMP,` | Executes this statement as part of the current block. |\n| **Line 22** | `KICKBACK,` | Executes this statement as part of the current block. |\n| **Line 23** | `PENALTY,` | Executes this statement as part of the current block. |\n| **Line 24** | `WILD_ACE` | Executes this statement as part of the current block. |\n| **Line 25** | `}` | Executes this statement as part of the current block. |",
       "codeSnippets": [
         {
           "id": "cs_01_01_a",
           "language": "gdscript",
-          "code": "class_name CardTypes\nextends RefCounted\n\nenum Suits { HEARTS, DIAMONDS, CLUBS, SPADES }\nenum Ranks {\n    TWO = 2, THREE, FOUR, FIVE, SIX, SEVEN,\n    EIGHT, NINE, TEN,\n    JACK = 11, QUEEN = 12, KING = 13,\n    ACE = 14, JOKER = 15\n}\n\nfunc is_penalty(rank: int) -> bool:\n    return rank == Ranks.TWO or rank == Ranks.THREE or rank == Ranks.JOKER",
-          "caption": "Enum definitions for suits and ranks, anchored at real card values."
+          "code": "# File: res://scripts/card_types.gd\nclass_name CardTypes\nextends RefCounted\n\nenum Suits {\n    HEARTS = 0,\n    DIAMONDS = 1,\n    CLUBS = 2,\n    SPADES = 3\n}\n\nenum Ranks {\n    TWO = 2, THREE = 3, FOUR = 4, FIVE = 5, SIX = 6, SEVEN = 7,\n    EIGHT = 8, NINE = 9, TEN = 10,\n    JACK = 11, QUEEN = 12, KING = 13, ACE = 14, JOKER = 15\n}\n\nenum CardKind {\n    ANSWER,\n    QUESTION,\n    JUMP,\n    KICKBACK,\n    PENALTY,\n    WILD_ACE\n}",
+          "caption": "Save this complete script as res://scripts/card_types.gd."
         }
       ],
       "practicePrompt": {
-        "instructions": "Add a new enum `CardKind` with values PENALTY, QUESTION, ANSWER, JUMP, KICKBACK, NORMAL, and write a function `is_special(kind)` returning true for everything except NORMAL.",
-        "hint": "Use `!=` to compare against NORMAL.",
-        "solutionCode": "enum CardKind { PENALTY, QUESTION, ANSWER, JUMP, KICKBACK, NORMAL }\n\nfunc is_special(kind: int) -> bool:\n    return kind != CardKind.NORMAL"
+        "instructions": "Write a helper function `is_special(kind: int) -> bool` that returns `true` for any `CardKind` that is NOT `CardKind.ANSWER`.",
+        "hint": "Use `return kind != CardKind.ANSWER`.",
+        "starterCode": "enum CardKind { ANSWER, QUESTION, JUMP, KICKBACK, PENALTY, WILD_ACE }\n\nfunc is_special(kind: int) -> bool:\n    # Return true if kind is not CardKind.ANSWER:\n",
+        "requiredTokens": [
+          "func",
+          "is_special",
+          "kind",
+          "return",
+          "!=",
+          "CardKind.ANSWER"
+        ],
+        "expectedOutput": "Returns true for Question, Jump, Kickback, Penalty, and Wild Ace cards.",
+        "solutionCode": "enum CardKind { ANSWER, QUESTION, JUMP, KICKBACK, PENALTY, WILD_ACE }\n\nfunc is_special(kind: int) -> bool:\n    return kind != CardKind.ANSWER"
       },
       "quizQuestions": [
         {
           "id": "q_01_01_a",
-          "prompt": "Why anchor Ranks at explicit values like TWO = 2 instead of letting them auto-increment from 0?",
-          "choices": ["It runs faster", "So the integer equals the card's face value, simplifying penalty and comparison logic", "It is required by Godot", "It saves memory"],
+          "prompt": "Why do we anchor `enum Ranks` with `TWO = 2` instead of letting it start at `0`?",
+          "choices": [
+            "Godot forbids 0 in enums",
+            "So every rank's integer value matches its real card face value (2 is 2, 10 is 10)",
+            "To make the APK smaller",
+            "Because Suits already uses 0"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Aligning enum values with card face values means rank 7 IS the 7 of any suit — no lookup table needed for math.",
+          "explanation": "Anchoring `TWO = 2` keeps integer values aligned with the actual numbers printed on the playing cards.",
           "concept": "Enums"
         },
         {
           "id": "q_01_01_b",
-          "prompt": "How do you reference the ACE member of the Ranks enum declared in `class_name CardTypes`?",
-          "choices": ["ACE", "Ranks.ACE", "CardTypes.Ranks.ACE", "CardTypes::Ranks::ACE"],
+          "prompt": "How do you access the `JOKER` rank from another script like `table.gd`?",
+          "choices": [
+            "JOKER",
+            "Ranks.JOKER",
+            "CardTypes.Ranks.JOKER",
+            "card_types.JOKER"
+          ],
           "correctChoiceIndex": 2,
-          "explanation": "Fully-qualified enum access is `ClassName.EnumName.MEMBER`, ensuring no collision with other enums named Ranks.",
+          "explanation": "Because `enum Ranks` is declared inside `class_name CardTypes`, you reference it as `CardTypes.Ranks.JOKER`.",
           "concept": "Enums"
+        },
+        {
+          "id": "q_01_01_c",
+          "prompt": "Where should `card_types.gd` be saved in your Godot project?",
+          "choices": [
+            "res://scripts/card_types.gd",
+            "res://audio/card_types.gd",
+            "Outside the project folder",
+            "Inside AndroidManifest.xml"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "All shared data and rule scripts live cleanly inside `res://scripts/`.",
+          "concept": "Godot Editor"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/card_types.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Enums for Suits, Ranks & Card Kinds (`card_types.gd`)`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/card_types.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_01_02_resources",
       "order": 5,
-      "title": "Custom Resources for Card Data",
-      "bodyMarkdown": "# Resources\n\nA **Resource** in Godot is a data container that can be saved to `.tres` files and inspected in the editor. For Kadi we will model each card's static data — its name, art path, and rule text — as a Resource.\n\n```gdscript\nclass_name CardData\nextends Resource\n\n@export var suit: CardTypes.Suits\n@export var rank: int\n@export var display_name: String\n@export var art: Texture2D\n@export var rule_text: String = \"\"\n\nfunc is_penalty() -> bool:\n    return rank == 2 or rank == 3 or rank == 15\n```\n\n`@export` exposes fields to the Inspector, so designers can build decks by editing `.tres` files in the editor — no code, no recompiling. This is the whole point of Resources: data and code separate cleanly.\n\nResources are reference-counted and cheap to share. Two players can hold the same CardData reference without copying.\n\n> [!WHY]\n> Resources move card definitions out of code and into editable files. A designer can rebalance a penalty value, swap art, or rename a card without touching GDScript. You ship the same binary with different `.tres` packs for, say, a kids' variant — pure data, zero risk to logic.\n\nPrefer Resources over dictionaries for any data that a non-programmer will touch.",
+      "title": "Custom Resource for Card Data (`card_data.gd`)",
+      "targetFile": "res://scripts/card_data.gd",
+      "sceneTree": "res://scripts/card_data.gd  (class_name CardData extends Resource)",
+      "editorSteps": [
+        "In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**.",
+        "Name the file `card_data.gd` (`res://scripts/card_data.gd`) and click **Create**.",
+        "Paste the complete `CardData` script below and press **Ctrl+S**.",
+        "Notice how `CardData.make(suit, rank)` automatically sets `display_name`, `rank_label()`, `suit_symbol()`, and rule helpers (`is_penalty()`, `is_question()`, `is_answer()`, `can_start_discard()`)."
+      ],
+      "keyTakeaways": [
+        "`CardData` extends `Resource` and holds everything about one card: `suit`, `rank`, `display_name`, and rule methods.",
+        "`CardData.make(suit, rank)` is a static factory method that constructs a populated card in one call.",
+        "Putting `is_penalty()`, `penalty_value()`, `is_question()`, and `is_answer()` directly on `CardData` keeps rule checks readable across the whole project."
+      ],
+      "bodyMarkdown": "# Creating `res://scripts/card_data.gd` (`CardData`)\n\nNext, we create **`res://scripts/card_data.gd`**, a custom **[[Resource]]** class (`class_name CardData`) that represents a single Kadi card.\n\nWhy make `CardData` so thorough right now? Because if every `CardData` object already knows how to format its corner text (`\"7\"`, `\"Q\"`, `\"A\"`, `\"JOK\"`), its suit symbol (`\"♥\"`, `\"♦\"`, `\"♣\"`, `\"♠\"`), its color (red vs. black), and its Kadi rule role (`is_penalty()`, `penalty_value()`, `is_question()`, `is_answer()`), then building the visual card scene in Phase 2 and the rule validator in Phase 4 becomes 10× easier!\n\n```gdscript\n# File: res://scripts/card_data.gd\nclass_name CardData\nextends Resource\n\nconst SUIT_SYMBOLS: Dictionary = {\n    CardTypes.Suits.HEARTS: \"♥\",\n    CardTypes.Suits.DIAMONDS: \"♦\",\n    CardTypes.Suits.CLUBS: \"♣\",\n    CardTypes.Suits.SPADES: \"♠\"\n}\n\nconst RANK_LABELS: Dictionary = {\n    11: \"J\", 12: \"Q\", 13: \"K\", 14: \"A\", 15: \"JOK\"\n}\n\n@export var suit: CardTypes.Suits = CardTypes.Suits.HEARTS\n@export var rank: int = 2\n@export var display_name: String = \"\"\n\nstatic func make(s: CardTypes.Suits, r: int) -> CardData:\n    var c := CardData.new()\n    c.suit = s\n    c.rank = r\n    c.display_name = \"JOK\" if r == CardTypes.Ranks.JOKER else \"%s%s\" % [c.rank_label(), c.suit_symbol()]\n    return c\n```\n\n> [!WHY]\n> Using `@export` on `suit`, `rank`, and `display_name` exposes those properties in Godot's Inspector dock whenever you inspect a `CardData` resource. And adding `static func make(s, r) -> CardData` lets our deck builder create cards in one clean expression: `CardData.make(suit, rank)`.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 5: *Custom Resource for Card Data (`card_data.gd`)* |\n| **Which File Do I Edit?** | `res://scripts/card_data.gd` |\n| **Scene / Node Context** | `res://scripts/card_data.gd  (class_name CardData extends Resource)` |\n| **What Problem Does It Solve?** | `CardData` extends `Resource` and holds everything about one card: `suit`, `rank`, `display_name`, and rule methods. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_data.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Name the file `card_data.gd` (`res://scripts/card_data.gd`) and click **Create**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_data.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Paste the complete `CardData` script below and press **Ctrl+S**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_data.gd`), and node references match what the runtime expects when you press `F5`.\n4. **Notice how `CardData.make(suit, rank)` automatically sets `display_name`, `rank_label()`, `suit_symbol()`, and rule helpers (`is_penalty()`, `is_question()`, `is_answer()`, `can_start_discard()`).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/card_data.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Custom Resource for Card Data (`card_data.gd`)` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/card_data.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `CardData` extends `Resource` and holds everything about one card: `suit`, `rank`, `display_name`, and rule methods.\n- **Core Principle 2**: `CardData.make(suit, rank)` is a static factory method that constructs a populated card in one call.\n- **Core Principle 3**: Putting `is_penalty()`, `penalty_value()`, `is_question()`, and `is_answer()` directly on `CardData` keeps rule checks readable across the whole project.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What does the `@export` annotation do on `CardData` fields like `@export var rank: int`?** | **Exposes the variable in Godot's Inspector dock so it can be viewed and edited visually** — `@export` makes a script variable editable in the Godot Inspector dock and serializable in `.tres`/`.tscn` files. |\n| **Why does `CardData.can_start_discard()` return `true` only for `rank in [4, 5, 6, 7, 9, 10]`?** | **Per Kadi rules, 2, 3, Question (8/Q), Jump (J), Kickback (K), Ace, and Joker cannot start the discard pile** — KADI.md specifies that 2, 3, Question, Kickback, Jump, Joker, and Ace cards cannot start the discard pile — leaving 4, 5, 6, 7, 9, and 10. |\n| **What does `static func make(s, r) -> CardData` allow other scripts to do?** | **Call `CardData.make(suit, rank)` directly on the class without manually initializing fields every time** — A `static func` is called on the class itself (`CardData.make(...)`), acting as a clean factory constructor. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a method `is_special() -> bool` on `CardData` that returns `true` when `rank == 15` (Joker) or `rank == 14` (Ace).\n- **How Godot Evaluates It**: When your script runs `func is_special() -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns true for Jokers and Aces.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/card_data.gd` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `class_name CardData` | Registers `CardData` as a global type across the entire Godot project so any script can reference `CardData` without `preload()`. |\n| **Line 3** | `extends Resource` | Inherits all properties, signals, and lifecycle methods from Godot's `Resource` class. |\n| **Line 5** | `const SUIT_SYMBOLS: Dictionary = {` | Declares a compile-time constant that can never be accidentally overwritten at runtime. |\n| **Line 6** | `CardTypes.Suits.HEARTS: \"♥\",` | Executes this statement as part of the current block. |\n| **Line 7** | `CardTypes.Suits.DIAMONDS: \"♦\",` | Executes this statement as part of the current block. |\n| **Line 8** | `CardTypes.Suits.CLUBS: \"♣\",` | Executes this statement as part of the current block. |\n| **Line 9** | `CardTypes.Suits.SPADES: \"♠\"` | Executes this statement as part of the current block. |\n| **Line 10** | `}` | Executes this statement as part of the current block. |\n| **Line 12** | `const SUIT_NAMES: Dictionary = {` | Declares a compile-time constant that can never be accidentally overwritten at runtime. |\n| **Line 13** | `CardTypes.Suits.HEARTS: \"Hearts\",` | Executes this statement as part of the current block. |\n| **Line 14** | `CardTypes.Suits.DIAMONDS: \"Diamonds\",` | Executes this statement as part of the current block. |\n| **Line 15** | `CardTypes.Suits.CLUBS: \"Clubs\",` | Executes this statement as part of the current block. |\n| **Line 16** | `CardTypes.Suits.SPADES: \"Spades\"` | Executes this statement as part of the current block. |\n| **Line 17** | `}` | Executes this statement as part of the current block. |\n| **Line 19** | `const RANK_LABELS: Dictionary = {` | Declares a compile-time constant that can never be accidentally overwritten at runtime. |\n| **Line 20** | `11: \"J\", 12: \"Q\", 13: \"K\", 14: \"A\", 15: \"JOK\"` | Executes this statement as part of the current block. |\n| **Line 21** | `}` | Executes this statement as part of the current block. |\n| **Line 23** | `@export var suit: CardTypes.Suits = CardTypes.Suits.HEARTS` | Exposes this property in the Godot Inspector dock so you can inspect or tweak it visually without editing code. |\n| **Line 24** | `@export var rank: int = 2` | Exposes this property in the Godot Inspector dock so you can inspect or tweak it visually without editing code. |\n| **Line 25** | `@export var display_name: String = \"\"` | Exposes this property in the Godot Inspector dock so you can inspect or tweak it visually without editing code. |\n| **Line 27** | `static func make(s: CardTypes.Suits, r: int) -> CardData:` | Defines static helper method `make()` callable directly on the class without instantiating an object. |\n| **Line 28** | `var c := CardData.new()` | Declares a mutable typed variable to store state in memory. |\n| **Line 29** | `c.suit = s` | Assigns the computed right-hand value into `c.suit`. |\n| **Line 30** | `c.rank = r` | Assigns the computed right-hand value into `c.rank`. |\n| **Line 31** | `c.display_name = \"JOK\" if r == CardTypes.Ranks.JOKER else \"%s%s\" % [c.rank_label(), c.suit_symbol()]` | Assigns the computed right-hand value into `c.display_name`. |\n| **Line 32** | `return c` | Immediately exits the current function and sends `c` back to the caller. |\n| **Line 34** | `func rank_label() -> String:` | Defines function `rank_label()` returning `String`. |\n| **Line 35** | `return RANK_LABELS.get(rank, str(rank))` | Immediately exits the current function and sends `RANK_LABELS.get(rank, str(rank))` back to the caller. |\n| **Line 37** | `func suit_symbol() -> String:` | Defines function `suit_symbol()` returning `String`. |\n| **Line 38** | `return \"★\" if rank == CardTypes.Ranks.JOKER else SUIT_SYMBOLS.get(suit, \"?\")` | Immediately exits the current function and sends `\"★\" if rank == CardTypes.Ranks.JOKER else SUIT_SYMBOLS.get(suit, \"?\")` back to the caller. |\n| **Line 40** | `func is_red_suit() -> bool:` | Defines function `is_red_suit()` returning `bool`. |\n| **Line 41** | `return suit == CardTypes.Suits.HEARTS or suit == CardTypes.Suits.DIAMONDS` | Immediately exits the current function and sends `suit == CardTypes.Suits.HEARTS or suit == CardTypes.Suits.DIAMONDS` back to the caller. |\n| **Line 43** | `func is_penalty() -> bool:` | Defines function `is_penalty()` returning `bool`. |\n| **Line 44** | `return rank == CardTypes.Ranks.TWO or rank == CardTypes.Ranks.THREE or rank == CardTypes.Ranks.JOKER` | Immediately exits the current function and sends `rank == CardTypes.Ranks.TWO or rank == CardTypes.Ranks.THREE or rank == CardTypes.Ranks.JOKER` back to the caller. |\n| **Line 46** | `func penalty_value() -> int:` | Defines function `penalty_value()` returning `int`. |\n| **Line 47** | `match rank:` | Pattern-matches `rank` against the discrete cases indented below (no fall-through). |\n| **Line 48** | `CardTypes.Ranks.TWO: return 2` | Executes this statement as part of the current block. |\n| **Line 49** | `CardTypes.Ranks.THREE: return 3` | Executes this statement as part of the current block. |\n| **Line 50** | `CardTypes.Ranks.JOKER: return 5` | Executes this statement as part of the current block. |\n| **Line 51** | `_: return 0` | Executes this statement as part of the current block. |\n| **Line 53** | `func is_question() -> bool:` | Defines function `is_question()` returning `bool`. |\n| **Line 54** | `return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT` | Immediately exits the current function and sends `rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT` back to the caller. |\n| **Line 56** | `func is_answer() -> bool:` | Defines function `is_answer()` returning `bool`. |\n| **Line 57** | `return rank in [4, 5, 6, 7, 9, 10, CardTypes.Ranks.ACE]` | Immediately exits the current function and sends `rank in [4, 5, 6, 7, 9, 10, CardTypes.Ranks.ACE]` back to the caller. |\n| **Line 59** | `func is_jump() -> bool:` | Defines function `is_jump()` returning `bool`. |\n| **Line 60** | `return rank == CardTypes.Ranks.JACK` | Immediately exits the current function and sends `rank == CardTypes.Ranks.JACK` back to the caller. |\n| **Line 62** | `func is_kickback() -> bool:` | Defines function `is_kickback()` returning `bool`. |\n| **Line 63** | `return rank == CardTypes.Ranks.KING` | Immediately exits the current function and sends `rank == CardTypes.Ranks.KING` back to the caller. |\n| **Line 65** | `func can_start_discard() -> bool:` | Defines function `can_start_discard()` returning `bool`. |\n| **Line 66** | `return rank in [4, 5, 6, 7, 9, 10]` | Immediately exits the current function and sends `rank in [4, 5, 6, 7, 9, 10]` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_01_02_a",
           "language": "gdscript",
-          "code": "class_name CardData\nextends Resource\n\n@export var suit: CardTypes.Suits\n@export var rank: int\n@export var display_name: String\n@export var art: Texture2D\n@export var rule_text: String = \"\"\n\nfunc is_penalty() -> bool:\n    return rank == 2 or rank == 3 or rank == 15\n\nstatic func make(s: int, r: int) -> CardData:\n    var c := CardData.new()\n    c.suit = s\n    c.rank = r\n    return c",
-          "caption": "A CardData Resource with @export fields and a factory."
+          "code": "# File: res://scripts/card_data.gd\nclass_name CardData\nextends Resource\n\nconst SUIT_SYMBOLS: Dictionary = {\n    CardTypes.Suits.HEARTS: \"♥\",\n    CardTypes.Suits.DIAMONDS: \"♦\",\n    CardTypes.Suits.CLUBS: \"♣\",\n    CardTypes.Suits.SPADES: \"♠\"\n}\n\nconst SUIT_NAMES: Dictionary = {\n    CardTypes.Suits.HEARTS: \"Hearts\",\n    CardTypes.Suits.DIAMONDS: \"Diamonds\",\n    CardTypes.Suits.CLUBS: \"Clubs\",\n    CardTypes.Suits.SPADES: \"Spades\"\n}\n\nconst RANK_LABELS: Dictionary = {\n    11: \"J\", 12: \"Q\", 13: \"K\", 14: \"A\", 15: \"JOK\"\n}\n\n@export var suit: CardTypes.Suits = CardTypes.Suits.HEARTS\n@export var rank: int = 2\n@export var display_name: String = \"\"\n\nstatic func make(s: CardTypes.Suits, r: int) -> CardData:\n    var c := CardData.new()\n    c.suit = s\n    c.rank = r\n    c.display_name = \"JOK\" if r == CardTypes.Ranks.JOKER else \"%s%s\" % [c.rank_label(), c.suit_symbol()]\n    return c\n\nfunc rank_label() -> String:\n    return RANK_LABELS.get(rank, str(rank))\n\nfunc suit_symbol() -> String:\n    return \"★\" if rank == CardTypes.Ranks.JOKER else SUIT_SYMBOLS.get(suit, \"?\")\n\nfunc is_red_suit() -> bool:\n    return suit == CardTypes.Suits.HEARTS or suit == CardTypes.Suits.DIAMONDS\n\nfunc is_penalty() -> bool:\n    return rank == CardTypes.Ranks.TWO or rank == CardTypes.Ranks.THREE or rank == CardTypes.Ranks.JOKER\n\nfunc penalty_value() -> int:\n    match rank:\n        CardTypes.Ranks.TWO: return 2\n        CardTypes.Ranks.THREE: return 3\n        CardTypes.Ranks.JOKER: return 5\n        _: return 0\n\nfunc is_question() -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n\nfunc is_answer() -> bool:\n    return rank in [4, 5, 6, 7, 9, 10, CardTypes.Ranks.ACE]\n\nfunc is_jump() -> bool:\n    return rank == CardTypes.Ranks.JACK\n\nfunc is_kickback() -> bool:\n    return rank == CardTypes.Ranks.KING\n\nfunc can_start_discard() -> bool:\n    return rank in [4, 5, 6, 7, 9, 10]",
+          "caption": "The complete res://scripts/card_data.gd script — copy and save this file now!"
         }
       ],
       "practicePrompt": {
-        "instructions": "Add an `@export var is_joker: bool` field to CardData and a method `is_special()` returning true for jokers or aces.",
-        "hint": "Jokers are rank 15; aces rank 14.",
-        "solutionCode": "@export var is_joker: bool = false\n\nfunc is_special() -> bool:\n    return is_joker or rank == 14"
+        "instructions": "Write a method `is_special() -> bool` on `CardData` that returns `true` when `rank == 15` (Joker) or `rank == 14` (Ace).",
+        "hint": "Use `func is_special() -> bool:` and `return rank == 15 or rank == 14`.",
+        "starterCode": "func is_special() -> bool:\n    # Return true for Joker (15) or Ace (14):\n",
+        "requiredTokens": [
+          "func",
+          "is_special",
+          "bool",
+          "return",
+          "rank",
+          "15",
+          "or",
+          "14"
+        ],
+        "expectedOutput": "Returns true for Jokers and Aces.",
+        "solutionCode": "func is_special() -> bool:\n    return rank == 15 or rank == 14"
       },
       "quizQuestions": [
         {
           "id": "q_01_02_a",
-          "prompt": "What does the `@export` annotation do to a Resource field?",
-          "choices": ["Makes it private", "Exposes it to the Inspector so designers can edit it on .tres files", "Marks it as const", "Hides it from other scripts"],
+          "prompt": "What does the `@export` annotation do on `CardData` fields like `@export var rank: int`?",
+          "choices": [
+            "Exports the game to Android",
+            "Exposes the variable in Godot's Inspector dock so it can be viewed and edited visually",
+            "Makes the variable constant",
+            "Hides the variable from other scripts"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "`@export` surfaces the field in the editor, enabling data-driven design without touching code.",
+          "explanation": "`@export` makes a script variable editable in the Godot Inspector dock and serializable in `.tres`/`.tscn` files.",
           "concept": "Resources"
         },
         {
           "id": "q_01_02_b",
-          "prompt": "Why use a Resource rather than a Dictionary for card data?",
-          "choices": ["Resources are faster", "Resources are reference-counted, inspectable, and savable to .tres files for designer editing", "Dictionaries crash Godot", "Resources are required for nodes"],
+          "prompt": "Why does `CardData.can_start_discard()` return `true` only for `rank in [4, 5, 6, 7, 9, 10]`?",
+          "choices": [
+            "Other ranks don't exist in Kadi",
+            "Per Kadi rules, 2, 3, Question (8/Q), Jump (J), Kickback (K), Ace, and Joker cannot start the discard pile",
+            "Because 4..10 are red cards",
+            "To save memory"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Resources integrate with the editor and asset pipeline; dictionaries are just runtime structures with no Inspector support.",
+          "explanation": "KADI.md specifies that 2, 3, Question, Kickback, Jump, Joker, and Ace cards cannot start the discard pile — leaving 4, 5, 6, 7, 9, and 10.",
+          "concept": "Resources"
+        },
+        {
+          "id": "q_01_02_c",
+          "prompt": "What does `static func make(s, r) -> CardData` allow other scripts to do?",
+          "choices": [
+            "Call `CardData.make(suit, rank)` directly on the class without manually initializing fields every time",
+            "Modify constants at runtime",
+            "Delete the deck",
+            "Bypass type checking"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "A `static func` is called on the class itself (`CardData.make(...)`), acting as a clean factory constructor.",
           "concept": "Resources"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/card_data.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Custom Resource for Card Data (`card_data.gd`)`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/card_data.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_01_03_deck_builder",
       "order": 6,
-      "title": "Building the Deck with Nested Loops",
-      "bodyMarkdown": "# Deck Builder\n\nA standard Kadi deck is 52 cards (4 suits × 13 ranks) plus two Jokers. The cleanest way to generate it is a nested `for` loop: outer loop over suits, inner loop over ranks.\n\n```gdscript\nfunc build_deck() -> Array:\n    var deck: Array = []\n    for suit in range(4):\n        for rank in range(2, 15):  # 2 through Ace (14)\n            deck.append(CardData.make(suit, rank))\n    deck.append(CardData.make(0, 15))  # Joker 1\n    deck.append(CardData.make(1, 15))  # Joker 2\n    return deck\n```\n\n`range(2, 15)` yields 2, 3, ..., 14 — the 13 ranks. We add the two Jokers manually because they have no suit constraint (we tag them with placeholder suits).\n\nAfter building, **shuffle** the deck with `deck.shuffle()` (a Godot built-in that randomises in place). Shuffling uses a Fisher-Yates algorithm; results differ each run unless you seed the RNG.\n\n> [!WHY]\n> Generating the deck programmatically guarantees 52 unique cards every time. Hard-coding 52 literals would invite typos — a missing 7 of Clubs breaks the game silently. A nested loop is also self-documenting: read it and you see exactly the deck composition.\n\nIf you add a variant deck (e.g. two-pack Kadi), one constant change — `range(2, 15)` to two iterations — extends the builder.",
+      "title": "Building & Shuffling the 54-Card Kadi Deck",
+      "targetFile": "res://scripts/game_state.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Understand how an outer loop over 4 suits (`0..3`) and an inner loop over 13 ranks (`range(2, 15)`) produces all 52 suited cards.",
+        "Append the 2 Jokers (`CardTypes.Ranks.JOKER`, rank 15) after the nested loops so the deck totals exactly 54 cards.",
+        "Call `deck.shuffle()` to randomize the 54-card array in place using Godot's Fisher-Yates shuffle."
+      ],
+      "keyTakeaways": [
+        "`range(2, 15)` generates `2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14` (13 ranks per suit, because the end bound `15` is exclusive).",
+        "4 suits × 13 ranks = 52 cards, plus 2 Jokers = 54 cards total.",
+        "`deck.shuffle()` randomizes the deck order in one built-in call."
+      ],
+      "bodyMarkdown": "# Building the 54-Card Kadi Deck with Nested Loops\n\nA complete **Kadi** deck has **54 cards**: 52 standard suited cards (4 suits × 13 ranks from 2 through Ace) plus **2 Jokers**.\n\nInstead of typing 54 lines of code by hand (where a single copy-paste typo could accidentally give the deck two 7 of Spades and zero 7 of Clubs!), we generate the deck with a **nested `for` loop**:\n\n```gdscript\nfunc build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:\n        for rank in range(2, 15):  # 2 through 14 (Ace); 15 is exclusive!\n            new_deck.append(CardData.make(suit, rank))\n    # Add the 2 Jokers (rank 15) to reach 54 cards:\n    new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))\n    new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))\n    new_deck.shuffle()\n    return new_deck\n```\n\n> [!MISTAKE]\n> Watch out for `range(start, end)`! In GDScript, the second number is **exclusive** (it stops at `end - 1`). Since `CardTypes.Ranks.ACE` is `14`, you MUST write `range(2, 15)` so that `14` is included! Writing `range(2, 14)` would stop at `13` (King) and build a 48-card deck with no Aces!\n\n> [!WHY]\n> Why call Godot's built-in `new_deck.shuffle()` instead of writing a random loop yourself? Because `Array.shuffle()` uses an unbiased Fisher-Yates algorithm under the hood, guaranteeing every permutation of the 54 cards is equally likely.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 6: *Building & Shuffling the 54-Card Kadi Deck* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd` |\n| **Scene / Node Context** | `root (Viewport)  [Godot Runtime SceneTree]` |\n| **What Problem Does It Solve?** | `range(2, 15)` generates `2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14` (13 ranks per suit, because the end bound `15` is exclusive). |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Understand how an outer loop over 4 suits (`0..3`) and an inner loop over 13 ranks (`range(2, 15)`) produces all 52 suited cards.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Append the 2 Jokers (`CardTypes.Ranks.JOKER`, rank 15) after the nested loops so the deck totals exactly 54 cards.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Call `deck.shuffle()` to randomize the 54-card array in place using Godot's Fisher-Yates shuffle.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Building & Shuffling the 54-Card Kadi Deck` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `range(2, 15)` generates `2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14` (13 ranks per suit, because the end bound `15` is exclusive).\n- **Core Principle 2**: 4 suits × 13 ranks = 52 cards, plus 2 Jokers = 54 cards total.\n- **Core Principle 3**: `deck.shuffle()` randomizes the deck order in one built-in call.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What integers does `range(2, 15)` generate in GDScript?** | **2 through 14 inclusive (15 is exclusive)** — `range(start, end)` includes `start` (`2`) and excludes `end` (`15`), producing `2, 3, ..., 14`. |\n| **How many cards are in a complete Kadi deck built by `build_deck()`?** | **54 cards (4 suits × 13 ranks + 2 Jokers)** — Kadi uses all 52 suited cards plus 2 Jokers, totaling 54 cards. |\n| **What bug occurs if you write `for rank in range(2, 14):` in `build_deck()`?** | **Rank 14 (all four Aces!) is excluded from the deck** — Because the upper bound of `range()` is exclusive, `range(2, 14)` stops at 13 (King) and omits all Aces (14). |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `build_mini_deck() -> Array` that loops over suits `range(2)` (Hearts=0, Diamonds=1) and ranks `range(2, 15)`, appends `CardData.make(suit, rank)` to `var deck: Array = []`, shuffles it, and returns `deck`.\n- **How Godot Evaluates It**: When your script runs `func build_mini_deck() -> Array:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns a shuffled 26-card red-suits mini deck.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func build_deck() -> Array[CardData]:` | Defines function `build_deck()` returning `Array[CardData]`. |\n| **Line 2** | `var new_deck: Array[CardData] = []` | Declares a mutable typed variable to store state in memory. |\n| **Line 3** | `for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 4** | `for rank in range(2, 15):` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 5** | `new_deck.append(CardData.make(suit, rank))` | Executes this statement as part of the current block. |\n| **Line 6** | `new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))` | Executes this statement as part of the current block. |\n| **Line 7** | `new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))` | Executes this statement as part of the current block. |\n| **Line 8** | `new_deck.shuffle()` | Executes this statement as part of the current block. |\n| **Line 9** | `return new_deck` | Immediately exits the current function and sends `new_deck` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_01_03_a",
           "language": "gdscript",
-          "code": "func build_deck() -> Array:\n    var deck: Array = []\n    for suit in range(4):\n        for rank in range(2, 15):\n            deck.append(CardData.make(suit, rank))\n    deck.append(CardData.make(0, 15))\n    deck.append(CardData.make(1, 15))\n    deck.shuffle()\n    return deck",
-          "caption": "Nested for loops build and shuffle a 54-card Kadi deck."
+          "code": "func build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:\n        for rank in range(2, 15):\n            new_deck.append(CardData.make(suit, rank))\n    new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))\n    new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))\n    new_deck.shuffle()\n    return new_deck",
+          "caption": "Nested loops generate 52 suited cards, append 2 Jokers (54 total), and shuffle."
         }
       ],
       "practicePrompt": {
-        "instructions": "Modify build_deck to build only the red suits (Hearts=0, Diamonds=1) for a mini-deck variant.",
-        "hint": "Change the outer range to only cover suits 0 and 1.",
+        "instructions": "Write a function `build_mini_deck() -> Array` that loops over suits `range(2)` (Hearts=0, Diamonds=1) and ranks `range(2, 15)`, appends `CardData.make(suit, rank)` to `var deck: Array = []`, shuffles it, and returns `deck`.",
+        "hint": "Use `for suit in range(2):` then `for rank in range(2, 15):` then `deck.append(CardData.make(suit, rank))`, followed by `deck.shuffle()` and `return deck`.",
+        "starterCode": "func build_mini_deck() -> Array:\n    var deck: Array = []\n    # Write nested loops for 2 suits and ranks 2..14, shuffle, and return:\n",
+        "requiredTokens": [
+          "for",
+          "suit",
+          "range(2)",
+          "rank",
+          "range(2, 15)",
+          "CardData.make",
+          "deck.shuffle()",
+          "return"
+        ],
+        "expectedOutput": "Returns a shuffled 26-card red-suits mini deck.",
         "solutionCode": "func build_mini_deck() -> Array:\n    var deck: Array = []\n    for suit in range(2):\n        for rank in range(2, 15):\n            deck.append(CardData.make(suit, rank))\n    deck.shuffle()\n    return deck"
       },
       "quizQuestions": [
         {
           "id": "q_01_03_a",
-          "prompt": "What does `range(2, 15)` yield?",
-          "choices": ["2 through 15 inclusive", "2 through 14 inclusive (15 is exclusive)", "0 through 15", "Just 2 and 15"],
+          "prompt": "What integers does `range(2, 15)` generate in GDScript?",
+          "choices": [
+            "2 through 15 inclusive",
+            "2 through 14 inclusive (15 is exclusive)",
+            "0 through 15",
+            "Only 2 and 15"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Godot's `range(start, end)` is half-open: it includes start but excludes end, so range(2,15) gives 2..14.",
+          "explanation": "`range(start, end)` includes `start` (`2`) and excludes `end` (`15`), producing `2, 3, ..., 14`.",
           "concept": "Nested loops"
         },
         {
           "id": "q_01_03_b",
-          "prompt": "Why call `deck.shuffle()` after building rather than writing a custom shuffle?",
-          "choices": ["It is faster", "It uses a correct Fisher-Yates implementation and is well-tested", "It is required by Godot", "Custom shuffles crash"],
+          "prompt": "How many cards are in a complete Kadi deck built by `build_deck()`?",
+          "choices": [
+            "52 cards",
+            "54 cards (4 suits × 13 ranks + 2 Jokers)",
+            "40 cards",
+            "56 cards"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "The built-in shuffle is correct and battle-tested. Rolling your own risks subtle bias bugs.",
+          "explanation": "Kadi uses all 52 suited cards plus 2 Jokers, totaling 54 cards.",
+          "concept": "Nested loops"
+        },
+        {
+          "id": "q_01_03_c",
+          "prompt": "What bug occurs if you write `for rank in range(2, 14):` in `build_deck()`?",
+          "choices": [
+            "Jokers are duplicated",
+            "Rank 14 (all four Aces!) is excluded from the deck",
+            "The game crashes on launch",
+            "Twos are excluded from the deck"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Because the upper bound of `range()` is exclusive, `range(2, 14)` stops at 13 (King) and omits all Aces (14).",
           "concept": "Nested loops"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/game_state.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Building & Shuffling the 54-Card Kadi Deck`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_01_04_autoloads",
       "order": 7,
-      "title": "Autoloads: A Game-State Singleton",
-      "bodyMarkdown": "# Autoloads\n\nAn **Autoload** is a script Godot loads once at startup and keeps alive for the entire session. It is the Godot-idiomatic singleton — the right home for cross-scene game state.\n\nRegister the script in **Project Settings → Autoload** (or `project.godot`'s `[autoload]` section). Then any node can reference it by name.\n\n```gdscript\nclass_name GameState\nextends Node\n\nvar deck: Array = []\nvar discard_pile: Array = []\nvar hands: Array = []\nvar current_player: int = 0\nvar penalty_stack: int = 0\n\nfunc _ready() -> void:\n    deck = build_deck()\n    print(\"Deck ready: \", deck.size(), \" cards\")\n```\n\nOnce registered as `GameState`, access it from anywhere: `GameState.deck.pop_back()`, `GameState.advance_turn()`. There is exactly one instance — no constructor calls, no passing references around. Because it is a Node, you can also fetch it with `get_node(\"/root/GameState\")` if you prefer path-based access over the global name.\n\n> [!WHY]\n> Kadi's state (deck, piles, turn) must survive scene transitions — the menu, the table, the win screen. An Autoload lives outside any scene, so reloading the table scene does not blow away the current match. Without it you would either pass a Node through every scene change or duplicate state, both of which breed bugs.\n\nKeep Autoloads for genuine globals only — anything scene-local belongs in a regular node.",
+      "title": "Creating & Registering the `GameState` Autoload (`game_state.gd`)",
+      "targetFile": "res://scripts/game_state.gd",
+      "sceneTree": "Project -> Project Settings -> Globals -> Autoload\n└── Path: res://scripts/game_state.gd  |  Node Name: GameState  |  Enable: [x]",
+      "editorSteps": [
+        "In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**, name it `game_state.gd` (`res://scripts/game_state.gd`), and click **Create**.",
+        "Paste the complete `game_state.gd` code below and press **Ctrl+S** to save.",
+        "In the top menu bar, click **Project -> Project Settings...** and switch to the **Globals -> Autoload** tab at the top of the window.",
+        "Click the folder icon next to **Path**, select `res://scripts/game_state.gd`, verify **Node Name** says `GameState`, and click **+ Add**.",
+        "Click **Close** on Project Settings, then press **F5** — verify the Output console prints `GameState Autoload ready: 54 cards in deck`!"
+      ],
+      "keyTakeaways": [
+        "An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads.",
+        "Do NOT put `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState` — Godot's Autoload system already creates the global identifier `GameState`!",
+        "Any script in your project can now call `GameState.start_new_match()`, `GameState.deck`, and `GameState.hands` directly."
+      ],
+      "bodyMarkdown": "# Registering `GameState` as a Global Autoload Singleton\n\nWhere should the 54-card draw pile, the discard pile, the 4 player hands, the active penalty stack, and the declared suit live so that `Table.tscn`, `CardScene.tscn`, and `DeclareSuitDialog.tscn` can all read them cleanly? In an **[[Autoloads|Autoload]]** singleton!\n\nAn **Autoload** is a script extending `Node` that Godot instantiates once at game startup under `/root/GameState` and keeps alive across the entire session.\n\n> [!MISTAKE]\n> **Crucial Godot 4 Rule:** When you register a script in **Project Settings → Globals → Autoload** under the name `GameState`, **do NOT write `class_name GameState` at the top of `game_state.gd`!** Why? Because registering an Autoload named `GameState` already defines the global name `GameState`. Adding `class_name GameState` too causes the compiler error: `Class \"GameState\" hides an autoload singleton`. Just start `game_state.gd` with `extends Node`!\n\n> [!GODOT]\n> Follow the **Do This in Godot** checklist above to create `res://scripts/game_state.gd` and register it under **Project → Project Settings → Globals → Autoload** with Node Name `GameState`.\n\n```gdscript\n# File: res://scripts/game_state.gd\n# Registered as Autoload singleton named: GameState\nextends Node\n\nsignal state_updated()\nsignal penalty_updated(new_total: int)\nsignal pile_recycled(new_deck_size: int)\n\nvar deck: Array[CardData] = []\nvar discard_pile: Array[CardData] = []\nvar hands: Array = [[], [], [], []]\nvar penalty_stack: int = 0\nvar penalty_rank: int = 0\nvar declared_suit: int = -1  # -1 = no active suit declaration\nvar announced_kadi: Array[bool] = [false, false, false, false]\nvar last_play_was_legal: bool = true\n```\n\n> [!WHY]\n> An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 7: *Creating & Registering the `GameState` Autoload (`game_state.gd`)* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd` |\n| **Scene / Node Context** | `Project -> Project Settings -> Globals -> Autoload` |\n| **What Problem Does It Solve?** | An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**, name it `game_state.gd` (`res://scripts/game_state.gd`), and click **Create**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Paste the complete `game_state.gd` code below and press **Ctrl+S** to save.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n3. **In the top menu bar, click **Project -> Project Settings...** and switch to the **Globals -> Autoload** tab at the top of the window.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n4. **Click the folder icon next to **Path**, select `res://scripts/game_state.gd`, verify **Node Name** says `GameState`, and click **+ Add**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n5. **Click **Close** on Project Settings, then press **F5** — verify the Output console prints `GameState Autoload ready: 54 cards in deck`!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Creating & Registering the `GameState` Autoload (`game_state.gd`)` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads.\n- **Core Principle 2**: Do NOT put `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState` — Godot's Autoload system already creates the global identifier `GameState`!\n- **Core Principle 3**: Any script in your project can now call `GameState.start_new_match()`, `GameState.deck`, and `GameState.hands` directly.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Where do you register `res://scripts/game_state.gd` so that `GameState` is accessible globally across all scenes?** | **Project -> Project Settings -> Globals -> Autoload** — Autoloads are registered in `Project Settings -> Globals -> Autoload`, which spawns the singleton at `/root/GameState` on launch. |\n| **Why should you OMIT `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState`?** | **Because the Autoload registration already creates the global identifier `GameState`; adding `class_name GameState` causes a name-collision error** — In Godot 4, an Autoload named `GameState` is already a global singleton identifier; declaring `class_name GameState` as well triggers a `hides an autoload singleton` error. |\n| **What does `GameState.top_discard()` return when `discard_pile` is empty?** | **It safely returns `null` because it checks `not discard_pile.is_empty()` first** — Guarding `.back()` with `if not discard_pile.is_empty() else null` prevents empty-array errors. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Add a `round_number: int = 1` variable and a `next_round() -> void` function that increments `round_number` by 1 and resets `penalty_stack = 0`.\n- **How Godot Evaluates It**: When your script runs `var penalty_stack: int = 0`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Increments round_number and clears penalty_stack for the new round.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/game_state.gd` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `# Register in Project Settings -> Globals -> Autoload as: GameState` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 3** | `extends Node` | Inherits all properties, signals, and lifecycle methods from Godot's `Node` class. |\n| **Line 5** | `signal state_updated()` | Declares custom typed signal `state_updated()` that this script can broadcast via `.emit(...)`. |\n| **Line 6** | `signal penalty_updated(new_total: int)` | Declares custom typed signal `penalty_updated(new_total: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 7** | `signal pile_recycled(new_deck_size: int)` | Declares custom typed signal `pile_recycled(new_deck_size: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 9** | `var deck: Array[CardData] = []` | Declares a mutable typed variable to store state in memory. |\n| **Line 10** | `var discard_pile: Array[CardData] = []` | Declares a mutable typed variable to store state in memory. |\n| **Line 11** | `var hands: Array = [[], [], [], []]` | Declares a mutable typed variable to store state in memory. |\n| **Line 12** | `var penalty_stack: int = 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 13** | `var penalty_rank: int = 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 14** | `var declared_suit: int = -1` | Declares a mutable typed variable to store state in memory. |\n| **Line 15** | `var announced_kadi: Array[bool] = [false, false, false, false]` | Declares a mutable typed variable to store state in memory. |\n| **Line 16** | `var last_play_was_legal: bool = true` | Declares a mutable typed variable to store state in memory. |\n| **Line 18** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 19** | `deck = build_deck()` | Assigns the computed right-hand value into `deck`. |\n| **Line 20** | `print(\"GameState Autoload ready: %d cards in deck\" % deck.size())` | Logs the formatted message to Godot's bottom **Output** panel for inspection. |\n| **Line 22** | `func build_deck() -> Array[CardData]:` | Defines function `build_deck()` returning `Array[CardData]`. |\n| **Line 23** | `var new_deck: Array[CardData] = []` | Declares a mutable typed variable to store state in memory. |\n| **Line 24** | `for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 25** | `for rank in range(2, 15):` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 26** | `new_deck.append(CardData.make(suit, rank))` | Executes this statement as part of the current block. |\n| **Line 27** | `new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))` | Executes this statement as part of the current block. |\n| **Line 28** | `new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))` | Executes this statement as part of the current block. |\n| **Line 29** | `new_deck.shuffle()` | Executes this statement as part of the current block. |\n| **Line 30** | `return new_deck` | Immediately exits the current function and sends `new_deck` back to the caller. |\n| **Line 32** | `func top_discard() -> CardData:` | Defines function `top_discard()` returning `CardData`. |\n| **Line 33** | `return discard_pile.back() if not discard_pile.is_empty() else null` | Immediately exits the current function and sends `discard_pile.back() if not discard_pile.is_empty() else null` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_01_04_a",
           "language": "gdscript",
-          "code": "class_name GameState\nextends Node\n\nvar deck: Array = []\nvar discard_pile: Array = []\nvar hands: Array = []\nvar current_player: int = 0\nvar penalty_stack: int = 0\n\nfunc _ready() -> void:\n    deck = build_deck()\n\nfunc advance_turn() -> void:\n    current_player = (current_player + 1) % 4",
-          "caption": "A GameState Autoload holding the whole match in one place."
+          "code": "# File: res://scripts/game_state.gd\n# Register in Project Settings -> Globals -> Autoload as: GameState\nextends Node\n\nsignal state_updated()\nsignal penalty_updated(new_total: int)\nsignal pile_recycled(new_deck_size: int)\n\nvar deck: Array[CardData] = []\nvar discard_pile: Array[CardData] = []\nvar hands: Array = [[], [], [], []]\nvar penalty_stack: int = 0\nvar penalty_rank: int = 0\nvar declared_suit: int = -1\nvar announced_kadi: Array[bool] = [false, false, false, false]\nvar last_play_was_legal: bool = true\n\nfunc _ready() -> void:\n    deck = build_deck()\n    print(\"GameState Autoload ready: %d cards in deck\" % deck.size())\n\nfunc build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:\n        for rank in range(2, 15):\n            new_deck.append(CardData.make(suit, rank))\n    new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))\n    new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))\n    new_deck.shuffle()\n    return new_deck\n\nfunc top_discard() -> CardData:\n    return discard_pile.back() if not discard_pile.is_empty() else null",
+          "caption": "Save this as res://scripts/game_state.gd and register it as the 'GameState' Autoload."
         }
       ],
       "practicePrompt": {
-        "instructions": "Add a `round_number: int` field initialised to 1 and a method `next_round()` that increments it.",
-        "hint": "Fields default to 0; initialise explicitly to 1.",
-        "solutionCode": "var round_number: int = 1\n\nfunc next_round() -> void:\n    round_number += 1"
+        "instructions": "Add a `round_number: int = 1` variable and a `next_round() -> void` function that increments `round_number` by 1 and resets `penalty_stack = 0`.",
+        "hint": "Declare `var round_number: int = 1`, then inside `func next_round() -> void:` write `round_number += 1` and `penalty_stack = 0`.",
+        "starterCode": "var penalty_stack: int = 0\n# Declare round_number = 1 and next_round() below:\n",
+        "requiredTokens": [
+          "var",
+          "round_number",
+          "1",
+          "func",
+          "next_round()",
+          "round_number",
+          "+=",
+          "penalty_stack",
+          "0"
+        ],
+        "expectedOutput": "Increments round_number and clears penalty_stack for the new round.",
+        "solutionCode": "var penalty_stack: int = 0\nvar round_number: int = 1\n\nfunc next_round() -> void:\n    round_number += 1\n    penalty_stack = 0"
       },
       "quizQuestions": [
         {
           "id": "q_01_04_a",
-          "prompt": "What is the defining property of an Autoload?",
-          "choices": ["It is faster than a regular Node", "Godot loads it once at startup and keeps a single instance alive across scene changes", "It cannot hold state", "It must extend Node2D"],
+          "prompt": "Where do you register `res://scripts/game_state.gd` so that `GameState` is accessible globally across all scenes?",
+          "choices": [
+            "In the Inspector dock of a Label",
+            "Project -> Project Settings -> Globals -> Autoload",
+            "Inside AndroidManifest.xml",
+            "In the Audio tab"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Autoloads survive scene transitions as a single global instance, which is why they hold cross-scene state like the active match.",
+          "explanation": "Autoloads are registered in `Project Settings -> Globals -> Autoload`, which spawns the singleton at `/root/GameState` on launch.",
           "concept": "Autoloads"
         },
         {
           "id": "q_01_04_b",
-          "prompt": "Where do you register a script as an Autoload?",
-          "choices": ["In the script's _ready()", "Project Settings → Autoload, or the [autoload] section of project.godot", "In a .tres file", "By calling Engine.add_autoload()"],
+          "prompt": "Why should you OMIT `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState`?",
+          "choices": [
+            "Autoloads cannot contain functions",
+            "Because the Autoload registration already creates the global identifier `GameState`; adding `class_name GameState` causes a name-collision error",
+            "Because `class_name` only works in 3D",
+            "To reduce file size"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Autoloads are registered in project settings, which writes them to project.godot. Godot instantiates them before any scene loads.",
+          "explanation": "In Godot 4, an Autoload named `GameState` is already a global singleton identifier; declaring `class_name GameState` as well triggers a `hides an autoload singleton` error.",
+          "concept": "Autoloads"
+        },
+        {
+          "id": "q_01_04_c",
+          "prompt": "What does `GameState.top_discard()` return when `discard_pile` is empty?",
+          "choices": [
+            "It crashes",
+            "It safely returns `null` because it checks `not discard_pile.is_empty()` first",
+            "It returns an Ace of Spades",
+            "It returns 0"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Guarding `.back()` with `if not discard_pile.is_empty() else null` prevents empty-array errors.",
           "concept": "Autoloads"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/game_state.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Creating & Registering the `GameState` Autoload (`game_state.gd`)`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
-  "debugChallenge": null
+  "debugChallenge": {
+    "id": "dbg_01_off_by_one_deck",
+    "brokenCode": "func build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in range(4):\n        for rank in range(2, 14):\n            new_deck.append(CardData.make(suit, rank))\n    new_deck.append(CardData.make(0, 15))\n    new_deck.append(CardData.make(1, 15))\n    return new_deck",
+    "bugDescription": "When you deal a match of Kadi, players notice there are ZERO Aces anywhere in the deck, and `new_deck.size()` prints 50 instead of 54!",
+    "fixedCode": "func build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in range(4):\n        for rank in range(2, 15):\n            new_deck.append(CardData.make(suit, rank))\n    new_deck.append(CardData.make(0, 15))\n    new_deck.append(CardData.make(1, 15))\n    return new_deck",
+    "explanation": "In GDScript, the second argument of `range(start, end)` is **exclusive**. Because Ace is rank `14`, writing `range(2, 14)` on line 4 stopped at `13` (King) and omitted all 4 Aces! Changing line 4 to `range(2, 15)` includes `14` and restores all 54 cards.",
+    "buggyLineNumber": 4,
+    "hint": "Check the inner `for rank in range(...)` loop on line 4: remember that `range(start, end)` stops at `end - 1`!"
+  }
 }

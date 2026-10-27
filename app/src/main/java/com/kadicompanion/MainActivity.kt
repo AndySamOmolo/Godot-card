@@ -16,11 +16,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.kadicompanion.ui.bookmarks.BookmarksScreen
 import com.kadicompanion.ui.common.KadiBackground
@@ -36,6 +36,7 @@ import com.kadicompanion.ui.navigation.TopLevelDestination
 import com.kadicompanion.ui.onboarding.OnboardingScreen
 import com.kadicompanion.ui.settings.SettingsScreen
 import com.kadicompanion.ui.theme.KadiTheme
+import com.kadicompanion.ui.tutorial.blueprint.ProjectBlueprintScreen
 import com.kadicompanion.ui.tutorial.debugchallenge.DebugChallengeScreen
 import com.kadicompanion.ui.tutorial.lessondetail.LessonDetailScreen
 import com.kadicompanion.ui.tutorial.phaselist.PhaseDetailScreen
@@ -84,11 +85,23 @@ private fun AppContent(state: RootUiState, onOnboarded: () -> Unit) {
                     onReview = { lessonId -> navController.navigate(Routes.lesson(lessonId)) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenInsights = { navController.navigate(Routes.INSIGHTS) },
-                    onOpenPhases = { navController.navigate(Routes.PHASE_LIST) }
+                    onOpenPhases = { navController.navigate(Routes.PHASE_LIST) },
+                    onOpenBlueprint = { navController.navigate(Routes.BLUEPRINT) },
+                    onOpenPhase = { phaseId -> navController.navigate(Routes.phaseDetail(phaseId)) }
                 )
             }
             composable(Routes.PHASE_LIST) {
-                PhaseListScreen(onPhaseClick = { phaseId -> navController.navigate(Routes.phaseDetail(phaseId)) }, onOpenSettings = { navController.navigate(Routes.SETTINGS) })
+                PhaseListScreen(
+                    onPhaseClick = { phaseId -> navController.navigate(Routes.phaseDetail(phaseId)) },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenBlueprint = { navController.navigate(Routes.BLUEPRINT) }
+                )
+            }
+            composable(Routes.BLUEPRINT) {
+                ProjectBlueprintScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToPhase = { phaseId -> navController.navigate(Routes.phaseDetail(phaseId)) }
+                )
             }
             composable(Routes.PHASE_DETAIL, arguments = listOf(navArgument(Routes.ARG_PHASE_ID) { type = NavType.StringType })) { entry ->
                 val phaseId = entry.arguments?.getString(Routes.ARG_PHASE_ID).orEmpty()
@@ -108,7 +121,10 @@ private fun AppContent(state: RootUiState, onOnboarded: () -> Unit) {
                 DebugChallengeScreen(onBack = { navController.popBackStack() }, onComplete = { navController.popBackStack() })
             }
             composable(Routes.DOCS) {
-                DocsListScreen(onDocClick = { className -> navController.navigate(Routes.docDetail(className)) }, onOpenGlossary = { navController.navigate(Routes.GLOSSARY) })
+                DocsListScreen(
+                    onDocClick = { className -> navController.navigate(Routes.docDetail(className)) },
+                    onOpenGlossary = { term -> navController.navigate(Routes.glossaryDetail(term)) }
+                )
             }
             composable(Routes.DOC_DETAIL, arguments = listOf(navArgument(Routes.ARG_CLASS_NAME) { type = NavType.StringType })) { entry ->
                 val className = entry.arguments?.getString(Routes.ARG_CLASS_NAME).orEmpty()

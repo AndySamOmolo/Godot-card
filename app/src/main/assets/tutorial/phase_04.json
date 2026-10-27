@@ -1,100 +1,327 @@
 {
   "id": "phase_04_play_validation",
   "order": 4,
-  "title": "Basic Play Validation",
-  "summary": "Encode Kadi's play rules with Godot's `match` statement and custom Resources: decide whether a card is legal given the top of the discard pile.",
-  "estimatedMinutes": 45,
-  "concepts": ["Match statements", "Custom Resources"],
-  "programmingConcepts": ["Pattern matching", "Switch/branching", "Validation"],
+  "title": "Basic Play Validation & Drawing Cards",
+  "summary": "Create `res://scripts/rule_validator.gd` (`RuleValidator`) using `match` statements, wire the Play Selected and Draw buttons in `Table.gd`, and enforce Kadi's 1-card penalty for invalid moves.",
+  "estimatedMinutes": 60,
+  "concepts": [
+    "Match statements",
+    "RuleValidator",
+    "Drawing Cards",
+    "Invalid Play Penalty"
+  ],
+  "programmingConcepts": [
+    "Pattern matching",
+    "Switch/branching",
+    "Validation",
+    "State mutation"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/rule_validator.gd",
+    "res://scripts/game_state.gd",
+    "res://scenes/table/table.gd"
+  ],
+  "sceneTreeBlueprint": "Table (Node2D)  [script: res://scenes/table/table.gd]\n└── HUD (CanvasLayer)\n    ├── PlaySelectedButton (Button)  [pressed -> _on_play_selected_pressed()]\n    ├── DrawButton (Button)          [pressed -> _on_draw_pressed()]\n    └── FeedbackLabel (Label)        [Displays \"Played 7♥\" or \"Invalid play! +1 penalty card\"]",
+  "learningObjectives": [
+    "Create `res://scripts/rule_validator.gd` (`class_name RuleValidator`) with static validation functions.",
+    "Use GDScript's `match` statement to classify cards cleanly without deeply nested `if/elif` ladders.",
+    "Implement `GameState.draw_cards(player, count)` with automatic discard-pile recycling when the draw pile runs dry.",
+    "Wire `PlaySelectedButton` and `DrawButton` in `table.gd` so legal moves transfer cards to `discard_pile` and illegal moves penalize the player with 1 drawn card."
+  ],
   "lessons": [
     {
       "id": "l_04_01_match",
       "order": 1,
-      "title": "Match Statements for Card Rules",
-      "bodyMarkdown": "# Match Statements\n\nGDScript's `match` is a cleaner `switch`. It compares one expression against a series of patterns and runs the matching block. For Kadi's per-card rules, where each rank triggers different behaviour, `match` is the right tool.\n\n```gdscript\nfunc classify(card: CardData) -> String:\n    match card.rank:\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE, CardTypes.Ranks.JOKER:\n            return \"penalty\"\n        CardTypes.Ranks.JACK:\n            return \"jump\"\n        CardTypes.Ranks.KING:\n            return \"kickback\"\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT:\n            return \"question\"\n        CardTypes.Ranks.FOUR, CardTypes.Ranks.FIVE, CardTypes.Ranks.SIX, \\\n        CardTypes.Ranks.SEVEN, CardTypes.Ranks.NINE, CardTypes.Ranks.TEN, \\\n        CardTypes.Ranks.ACE:\n            return \"answer\"\n        _:\n            return \"normal\"\n```\n\nGroup multiple values on one line with commas. The `_` wildcard catches anything unmatched — always include it so unhandled ranks fail loudly instead of silently dropping.\n\n`match` works on ints, Strings, enums, arrays, and dictionaries. It does NOT fall through — only the matched block runs.\n\n> [!WHY]\n> `match` lays every card rule out like a lookup table. Adding a new special card (say, a custom rank) is one new line — and the compiler does not need to re-evaluate every `if/elif` above it. Compared to a long if/elif chain, match makes the rule book visually parallel to the code, which is invaluable when a designer is reviewing the logic beside you.\n\nUse `match` when one value selects among many discrete branches; use `if/elif` when each test is its own boolean expression.",
+      "title": "Creating `RuleValidator` (`rule_validator.gd`) with `match`",
+      "targetFile": "res://scripts/rule_validator.gd",
+      "sceneTree": "res://scripts/rule_validator.gd  (class_name RuleValidator extends RefCounted)",
+      "editorSteps": [
+        "In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**.",
+        "Name the script `rule_validator.gd` (`res://scripts/rule_validator.gd`) and click **Create**.",
+        "Paste the `RuleValidator` script below and press **Ctrl+S** to save."
+      ],
+      "keyTakeaways": [
+        "GDScript's `match` statement switches on a single expression (`card.rank`), supports comma-separated patterns on one line, and never falls through.",
+        "The `_:` wildcard branch at the bottom of a `match` catches any remaining ranks.",
+        "In Kadi, a single card is playable on `top` if it shares `suit` OR `rank`, OR if it is a wild `ACE` (14) or `JOKER` (15)."
+      ],
+      "bodyMarkdown": "# Creating `res://scripts/rule_validator.gd` with `match`\n\nTo keep our Kadi rules crystal clear and easy to test, we place all move-legality checks in a dedicated script: **`res://scripts/rule_validator.gd`** (`class_name RuleValidator`).\n\nInside `RuleValidator`, GDScript's **`[[match statements|match]]`** statement shines whenever we classify a card by its rank:\n\n```gdscript\n# File: res://scripts/rule_validator.gd\nclass_name RuleValidator\nextends RefCounted\n\nstatic func classify(card: CardData) -> String:\n    match card.rank:\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE, CardTypes.Ranks.JOKER:\n            return \"penalty\"\n        CardTypes.Ranks.JACK:\n            return \"jump\"\n        CardTypes.Ranks.KING:\n            return \"kickback\"\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT:\n            return \"question\"\n        CardTypes.Ranks.ACE:\n            return \"ace\"\n        _:\n            return \"answer\"\n\nstatic func is_single_card_playable(card: CardData, top: CardData, penalty_stack: int = 0, declared_suit: int = -1) -> bool:\n    if top == null:\n        return true\n    # 1. If a penalty stack is active, ONLY a same-rank penalty or an Ace can be played:\n    if penalty_stack > 0:\n        return card.rank == CardTypes.Ranks.ACE or (card.is_penalty() and card.rank == top.rank)\n    # 2. If an Ace suit declaration is active, card must match declared_suit (or be Ace/Joker):\n    if declared_suit != -1:\n        return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER\n    # 3. Standard Kadi rule: Ace/Joker are wild; otherwise match suit OR rank:\n    if card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER:\n        return true\n    return card.suit == top.suit or card.rank == top.rank\n```\n\n> [!WHY]\n> Look at `is_single_card_playable()` above: in just 12 lines, it already respects **all three Kadi table states** (active penalty stack, active suit declaration, and standard suit/rank/wild matching)! By making it a `static func` on `RuleValidator`, both `table.gd` and our AI opponent can call `RuleValidator.is_single_card_playable(...)` from anywhere.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 4 (Basic Play Validation & Drawing Cards) — Lesson 1: *Creating `RuleValidator` (`rule_validator.gd`) with `match`* |\n| **Which File Do I Edit?** | `res://scripts/rule_validator.gd` |\n| **Scene / Node Context** | `res://scripts/rule_validator.gd  (class_name RuleValidator extends RefCounted)` |\n| **What Problem Does It Solve?** | GDScript's `match` statement switches on a single expression (`card.rank`), supports comma-separated patterns on one line, and never falls through. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Name the script `rule_validator.gd` (`res://scripts/rule_validator.gd`) and click **Create**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Paste the `RuleValidator` script below and press **Ctrl+S** to save.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Creating `RuleValidator` (`rule_validator.gd`) with `match`` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/rule_validator.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: GDScript's `match` statement switches on a single expression (`card.rank`), supports comma-separated patterns on one line, and never falls through.\n- **Core Principle 2**: The `_:` wildcard branch at the bottom of a `match` catches any remaining ranks.\n- **Core Principle 3**: In Kadi, a single card is playable on `top` if it shares `suit` OR `rank`, OR if it is a wild `ACE` (14) or `JOKER` (15).\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What does the `_:` pattern at the bottom of a `match` statement do?** | **Acts as the default wildcard branch matching any value not matched above** — `_:` is the wildcard catch-all pattern in GDScript's `match` statement. |\n| **Does a `match` branch in GDScript automatically fall through to the next branch below it?** | **No — only the matched branch executes and then the `match` block exits** — Unlike C/Java `switch`, GDScript `match` branches never fall through by default. |\n| **Why does `is_single_card_playable()` return `true` when `card.rank == CardTypes.Ranks.ACE` (and `penalty_stack == 0`) even if the Ace's suit does not match `top.suit`?** | **Because in Kadi an Ace can be played on any suit to declare a new suit (and can also block penalties)** — In Kadi, Aces can be played regardless of the active suit to command a suit change or block a penalty stack. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `suit_color(card: CardData) -> String` using `match card.suit:` that returns `\"red\"` for `CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS`, `\"black\"` for `CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES`, and `\"unknown\"` for `_:`.\n- **How Godot Evaluates It**: When your script runs `func suit_color(card: CardData) -> String:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns 'red' for Hearts/Diamonds and 'black' for Clubs/Spades.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/rule_validator.gd` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `class_name RuleValidator` | Registers `RuleValidator` as a global type across the entire Godot project so any script can reference `RuleValidator` without `preload()`. |\n| **Line 3** | `extends RefCounted` | Inherits all properties, signals, and lifecycle methods from Godot's `RefCounted` class. |\n| **Line 5** | `static func classify(card: CardData) -> String:` | Defines static helper method `classify()` callable directly on the class without instantiating an object. |\n| **Line 6** | `match card.rank:` | Pattern-matches `card.rank` against the discrete cases indented below (no fall-through). |\n| **Line 7** | `CardTypes.Ranks.TWO, CardTypes.Ranks.THREE, CardTypes.Ranks.JOKER:` | Executes this statement as part of the current block. |\n| **Line 8** | `return \"penalty\"` | Immediately exits the current function and sends `\"penalty\"` back to the caller. |\n| **Line 9** | `CardTypes.Ranks.JACK:` | Executes this statement as part of the current block. |\n| **Line 10** | `return \"jump\"` | Immediately exits the current function and sends `\"jump\"` back to the caller. |\n| **Line 11** | `CardTypes.Ranks.KING:` | Executes this statement as part of the current block. |\n| **Line 12** | `return \"kickback\"` | Immediately exits the current function and sends `\"kickback\"` back to the caller. |\n| **Line 13** | `CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT:` | Executes this statement as part of the current block. |\n| **Line 14** | `return \"question\"` | Immediately exits the current function and sends `\"question\"` back to the caller. |\n| **Line 15** | `CardTypes.Ranks.ACE:` | Executes this statement as part of the current block. |\n| **Line 16** | `return \"ace\"` | Immediately exits the current function and sends `\"ace\"` back to the caller. |\n| **Line 17** | `_:` | Wildcard default branch of the `match` statement — catches any value not matched above. |\n| **Line 18** | `return \"answer\"` | Immediately exits the current function and sends `\"answer\"` back to the caller. |\n| **Line 20** | `static func is_single_card_playable(card: CardData, top: CardData, penalty_stack: int = 0, declared_suit: int = -1) -> bool:` | Defines static helper method `is_single_card_playable()` callable directly on the class without instantiating an object. |\n| **Line 21** | `if top == null:` | Branches into the indented block only when `top == null` evaluates to `true`. |\n| **Line 22** | `return true` | Immediately exits the current function and sends `true` back to the caller. |\n| **Line 23** | `if penalty_stack > 0:` | Branches into the indented block only when `penalty_stack > 0` evaluates to `true`. |\n| **Line 24** | `return card.rank == CardTypes.Ranks.ACE or (card.is_penalty() and card.rank == top.rank)` | Immediately exits the current function and sends `card.rank == CardTypes.Ranks.ACE or (card.is_penalty() and card.rank == top.rank)` back to the caller. |\n| **Line 25** | `if declared_suit != -1:` | Branches into the indented block only when `declared_suit != -1` evaluates to `true`. |\n| **Line 26** | `return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER` | Immediately exits the current function and sends `card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER` back to the caller. |\n| **Line 27** | `if card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER:` | Branches into the indented block only when `card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER` evaluates to `true`. |\n| **Line 28** | `return true` | Immediately exits the current function and sends `true` back to the caller. |\n| **Line 29** | `return card.suit == top.suit or card.rank == top.rank` | Immediately exits the current function and sends `card.suit == top.suit or card.rank == top.rank` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_04_01_a",
           "language": "gdscript",
-          "code": "func classify(card: CardData) -> String:\n    match card.rank:\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE, CardTypes.Ranks.JOKER:\n            return \"penalty\"\n        CardTypes.Ranks.JACK:\n            return \"jump\"\n        CardTypes.Ranks.KING:\n            return \"kickback\"\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT:\n            return \"question\"\n        _:\n            return \"answer-or-normal\"",
-          "caption": "A match statement classifying cards by rank."
+          "code": "# File: res://scripts/rule_validator.gd\nclass_name RuleValidator\nextends RefCounted\n\nstatic func classify(card: CardData) -> String:\n    match card.rank:\n        CardTypes.Ranks.TWO, CardTypes.Ranks.THREE, CardTypes.Ranks.JOKER:\n            return \"penalty\"\n        CardTypes.Ranks.JACK:\n            return \"jump\"\n        CardTypes.Ranks.KING:\n            return \"kickback\"\n        CardTypes.Ranks.QUEEN, CardTypes.Ranks.EIGHT:\n            return \"question\"\n        CardTypes.Ranks.ACE:\n            return \"ace\"\n        _:\n            return \"answer\"\n\nstatic func is_single_card_playable(card: CardData, top: CardData, penalty_stack: int = 0, declared_suit: int = -1) -> bool:\n    if top == null:\n        return true\n    if penalty_stack > 0:\n        return card.rank == CardTypes.Ranks.ACE or (card.is_penalty() and card.rank == top.rank)\n    if declared_suit != -1:\n        return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER\n    if card.rank == CardTypes.Ranks.ACE or card.rank == CardTypes.Ranks.JOKER:\n        return true\n    return card.suit == top.suit or card.rank == top.rank",
+          "caption": "Save this in res://scripts/rule_validator.gd."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write a `match` on `card.suit` returning the strings \"red\" for HEARTS/DIAMONDS and \"black\" for CLUBS/SPADES, with a `_` default returning \"unknown\".",
-        "hint": "Group the red suits on one line and the black on another.",
+        "instructions": "Write a function `suit_color(card: CardData) -> String` using `match card.suit:` that returns `\"red\"` for `CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS`, `\"black\"` for `CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES`, and `\"unknown\"` for `_:`.",
+        "hint": "Group the two red suits with a comma on one `match` branch, the two black suits on the next, and `_:` at the end.",
+        "starterCode": "func suit_color(card: CardData) -> String:\n    match card.suit:\n        # Add branches for red, black, and _:\n",
+        "requiredTokens": [
+          "match",
+          "card.suit",
+          "HEARTS",
+          "DIAMONDS",
+          "red",
+          "CLUBS",
+          "SPADES",
+          "black",
+          "_:"
+        ],
+        "expectedOutput": "Returns 'red' for Hearts/Diamonds and 'black' for Clubs/Spades.",
         "solutionCode": "func suit_color(card: CardData) -> String:\n    match card.suit:\n        CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS:\n            return \"red\"\n        CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES:\n            return \"black\"\n        _:\n            return \"unknown\""
       },
       "quizQuestions": [
         {
           "id": "q_04_01_a",
-          "prompt": "What does the `_` pattern in a match statement match?",
-          "choices": ["Only zero", "Any value (wildcard default)", "Only null", "Only empty strings"],
+          "prompt": "What does the `_:` pattern at the bottom of a `match` statement do?",
+          "choices": [
+            "Matches only negative numbers",
+            "Acts as the default wildcard branch matching any value not matched above",
+            "Repeats the match statement",
+            "Throws an error"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "`_` is the wildcard; it matches anything and should be the last branch to catch unhandled cases loudly.",
+          "explanation": "`_:` is the wildcard catch-all pattern in GDScript's `match` statement.",
           "concept": "Match statements"
         },
         {
           "id": "q_04_01_b",
-          "prompt": "Does a `match` branch fall through to the next branch if it has no return?",
-          "choices": ["Yes, it always falls through", "No — only the matched block runs, there is no fall-through", "Only if you use `continue`", "Only for enum values"],
+          "prompt": "Does a `match` branch in GDScript automatically fall through to the next branch below it?",
+          "choices": [
+            "Yes, unless you write `break`",
+            "No — only the matched branch executes and then the `match` block exits",
+            "Only for integers",
+            "Only in debug builds"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Godot's `match` does not fall through. Each branch is independent; you must explicitly `return` or fall out.",
+          "explanation": "Unlike C/Java `switch`, GDScript `match` branches never fall through by default.",
           "concept": "Match statements"
+        },
+        {
+          "id": "q_04_01_c",
+          "prompt": "Why does `is_single_card_playable()` return `true` when `card.rank == CardTypes.Ranks.ACE` (and `penalty_stack == 0`) even if the Ace's suit does not match `top.suit`?",
+          "choices": [
+            "Because Aces have no suit",
+            "Because in Kadi an Ace can be played on any suit to declare a new suit (and can also block penalties)",
+            "It is a bug",
+            "Because Aces are worth 0 points"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "In Kadi, Aces can be played regardless of the active suit to command a suit change or block a penalty stack.",
+          "concept": "Validation"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/rule_validator.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Creating `RuleValidator` (`rule_validator.gd`) with `match``."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_04_02_drawing_invalid",
       "order": 2,
-      "title": "Drawing Cards and Handling Invalid Plays",
-      "bodyMarkdown": "# Drawing Cards and Handling Invalid Plays\n\nValidation is only half of Kadi's play loop — the other half is what happens when a play does *not* go through. The rulebook is precise: if a player **cannot** play a card, they must draw one from the draw pile; if a player plays a card that does **not** match the suit or rank of the top card, they are penalised by picking a card from the draw pile and the game proceeds to the next player.\n\nBoth cases funnel through one function, `draw_card(player)`. It also handles the empty-pile rule: when the draw pile runs out, the discard pile — excluding its top card — is reshuffled to become the new draw pile.\n\n```gdscript\nfunc draw_card(player: int) -> CardData:\n    if GameState.deck.is_empty():\n        var top: CardData = GameState.discard_pile.pop_back()\n        GameState.deck = GameState.discard_pile\n        GameState.deck.shuffle()\n        GameState.discard_pile = [top]\n    var card: CardData = GameState.deck.pop_back()\n    GameState.hands[player].append(card)\n    return card\n```\n\nThe player triggers a voluntary draw through a **Draw button** — a `Button` node whose `pressed` signal we connect in `_ready()`. Attempted plays route through `try_play`, which uses the `is_playable` validator from the previous lesson: a legal card moves to the discard pile, an illegal one costs the player a penalty draw and their turn.\n\n```gdscript\n@onready var draw_button: Button = $UI/DrawButton\n@onready var feedback_label: Label = $UI/FeedbackLabel\n\nfunc _ready() -> void:\n    draw_button.pressed.connect(_on_draw_pressed)\n\nfunc _on_draw_pressed() -> void:\n    draw_card(TurnManager.current_player_index)\n    feedback_label.text = \"Card drawn — no playable card.\"\n    TurnManager.advance_turn()\n\nfunc try_play(player: int, card: CardData) -> void:\n    if is_playable(card, GameState.discard_pile.back()):\n        GameState.hands[player].erase(card)\n        GameState.discard_pile.append(card)\n    else:\n        draw_card(player)\n        feedback_label.text = \"Invalid play! Penalty card drawn.\"\n        TurnManager.advance_turn()\n```\n\nNotice that the invalid branch never crashes and never silently ignores the click. It applies the rulebook's penalty (one drawn card), tells the player exactly what happened through the `feedback_label`, and passes the turn — the same three beats a human dealer would perform at a real table.\n\n> [!WHY]\n> Invalid input is not an error condition in Kadi — it is a rule with a defined consequence. Coding the penalty path as deliberately as the happy path keeps the game fair and the player informed. A silent rejection teaches nothing; a crash ruins the match. UI feedback plus a rulebook-accurate penalty turns every mistake into a lesson about which cards match, which is exactly how people learn Kadi at a real table.\n\nWith drawing and penalties wired, the play loop is complete: match, play, or draw — and the turn always moves on.",
+      "title": "Drawing Cards & Enforcing Invalid-Play Penalties",
+      "targetFile": "res://scripts/game_state.gd + res://scenes/table/table.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Add `draw_cards(player: int, count: int = 1) -> Array[CardData]` to `res://scripts/game_state.gd`.",
+        "In `res://scenes/table/table.gd`, connect `$HUD/PlaySelectedButton.pressed` to `_on_play_selected_pressed` and `$HUD/DrawButton.pressed` to `_on_draw_pressed`.",
+        "Press **F5** to play! Click a card in your hand and click **Play Selected** — legal cards move to the center discard pile, illegal cards give you a 1-card penalty draw, and then the 3 AI players take their turns!"
+      ],
+      "keyTakeaways": [
+        "In Kadi, playing a card that does not match the top card is NOT silently ignored — the player is penalized by drawing 1 card from the draw pile and losing their turn!",
+        "Voluntarily clicking `DrawButton` draws 1 card (or the active `penalty_stack` if facing a penalty) and advances the turn.",
+        "Whenever a player draws any card, `GameState.announced_kadi[player]` resets to `false` because their hand grew."
+      ],
+      "bodyMarkdown": "# Drawing Cards & Completing the Play Loop\n\nNow let's connect validation to action! What happens in a real game of **Kadi** when a player either **cannot play** or **plays an invalid card**?\n\n> [!KADI]\n> Per `KADI.md`:\n> 1. **Voluntary Draw**: If a player cannot play a card, they must draw 1 card from the draw pile (or pick up `penalty_stack` cards if a penalty is active) and their turn ends.\n> 2. **Invalid Play Penalty**: If a player attempts to play a card that does **not** match the suit or rank of the top card (or plays an unaccompanied Question card), they are **penalized by picking 1 card from the draw pile**, and the turn passes to the next player!\n\nFirst, add `draw_cards(player: int, count: int = 1)` to **`res://scripts/game_state.gd`**:\n\n```gdscript\n# Inside res://scripts/game_state.gd:\nfunc draw_cards(player: int, count: int = 1) -> Array[CardData]:\n    var drawn: Array[CardData] = []\n    for _i in range(count):\n        reshuffle_if_empty()\n        if not deck.is_empty():\n            var c: CardData = deck.pop_back()\n            hands[player].append(c)\n            drawn.append(c)\n    # Drawing a card revokes any prior 'Niko Kadi' announcement!\n    announced_kadi[player] = false\n    state_updated.emit()\n    return drawn\n\nfunc reshuffle_if_empty() -> void:\n    if not deck.is_empty() or discard_pile.size() <= 1:\n        return\n    var top: CardData = discard_pile.pop_back()\n    deck = discard_pile.duplicate()\n    deck.shuffle()\n    discard_pile = [top]\n    pile_recycled.emit(deck.size())\n```\n\nThen wire `_on_draw_pressed()` and `_on_play_selected_pressed()` inside **`res://scenes/table/table.gd`**! Press **F5** after adding the snippet below and you can play turns back and forth against the 3 AI players!\n\n> [!WHY]\n> In Kadi, playing a card that does not match the top card is NOT silently ignored — the player is penalized by drawing 1 card from the draw pile and losing their turn!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 4 (Basic Play Validation & Drawing Cards) — Lesson 2: *Drawing Cards & Enforcing Invalid-Play Penalties* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [script: res://scenes/table/table.gd]` |\n| **What Problem Does It Solve?** | In Kadi, playing a card that does not match the top card is NOT silently ignored — the player is penalized by drawing 1 card from the draw pile and losing their turn! |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Add `draw_cards(player: int, count: int = 1) -> Array[CardData]` to `res://scripts/game_state.gd`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **In `res://scenes/table/table.gd`, connect `$HUD/PlaySelectedButton.pressed` to `_on_play_selected_pressed` and `$HUD/DrawButton.pressed` to `_on_draw_pressed`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Press **F5** to play! Click a card in your hand and click **Play Selected** — legal cards move to the center discard pile, illegal cards give you a 1-card penalty draw, and then the 3 AI players take their turns!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Drawing Cards & Enforcing Invalid-Play Penalties` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: In Kadi, playing a card that does not match the top card is NOT silently ignored — the player is penalized by drawing 1 card from the draw pile and losing their turn!\n- **Core Principle 2**: Voluntarily clicking `DrawButton` draws 1 card (or the active `penalty_stack` if facing a penalty) and advances the turn.\n- **Core Principle 3**: Whenever a player draws any card, `GameState.announced_kadi[player]` resets to `false` because their hand grew.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Per Kadi rules, what happens when a player attempts to play a card that matches neither the suit nor the rank of the top card?** | **They are penalized by drawing 1 card from the draw pile and their turn passes to the next player** — In Kadi, an invalid play incurs a 1-card penalty draw and ends the player's turn. |\n| **What does `draw_cards()` do when `GameState.deck` becomes empty mid-draw?** | **It calls `reshuffle_if_empty()`, which recycles `discard_pile` (except the top card) into a freshly shuffled `deck`** — Calling `reshuffle_if_empty()` before each pop ensures even a 5-card Joker penalty draw succeeds when the draw pile only had 2 cards left. |\n| **Why does `draw_cards(player, count)` set `announced_kadi[player] = false`?** | **Because drawing increases the player's hand, voiding any prior 'Niko Kadi' announcement** — If a player announced 'Niko Kadi' (claiming they would win this round) but had to draw cards instead, they must re-announce on a future turn. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a helper function `has_playable_card(player: int) -> bool` that loops through `for card in GameState.hands[player]:` and returns `true` if `RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit)` is true, or `false` after the loop.\n- **How Godot Evaluates It**: When your script runs `func has_playable_card(player: int) -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns true if the player holds at least one playable card, false if they must draw.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# Inside res://scenes/table/table.gd:` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `func _on_draw_pressed() -> void:` | Defines function `_on_draw_pressed()` returning `void`. |\n| **Line 3** | `if TurnManager.current_player_index != 0:` | Branches into the indented block only when `TurnManager.current_player_index != 0` evaluates to `true`. |\n| **Line 4** | `return` | Immediately exits the function (early-return guard clause). |\n| **Line 5** | `staged_cards.clear()` | Executes this statement as part of the current block. |\n| **Line 6** | `if GameState.penalty_stack > 0:` | Branches into the indented block only when `GameState.penalty_stack > 0` evaluates to `true`. |\n| **Line 7** | `var picked: int = GameState.penalty_stack` | Declares a mutable typed variable to store state in memory. |\n| **Line 8** | `GameState.draw_cards(0, picked)` | Executes this statement as part of the current block. |\n| **Line 9** | `GameState.penalty_stack = 0` | Assigns the computed right-hand value into `GameState.penalty_stack`. |\n| **Line 10** | `status_label.text = \"You picked up %d penalty cards.\" % picked` | Assigns the computed right-hand value into `status_label.text`. |\n| **Line 11** | `else:` | Fallback branch executed when every preceding `if` and `elif` condition evaluated to `false`. |\n| **Line 12** | `GameState.draw_cards(0, 1)` | Executes this statement as part of the current block. |\n| **Line 13** | `status_label.text = \"You drew 1 card.\"` | Assigns the computed right-hand value into `status_label.text`. |\n| **Line 14** | `TurnManager.advance_turn()` | Executes this statement as part of the current block. |\n| **Line 16** | `func _on_play_selected_pressed() -> void:` | Defines function `_on_play_selected_pressed()` returning `void`. |\n| **Line 17** | `if TurnManager.current_player_index != 0 or staged_cards.is_empty():` | Branches into the indented block only when `TurnManager.current_player_index != 0 or staged_cards.is_empty()` evaluates to `true`. |\n| **Line 18** | `return` | Immediately exits the function (early-return guard clause). |\n| **Line 19** | `var card: CardData = staged_cards[0]` | Declares a mutable typed variable to store state in memory. |\n| **Line 20** | `var top: CardData = GameState.top_discard()` | Declares a mutable typed variable to store state in memory. |\n| **Line 21** | `if RuleValidator.is_single_card_playable(card, top, GameState.penalty_stack, GameState.declared_suit):` | Branches into the indented block only when `RuleValidator.is_single_card_playable(card, top, GameState.penalty_stack, GameState.declared_suit)` evaluates to `true`. |\n| **Line 22** | `_commit_single_card_play(0, card)` | Executes this statement as part of the current block. |\n| **Line 23** | `staged_cards.clear()` | Executes this statement as part of the current block. |\n| **Line 24** | `else:` | Fallback branch executed when every preceding `if` and `elif` condition evaluated to `false`. |\n| **Line 25** | `staged_cards.clear()` | Executes this statement as part of the current block. |\n| **Line 26** | `GameState.draw_cards(0, 1)` | Executes this statement as part of the current block. |\n| **Line 27** | `status_label.text = \"Invalid play! Penalty card drawn.\"` | Assigns the computed right-hand value into `status_label.text`. |\n| **Line 28** | `TurnManager.advance_turn()` | Executes this statement as part of the current block. |",
       "codeSnippets": [
         {
           "id": "cs_04_02_a",
           "language": "gdscript",
-          "code": "func draw_card(player: int) -> CardData:\n    if GameState.deck.is_empty():\n        var top: CardData = GameState.discard_pile.pop_back()\n        GameState.deck = GameState.discard_pile\n        GameState.deck.shuffle()\n        GameState.discard_pile = [top]\n    var card: CardData = GameState.deck.pop_back()\n    GameState.hands[player].append(card)\n    return card",
-          "caption": "draw_card handles the empty draw pile by reshuffling the discard pile (minus its top card)."
-        },
-        {
-          "id": "cs_04_02_b",
-          "language": "gdscript",
-          "code": "@onready var draw_button: Button = $UI/DrawButton\n@onready var feedback_label: Label = $UI/FeedbackLabel\n\nfunc _ready() -> void:\n    draw_button.pressed.connect(_on_draw_pressed)\n\nfunc _on_draw_pressed() -> void:\n    draw_card(TurnManager.current_player_index)\n    feedback_label.text = \"Card drawn — no playable card.\"\n    TurnManager.advance_turn()\n\nfunc try_play(player: int, card: CardData) -> void:\n    if is_playable(card, GameState.discard_pile.back()):\n        GameState.hands[player].erase(card)\n        GameState.discard_pile.append(card)\n    else:\n        draw_card(player)\n        feedback_label.text = \"Invalid play! Penalty card drawn.\"\n        TurnManager.advance_turn()",
-          "caption": "The Draw button's pressed signal and the penalty branch for invalid plays."
+          "code": "# Inside res://scenes/table/table.gd:\nfunc _on_draw_pressed() -> void:\n    if TurnManager.current_player_index != 0:\n        return\n    staged_cards.clear()\n    if GameState.penalty_stack > 0:\n        var picked: int = GameState.penalty_stack\n        GameState.draw_cards(0, picked)\n        GameState.penalty_stack = 0\n        status_label.text = \"You picked up %d penalty cards.\" % picked\n    else:\n        GameState.draw_cards(0, 1)\n        status_label.text = \"You drew 1 card.\"\n    TurnManager.advance_turn()\n\nfunc _on_play_selected_pressed() -> void:\n    if TurnManager.current_player_index != 0 or staged_cards.is_empty():\n        return\n    var card: CardData = staged_cards[0]\n    var top: CardData = GameState.top_discard()\n    if RuleValidator.is_single_card_playable(card, top, GameState.penalty_stack, GameState.declared_suit):\n        _commit_single_card_play(0, card)\n        staged_cards.clear()\n    else:\n        staged_cards.clear()\n        GameState.draw_cards(0, 1)\n        status_label.text = \"Invalid play! Penalty card drawn.\"\n        TurnManager.advance_turn()",
+          "caption": "Handling voluntary draws and valid/invalid plays in res://scenes/table/table.gd."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write a helper `has_playable_card(player: int) -> bool` that returns true if any card in the player's hand passes is_playable against the top of the discard pile. The UI will use it to enable the Draw button only when the player is truly stuck.",
-        "hint": "Loop over GameState.hands[player] and return true on the first playable card; return false after the loop.",
-        "solutionCode": "func has_playable_card(player: int) -> bool:\n    var top: CardData = GameState.discard_pile.back()\n    for card in GameState.hands[player]:\n        if is_playable(card, top):\n            return true\n    return false"
+        "instructions": "Write a helper function `has_playable_card(player: int) -> bool` that loops through `for card in GameState.hands[player]:` and returns `true` if `RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit)` is true, or `false` after the loop.",
+        "hint": "Loop with `for card in GameState.hands[player]:`, check `if RuleValidator.is_single_card_playable(...): return true`, and `return false` at the end.",
+        "starterCode": "func has_playable_card(player: int) -> bool:\n    var top: CardData = GameState.top_discard()\n    # Loop over GameState.hands[player] and return true on the first playable card:\n",
+        "requiredTokens": [
+          "for",
+          "card",
+          "GameState.hands[player]",
+          "if",
+          "RuleValidator.is_single_card_playable",
+          "return",
+          "true",
+          "false"
+        ],
+        "expectedOutput": "Returns true if the player holds at least one playable card, false if they must draw.",
+        "solutionCode": "func has_playable_card(player: int) -> bool:\n    var top: CardData = GameState.top_discard()\n    for card in GameState.hands[player]:\n        if RuleValidator.is_single_card_playable(card, top, GameState.penalty_stack, GameState.declared_suit):\n            return true\n    return false"
       },
       "quizQuestions": [
         {
           "id": "q_04_02_a",
-          "prompt": "Per the Kadi rules, what happens when a player plays a card that matches neither the suit nor the rank of the top card?",
-          "choices": ["The card is played anyway", "They draw a penalty card from the draw pile and the turn passes to the next player", "They are eliminated from the game", "The deck is reshuffled"],
+          "prompt": "Per Kadi rules, what happens when a player attempts to play a card that matches neither the suit nor the rank of the top card?",
+          "choices": [
+            "Nothing happens and they keep trying",
+            "They are penalized by drawing 1 card from the draw pile and their turn passes to the next player",
+            "They automatically win",
+            "The discard pile is cleared"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "An invalid play is penalised with one drawn card, and the game proceeds to the next player — the try_play else-branch encodes exactly this rule.",
-          "concept": "Validation"
+          "explanation": "In Kadi, an invalid play incurs a 1-card penalty draw and ends the player's turn.",
+          "concept": "Invalid Play Penalty"
         },
         {
           "id": "q_04_02_b",
-          "prompt": "How do you react to a Button being clicked in Godot 4?",
-          "choices": ["Poll button.is_clicked() every frame", "Connect its `pressed` signal to a handler: `draw_button.pressed.connect(_on_draw_pressed)`", "Override the button's _process()", "Set button.on_click = true"],
+          "prompt": "What does `draw_cards()` do when `GameState.deck` becomes empty mid-draw?",
+          "choices": [
+            "It crashes",
+            "It calls `reshuffle_if_empty()`, which recycles `discard_pile` (except the top card) into a freshly shuffled `deck`",
+            "It creates extra Jokers",
+            "It ends the match as a tie"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Buttons emit the `pressed` signal when clicked; connecting a callback in _ready() is the idiomatic Godot 4 pattern.",
-          "concept": "Signals"
+          "explanation": "Calling `reshuffle_if_empty()` before each pop ensures even a 5-card Joker penalty draw succeeds when the draw pile only had 2 cards left.",
+          "concept": "Drawing Cards"
+        },
+        {
+          "id": "q_04_02_c",
+          "prompt": "Why does `draw_cards(player, count)` set `announced_kadi[player] = false`?",
+          "choices": [
+            "Because drawing cards is illegal",
+            "Because drawing increases the player's hand, voiding any prior 'Niko Kadi' announcement",
+            "To reset the deck size",
+            "To reverse turn direction"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "If a player announced 'Niko Kadi' (claiming they would win this round) but had to draw cards instead, they must re-announce on a future turn.",
+          "concept": "Drawing Cards"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/game_state.gd + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Drawing Cards & Enforcing Invalid-Play Penalties`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ]
+    },
+    {
+      "id": "l_04_03_multi_card_combos",
+      "order": 3,
+      "title": "Validating Multi-Card Same-Rank Combos in One Move",
+      "targetFile": "res://scripts/rule_validator.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Open `res://scripts/rule_validator.gd`.",
+        "In `validate_move(cards, top, penalty_stack, declared_suit)`, verify how consecutive non-question cards in a multi-card play are checked.",
+        "Confirm that when a player stages multiple non-question cards (e.g. two 7s or two Jacks), every subsequent card shares the same rank as the previous card!"
+      ],
+      "keyTakeaways": [
+        "When playing multiple cards in one move without a Question Card, every card after the first must match the **rank** of the previous card (e.g. `[7♥, 7♠]` or `[J♣, J♦]`).",
+        "When a Question Card (`Q` or `8`) is played, the card immediately following it must either be another Question Card or a matching-suit Answer Card."
+      ],
+      "bodyMarkdown": "# Multi-Card Combos: Playing Doubles & Chains in One Turn\n\nIn **Kadi**, can you play **two 7s** (`[7♥, 7♠]`) or **two Jacks** (`[J♣, J♦]`) in a single move? Yes! As long as the first card is legal on the discard pile (`top`), you can chain additional cards of the **same rank** in the same move — or chain a Question Card (`Q` or `8`) into its matching-suit Answer Card.\n\nLet's write a helper `are_consecutive_cards_compatible(prev: CardData, next_card: CardData) -> bool` inside **`res://scripts/rule_validator.gd`** so `validate_move()` handles both Question+Answer pairs AND same-rank multi-card drops:\n\n```gdscript\nstatic func are_consecutive_cards_compatible(prev: CardData, next_card: CardData) -> bool:\n    # Case 1: Previous card was a Question Card (Q or 8)\n    if is_question_card(prev.rank):\n        if is_question_card(next_card.rank):\n            return prev.suit == next_card.suit or prev.rank == next_card.rank\n        return is_answer_card(next_card.rank) and (next_card.suit == prev.suit or next_card.rank == CardTypes.Ranks.ACE)\n    # Case 2: Previous card was NOT a Question Card -> multi-card combo must share the SAME rank!\n    return next_card.rank == prev.rank\n```\n\n> [!WHY]\n> Without `are_consecutive_cards_compatible()`, a player could select `[7♥, 9♥]` (two unrelated Answer cards of the same suit) and dump their whole hand in one turn! Requiring `next_card.rank == prev.rank` (unless `prev` is a Question Card demanding a same-suit Answer) keeps multi-card moves 100% faithful to real Kenyan Kadi.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 4 (Basic Play Validation & Drawing Cards) — Lesson 3: *Validating Multi-Card Same-Rank Combos in One Move* |\n| **Which File Do I Edit?** | `res://scripts/rule_validator.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [script: res://scenes/table/table.gd]` |\n| **What Problem Does It Solve?** | When playing multiple cards in one move without a Question Card, every card after the first must match the **rank** of the previous card (e.g. `[7♥, 7♠]` or `[J♣, J♦]`). |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Open `res://scripts/rule_validator.gd`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n2. **In `validate_move(cards, top, penalty_stack, declared_suit)`, verify how consecutive non-question cards in a multi-card play are checked.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Confirm that when a player stages multiple non-question cards (e.g. two 7s or two Jacks), every subsequent card shares the same rank as the previous card!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Validating Multi-Card Same-Rank Combos in One Move` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/rule_validator.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: When playing multiple cards in one move without a Question Card, every card after the first must match the **rank** of the previous card (e.g. `[7♥, 7♠]` or `[J♣, J♦]`).\n- **Core Principle 2**: When a Question Card (`Q` or `8`) is played, the card immediately following it must either be another Question Card or a matching-suit Answer Card.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **If the top discard card is 7 of Hearts, which of these two-card moves is legal in Kadi?** | **[7 of Clubs, 7 of Spades] (first matches rank 7, second shares rank 7)** — Multiple non-question cards played in a single move must share the same rank (e.g. two 7s or two Jacks). |\n| **When CAN two cards of DIFFERENT ranks be played together in a single move?** | **When the first card is a Question Card (Q or 8) and the second card is a matching-suit Answer Card (e.g. Q♥ followed by 7♥)** — A Question Card (Q or 8) must be accompanied by an Answer Card (4, 5, 6, 7, 9, 10, or Ace) of the same suit. |\n| **Why do we check every consecutive pair `(cards[i], cards[i + 1])` in a multi-card move?** | **So a player cannot sneak an illegal extra card onto the end of a valid first card** — Every transition from `cards[i]` to `cards[i + 1]` in a multi-card move must obey either the Q->A pairing rule or the same-rank combo rule. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `is_same_rank_pair(a: CardData, b: CardData) -> bool` that returns `true` when `a.rank == b.rank`.\n- **How Godot Evaluates It**: When your script runs `func is_same_rank_pair(a: CardData, b: CardData) -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Verifies that two non-question cards played together share the same rank.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `static func are_consecutive_cards_compatible(prev: CardData, next_card: CardData) -> bool:` | Defines static helper method `are_consecutive_cards_compatible()` callable directly on the class without instantiating an object. |\n| **Line 2** | `if is_question_card(prev.rank):` | Branches into the indented block only when `is_question_card(prev.rank)` evaluates to `true`. |\n| **Line 3** | `if is_question_card(next_card.rank):` | Branches into the indented block only when `is_question_card(next_card.rank)` evaluates to `true`. |\n| **Line 4** | `return prev.suit == next_card.suit or prev.rank == next_card.rank` | Immediately exits the current function and sends `prev.suit == next_card.suit or prev.rank == next_card.rank` back to the caller. |\n| **Line 5** | `return is_answer_card(next_card.rank) and (next_card.suit == prev.suit or next_card.rank == CardTypes.Ranks.ACE)` | Immediately exits the current function and sends `is_answer_card(next_card.rank) and (next_card.suit == prev.suit or next_card.rank == CardTypes.Ranks.ACE)` back to the caller. |\n| **Line 6** | `return next_card.rank == prev.rank` | Immediately exits the current function and sends `next_card.rank == prev.rank` back to the caller. |",
+      "codeSnippets": [
+        {
+          "id": "cs_04_03_a",
+          "language": "gdscript",
+          "code": "static func are_consecutive_cards_compatible(prev: CardData, next_card: CardData) -> bool:\n    if is_question_card(prev.rank):\n        if is_question_card(next_card.rank):\n            return prev.suit == next_card.suit or prev.rank == next_card.rank\n        return is_answer_card(next_card.rank) and (next_card.suit == prev.suit or next_card.rank == CardTypes.Ranks.ACE)\n    return next_card.rank == prev.rank",
+          "caption": "Checking consecutive pairs in a multi-card move."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `is_same_rank_pair(a: CardData, b: CardData) -> bool` that returns `true` when `a.rank == b.rank`.",
+        "hint": "Use `return a.rank == b.rank`.",
+        "starterCode": "func is_same_rank_pair(a: CardData, b: CardData) -> bool:\n    # Return true if a and b have the same rank:\n",
+        "requiredTokens": [
+          "func",
+          "is_same_rank_pair",
+          "return",
+          "a.rank",
+          "==",
+          "b.rank"
+        ],
+        "expectedOutput": "Verifies that two non-question cards played together share the same rank.",
+        "solutionCode": "func is_same_rank_pair(a: CardData, b: CardData) -> bool:\n    return a.rank == b.rank"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_04_03_a",
+          "prompt": "If the top discard card is 7 of Hearts, which of these two-card moves is legal in Kadi?",
+          "choices": [
+            "[7 of Clubs, 9 of Clubs] (different non-question ranks)",
+            "[7 of Clubs, 7 of Spades] (first matches rank 7, second shares rank 7)",
+            "[4 of Spades, 5 of Diamonds]",
+            "[Queen of Hearts] alone without an Answer"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Multiple non-question cards played in a single move must share the same rank (e.g. two 7s or two Jacks).",
+          "concept": "Validation"
+        },
+        {
+          "id": "q_04_03_b",
+          "prompt": "When CAN two cards of DIFFERENT ranks be played together in a single move?",
+          "choices": [
+            "Never",
+            "When the first card is a Question Card (Q or 8) and the second card is a matching-suit Answer Card (e.g. Q♥ followed by 7♥)",
+            "Whenever both cards are black suits",
+            "Only on turn 1"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "A Question Card (Q or 8) must be accompanied by an Answer Card (4, 5, 6, 7, 9, 10, or Ace) of the same suit.",
+          "concept": "Validation"
+        },
+        {
+          "id": "q_04_03_c",
+          "prompt": "Why do we check every consecutive pair `(cards[i], cards[i + 1])` in a multi-card move?",
+          "choices": [
+            "To sort the hand",
+            "So a player cannot sneak an illegal extra card onto the end of a valid first card",
+            "Because Godot arrays only allow pairs",
+            "To count Jokers"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Every transition from `cards[i]` to `cards[i + 1]` in a multi-card move must obey either the Q->A pairing rule or the same-rank combo rule.",
+          "concept": "Validation"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/rule_validator.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Validating Multi-Card Same-Rank Combos in One Move`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
   "debugChallenge": {
     "id": "dbg_04_play_validation",
     "brokenCode": "func is_playable(card: CardData, top: CardData) -> bool:\n    if card.suit == top.suit or card.rank == top.rank:\n        return true\n    if card.rank == CardTypes.Ranks.JOKER:\n        return true\n    return false",
-    "bugDescription": "In Kadi an Ace is special: a player may play it even when it does not match the top card, because an Ace lets them declare a new suit (and can also be used to escape a penalty). This validation treats an Ace like an ordinary card, so a player holding only an off-suit Ace is wrongly stuck and the game stalls.",
+    "bugDescription": "In Kadi an Ace (rank 14) is wild: a player can play an Ace on any suit to command a new suit. With this code, a player holding an Ace of Spades when the top card is 7 of Hearts is penalized for an invalid play!",
     "fixedCode": "func is_playable(card: CardData, top: CardData) -> bool:\n    if card.suit == top.suit or card.rank == top.rank:\n        return true\n    if card.rank == CardTypes.Ranks.JOKER or card.rank == CardTypes.Ranks.ACE:\n        return true\n    return false",
-    "explanation": "The missing `or card.rank == CardTypes.Ranks.ACE` clause meant an Ace was rejected unless it happened to match the suit or rank. Adding the check restores the rule that an Ace (like a Joker) may be played regardless of the top card, after which the player declares the next suit."
+    "explanation": "Line 4 checked for `CardTypes.Ranks.JOKER` but forgot `or card.rank == CardTypes.Ranks.ACE`. Adding the Ace check allows an off-suit Ace to be played legally.",
+    "buggyLineNumber": 4,
+    "hint": "Look at line 4 where wild cards are checked: Joker is allowed on any card, but which other special rank in Kadi can be played regardless of suit?"
   }
 }

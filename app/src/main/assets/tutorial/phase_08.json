@@ -1,88 +1,326 @@
 {
   "id": "phase_08_ace_declarations",
   "order": 8,
-  "title": "Ace Declarations",
-  "summary": "When an Ace hits the pile, the player declares a new suit. Build the declaration popup with Godot Control nodes, an enum-backed OptionButton, and a signal that carries the choice back to the rules engine.",
-  "estimatedMinutes": 55,
-  "concepts": ["Control nodes", "UI popups", "Game state"],
-  "programmingConcepts": ["Event handling", "Callbacks", "Enums", "State management"],
+  "title": "Ace Suit Declarations & UI Popups",
+  "summary": "Build `res://scenes/ui/declare_suit_dialog.tscn` using Godot Control nodes, emit `suit_declared(suit)` when an Ace is played, and enforce the demanded suit until satisfied.",
+  "estimatedMinutes": 60,
+  "concepts": [
+    "Control nodes",
+    "UI popups",
+    "Game state",
+    "Sentinel values"
+  ],
+  "programmingConcepts": [
+    "Event handling",
+    "Callbacks",
+    "Enums",
+    "State lifecycle (Set/Enforce/Clear)"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scenes/ui/declare_suit_dialog.tscn",
+    "res://scenes/ui/declare_suit_dialog.gd",
+    "res://scripts/game_state.gd",
+    "res://scenes/table/table.gd"
+  ],
+  "sceneTreeBlueprint": "DeclareSuitDialog (Control)  [res://scenes/ui/declare_suit_dialog.tscn | script: declare_suit_dialog.gd]\n└── Panel (Panel)            [Centered dialog box: 320×200 px]\n    ├── TitleLabel (Label)   [Text: \"Declare Next Suit:\"]\n    ├── OptionButton (OptionButton) [Items: Hearts, Diamonds, Clubs, Spades]\n    └── ConfirmButton (Button)      [Text: \"Declare Suit\"]",
+  "learningObjectives": [
+    "Build `res://scenes/ui/declare_suit_dialog.tscn` with a `Panel`, `OptionButton`, and `ConfirmButton`.",
+    "Store `CardTypes.Suits` enum values as item IDs in `OptionButton` so `get_selected_id()` returns the exact enum integer.",
+    "Manage the full 3-stage lifecycle of `GameState.declared_suit` (`-1` sentinel): **Set** on Ace play, **Enforce** in `RuleValidator`, and **Clear** back to `-1` once satisfied!"
+  ],
   "lessons": [
     {
       "id": "l_08_01_declaration_popup",
       "order": 1,
-      "title": "A Suit-Declaration Popup",
-      "bodyMarkdown": "# Control Nodes and the Declaration Popup\n\nA **Control** node is Godot's base class for UI — buttons, labels, dialogs. When a player plays an Ace they must declare the next suit; that is a perfect fit for a popup built from Control nodes.\n\n```gdscript\nclass_name DeclareSuitDialog\nextends Control\n\nsignal suit_declared(suit: int)\n\n@onready var option_button: OptionButton = $Panel/OptionButton\n@onready var confirm_button: Button = $Panel/ConfirmButton\n\nfunc _ready() -> void:\n    option_button.add_item(\"Hearts\", CardTypes.Suits.HEARTS)\n    option_button.add_item(\"Diamonds\", CardTypes.Suits.DIAMONDS)\n    option_button.add_item(\"Clubs\", CardTypes.Suits.CLUBS)\n    option_button.add_item(\"Spades\", CardTypes.Suits.SPADES)\n    confirm_button.pressed.connect(_on_confirm)\n\nfunc _on_confirm() -> void:\n    var suit: int = option_button.get_selected_id()\n    suit_declared.emit(suit)\n    hide()\n```\n\n`@onready` resolves the node reference after the scene is ready, safer than `$Panel/OptionButton` at the top of the script (the child might not exist yet). `OptionButton.add_item(label, id)` lets us store the enum value as the item's id, so `get_selected_id()` returns the enum directly — no string parsing, no lookup table.\n\nThe dialog emits `suit_declared` and hides itself. The rules engine connects to `suit_declared` and updates the required suit. The dialog has no idea what the rules do with the answer — pure decoupling.\n\n> [!WHY]\n> Storing the enum value as the OptionButton id means a rename of the suit string never breaks the rules. If we had string-matched on `\"Hearts\"`, a typo or localisation would silently break the game. The enum-as-id pattern keeps UI text and rule logic independent — translate the labels freely; the selected id is always a valid `Suits` member.\n\nHide dialogs rather than `queue_free()`-ing them if you will reuse them; recreating nodes each turn is wasteful.",
+      "title": "Building the Suit-Declaration Popup (`declare_suit_dialog.tscn`)",
+      "targetFile": "res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd",
+      "sceneTree": "DeclareSuitDialog (Control)  [script: res://scenes/ui/declare_suit_dialog.gd]\n└── Panel (Panel)\n    ├── TitleLabel (Label)\n    ├── OptionButton (OptionButton)\n    └── ConfirmButton (Button)",
+      "editorSteps": [
+        "Click **Scene -> New Scene**, choose **User Interface (`Control`)**, and rename the root node to `DeclareSuitDialog`.",
+        "Add a child `Panel` under `DeclareSuitDialog` (size `300 × 180`, centered in the viewport).",
+        "Add three children inside `Panel`: a `Label` named `TitleLabel` (`\"Choose a Suit\"`), an `OptionButton` named `OptionButton`, and a `Button` named `ConfirmButton` (`\"Confirm\"`).",
+        "Save the scene at `res://scenes/ui/declare_suit_dialog.tscn`.",
+        "Attach a script to `DeclareSuitDialog` saved at `res://scenes/ui/declare_suit_dialog.gd`, paste the code below, and save (**Ctrl+S**).",
+        "Open `res://scenes/table/table.tscn`, select `HUD`, click the **Instantiate Child Scene** icon (chain-link icon next to `+`), and add `declare_suit_dialog.tscn` under `HUD`!"
+      ],
+      "keyTakeaways": [
+        "`option_button.add_item(label, id)` attaches our `CardTypes.Suits` enum integer directly to each dropdown row.",
+        "`option_button.get_selected_id()` returns the selected `CardTypes.Suits` enum value without fragile string comparisons.",
+        "Hiding the dialog (`hide()`) in `_ready()` and showing it (`show()`) when Player 0 plays an Ace avoids recreating UI nodes mid-turn."
+      ],
+      "bodyMarkdown": "# Building `res://scenes/ui/declare_suit_dialog.tscn`\n\nIn **Kadi**, playing an **Ace (A)** in normal play lets you command the suit that the next player must play:\n\n> [!KADI]\n> *\"If a player plays an Ace card, they can declare the suit that the next player must play. If they do not, the game continues as usual.\"*\n\nLet's build a clean popup dialog in **`res://scenes/ui/declare_suit_dialog.tscn`** using Godot's **`[[OptionButton]]`** and **`[[Button]]`** Control nodes.\n\n```gdscript\n# File: res://scenes/ui/declare_suit_dialog.gd\nclass_name DeclareSuitDialog\nextends Control\n\nsignal suit_declared(suit: int)\n\n@onready var option_button: OptionButton = $Panel/OptionButton\n@onready var confirm_button: Button = $Panel/ConfirmButton\n\nfunc _ready() -> void:\n    option_button.clear()\n    option_button.add_item(\"♥ Hearts\", CardTypes.Suits.HEARTS)\n    option_button.add_item(\"♦ Diamonds\", CardTypes.Suits.DIAMONDS)\n    option_button.add_item(\"♣ Clubs\", CardTypes.Suits.CLUBS)\n    option_button.add_item(\"♠ Spades\", CardTypes.Suits.SPADES)\n    confirm_button.pressed.connect(_on_confirm)\n    hide()  # Hidden until an Ace is played!\n\nfunc _on_confirm() -> void:\n    var chosen_suit: int = option_button.get_selected_id()\n    hide()\n    suit_declared.emit(chosen_suit)\n```\n\n> [!WHY]\n> Why pass `CardTypes.Suits.HEARTS` as the second argument (`id`) to `option_button.add_item(\"♥ Hearts\", CardTypes.Suits.HEARTS)`? Because then `option_button.get_selected_id()` returns the exact integer `CardTypes.Suits` enum value! You can change the display text to Swahili, add emojis, or reorder items later without ever breaking the rule engine.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 8 (Ace Suit Declarations & UI Popups) — Lesson 1: *Building the Suit-Declaration Popup (`declare_suit_dialog.tscn`)* |\n| **Which File Do I Edit?** | `res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd` |\n| **Scene / Node Context** | `DeclareSuitDialog (Control)  [script: res://scenes/ui/declare_suit_dialog.gd]` |\n| **What Problem Does It Solve?** | `option_button.add_item(label, id)` attaches our `CardTypes.Suits` enum integer directly to each dropdown row. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Click **Scene -> New Scene**, choose **User Interface (`Control`)**, and rename the root node to `DeclareSuitDialog`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Add a child `Panel` under `DeclareSuitDialog` (size `300 × 180`, centered in the viewport).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Add three children inside `Panel`: a `Label` named `TitleLabel` (`\"Choose a Suit\"`), an `OptionButton` named `OptionButton`, and a `Button` named `ConfirmButton` (`\"Confirm\"`).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd`), and node references match what the runtime expects when you press `F5`.\n4. **Save the scene at `res://scenes/ui/declare_suit_dialog.tscn`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd`), and node references match what the runtime expects when you press `F5`.\n5. **Attach a script to `DeclareSuitDialog` saved at `res://scenes/ui/declare_suit_dialog.gd`, paste the code below, and save (**Ctrl+S**).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd`), and node references match what the runtime expects when you press `F5`.\n6. **Open `res://scenes/table/table.tscn`, select `HUD`, click the **Instantiate Child Scene** icon (chain-link icon next to `+`), and add `declare_suit_dialog.tscn` under `HUD`!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Building the Suit-Declaration Popup (`declare_suit_dialog.tscn`)` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `option_button.add_item(label, id)` attaches our `CardTypes.Suits` enum integer directly to each dropdown row.\n- **Core Principle 2**: `option_button.get_selected_id()` returns the selected `CardTypes.Suits` enum value without fragile string comparisons.\n- **Core Principle 3**: Hiding the dialog (`hide()`) in `_ready()` and showing it (`show()`) when Player 0 plays an Ace avoids recreating UI nodes mid-turn.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why do we use `@onready var option_button: OptionButton = $Panel/OptionButton` instead of `var option_button = $Panel/OptionButton`?** | **Child nodes do not exist when the script is first instantiated; `@onready` waits until the node and its children enter the scene tree in `_ready()`** — Without `@onready`, `$Panel/OptionButton` runs too early (before children are attached) and evaluates to `null`. |\n| **What is the advantage of passing `CardTypes.Suits.HEARTS` as the `id` in `option_button.add_item(\"♥ Hearts\", CardTypes.Suits.HEARTS)`?** | **`get_selected_id()` returns the `CardTypes.Suits` enum integer directly, decoupling UI text from rule logic** — Storing the enum ID on each item means UI labels can change freely without breaking enum comparisons. |\n| **Why do we call `hide()` on `DeclareSuitDialog` instead of `queue_free()` when the player confirms a suit?** | **Because Aces are played multiple times per match; hiding and re-showing the existing dialog avoids re-instantiating and re-connecting signals every time** — Reusable dialogs should be hidden with `hide()` and shown with `show()` so their signal connections remain intact. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Add a `@onready var cancel_button: Button = $Panel/CancelButton` and a function `_on_cancel() -> void` that calls `hide()` (allowing the player to skip declaring a suit, as Kadi rules allow!).\n- **How Godot Evaluates It**: When your script runs `@onready var cancel_button: Button = $Panel/CancelButton`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Hides the dialog without setting a suit demand when the player chooses not to declare.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scenes/ui/declare_suit_dialog.gd` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `class_name DeclareSuitDialog` | Registers `DeclareSuitDialog` as a global type across the entire Godot project so any script can reference `DeclareSuitDialog` without `preload()`. |\n| **Line 3** | `extends Control` | Inherits all properties, signals, and lifecycle methods from Godot's `Control` class. |\n| **Line 5** | `signal suit_declared(suit: int)` | Declares custom typed signal `suit_declared(suit: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 7** | `@onready var option_button: OptionButton = $Panel/OptionButton` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 8** | `@onready var confirm_button: Button = $Panel/ConfirmButton` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 10** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 11** | `option_button.clear()` | Executes this statement as part of the current block. |\n| **Line 12** | `option_button.add_item(\"♥ Hearts\", CardTypes.Suits.HEARTS)` | Executes this statement as part of the current block. |\n| **Line 13** | `option_button.add_item(\"♦ Diamonds\", CardTypes.Suits.DIAMONDS)` | Executes this statement as part of the current block. |\n| **Line 14** | `option_button.add_item(\"♣ Clubs\", CardTypes.Suits.CLUBS)` | Executes this statement as part of the current block. |\n| **Line 15** | `option_button.add_item(\"♠ Spades\", CardTypes.Suits.SPADES)` | Executes this statement as part of the current block. |\n| **Line 16** | `confirm_button.pressed.connect(_on_confirm)` | Subscribes a callback function to a signal so the function runs automatically whenever the signal emits. |\n| **Line 17** | `hide()` | Executes this statement as part of the current block. |\n| **Line 19** | `func _on_confirm() -> void:` | Defines function `_on_confirm()` returning `void`. |\n| **Line 20** | `var chosen_suit: int = option_button.get_selected_id()` | Declares a mutable typed variable to store state in memory. |\n| **Line 21** | `hide()` | Executes this statement as part of the current block. |\n| **Line 22** | `suit_declared.emit(chosen_suit)` | Broadcasts the signal to all connected listener nodes along with any arguments. |",
       "codeSnippets": [
         {
           "id": "cs_08_01_a",
           "language": "gdscript",
-          "code": "class_name DeclareSuitDialog\nextends Control\n\nsignal suit_declared(suit: int)\n\n@onready var option_button: OptionButton = $Panel/OptionButton\n@onready var confirm_button: Button = $Panel/ConfirmButton\n\nfunc _ready() -> void:\n    option_button.add_item(\"Hearts\", CardTypes.Suits.HEARTS)\n    option_button.add_item(\"Diamonds\", CardTypes.Suits.DIAMONDS)\n    option_button.add_item(\"Clubs\", CardTypes.Suits.CLUBS)\n    option_button.add_item(\"Spades\", CardTypes.Suits.SPADES)\n    confirm_button.pressed.connect(_on_confirm)\n\nfunc _on_confirm() -> void:\n    suit_declared.emit(option_button.get_selected_id())\n    hide()",
-          "caption": "A popup that lets the player declare a suit and emits the enum value."
+          "code": "# File: res://scenes/ui/declare_suit_dialog.gd\nclass_name DeclareSuitDialog\nextends Control\n\nsignal suit_declared(suit: int)\n\n@onready var option_button: OptionButton = $Panel/OptionButton\n@onready var confirm_button: Button = $Panel/ConfirmButton\n\nfunc _ready() -> void:\n    option_button.clear()\n    option_button.add_item(\"♥ Hearts\", CardTypes.Suits.HEARTS)\n    option_button.add_item(\"♦ Diamonds\", CardTypes.Suits.DIAMONDS)\n    option_button.add_item(\"♣ Clubs\", CardTypes.Suits.CLUBS)\n    option_button.add_item(\"♠ Spades\", CardTypes.Suits.SPADES)\n    confirm_button.pressed.connect(_on_confirm)\n    hide()\n\nfunc _on_confirm() -> void:\n    var chosen_suit: int = option_button.get_selected_id()\n    hide()\n    suit_declared.emit(chosen_suit)",
+          "caption": "Save as res://scenes/ui/declare_suit_dialog.gd and instance under Table/HUD."
         }
       ],
       "practicePrompt": {
-        "instructions": "Add a Cancel button that emits nothing but hides the dialog. Wire it up in _ready() and write the handler.",
-        "hint": "Use a second @onready var and connect its pressed signal.",
-        "solutionCode": "@onready var cancel_button: Button = $Panel/CancelButton\n\n# inside _ready():\ncancel_button.pressed.connect(_on_cancel)\n\nfunc _on_cancel() -> void:\n    hide()"
+        "instructions": "Add a `@onready var cancel_button: Button = $Panel/CancelButton` and a function `_on_cancel() -> void` that calls `hide()` (allowing the player to skip declaring a suit, as Kadi rules allow!).",
+        "hint": "Declare `@onready var cancel_button: Button = $Panel/CancelButton` and `func _on_cancel() -> void:` with `hide()`.",
+        "starterCode": "# Add @onready var cancel_button and func _on_cancel() -> void:\n",
+        "requiredTokens": [
+          "@onready",
+          "cancel_button",
+          "Button",
+          "func",
+          "_on_cancel()",
+          "hide()"
+        ],
+        "expectedOutput": "Hides the dialog without setting a suit demand when the player chooses not to declare.",
+        "solutionCode": "@onready var cancel_button: Button = $Panel/CancelButton\n\nfunc _on_cancel() -> void:\n    hide()"
       },
       "quizQuestions": [
         {
           "id": "q_08_01_a",
-          "prompt": "Why use `@onready` instead of initialising the node reference at the top of the script?",
-          "choices": ["It runs faster", "Children may not exist when the script loads; @onready defers resolution until _ready() runs after the tree is built", "@onready is required by Godot", "It allows null values"],
+          "prompt": "Why do we use `@onready var option_button: OptionButton = $Panel/OptionButton` instead of `var option_button = $Panel/OptionButton`?",
+          "choices": [
+            "`@onready` makes the button larger",
+            "Child nodes do not exist when the script is first instantiated; `@onready` waits until the node and its children enter the scene tree in `_ready()`",
+            "`@onready` is required for all integers",
+            "It saves battery"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Node paths resolve only after the scene tree is constructed. @onready guarantees the reference is fetched at the right moment.",
+          "explanation": "Without `@onready`, `$Panel/OptionButton` runs too early (before children are attached) and evaluates to `null`.",
           "concept": "Control nodes"
         },
         {
           "id": "q_08_01_b",
-          "prompt": "What is the advantage of storing the enum value as the OptionButton item id?",
-          "choices": ["It saves memory", "`get_selected_id()` returns the enum directly, so UI text can be translated without affecting rule logic", "It is required by Godot", "It sorts items automatically"],
+          "prompt": "What is the advantage of passing `CardTypes.Suits.HEARTS` as the `id` in `option_button.add_item(\"♥ Hearts\", CardTypes.Suits.HEARTS)`?",
+          "choices": [
+            "It colors the text red automatically",
+            "`get_selected_id()` returns the `CardTypes.Suits` enum integer directly, decoupling UI text from rule logic",
+            "It sorts the dropdown alphabetically",
+            "It disables the other suits"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Decoupling the displayed label from the underlying value means localisation and rule logic never interfere — the id is always a valid Suits member.",
+          "explanation": "Storing the enum ID on each item means UI labels can change freely without breaking enum comparisons.",
+          "concept": "UI popups"
+        },
+        {
+          "id": "q_08_01_c",
+          "prompt": "Why do we call `hide()` on `DeclareSuitDialog` instead of `queue_free()` when the player confirms a suit?",
+          "choices": [
+            "`queue_free()` is deprecated in Godot 4",
+            "Because Aces are played multiple times per match; hiding and re-showing the existing dialog avoids re-instantiating and re-connecting signals every time",
+            "`hide()` deletes the node from disk",
+            "`queue_free()` only works on 3D nodes"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Reusable dialogs should be hidden with `hide()` and shown with `show()` so their signal connections remain intact.",
           "concept": "UI popups"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Building the Suit-Declaration Popup (`declare_suit_dialog.tscn`)`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_08_02_declared_suit",
       "order": 2,
-      "title": "Enforcing the Declared Suit",
-      "bodyMarkdown": "# Enforcing the Declared Suit\n\nThe popup from the last lesson collects the player's choice — but a declaration means nothing until the rules engine **enforces** it. When an Ace is played and a suit declared, the next player must play that suit; the ordinary match-suit-or-rank rule is suspended until the demand is met.\n\nWe model this with one extra piece of game state: `declared_suit`. A sentinel value of `-1` means \"no declaration active\", so the variable doubles as its own on/off switch.\n\n```gdscript\nvar declared_suit: int = -1  # -1 = no active declaration\n\nfunc _on_suit_declared(suit: int) -> void:\n    declared_suit = suit\n\nfunc is_playable(card: CardData, top: CardData) -> bool:\n    if declared_suit != -1:\n        return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE\n    return card.suit == top.suit or card.rank == top.rank\n\nfunc on_card_played(card: CardData) -> void:\n    if declared_suit != -1 and card.suit == declared_suit:\n        declared_suit = -1  # demand satisfied — clear it\n```\n\n`is_playable` now has two modes. While a declaration is active, only the declared suit (or another Ace, which lets a player re-declare) gets through; the top card's suit and rank are irrelevant. Once no declaration is active, the familiar Phase 0 rule takes over.\n\nThe third function is the easy one to forget: **clearing** the declaration. The moment a card of the declared suit lands, the demand is satisfied and `declared_suit` returns to `-1`. Skip this step and the declaration haunts every later turn, locking the whole game to one suit forever.\n\n> [!WHY]\n> Temporary rule modifiers like a suit declaration have a full **lifecycle**: set, enforce, clear. Bugs cluster at the edges — a declaration that is never cleared, or one cleared too early (before any matching card was played). Writing the three lifecycle functions side by side, and naming the sentinel (`-1`) explicitly, makes each stage visible and testable. Any future modifier — an active penalty, a pending question — follows the same set/enforce/clear shape.\n\nConnect the dialog's `suit_declared` signal to `_on_suit_declared` and the loop is closed: UI collects the choice, state stores it, `is_playable` enforces it, and the first conforming card clears it.",
+      "title": "The 3-Stage Lifecycle of `declared_suit`: Set, Enforce, Clear",
+      "targetFile": "res://scripts/game_state.gd + res://scenes/table/table.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "In `GameState` (`res://scripts/game_state.gd`), initialize `var declared_suit: int = -1` (where `-1` is the sentinel meaning 'no active suit declaration').",
+        "When `_on_suit_declared(suit: int)` fires in `table.gd`, set `GameState.declared_suit = suit` and advance the turn.",
+        "When ANY legal card is played while `GameState.declared_suit != -1` (and it wasn't a new Ace setting a new suit), reset `GameState.declared_suit = -1` so the demand is cleared!"
+      ],
+      "keyTakeaways": [
+        "Using `-1` as a **sentinel value** in `var declared_suit: int = -1` avoids keeping a separate boolean `has_declared_suit` that could drift out of sync.",
+        "Every temporary rule modifier in a game has a 3-stage lifecycle: **1. Set** (when Ace is played), **2. Enforce** (in `is_single_card_playable`), and **3. Clear** (reset to `-1` once a matching card is played).",
+        "Forgetting the **Clear** step is a classic bug that locks the entire remainder of the match to one suit forever!"
+      ],
+      "bodyMarkdown": "# Enforcing & Clearing the Declared Suit (`declared_suit`)\n\nCollecting the suit from `DeclareSuitDialog` is Step 1. Now we must **enforce** that suit on the next player and **clear** the demand once it has been satisfied!\n\nWe store the active suit demand in `GameState.declared_suit` using `-1` as a **sentinel value** meaning *\"no suit demand is currently active\"*:\n\n```gdscript\n# Inside res://scripts/game_state.gd:\nvar declared_suit: int = -1  # -1 = no active demand; 0..3 = Hearts..Spades\n\nfunc set_declared_suit(suit: int) -> void:\n    declared_suit = suit\n    state_updated.emit()\n\nfunc on_legal_card_landed(card: CardData) -> void:\n    # If a suit demand was active and the player satisfied it with a non-Ace, clear it!\n    if declared_suit != -1 and card.suit == declared_suit and card.rank != CardTypes.Ranks.ACE:\n        declared_suit = -1\n```\n\nAnd how should an **AI Opponent** (Seats 1, 2, 3) choose which suit to declare when an AI plays an Ace? It simply counts which suit appears most frequently in its remaining hand!\n\n```gdscript\nfunc choose_best_suit_for_ai(hand: Array) -> int:\n    var counts: Dictionary = {0: 0, 1: 0, 2: 0, 3: 0}\n    for c in hand:\n        counts[c.suit] = counts.get(c.suit, 0) + 1\n    var best_suit: int = CardTypes.Suits.HEARTS\n    for s in [0, 1, 2, 3]:\n        if counts[s] > counts[best_suit]:\n            best_suit = s\n    return best_suit\n```\n\n> [!WHY]\n> Every temporary rule state in a game has three lifecycle stages: **Set → Enforce → Clear**. Writing all three stages together and testing what clears `declared_suit` back to `-1` prevents the infamous \"stuck suit\" bug where a single Ace locks the whole match to Hearts forever.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 8 (Ace Suit Declarations & UI Popups) — Lesson 2: *The 3-Stage Lifecycle of `declared_suit`: Set, Enforce, Clear* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `DeclareSuitDialog (Control)  [res://scenes/ui/declare_suit_dialog.tscn | script: declare_suit_dialog.gd]` |\n| **What Problem Does It Solve?** | Using `-1` as a **sentinel value** in `var declared_suit: int = -1` avoids keeping a separate boolean `has_declared_suit` that could drift out of sync. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `GameState` (`res://scripts/game_state.gd`), initialize `var declared_suit: int = -1` (where `-1` is the sentinel meaning 'no active suit declaration').** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **When `_on_suit_declared(suit: int)` fires in `table.gd`, set `GameState.declared_suit = suit` and advance the turn.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **When ANY legal card is played while `GameState.declared_suit != -1` (and it wasn't a new Ace setting a new suit), reset `GameState.declared_suit = -1` so the demand is cleared!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `The 3-Stage Lifecycle of `declared_suit`: Set, Enforce, Clear` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Using `-1` as a **sentinel value** in `var declared_suit: int = -1` avoids keeping a separate boolean `has_declared_suit` that could drift out of sync.\n- **Core Principle 2**: Every temporary rule modifier in a game has a 3-stage lifecycle: **1. Set** (when Ace is played), **2. Enforce** (in `is_single_card_playable`), and **3. Clear** (reset to `-1` once a matching card is played).\n- **Core Principle 3**: Forgetting the **Clear** step is a classic bug that locks the entire remainder of the match to one suit forever!\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why do we use `var declared_suit: int = -1` (a sentinel value) instead of keeping two variables (`var has_declaration: bool` and `var declared_suit: int`)?** | **Keeping the state in a single variable makes it impossible for `has_declaration` and `declared_suit` to get out of sync** — A single variable with a `-1` inactive sentinel eliminates impossible states where a boolean flag disagrees with the suit variable. |\n| **What bug happens if `on_card_played()` forgets to reset `declared_suit = -1` when a card of the demanded suit is played?** | **The suit demand stays active for the rest of the match, forcing every player to play that suit forever** — Without the Clear stage of the state lifecycle, `declared_suit != -1` remains true on every future turn. |\n| **While `declared_suit` is set to `CardTypes.Suits.DIAMONDS` (and top card is Ace of Clubs), is the 9 of Clubs playable?** | **No — while a suit declaration is active, you must play the declared suit (Diamonds) or another Ace/Joker** — An active suit declaration overrides the top card's suit and requires matching `declared_suit` (or playing another Ace). |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write `has_declaration() -> bool` that returns `declared_suit != -1`, and `clear_declaration() -> void` that resets `declared_suit = -1`.\n- **How Godot Evaluates It**: When your script runs `var declared_suit: int = -1`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Provides clean helper methods to query and clear the active Ace suit demand.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `var declared_suit: int = -1` | Declares a mutable typed variable to store state in memory. |\n| **Line 3** | `func _on_suit_declared(suit: int) -> void:` | Defines function `_on_suit_declared()` returning `void`. |\n| **Line 4** | `declared_suit = suit` | Assigns the computed right-hand value into `declared_suit`. |\n| **Line 6** | `func is_playable(card: CardData, top: CardData) -> bool:` | Defines function `is_playable()` returning `bool`. |\n| **Line 7** | `if declared_suit != -1:` | Branches into the indented block only when `declared_suit != -1` evaluates to `true`. |\n| **Line 8** | `return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE` | Immediately exits the current function and sends `card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE` back to the caller. |\n| **Line 9** | `return card.suit == top.suit or card.rank == top.rank` | Immediately exits the current function and sends `card.suit == top.suit or card.rank == top.rank` back to the caller. |\n| **Line 11** | `func on_card_played(card: CardData) -> void:` | Defines function `on_card_played()` returning `void`. |\n| **Line 12** | `if declared_suit != -1 and card.suit == declared_suit:` | Branches into the indented block only when `declared_suit != -1 and card.suit == declared_suit` evaluates to `true`. |\n| **Line 13** | `declared_suit = -1` | Assigns the computed right-hand value into `declared_suit`. |",
       "codeSnippets": [
         {
           "id": "cs_08_02_a",
           "language": "gdscript",
           "code": "var declared_suit: int = -1\n\nfunc _on_suit_declared(suit: int) -> void:\n    declared_suit = suit\n\nfunc is_playable(card: CardData, top: CardData) -> bool:\n    if declared_suit != -1:\n        return card.suit == declared_suit or card.rank == CardTypes.Ranks.ACE\n    return card.suit == top.suit or card.rank == top.rank\n\nfunc on_card_played(card: CardData) -> void:\n    if declared_suit != -1 and card.suit == declared_suit:\n        declared_suit = -1",
-          "caption": "The declaration lifecycle: store on Ace, enforce in is_playable, clear when satisfied."
+          "caption": "The complete 3-stage lifecycle of declared_suit: set, enforce, and clear."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `has_declaration()` returning true while a declaration is active, and `describe_demand()` returning e.g. \"Play Hearts\" using a SUIT_NAMES dictionary, or \"No demand\" when inactive.",
-        "hint": "Compare declared_suit against the -1 sentinel; use SUIT_NAMES[declared_suit] for the label.",
-        "solutionCode": "func has_declaration() -> bool:\n    return declared_suit != -1\n\nfunc describe_demand() -> String:\n    if not has_declaration():\n        return \"No demand\"\n    return \"Play %s\" % SUIT_NAMES[declared_suit]"
+        "instructions": "Write `has_declaration() -> bool` that returns `declared_suit != -1`, and `clear_declaration() -> void` that resets `declared_suit = -1`.",
+        "hint": "Write both small functions using `declared_suit` and `-1`.",
+        "starterCode": "var declared_suit: int = -1\n\n# Write has_declaration() -> bool and clear_declaration() -> void:\n",
+        "requiredTokens": [
+          "func",
+          "has_declaration()",
+          "return",
+          "declared_suit",
+          "-1",
+          "clear_declaration()"
+        ],
+        "expectedOutput": "Provides clean helper methods to query and clear the active Ace suit demand.",
+        "solutionCode": "var declared_suit: int = -1\n\nfunc has_declaration() -> bool:\n    return declared_suit != -1\n\nfunc clear_declaration() -> void:\n    declared_suit = -1"
       },
       "quizQuestions": [
         {
           "id": "q_08_02_a",
-          "prompt": "Why does `declared_suit` use -1 as its inactive value instead of a separate `has_declaration: bool` flag?",
-          "choices": ["-1 uses less memory", "A sentinel keeps the state in ONE variable, so it can never disagree with a companion flag — two variables can drift out of sync", "Godot forbids two state variables", "-1 is a valid suit"],
+          "prompt": "Why do we use `var declared_suit: int = -1` (a sentinel value) instead of keeping two variables (`var has_declaration: bool` and `var declared_suit: int`)?",
+          "choices": [
+            "Godot only allows 5 variables per script",
+            "Keeping the state in a single variable makes it impossible for `has_declaration` and `declared_suit` to get out of sync",
+            "Because `-1` is the enum value for Spades",
+            "To make rendering faster"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "With a value-plus-flag pair, a bug can set the flag without the value (or vice versa). A single sentinel-bearing variable makes the invalid combination unrepresentable.",
-          "concept": "Game state"
+          "explanation": "A single variable with a `-1` inactive sentinel eliminates impossible states where a boolean flag disagrees with the suit variable.",
+          "concept": "Sentinel values"
         },
         {
           "id": "q_08_02_b",
-          "prompt": "What goes wrong if `on_card_played` never resets `declared_suit` to -1?",
-          "choices": ["Nothing — the declaration expires automatically", "The declaration stays active forever, so every future turn is locked to that one suit and the game effectively jams", "The game crashes", "The Ace becomes unplayable"],
+          "prompt": "What bug happens if `on_card_played()` forgets to reset `declared_suit = -1` when a card of the demanded suit is played?",
+          "choices": [
+            "The game crashes immediately",
+            "The suit demand stays active for the rest of the match, forcing every player to play that suit forever",
+            "The deck empties",
+            "Aces stop working"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "State modifiers must be cleared when satisfied. A stale declaration keeps overriding is_playable on every later turn — the classic 'forgot the clear step' lifecycle bug.",
+          "explanation": "Without the Clear stage of the state lifecycle, `declared_suit != -1` remains true on every future turn.",
+          "concept": "Game state"
+        },
+        {
+          "id": "q_08_02_c",
+          "prompt": "While `declared_suit` is set to `CardTypes.Suits.DIAMONDS` (and top card is Ace of Clubs), is the 9 of Clubs playable?",
+          "choices": [
+            "Yes, because it matches Clubs",
+            "No — while a suit declaration is active, you must play the declared suit (Diamonds) or another Ace/Joker",
+            "Yes, because 9 is an Answer card",
+            "Only on AI turns"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "An active suit declaration overrides the top card's suit and requires matching `declared_suit` (or playing another Ace).",
           "concept": "Game state"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/game_state.gd + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `The 3-Stage Lifecycle of `declared_suit`: Set, Enforce, Clear`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ]
+    },
+    {
+      "id": "l_08_03_ai_ace_suit_picker",
+      "order": 3,
+      "title": "Smart AI Suit Selection When Playing an Ace",
+      "targetFile": "res://scripts/game_state.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Open `res://scripts/game_state.gd` and inspect `choose_best_suit_for_ai(hand: Array) -> int`.",
+        "Count how many cards of each suit (`0..3`) remain in the AI's `hand` using a Dictionary `{0: 0, 1: 0, 2: 0, 3: 0}`.",
+        "Return the suit with the highest count so the AI always declares the suit it holds the most of!"
+      ],
+      "keyTakeaways": [
+        "When an AI opponent plays an Ace, we do NOT show `DeclareSuitDialog` (which is for the human player!) — instead, `choose_best_suit_for_ai(hand)` picks the AI's most common suit automatically.",
+        "Tallying frequencies in a `Dictionary` and picking the maximum is a classic game-AI heuristic."
+      ],
+      "bodyMarkdown": "# Teaching AI Opponents to Declare Their Strongest Suit\n\nWhen **Player 0 (You)** plays an Ace, `table.gd` calls `declare_suit_dialog.show()` and waits for you to pick a suit from the popup. But what should happen when **Player 1, 2, or 3 (an AI Opponent)** plays an Ace?\n\nWe certainly shouldn't pop up the dialog for the human to pick the AI's suit! Instead, the AI inspects its remaining hand and declares whichever suit it holds the **most cards** of:\n\n```gdscript\n# Inside res://scripts/game_state.gd:\nfunc choose_best_suit_for_ai(hand: Array) -> int:\n    var counts: Dictionary = {0: 0, 1: 0, 2: 0, 3: 0}\n    for c in hand:\n        if c.rank != CardTypes.Ranks.JOKER:\n            counts[c.suit] = counts.get(c.suit, 0) + 1\n    var best_suit: int = CardTypes.Suits.HEARTS\n    for s in [0, 1, 2, 3]:\n        if counts[s] > counts[best_suit]:\n            best_suit = s\n    return best_suit\n```\n\n> [!WHY]\n> Why check `if player == 0: declare_suit_dialog.show()` vs `else: GameState.declared_suit = GameState.choose_best_suit_for_ai(...)`? Because human players interact asynchronously via UI signals (`suit_declared`), whereas AI players compute their choice synchronously in code and immediately call `TurnManager.advance_turn()`!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 8 (Ace Suit Declarations & UI Popups) — Lesson 3: *Smart AI Suit Selection When Playing an Ace* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd` |\n| **Scene / Node Context** | `DeclareSuitDialog (Control)  [res://scenes/ui/declare_suit_dialog.tscn | script: declare_suit_dialog.gd]` |\n| **What Problem Does It Solve?** | When an AI opponent plays an Ace, we do NOT show `DeclareSuitDialog` (which is for the human player!) — instead, `choose_best_suit_for_ai(hand)` picks the AI's most common suit automatically. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Open `res://scripts/game_state.gd` and inspect `choose_best_suit_for_ai(hand: Array) -> int`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Count how many cards of each suit (`0..3`) remain in the AI's `hand` using a Dictionary `{0: 0, 1: 0, 2: 0, 3: 0}`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Return the suit with the highest count so the AI always declares the suit it holds the most of!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Smart AI Suit Selection When Playing an Ace` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: When an AI opponent plays an Ace, we do NOT show `DeclareSuitDialog` (which is for the human player!) — instead, `choose_best_suit_for_ai(hand)` picks the AI's most common suit automatically.\n- **Core Principle 2**: Tallying frequencies in a `Dictionary` and picking the maximum is a classic game-AI heuristic.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why shouldn't `declare_suit_dialog.show()` be called when an AI opponent (Seat 1, 2, or 3) plays an Ace?** | **Because the human shouldn't choose the AI's suit (and the game would pause waiting for human input on an AI turn); instead the AI picks its most common suit automatically** — Human turns use the UI popup; AI turns use `choose_best_suit_for_ai(hand)` automatically. |\n| **How does `choose_best_suit_for_ai(hand)` decide which suit to declare?** | **It counts how many cards of each suit remain in `hand` using a Dictionary and picks the suit with the highest count** — Picking the suit with the highest count in its own hand maximizes the AI's playable options on future turns. |\n| **What does `choose_best_suit_for_ai([])` return when the AI's hand is empty?** | **`CardTypes.Suits.HEARTS` (`0`), because all counts are `0` and `best_suit` starts initialized to `0`** — Initializing `best_suit = 0` (`HEARTS`) ensures a valid suit is always returned even if `hand` is empty. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `count_suit(hand: Array, target_suit: int) -> int` that counts how many cards `c` in `hand` have `c.suit == target_suit`.\n- **How Godot Evaluates It**: When your script runs `func count_suit(hand: Array, target_suit: int) -> int:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Counts how many cards of `target_suit` are in `hand`.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func choose_best_suit_for_ai(hand: Array) -> int:` | Defines function `choose_best_suit_for_ai()` returning `int`. |\n| **Line 2** | `var counts: Dictionary = {0: 0, 1: 0, 2: 0, 3: 0}` | Declares a mutable typed variable to store state in memory. |\n| **Line 3** | `for c in hand:` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 4** | `counts[c.suit] = counts.get(c.suit, 0) + 1` | Assigns the computed right-hand value into `counts[c.suit]`. |\n| **Line 5** | `var best_suit: int = 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 6** | `for s in [0, 1, 2, 3]:` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 7** | `if counts[s] > counts[best_suit]:` | Branches into the indented block only when `counts[s] > counts[best_suit]` evaluates to `true`. |\n| **Line 8** | `best_suit = s` | Assigns the computed right-hand value into `best_suit`. |\n| **Line 9** | `return best_suit` | Immediately exits the current function and sends `best_suit` back to the caller. |",
+      "codeSnippets": [
+        {
+          "id": "cs_08_03_a",
+          "language": "gdscript",
+          "code": "func choose_best_suit_for_ai(hand: Array) -> int:\n    var counts: Dictionary = {0: 0, 1: 0, 2: 0, 3: 0}\n    for c in hand:\n        counts[c.suit] = counts.get(c.suit, 0) + 1\n    var best_suit: int = 0\n    for s in [0, 1, 2, 3]:\n        if counts[s] > counts[best_suit]:\n            best_suit = s\n    return best_suit",
+          "caption": "Frequency-counting heuristic so AI opponents declare their strongest suit on an Ace."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `count_suit(hand: Array, target_suit: int) -> int` that counts how many cards `c` in `hand` have `c.suit == target_suit`.",
+        "hint": "Initialize `var count: int = 0`, loop `for c in hand:`, check `if c.suit == target_suit: count += 1`, and `return count`.",
+        "starterCode": "func count_suit(hand: Array, target_suit: int) -> int:\n    var count: int = 0\n    # Loop over hand and increment count when c.suit == target_suit:\n",
+        "requiredTokens": [
+          "for",
+          "c",
+          "hand",
+          "if",
+          "c.suit == target_suit",
+          "count",
+          "return"
+        ],
+        "expectedOutput": "Counts how many cards of `target_suit` are in `hand`.",
+        "solutionCode": "func count_suit(hand: Array, target_suit: int) -> int:\n    var count: int = 0\n    for c in hand:\n        if c.suit == target_suit:\n            count += 1\n    return count"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_08_03_a",
+          "prompt": "Why shouldn't `declare_suit_dialog.show()` be called when an AI opponent (Seat 1, 2, or 3) plays an Ace?",
+          "choices": [
+            "Dialogs crash on AI turns",
+            "Because the human shouldn't choose the AI's suit (and the game would pause waiting for human input on an AI turn); instead the AI picks its most common suit automatically",
+            "AI opponents cannot hold Aces",
+            "Because `OptionButton` only has 3 items"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Human turns use the UI popup; AI turns use `choose_best_suit_for_ai(hand)` automatically.",
+          "concept": "UI popups"
+        },
+        {
+          "id": "q_08_03_b",
+          "prompt": "How does `choose_best_suit_for_ai(hand)` decide which suit to declare?",
+          "choices": [
+            "It always picks Spades",
+            "It counts how many cards of each suit remain in `hand` using a Dictionary and picks the suit with the highest count",
+            "It picks a random number between 10 and 20",
+            "It copies the previous top card"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Picking the suit with the highest count in its own hand maximizes the AI's playable options on future turns.",
+          "concept": "Game state"
+        },
+        {
+          "id": "q_08_03_c",
+          "prompt": "What does `choose_best_suit_for_ai([])` return when the AI's hand is empty?",
+          "choices": [
+            "It crashes",
+            "`CardTypes.Suits.HEARTS` (`0`), because all counts are `0` and `best_suit` starts initialized to `0`",
+            "`-1`",
+            "`15`"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Initializing `best_suit = 0` (`HEARTS`) ensures a valid suit is always returned even if `hand` is empty.",
+          "concept": "Game state"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/game_state.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Smart AI Suit Selection When Playing an Ace`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
-  "debugChallenge": null
+  "debugChallenge": {
+    "id": "dbg_08_stale_suit_declaration",
+    "brokenCode": "func on_card_played(card: CardData) -> void:\n    GameState.discard_pile.append(card)\n    if card.rank == CardTypes.Ranks.ACE:\n        declare_suit_dialog.show()",
+    "bugDescription": "After Player 0 plays an Ace and declares Hearts, Player 1 plays the 7 of Hearts — yet on Player 2's turn, Player 2 is STILL forced to play Hearts (they cannot play the 7 of Spades on the 7 of Hearts)! The Hearts demand never expires!",
+    "fixedCode": "func on_card_played(card: CardData) -> void:\n    GameState.discard_pile.append(card)\n    if card.rank == CardTypes.Ranks.ACE:\n        declare_suit_dialog.show()\n    elif GameState.declared_suit != -1 and card.suit == GameState.declared_suit:\n        GameState.declared_suit = -1",
+    "explanation": "`on_card_played()` handled **setting** the declaration when an Ace was played (lines 3–4), but completely forgot the **clearing** stage when a subsequent card satisfied `GameState.declared_suit`! Adding `elif GameState.declared_suit != -1 and card.suit == GameState.declared_suit: GameState.declared_suit = -1` clears the demand as soon as it is met.",
+    "buggyLineNumber": 3,
+    "hint": "Look at lines 3–4: what happens when `card.rank` is NOT an Ace, and `GameState.declared_suit` was active from the previous turn?"
+  }
 }

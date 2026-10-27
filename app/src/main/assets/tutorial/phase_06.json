@@ -2,93 +2,329 @@
   "id": "phase_06_qa_cards",
   "order": 6,
   "title": "Question & Answer Cards",
-  "summary": "Compose small functions to handle Q/A pairing: when you play a question card (Q or 8) you must accompany it with a matching answer (4-7, 9, 10, A) in the same move, or draw. Practise null-safe access along the way.",
-  "estimatedMinutes": 55,
-  "concepts": ["Function composition", "Null-handling", "Validation loops"],
-  "programmingConcepts": ["Function composition", "Optional values", "Guard clauses", "Loops", "Validation"],
+  "summary": "Implement Kadi's signature Question (Queen & 8) and Answer (4, 5, 6, 7, 9, 10, Ace) pairing rule: stage multi-card moves in `Table.gd`, validate entire Q+A chains before mutating state, and handle null-safe lookups.",
+  "estimatedMinutes": 65,
+  "concepts": [
+    "Function composition",
+    "Null-handling",
+    "Validation loops",
+    "Multi-Card Staging"
+  ],
+  "programmingConcepts": [
+    "Function composition",
+    "Optional values",
+    "Guard clauses",
+    "Loops",
+    "Atomic state commits"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/rule_validator.gd",
+    "res://scenes/table/table.gd"
+  ],
+  "sceneTreeBlueprint": "Table (Node2D)  [script: res://scenes/table/table.gd]\n├── PlayerHandContainer (HBoxContainer)  [Click Q♥ then 7♥ to stage [Q♥, 7♥]]\n└── HUD (CanvasLayer)\n    └── PlaySelectedButton (Button)      [Validates staged_cards via RuleValidator.validate_move()]",
+  "learningObjectives": [
+    "Compose small, single-purpose helper functions (`is_question_card`, `is_answer_card`, `question_is_satisfied`) with null guards.",
+    "Validate multi-card plays (`staged_cards: Array[CardData]`) so every Question Card (Q or 8) is followed by a matching Answer Card of the same suit.",
+    "Apply the **Validate-Then-Commit** pattern in `table.gd` so illegal multi-card combinations never partially mutate the player's hand."
+  ],
   "lessons": [
     {
       "id": "l_06_01_qa_composition",
       "order": 1,
-      "title": "Composing Functions for Q/A Pairing",
-      "bodyMarkdown": "# Function Composition and Null-Handling\n\n**Function composition** means writing small functions that call each other to build up complex behaviour. Kadi's question/answer rule is a perfect case: `is_question_card`, `is_answer_card`, and `question_is_satisfied` each do one thing.\n\nThe rule: when a player plays a **question card** (a Queen or an 8), they must **accompany it with a matching answer card** (4, 5, 6, 7, 9, 10, or Ace) in the same move. If they hold no answer to pair with it, they cannot complete the question — they draw a card from the pile instead.\n\n```gdscript\nfunc is_question_card(rank: int) -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n\nfunc is_answer_card(rank: int) -> bool:\n    return rank in [CardTypes.Ranks.FOUR, CardTypes.Ranks.FIVE,\n                   CardTypes.Ranks.SIX, CardTypes.Ranks.SEVEN,\n                   CardTypes.Ranks.NINE, CardTypes.Ranks.TEN,\n                   CardTypes.Ranks.ACE]\n\nfunc question_is_satisfied(question: CardData, answer: CardData) -> bool:\n    if not is_question_card(question.rank):\n        return true  # not a question, nothing to pair\n    if answer == null:\n        return false  # no answer supplied -> player must draw instead\n    return is_answer_card(answer.rank)\n```\n\nNote the **null-guard**: `if answer == null: return false`. A player who plays a lone question with no answer card passes `null` here — without the guard, calling `answer.rank` on a null throws. Null-handling is the difference between a game that runs and a game that crashes when someone plays an unaccompanied question.\n\n`question_is_satisfied` reads like the rule itself: \"if the card played isn't a question, fine; otherwise there must be an answer card paired with it.\" Each helper is independently testable.\n\n> [!WHY]\n> Composing tiny functions turns rule text into readable code. A designer reading `question_is_satisfied` understands the Q/A rule without comments. Splitting also means changing what counts as an answer (say, removing Aces for a variant) touches only `is_answer_card` — every caller benefits and nothing else moves. Null-guards at function tops are cheap insurance against the single most common Godot crash: calling a method on a freed or missing value.\n\nGuard first, then the happy path. Never let a null reach a property access.",
+      "title": "Composing Functions for Q/A Pairing & Null Guards",
+      "targetFile": "res://scripts/rule_validator.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Open `res://scripts/rule_validator.gd`.",
+        "Add `is_question_card(rank: int) -> bool`, `is_answer_card(rank: int) -> bool`, and `question_is_satisfied(question: CardData, answer: CardData) -> bool`.",
+        "Place the null guard `if answer == null: return false` BEFORE reading `answer.rank` or `answer.suit`!"
+      ],
+      "keyTakeaways": [
+        "In Kadi, **Queen (12)** and **8** are Question Cards; **4, 5, 6, 7, 9, 10, and Ace (14)** are Answer Cards.",
+        "When a player plays a Question Card, they MUST accompany it with a matching Answer Card in the same move (or draw a card from the pile).",
+        "Always guard `if answer == null: return false` before accessing properties on an optional `CardData` object."
+      ],
+      "bodyMarkdown": "# Function Composition & Null-Safe Q/A Pairing\n\nIn **Kadi**, **Queen (Q)** and **8** are **[[Question Cards]]**. You cannot simply drop a Queen on the discard pile by itself and walk away! Let's read `KADI.md`:\n\n> [!KADI]\n> *\"If a player plays a Question Card, it must be accompanied by a matching answer card. If the player does not have an answer card, they must draw a card from the draw pile.\"*\n> Answer Cards are **4, 5, 6, 7, 9, 10, and Ace (A)**.\n\nWe encode this rule in **`res://scripts/rule_validator.gd`** using **[[Function composition]]** — building small, focused helper functions that call one another:\n\n```gdscript\nstatic func is_question_card(rank: int) -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n\nstatic func is_answer_card(rank: int) -> bool:\n    return rank in [\n        CardTypes.Ranks.FOUR, CardTypes.Ranks.FIVE,\n        CardTypes.Ranks.SIX, CardTypes.Ranks.SEVEN,\n        CardTypes.Ranks.NINE, CardTypes.Ranks.TEN,\n        CardTypes.Ranks.ACE\n    ]\n\nstatic func question_is_satisfied(question: CardData, answer: CardData) -> bool:\n    if not is_question_card(question.rank):\n        return true\n    if answer == null:\n        return false  # Lone question card -> player must draw!\n    if not is_answer_card(answer.rank):\n        return false\n    return answer.suit == question.suit or answer.rank == CardTypes.Ranks.ACE\n```\n\n> [!WHY]\n> Why is `if answer == null: return false` placed on line 16 **before** `answer.rank`? Because when a player clicks only a Queen in their hand and presses **Play Selected**, there is no second card (`answer` is `null`). Guarding against `null` first turns a fatal crash (`Invalid get index 'rank' on base: 'Nil'`) into a clean `false` return!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 6 (Question & Answer Cards) — Lesson 1: *Composing Functions for Q/A Pairing & Null Guards* |\n| **Which File Do I Edit?** | `res://scripts/rule_validator.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [script: res://scenes/table/table.gd]` |\n| **What Problem Does It Solve?** | In Kadi, **Queen (12)** and **8** are Question Cards; **4, 5, 6, 7, 9, 10, and Ace (14)** are Answer Cards. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Open `res://scripts/rule_validator.gd`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Add `is_question_card(rank: int) -> bool`, `is_answer_card(rank: int) -> bool`, and `question_is_satisfied(question: CardData, answer: CardData) -> bool`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Place the null guard `if answer == null: return false` BEFORE reading `answer.rank` or `answer.suit`!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Composing Functions for Q/A Pairing & Null Guards` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/rule_validator.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: In Kadi, **Queen (12)** and **8** are Question Cards; **4, 5, 6, 7, 9, 10, and Ace (14)** are Answer Cards.\n- **Core Principle 2**: When a player plays a Question Card, they MUST accompany it with a matching Answer Card in the same move (or draw a card from the pile).\n- **Core Principle 3**: Always guard `if answer == null: return false` before accessing properties on an optional `CardData` object.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why must `if answer == null: return false` come BEFORE `if not is_answer_card(answer.rank):`?** | **Because reading `answer.rank` when `answer` is `null` crashes the game with a Nil reference error** — A null guard must execute before any property or method access on the potentially-null variable. |\n| **Which ranks are Question Cards in Kadi?** | **Queen (12) and Eight (8)** — Per KADI.md: 'Queen (Q) and 8 cards are Question Cards.' |\n| **Which ranks are Answer Cards in Kadi?** | **4, 5, 6, 7, 9, 10, and Ace** — Per KADI.md: '4, 5, 6, 7, 9, 10, and Ace (A) cards are Answer Cards.' |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `must_draw(question: CardData, answer: CardData) -> bool` that returns `true` when `is_question_card(question.rank)` is true AND `answer == null`.\n- **How Godot Evaluates It**: When your script runs `func must_draw(question: CardData, answer: CardData) -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns true when a player attempts to play a lone Question Card without an Answer Card.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# Add inside res://scripts/rule_validator.gd:` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `static func is_question_card(rank: int) -> bool:` | Defines static helper method `is_question_card()` callable directly on the class without instantiating an object. |\n| **Line 3** | `return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT` | Immediately exits the current function and sends `rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT` back to the caller. |\n| **Line 5** | `static func is_answer_card(rank: int) -> bool:` | Defines static helper method `is_answer_card()` callable directly on the class without instantiating an object. |\n| **Line 6** | `return rank in [4, 5, 6, 7, 9, 10, 14]` | Immediately exits the current function and sends `rank in [4, 5, 6, 7, 9, 10, 14]` back to the caller. |\n| **Line 8** | `static func question_is_satisfied(question: CardData, answer: CardData) -> bool:` | Defines static helper method `question_is_satisfied()` callable directly on the class without instantiating an object. |\n| **Line 9** | `if not is_question_card(question.rank):` | Branches into the indented block only when `not is_question_card(question.rank)` evaluates to `true`. |\n| **Line 10** | `return true` | Immediately exits the current function and sends `true` back to the caller. |\n| **Line 11** | `if answer == null:` | Branches into the indented block only when `answer == null` evaluates to `true`. |\n| **Line 12** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 13** | `if not is_answer_card(answer.rank):` | Branches into the indented block only when `not is_answer_card(answer.rank)` evaluates to `true`. |\n| **Line 14** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 15** | `return answer.suit == question.suit or answer.rank == CardTypes.Ranks.ACE` | Immediately exits the current function and sends `answer.suit == question.suit or answer.rank == CardTypes.Ranks.ACE` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_06_01_a",
           "language": "gdscript",
-          "code": "func is_question_card(rank: int) -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n\nfunc is_answer_card(rank: int) -> bool:\n    return rank in [4, 5, 6, 7, 9, 10, 14]\n\nfunc question_is_satisfied(question: CardData, answer: CardData) -> bool:\n    if not is_question_card(question.rank):\n        return true\n    if answer == null:\n        return false\n    return is_answer_card(answer.rank)",
-          "caption": "Three composed functions: the player's question must be paired with an answer, with a null guard."
+          "code": "# Add inside res://scripts/rule_validator.gd:\nstatic func is_question_card(rank: int) -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n\nstatic func is_answer_card(rank: int) -> bool:\n    return rank in [4, 5, 6, 7, 9, 10, 14]\n\nstatic func question_is_satisfied(question: CardData, answer: CardData) -> bool:\n    if not is_question_card(question.rank):\n        return true\n    if answer == null:\n        return false\n    if not is_answer_card(answer.rank):\n        return false\n    return answer.suit == question.suit or answer.rank == CardTypes.Ranks.ACE",
+          "caption": "Three composed static helpers in RuleValidator for Question/Answer pairing."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `must_draw(question: CardData, answer: CardData)` returning true when a question card was played without an answer to pair it. Reuse is_question_card.",
-        "hint": "It's a question AND the answer is null.",
+        "instructions": "Write a function `must_draw(question: CardData, answer: CardData) -> bool` that returns `true` when `is_question_card(question.rank)` is true AND `answer == null`.",
+        "hint": "Use `return is_question_card(question.rank) and answer == null`.",
+        "starterCode": "func must_draw(question: CardData, answer: CardData) -> bool:\n    # Return true when question is a Question Card and answer is null:\n",
+        "requiredTokens": [
+          "func",
+          "must_draw",
+          "return",
+          "is_question_card",
+          "question.rank",
+          "and",
+          "answer",
+          "null"
+        ],
+        "expectedOutput": "Returns true when a player attempts to play a lone Question Card without an Answer Card.",
         "solutionCode": "func must_draw(question: CardData, answer: CardData) -> bool:\n    return is_question_card(question.rank) and answer == null"
       },
       "quizQuestions": [
         {
           "id": "q_06_01_a",
-          "prompt": "Why place the null guard `if answer == null: return false` before reading `answer.rank`?",
-          "choices": ["It runs faster there", "A player may play a question with no answer card (null); guarding first returns 'must draw' instead of crashing on `answer.rank`", "It is required by Godot", "To make the function shorter"],
+          "prompt": "Why must `if answer == null: return false` come BEFORE `if not is_answer_card(answer.rank):`?",
+          "choices": [
+            "To save memory",
+            "Because reading `answer.rank` when `answer` is `null` crashes the game with a Nil reference error",
+            "Because `is_answer_card` modifies `answer`",
+            "Godot requires `null` on line 1"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Accessing a property on null throws a runtime error. A lone question passes null as the answer, so the guard turns a crash into the correct 'draw a card' outcome.",
+          "explanation": "A null guard must execute before any property or method access on the potentially-null variable.",
           "concept": "Null-handling"
         },
         {
           "id": "q_06_01_b",
-          "prompt": "What is the main benefit of splitting the Q/A rule into `is_question_card`, `is_answer_card`, and `question_is_satisfied`?",
-          "choices": ["It uses less memory", "Each helper is independently testable and the rule reads like English; changing one definition does not ripple", "It is required by Godot", "It compiles faster"],
+          "prompt": "Which ranks are Question Cards in Kadi?",
+          "choices": [
+            "Jack (11) and King (13)",
+            "Queen (12) and Eight (8)",
+            "2, 3, and Joker",
+            "Ace (14) only"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Function composition localises change: altering what counts as an answer edits one helper, and every caller automatically picks up the new rule.",
+          "explanation": "Per KADI.md: 'Queen (Q) and 8 cards are Question Cards.'",
+          "concept": "Function composition"
+        },
+        {
+          "id": "q_06_01_c",
+          "prompt": "Which ranks are Answer Cards in Kadi?",
+          "choices": [
+            "4, 5, 6, 7, 9, 10, and Ace",
+            "2, 3, and Joker",
+            "Only 7 and 10",
+            "Jack and King"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Per KADI.md: '4, 5, 6, 7, 9, 10, and Ace (A) cards are Answer Cards.'",
           "concept": "Function composition"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/rule_validator.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Composing Functions for Q/A Pairing & Null Guards`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_06_02_qa_chains",
       "order": 2,
-      "title": "Validating Question-Answer Chains",
-      "bodyMarkdown": "# Validating Question-Answer Chains\n\nKadi lets a player put down **several cards in one move**: a Question Card (Queen or 8) followed by its answer, or even a run of questions that ends in one settling answer. The table rule is unforgiving — every question must be accompanied by a **matching Answer Card of the same suit**, or the whole play is illegal and the player draws instead.\n\nA single boolean check cannot judge a multi-card play. We need a **validator**: a loop that walks the proposed play card by card and, at each Question Card, looks ahead to confirm what follows it.\n\n```gdscript\nfunc validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if not is_question_card(card.rank):\n            continue\n        if i + 1 >= cards.size():\n            return false  # question with nothing after it -> draw\n        var next_card: CardData = cards[i + 1]\n        if is_question_card(next_card.rank):\n            continue  # chained question; the chain's final answer settles it\n        if not is_answer_card(next_card.rank):\n            return false\n        if next_card.suit != card.suit:\n            return false  # answer must match the question's suit\n    return true\n```\n\nThe `continue` statements are guard clauses inside a loop: non-questions are skipped, chained questions defer to the next iteration, and only a genuine question-answer pair gets the full two-part test — is it an answer, and does the suit match?\n\nNotice how the validator **reuses** `is_question_card` and `is_answer_card` from the previous lesson. Composition pays off again: the chain rule is expressed entirely in terms of helpers you already trust.\n\n> [!WHY]\n> Validating the *whole* play before mutating any state is a core pattern. If you popped cards off the hand one at a time and discovered the third card was illegal, you would have to un-play the first two — rollback code that is fiddly and bug-prone. A pure validator that answers \"is this entire play legal?\" first means the game state changes only once, and only for legal plays. Validate, then commit.\n\nWhen `validate_question_chain` returns false, the rules engine rejects the move and the player draws a card — exactly what the Kadi rulebook demands.",
+      "title": "Validating Multi-Card Moves & Question-Answer Chains",
+      "targetFile": "res://scripts/rule_validator.gd + res://scenes/table/table.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Add `validate_question_chain(cards: Array[CardData]) -> bool` and `validate_move(cards: Array[CardData], top: CardData, penalty_stack: int, declared_suit: int) -> bool` to `res://scripts/rule_validator.gd`.",
+        "In `res://scenes/table/table.gd`, update `_on_play_selected_pressed()` to call `RuleValidator.validate_move(staged_cards, top, GameState.penalty_stack, GameState.declared_suit)`.",
+        "Only remove cards from `GameState.hands[0]` and append to `GameState.discard_pile` AFTER `validate_move()` returns `true`!"
+      ],
+      "keyTakeaways": [
+        "**Validate-Then-Commit**: Always check the legality of the ENTIRE `staged_cards` array before removing a single card from the player's hand!",
+        "In a multi-card Question chain (e.g. `[Q♥, Q♠, 7♠]`), the first card must be playable on `top`, chained Questions can bridge suits/ranks, and the final card after a Question must be a matching-suit Answer Card!",
+        "If `validate_move()` returns `false`, `staged_cards` is cleared and the player draws 1 penalty card without corrupting their hand."
+      ],
+      "bodyMarkdown": "# Validating Question-Answer Chains (`validate_move`)\n\nIn Phase 2, we built `staged_cards: Array[CardData]` in `table.gd` so the player can click multiple cards in their hand (for example, clicking **`Q♥`** and then **`7♥`**) before pressing **Play Selected**.\n\nNow let's write the complete multi-card validator in **`res://scripts/rule_validator.gd`**:\n\n```gdscript\nstatic func validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if not is_question_card(card.rank):\n            continue\n        # Every Question Card MUST have a card after it in the same move:\n        if i + 1 >= cards.size():\n            return false\n        var next_card: CardData = cards[i + 1]\n        if is_question_card(next_card.rank):\n            continue  # Chained question (e.g. Q♥ -> Q♠ -> 7♠)\n        if not is_answer_card(next_card.rank):\n            return false\n        if next_card.suit != card.suit and next_card.rank != CardTypes.Ranks.ACE:\n            return false\n    return true\n\nstatic func validate_move(cards: Array, top: CardData, penalty_stack: int, declared_suit: int) -> bool:\n    if cards.is_empty():\n        return false\n    # 1. The first card in the move must be playable on the current top card:\n    if not is_single_card_playable(cards[0], top, penalty_stack, declared_suit):\n        return false\n    # 2. Every Question Card in the sequence must be properly answered:\n    if not validate_question_chain(cards):\n        return false\n    return true\n```\n\n> [!WHY]\n> Why validate the **entire** `cards` array in `validate_move()` *before* removing any card from `GameState.hands[player]`? Imagine if you removed `cards[0]` (`Q♥`) first, put it on the discard pile, and only then discovered `cards[1]` was illegal — you would have to write messy rollback code to put `Q♥` back into the hand! **Validate first, commit second** guarantees atomic state updates.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 6 (Question & Answer Cards) — Lesson 2: *Validating Multi-Card Moves & Question-Answer Chains* |\n| **Which File Do I Edit?** | `res://scripts/rule_validator.gd + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [script: res://scenes/table/table.gd]` |\n| **What Problem Does It Solve?** | **Validate-Then-Commit**: Always check the legality of the ENTIRE `staged_cards` array before removing a single card from the player's hand! |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Add `validate_question_chain(cards: Array[CardData]) -> bool` and `validate_move(cards: Array[CardData], top: CardData, penalty_stack: int, declared_suit: int) -> bool` to `res://scripts/rule_validator.gd`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **In `res://scenes/table/table.gd`, update `_on_play_selected_pressed()` to call `RuleValidator.validate_move(staged_cards, top, GameState.penalty_stack, GameState.declared_suit)`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Only remove cards from `GameState.hands[0]` and append to `GameState.discard_pile` AFTER `validate_move()` returns `true`!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Validating Multi-Card Moves & Question-Answer Chains` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/rule_validator.gd + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: **Validate-Then-Commit**: Always check the legality of the ENTIRE `staged_cards` array before removing a single card from the player's hand!\n- **Core Principle 2**: In a multi-card Question chain (e.g. `[Q♥, Q♠, 7♠]`), the first card must be playable on `top`, chained Questions can bridge suits/ranks, and the final card after a Question must be a matching-suit Answer Card!\n- **Core Principle 3**: If `validate_move()` returns `false`, `staged_cards` is cleared and the player draws 1 penalty card without corrupting their hand.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why does `validate_question_chain()` check `if i + 1 >= cards.size(): return false` before reading `cards[i + 1]`?** | **Because if a Question Card is the last card in `cards`, `i + 1` is out of bounds and the Question has no accompanying Answer Card!** — If a Question Card sits at the last index (`i == cards.size() - 1`), there is no card after it to answer the question, AND reading `cards[i + 1]` would crash with an out-of-bounds index error! |\n| **Why is it critical to run `RuleValidator.validate_move(cards, ...)` BEFORE calling `GameState.hands[player].erase(c)`?** | **So an illegal multi-card move never partially removes cards from the player's hand before failing on the second card** — Validating the whole move upfront ensures atomic state updates with zero rollback bugs. |\n| **Player 0 stages `[Queen of Hearts, 7 of Spades]` and clicks Play Selected. What does `validate_question_chain()` return, and why?** | **False, because the accompanying Answer Card (7 of Spades) does not match the Question Card's suit (Hearts)!** — An Answer Card paired with a Question Card must match the Question's suit (unless the answer is a wild Ace). |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write `count_unanswered_questions(cards: Array) -> int` that loops over `for i in range(cards.size()):` and increments `var unanswered: int = 0` whenever `is_question_card(cards[i].rank)` is true AND `i + 1 >= cards.size()`.\n- **How Godot Evaluates It**: When your script runs `func count_unanswered_questions(cards: Array) -> int:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Counts any Question card at the end of a move that lacks a following Answer card.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# Add inside res://scripts/rule_validator.gd:` | Comment / documentation line (ignored by Godot at runtime). |\n| **Line 2** | `static func validate_question_chain(cards: Array) -> bool:` | Defines static helper method `validate_question_chain()` callable directly on the class without instantiating an object. |\n| **Line 3** | `for i in range(cards.size()):` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 4** | `var card: CardData = cards[i]` | Declares a mutable typed variable to store state in memory. |\n| **Line 5** | `if not is_question_card(card.rank):` | Branches into the indented block only when `not is_question_card(card.rank)` evaluates to `true`. |\n| **Line 6** | `continue` | Skips the rest of the current loop iteration and jumps straight to the next item. |\n| **Line 7** | `if i + 1 >= cards.size():` | Branches into the indented block only when `i + 1 >= cards.size()` evaluates to `true`. |\n| **Line 8** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 9** | `var next_card: CardData = cards[i + 1]` | Declares a mutable typed variable to store state in memory. |\n| **Line 10** | `if is_question_card(next_card.rank):` | Branches into the indented block only when `is_question_card(next_card.rank)` evaluates to `true`. |\n| **Line 11** | `continue` | Skips the rest of the current loop iteration and jumps straight to the next item. |\n| **Line 12** | `if not is_answer_card(next_card.rank):` | Branches into the indented block only when `not is_answer_card(next_card.rank)` evaluates to `true`. |\n| **Line 13** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 14** | `if next_card.suit != card.suit and next_card.rank != CardTypes.Ranks.ACE:` | Branches into the indented block only when `next_card.suit != card.suit and next_card.rank != CardTypes.Ranks.ACE` evaluates to `true`. |\n| **Line 15** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 16** | `return true` | Immediately exits the current function and sends `true` back to the caller. |\n| **Line 18** | `static func validate_move(cards: Array, top: CardData, penalty_stack: int, declared_suit: int) -> bool:` | Defines static helper method `validate_move()` callable directly on the class without instantiating an object. |\n| **Line 19** | `if cards.is_empty():` | Branches into the indented block only when `cards.is_empty()` evaluates to `true`. |\n| **Line 20** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 21** | `if not is_single_card_playable(cards[0], top, penalty_stack, declared_suit):` | Branches into the indented block only when `not is_single_card_playable(cards[0], top, penalty_stack, declared_suit)` evaluates to `true`. |\n| **Line 22** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 23** | `return validate_question_chain(cards)` | Immediately exits the current function and sends `validate_question_chain(cards)` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_06_02_a",
           "language": "gdscript",
-          "code": "func validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if not is_question_card(card.rank):\n            continue\n        if i + 1 >= cards.size():\n            return false\n        var next_card: CardData = cards[i + 1]\n        if is_question_card(next_card.rank):\n            continue\n        if not is_answer_card(next_card.rank):\n            return false\n        if next_card.suit != card.suit:\n            return false\n    return true",
-          "caption": "A validator that walks a multi-card play and checks every question is answered in suit."
+          "code": "# Add inside res://scripts/rule_validator.gd:\nstatic func validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if not is_question_card(card.rank):\n            continue\n        if i + 1 >= cards.size():\n            return false\n        var next_card: CardData = cards[i + 1]\n        if is_question_card(next_card.rank):\n            continue\n        if not is_answer_card(next_card.rank):\n            return false\n        if next_card.suit != card.suit and next_card.rank != CardTypes.Ranks.ACE:\n            return false\n    return true\n\nstatic func validate_move(cards: Array, top: CardData, penalty_stack: int, declared_suit: int) -> bool:\n    if cards.is_empty():\n        return false\n    if not is_single_card_playable(cards[0], top, penalty_stack, declared_suit):\n        return false\n    return validate_question_chain(cards)",
+          "caption": "Complete multi-card move and Q/A chain validation in RuleValidator."
         },
         {
           "id": "cs_06_02_b",
           "language": "gdscript",
-          "code": "func try_play(cards: Array) -> void:\n    if not validate_question_chain(cards):\n        draw_card(GameState.current_player)\n        return\n    for card in cards:\n        GameState.discard_pile.append(card)",
-          "caption": "Validate first, commit second — state changes only for legal plays."
+          "code": "# Inside res://scenes/table/table.gd:\nfunc try_play_move(player: int, cards: Array) -> bool:\n    var top: CardData = GameState.top_discard()\n    if not RuleValidator.validate_move(cards, top, GameState.penalty_stack, GameState.declared_suit):\n        GameState.last_play_was_legal = false\n        GameState.draw_cards(player, 1)\n        TurnManager.advance_turn()\n        return false\n    GameState.last_play_was_legal = true\n    for c in cards:\n        GameState.hands[player].erase(c)\n        GameState.discard_pile.append(c)\n    GameState.state_updated.emit()\n    return true",
+          "caption": "Validate first, commit second: state mutates only after validate_move() succeeds."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `count_unanswered_questions(cards: Array)` that returns how many Question Cards in the play are NOT immediately followed by an answer card of the same suit. Reuse is_question_card and is_answer_card.",
-        "hint": "Loop with an index; for each question, check `i + 1 < cards.size()`, then rank and suit of the next card. Increment a counter on failure.",
-        "solutionCode": "func count_unanswered_questions(cards: Array) -> int:\n    var unanswered: int = 0\n    for i in range(cards.size()):\n        if not is_question_card(cards[i].rank):\n            continue\n        if i + 1 >= cards.size():\n            unanswered += 1\n        elif not is_answer_card(cards[i + 1].rank) or cards[i + 1].suit != cards[i].suit:\n            unanswered += 1\n    return unanswered"
+        "instructions": "Write `count_unanswered_questions(cards: Array) -> int` that loops over `for i in range(cards.size()):` and increments `var unanswered: int = 0` whenever `is_question_card(cards[i].rank)` is true AND `i + 1 >= cards.size()`.",
+        "hint": "Inside `for i in range(cards.size()):`, check `if is_question_card(cards[i].rank) and i + 1 >= cards.size(): unanswered += 1`, then `return unanswered`.",
+        "starterCode": "func count_unanswered_questions(cards: Array) -> int:\n    var unanswered: int = 0\n    # Loop over range(cards.size()) and check for a trailing question card:\n",
+        "requiredTokens": [
+          "for",
+          "range(cards.size())",
+          "is_question_card",
+          "i + 1",
+          "cards.size()",
+          "unanswered",
+          "return"
+        ],
+        "expectedOutput": "Counts any Question card at the end of a move that lacks a following Answer card.",
+        "solutionCode": "func count_unanswered_questions(cards: Array) -> int:\n    var unanswered: int = 0\n    for i in range(cards.size()):\n        if is_question_card(cards[i].rank) and i + 1 >= cards.size():\n            unanswered += 1\n    return unanswered"
       },
       "quizQuestions": [
         {
           "id": "q_06_02_a",
-          "prompt": "Per the Kadi rules, what happens when a player plays a Question Card without a matching answer card?",
-          "choices": ["The next player is skipped", "They must draw a card from the draw pile", "The direction of play reverses", "They win instantly"],
+          "prompt": "Why does `validate_question_chain()` check `if i + 1 >= cards.size(): return false` before reading `cards[i + 1]`?",
+          "choices": [
+            "To make the loop run twice as fast",
+            "Because if a Question Card is the last card in `cards`, `i + 1` is out of bounds and the Question has no accompanying Answer Card!",
+            "Because Arrays in GDScript have a maximum size of 2",
+            "To skip the first card"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "A Question Card must be accompanied by a matching answer. Without one, the play is illegal and the player draws — exactly what the validator's `return false` triggers.",
+          "explanation": "If a Question Card sits at the last index (`i == cards.size() - 1`), there is no card after it to answer the question, AND reading `cards[i + 1]` would crash with an out-of-bounds index error!",
           "concept": "Validation loops"
         },
         {
           "id": "q_06_02_b",
-          "prompt": "Why validate the ENTIRE multi-card play before mutating any game state?",
-          "choices": ["It runs faster", "If a later card proves illegal after earlier ones were applied, you would need error-prone rollback code; validating first means state changes only once, for legal plays", "Godot requires validation functions", "It uses less memory"],
+          "prompt": "Why is it critical to run `RuleValidator.validate_move(cards, ...)` BEFORE calling `GameState.hands[player].erase(c)`?",
+          "choices": [
+            "`erase()` is slow",
+            "So an illegal multi-card move never partially removes cards from the player's hand before failing on the second card",
+            "Godot forbids calling functions after `erase()`",
+            "To shuffle the hand"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Validate-then-commit avoids partial state changes. A pure validator answers the legality question with no side effects, so there is never anything to undo.",
+          "explanation": "Validating the whole move upfront ensures atomic state updates with zero rollback bugs.",
           "concept": "Function composition"
+        },
+        {
+          "id": "q_06_02_c",
+          "prompt": "Player 0 stages `[Queen of Hearts, 7 of Spades]` and clicks Play Selected. What does `validate_question_chain()` return, and why?",
+          "choices": [
+            "True, because 7 is an Answer Card",
+            "False, because the accompanying Answer Card (7 of Spades) does not match the Question Card's suit (Hearts)!",
+            "True, because Queens are wild",
+            "It crashes"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "An Answer Card paired with a Question Card must match the Question's suit (unless the answer is a wild Ace).",
+          "concept": "Validation loops"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/rule_validator.gd + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Validating Multi-Card Moves & Question-Answer Chains`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ]
+    },
+    {
+      "id": "l_06_03_ai_qa_pairs",
+      "order": 3,
+      "title": "Teaching AI Opponents to Play Question + Answer Pairs",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "In `res://scenes/table/table.gd`, add `_find_ai_question_pair(hand: Array, top: CardData) -> Array[CardData]`.",
+        "When an AI holds a playable Question Card (`Q` or `8`), scan `hand` for a matching-suit Answer Card (`is_answer_card(ans.rank) and ans.suit == q.suit`).",
+        "Only let the AI play the Question Card if it ALSO holds a matching Answer Card to pair with it in the same move!"
+      ],
+      "keyTakeaways": [
+        "An AI opponent should never play a lone Question Card (which would just penalize it with a drawn card!).",
+        "Scanning `hand` with a nested loop (`for q in hand:` -> `for a in hand:`) finds any legal `[q, a]` 2-card move so the AI sheds 2 cards in one turn."
+      ],
+      "bodyMarkdown": "# Teaching AI Opponents to Play `[Question, Answer]` Combos\n\nWhat happens if an AI opponent holds the **Queen of Hearts (`Q♥`)** and the **7 of Hearts (`7♥`)** when Hearts is on top of the discard pile? If the AI only tests single cards, it can never legally play `Q♥` because a Question Card played alone fails `validate_question_chain()`!\n\nBy adding `_find_ai_question_pair(hand, top)` inside **`res://scenes/table/table.gd`**, our AI opponents actively look for 2-card `[Question, Answer]` combos so they shed two cards in a single turn:\n\n```gdscript\nfunc _find_ai_question_pair(hand: Array, top: CardData) -> Array[CardData]:\n    for q in hand:\n        if not RuleValidator.is_question_card(q.rank):\n            continue\n        if not RuleValidator.is_single_card_playable(q, top, GameState.penalty_stack, GameState.declared_suit):\n            continue\n        for ans in hand:\n            if ans != q and RuleValidator.is_answer_card(ans.rank) and ans.suit == q.suit:\n                return [q, ans]\n    return []\n```\n\n> [!WHY]\n> Shedding two cards (`[q, ans]`) in a single turn brings the AI closer to calling *\"Niko Kadi!\"* twice as fast as playing a single Answer card — so checking `_find_ai_question_pair()` before single-card plays makes the AI noticeably stronger and more realistic!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 6 (Question & Answer Cards) — Lesson 3: *Teaching AI Opponents to Play Question + Answer Pairs* |\n| **Which File Do I Edit?** | `res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [script: res://scenes/table/table.gd]` |\n| **What Problem Does It Solve?** | An AI opponent should never play a lone Question Card (which would just penalize it with a drawn card!). |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `res://scenes/table/table.gd`, add `_find_ai_question_pair(hand: Array, top: CardData) -> Array[CardData]`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **When an AI holds a playable Question Card (`Q` or `8`), scan `hand` for a matching-suit Answer Card (`is_answer_card(ans.rank) and ans.suit == q.suit`).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Only let the AI play the Question Card if it ALSO holds a matching Answer Card to pair with it in the same move!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Teaching AI Opponents to Play Question + Answer Pairs` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: An AI opponent should never play a lone Question Card (which would just penalize it with a drawn card!).\n- **Core Principle 2**: Scanning `hand` with a nested loop (`for q in hand:` -> `for a in hand:`) finds any legal `[q, a]` 2-card move so the AI sheds 2 cards in one turn.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why does `_find_ai_question_pair()` check `ans != q` inside the inner loop?** | **Because a Question Card is never an Answer Card, and checking `ans != q` guarantees we never pair a card with itself** — When iterating over the same `hand` array in nested loops, `ans != q` ensures two distinct cards are chosen. |\n| **Why should the AI check for a `[Question, Answer]` pair BEFORE playing a single Answer card?** | **Because playing `[Question, Answer]` sheds 2 cards in one turn instead of 1, getting the AI closer to winning!** — Playing a legal Q+A pair sheds two cards in a single move and prevents the Question card from getting stranded in the AI's hand. |\n| **What does `_find_ai_question_pair()` return when the AI has no playable Question+Answer pair?** | **An empty array `[]`** — Returning an empty array `[]` lets the caller simply check `if not pair.is_empty():` without worrying about null references. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a helper `can_pair_qa(q: CardData, ans: CardData) -> bool` that returns `true` when `q != ans and q.suit == ans.suit`.\n- **How Godot Evaluates It**: When your script runs `func can_pair_qa(q: CardData, ans: CardData) -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Confirms that an Answer card shares the Question card's suit and is a distinct card instance.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func _find_ai_question_pair(hand: Array, top: CardData) -> Array[CardData]:` | Defines function `_find_ai_question_pair()` returning `Array[CardData]`. |\n| **Line 2** | `for q in hand:` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 3** | `if not RuleValidator.is_question_card(q.rank):` | Branches into the indented block only when `not RuleValidator.is_question_card(q.rank)` evaluates to `true`. |\n| **Line 4** | `continue` | Skips the rest of the current loop iteration and jumps straight to the next item. |\n| **Line 5** | `if not RuleValidator.is_single_card_playable(q, top, GameState.penalty_stack, GameState.declared_suit):` | Branches into the indented block only when `not RuleValidator.is_single_card_playable(q, top, GameState.penalty_stack, GameState.declared_suit)` evaluates to `true`. |\n| **Line 6** | `continue` | Skips the rest of the current loop iteration and jumps straight to the next item. |\n| **Line 7** | `for ans in hand:` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 8** | `if ans != q and RuleValidator.is_answer_card(ans.rank) and ans.suit == q.suit:` | Branches into the indented block only when `ans != q and RuleValidator.is_answer_card(ans.rank) and ans.suit == q.suit` evaluates to `true`. |\n| **Line 9** | `return [q, ans]` | Immediately exits the current function and sends `[q, ans]` back to the caller. |\n| **Line 10** | `return []` | Immediately exits the current function and sends `[]` back to the caller. |",
+      "codeSnippets": [
+        {
+          "id": "cs_06_03_a",
+          "language": "gdscript",
+          "code": "func _find_ai_question_pair(hand: Array, top: CardData) -> Array[CardData]:\n    for q in hand:\n        if not RuleValidator.is_question_card(q.rank):\n            continue\n        if not RuleValidator.is_single_card_playable(q, top, GameState.penalty_stack, GameState.declared_suit):\n            continue\n        for ans in hand:\n            if ans != q and RuleValidator.is_answer_card(ans.rank) and ans.suit == q.suit:\n                return [q, ans]\n    return []",
+          "caption": "Finding a playable [Question, Answer] pair in an AI opponent's hand."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a helper `can_pair_qa(q: CardData, ans: CardData) -> bool` that returns `true` when `q != ans and q.suit == ans.suit`.",
+        "hint": "Use `return q != ans and q.suit == ans.suit`.",
+        "starterCode": "func can_pair_qa(q: CardData, ans: CardData) -> bool:\n    # Return true when q and ans are distinct cards of the same suit:\n",
+        "requiredTokens": [
+          "func",
+          "can_pair_qa",
+          "return",
+          "q != ans",
+          "and",
+          "q.suit == ans.suit"
+        ],
+        "expectedOutput": "Confirms that an Answer card shares the Question card's suit and is a distinct card instance.",
+        "solutionCode": "func can_pair_qa(q: CardData, ans: CardData) -> bool:\n    return q != ans and q.suit == ans.suit"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_06_03_a",
+          "prompt": "Why does `_find_ai_question_pair()` check `ans != q` inside the inner loop?",
+          "choices": [
+            "Because a Question Card is never an Answer Card, and checking `ans != q` guarantees we never pair a card with itself",
+            "To sort the array",
+            "Because `q` is null",
+            "To skip Aces"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "When iterating over the same `hand` array in nested loops, `ans != q` ensures two distinct cards are chosen.",
+          "concept": "Validation loops"
+        },
+        {
+          "id": "q_06_03_b",
+          "prompt": "Why should the AI check for a `[Question, Answer]` pair BEFORE playing a single Answer card?",
+          "choices": [
+            "Godot requires 2-element arrays first",
+            "Because playing `[Question, Answer]` sheds 2 cards in one turn instead of 1, getting the AI closer to winning!",
+            "Single cards are illegal",
+            "To empty the draw pile"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Playing a legal Q+A pair sheds two cards in a single move and prevents the Question card from getting stranded in the AI's hand.",
+          "concept": "Function composition"
+        },
+        {
+          "id": "q_06_03_c",
+          "prompt": "What does `_find_ai_question_pair()` return when the AI has no playable Question+Answer pair?",
+          "choices": [
+            "null",
+            "An empty array `[]`",
+            "A single Joker",
+            "It crashes"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Returning an empty array `[]` lets the caller simply check `if not pair.is_empty():` without worrying about null references.",
+          "concept": "Null-handling"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Teaching AI Opponents to Play Question + Answer Pairs`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
-  "debugChallenge": null
+  "debugChallenge": {
+    "id": "dbg_06_out_of_bounds_qa",
+    "brokenCode": "func validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if is_question_card(card.rank):\n            var next_card: CardData = cards[i + 1]\n            if not is_answer_card(next_card.rank):\n                return false\n    return true",
+    "bugDescription": "Whenever a player selects a single Queen (Question Card) by itself and clicks Play Selected, the game immediately crashes with `Out of bounds get index '1' (on base: 'Array')` instead of rejecting the move and drawing a card!",
+    "fixedCode": "func validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if is_question_card(card.rank):\n            if i + 1 >= cards.size():\n                return false\n            var next_card: CardData = cards[i + 1]\n            if not is_answer_card(next_card.rank):\n                return false\n    return true",
+    "explanation": "On line 5, `cards[i + 1]` is read without first checking whether `i + 1 < cards.size()`! When a Question Card is the last (or only) element in `cards`, `i + 1` equals `cards.size()`, which is out of bounds. Adding `if i + 1 >= cards.size(): return false` before reading `cards[i + 1]` prevents the crash and properly rejects the unanswered question.",
+    "buggyLineNumber": 5,
+    "hint": "Look at line 5 (`var next_card: CardData = cards[i + 1]`): what happens when `i` is the last index of `cards` (`cards.size() - 1`)?"
+  }
 }

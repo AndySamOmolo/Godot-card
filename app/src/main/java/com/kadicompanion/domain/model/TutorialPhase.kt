@@ -11,5 +11,8 @@ data class TutorialPhase(
     val programmingConcepts: List<String>,
     val debugChallenge: DebugChallenge? = null,
     val isSkippableForTrack: Set<LearnerTrack> = emptySet(),
-    val verifiedAgainstGodotVersion: String
+    val verifiedAgainstGodotVersion: String,
+    val projectFiles: List<String> = emptyList(),
+    val sceneTreeBlueprint: String? = null,
+    val learningObjectives: List<String> = emptyList()
 )

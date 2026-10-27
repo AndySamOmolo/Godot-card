@@ -23,10 +23,6 @@ class TutorialRepositoryImpl @Inject constructor(
     private val phases = _phases.asStateFlow()
     private var loadStarted = false
 
-    // *** THE FIX *** — observePhases() now triggers ensureLoaded() on subscription.
-    // Without this the UI would see an empty list forever because no one was
-    // calling getPhase/getLesson (those do trigger ensureLoaded). The PhaseList
-    // screen only observes the flow, so we have to start the load from there.
     override fun observePhases(): Flow<List<TutorialPhase>> = phases.onEach {
         if (!loadStarted) ensureLoaded()
     }
@@ -41,6 +37,19 @@ class TutorialRepositoryImpl @Inject constructor(
         return _phases.value.flatMap { it.lessons }.firstOrNull { it.id == lessonId }
     }
 
+    override suspend fun getPreviousLesson(lessonId: String): Lesson? {
+        ensureLoaded()
+        for (phase in _phases.value.sortedBy { it.order }) {
+            val lessons = phase.lessons.sortedBy { it.order }
+            val idx = lessons.indexOfFirst { it.id == lessonId }
+            if (idx != -1) {
+                if (idx - 1 >= 0) return lessons[idx - 1]
+                return null
+            }
+        }
+        return null
+    }
+
     override suspend fun getNextLesson(lessonId: String): Lesson? {
         ensureLoaded()
         for (phase in _phases.value.sortedBy { it.order }) {
@@ -52,6 +61,14 @@ class TutorialRepositoryImpl @Inject constructor(
             }
         }
         return null
+    }
+
+    override suspend fun getLastLessonOfPreviousPhase(phaseId: String): Lesson? {
+        ensureLoaded()
+        val sorted = _phases.value.sortedBy { it.order }
+        val idx = sorted.indexOfFirst { it.id == phaseId }
+        if (idx <= 0) return null
+        return sorted[idx - 1].lessons.maxByOrNull { it.order }
     }
 
     override suspend fun getFirstLessonOfNextPhase(phaseId: String): Lesson? {

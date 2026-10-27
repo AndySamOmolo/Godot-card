@@ -8,6 +8,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -31,11 +33,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -63,12 +67,30 @@ import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.glassBorderColor
 
-/**
- * The reference desk. Clean segmented tab control on top, pill search box,
- * and Godot classes rendered as crisp cards with monospace class names.
- */
+private val UI_CLASSES = setOf(
+    "Control", "Button", "Label", "RichTextLabel", "Panel", "ColorRect", "TextureRect",
+    "TextureButton", "OptionButton", "CheckButton", "LineEdit", "TextEdit", "ProgressBar",
+    "Slider", "Container", "HBoxContainer", "VBoxContainer", "GridContainer", "MarginContainer",
+    "ScrollContainer", "TabContainer", "Theme", "Window"
+)
+
+private val CARD_2D_CLASSES = setOf(
+    "Node", "Node2D", "CanvasItem", "CanvasLayer", "Sprite2D", "Area2D", "CollisionShape2D",
+    "CharacterBody2D", "RigidBody2D", "StaticBody2D", "Camera2D", "Marker2D", "CPUParticles2D",
+    "GPUParticles2D", "Texture2D", "Viewport", "SceneTree", "PackedScene"
+)
+
+private val AUDIO_ANIM_CLASSES = setOf(
+    "Tween", "Timer", "AnimationPlayer", "AnimationTree", "AudioStreamPlayer",
+    "AudioStreamPlayer2D", "AudioStreamPlayer3D"
+)
+
 @Composable
-fun DocsListScreen(onDocClick: (String) -> Unit, onOpenGlossary: () -> Unit, vm: DocsListViewModel = hiltViewModel()) {
+fun DocsListScreen(
+    onDocClick: (String) -> Unit,
+    onOpenGlossary: (String) -> Unit,
+    vm: DocsListViewModel = hiltViewModel()
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     Scaffold(
@@ -100,7 +122,7 @@ fun DocsListScreen(onDocClick: (String) -> Unit, onOpenGlossary: () -> Unit, vm:
             )
             when (selectedTab) {
                 0 -> ClassesTab(state = state, onQueryChange = vm::setQuery, onDocClick = onDocClick)
-                1 -> GlossaryListScreen(onTermClick = { _ -> onOpenGlossary() })
+                1 -> GlossaryListScreen(onTermClick = onOpenGlossary)
             }
         }
     }
@@ -118,14 +140,14 @@ private fun DocsSegmentedTabs(selected: Int, onSelect: (Int) -> Unit, modifier: 
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         SegmentButton(
-            label = "Classes",
+            label = "Godot Classes",
             icon = Icons.Outlined.DataObject,
             active = selected == 0,
             onClick = { onSelect(0) },
             modifier = Modifier.weight(1f)
         )
         SegmentButton(
-            label = "Glossary",
+            label = "Kadi & GDScript Glossary",
             icon = Icons.Outlined.Translate,
             active = selected == 1,
             onClick = { onSelect(1) },
@@ -165,20 +187,62 @@ private fun SegmentButton(
 
 @Composable
 private fun ClassesTab(state: DocsListUiState, onQueryChange: (String) -> Unit, onDocClick: (String) -> Unit) {
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    var selectedCategory by rememberSaveable { mutableIntStateOf(0) }
+    val categories = listOf("All", "UI & Controls", "2D & Scenes", "Audio & Timers", "Core & Data")
+
+    val categoryFiltered = state.filtered.filter { entry ->
+        when (selectedCategory) {
+            1 -> entry.className in UI_CLASSES
+            2 -> entry.className in CARD_2D_CLASSES
+            3 -> entry.className in AUDIO_ANIM_CLASSES
+            4 -> entry.className !in UI_CLASSES && entry.className !in CARD_2D_CLASSES && entry.className !in AUDIO_ANIM_CLASSES
+            else -> true
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SearchPill(
             query = state.query,
             onQueryChange = onQueryChange,
             placeholder = stringResource(R.string.search_docs_placeholder),
             modifier = Modifier.padding(horizontal = 16.dp)
         )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            categories.forEachIndexed { idx, label ->
+                val active = selectedCategory == idx
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = if (active) MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f)
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    border = BorderStroke(
+                        width = if (active) 1.5.dp else 0.5.dp,
+                        color = if (active) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant
+                    ),
+                    modifier = Modifier.clickable { selectedCategory = idx }
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                        color = if (active) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
         when {
             state.isLoading -> LoadingSkeleton(lines = 7)
             state.filtered.isEmpty() && state.query.isBlank() -> EmptyState(
                 title = "Building search index",
                 message = "Bundled Godot docs are being parsed on first launch."
             )
-            state.filtered.isEmpty() -> EmptyState(
+            categoryFiltered.isEmpty() -> EmptyState(
                 title = "No matches",
                 message = stringResource(R.string.empty_search)
             )
@@ -189,12 +253,12 @@ private fun ClassesTab(state: DocsListUiState, onQueryChange: (String) -> Unit, 
             ) {
                 item {
                     SectionHeader(
-                        title = if (state.query.isBlank()) "All classes" else "Matches",
-                        eyebrow = "reference",
-                        trailing = { Pill(text = "${state.filtered.size}", color = MaterialTheme.colorScheme.secondary) }
+                        title = categories[selectedCategory],
+                        eyebrow = "godot 4.3 classes",
+                        trailing = { Pill(text = "${categoryFiltered.size}", color = MaterialTheme.colorScheme.secondary) }
                     )
                 }
-                items(state.filtered, key = { it.className }) { entry ->
+                items(categoryFiltered, key = { it.className }) { entry ->
                     ClassRow(entry = entry, onClick = { onDocClick(entry.className) })
                 }
             }

@@ -1,0 +1,128 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "**" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Assemble Debug & Signed Release APKs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Validate Tutorial & Glossary JSON Assets
+        run: |
+          python3 -c '
+          import json, glob
+          phases = sorted(glob.glob("app/src/main/assets/tutorial/phase_*.json"))
+          assert len(phases) == 12, f"Expected 12 phases, found {len(phases)}"
+          for p in phases:
+              with open(p, encoding="utf-8") as f:
+                  d = json.load(f)
+              assert len(d["lessons"]) > 0, f"Empty lessons in {p}"
+          with open("app/src/main/assets/glossary/terms.json", encoding="utf-8") as f:
+              g = json.load(f)
+          print(f"Validated {len(phases)} phases and {len(g[\"terms\"])} glossary terms successfully.")
+          '
+
+      - name: Build Debug and Unsigned Release APKs with Gradle
+        run: ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Sign Release APK (using Repository Secrets or Ephemeral CI Keystore)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          UNSIGNED_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+          SIGNED_APK="app/build/outputs/apk/release/kadi-companion-release-signed.apk"
+          DEBUG_APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ -f "$UNSIGNED_APK" ]; then
+            if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+              echo "Signing release APK with repository secret keystore..."
+              echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/release.jks
+              KS_PATH="/tmp/release.jks"
+              KS_PASS="$KEYSTORE_PASSWORD"
+              K_ALIAS="$KEY_ALIAS"
+              K_PASS="$KEY_PASSWORD"
+            else
+              echo "No signing secrets configured — generating CI keystore so release APK is immediately installable..."
+              keytool -genkeypair -v \
+                -keystore /tmp/ci-release.jks \
+                -alias kadi_ci \
+                -keyalg RSA -keysize 2048 -validity 10000 \
+                -storepass kadi123456 -keypass kadi123456 \
+                -dname "CN=Kadi Companion, OU=Dev, O=Kadi, L=Nairobi, S=Nairobi, C=KE"
+              KS_PATH="/tmp/ci-release.jks"
+              KS_PASS="kadi123456"
+              K_ALIAS="kadi_ci"
+              K_PASS="kadi123456"
+            fi
+
+            BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+            "$BUILD_TOOLS_DIR/zipalign" -v -p 4 "$UNSIGNED_APK" /tmp/app-release-aligned.apk
+            "$BUILD_TOOLS_DIR/apksigner" sign \
+              --ks "$KS_PATH" \
+              --ks-pass "pass:$KS_PASS" \
+              --key-pass "pass:$K_PASS" \
+              --ks-key-alias "$K_ALIAS" \
+              --out "$SIGNED_APK" \
+              /tmp/app-release-aligned.apk
+            "$BUILD_TOOLS_DIR/apksigner" verify "$SIGNED_APK"
+            rm -f /tmp/*.jks /tmp/app-release-aligned.apk
+          fi
+
+          mkdir -p dist-apks
+          cp "$DEBUG_APK" dist-apks/kadi-companion-debug.apk
+          if [ -f "$SIGNED_APK" ]; then
+            cp "$SIGNED_APK" dist-apks/kadi-companion-release-signed.apk
+          fi
+          ls -lh dist-apks/
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kadi-companion-debug-apk
+          path: dist-apks/kadi-companion-debug.apk
+          retention-days: 30
+
+      - name: Upload Signed Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kadi-companion-release-signed-apk
+          path: dist-apks/kadi-companion-release-signed.apk
+          retention-days: 30
+
+      - name: Publish GitHub Release on Tag Push (v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist-apks/kadi-companion-debug.apk
+            dist-apks/kadi-companion-release-signed.apk

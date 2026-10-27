@@ -77,7 +77,10 @@ private fun PhaseDto.toDomain(): TutorialPhase = TutorialPhase(
     isSkippableForTrack = isSkippableForTrack.mapNotNull { name ->
         runCatching { LearnerTrack.valueOf(name) }.getOrNull()
     }.toSet(),
-    verifiedAgainstGodotVersion = verifiedAgainstGodotVersion
+    verifiedAgainstGodotVersion = verifiedAgainstGodotVersion,
+    projectFiles = projectFiles,
+    sceneTreeBlueprint = sceneTreeBlueprint,
+    learningObjectives = learningObjectives
 )
 
 private fun LessonDto.toDomain(phaseId: String): Lesson = Lesson(
@@ -88,11 +91,25 @@ private fun LessonDto.toDomain(phaseId: String): Lesson = Lesson(
     bodyMarkdown = bodyMarkdown,
     codeSnippets = codeSnippets.map { it.toDomain() },
     practicePrompt = practicePrompt?.toDomain(),
-    quizQuestions = quizQuestions.map { it.toDomain(id) }
+    quizQuestions = quizQuestions.map { it.toDomain(id) },
+    targetFile = targetFile,
+    sceneTree = sceneTree,
+    editorSteps = editorSteps,
+    verificationSteps = verificationSteps,
+    troubleshootingTips = troubleshootingTips,
+    keyTakeaways = keyTakeaways
 )
 
 private fun CodeSnippetDto.toDomain(): CodeSnippet = CodeSnippet(id, language, code, caption)
-private fun PracticePromptDto.toDomain(): PracticePrompt = PracticePrompt(instructions, hint, solutionCode)
+
+private fun PracticePromptDto.toDomain(): PracticePrompt = PracticePrompt(
+    instructions = instructions,
+    hint = hint,
+    solutionCode = solutionCode,
+    starterCode = starterCode,
+    requiredTokens = requiredTokens,
+    expectedOutput = expectedOutput
+)
 
 private fun QuizQuestionDto.toDomain(lessonId: String): QuizQuestion = QuizQuestion(
     id = id,
@@ -110,7 +127,9 @@ private fun DebugChallengeDto.toDomain(phaseId: String): DebugChallenge = DebugC
     brokenCode = brokenCode,
     bugDescription = bugDescription,
     fixedCode = fixedCode,
-    explanation = explanation
+    explanation = explanation,
+    buggyLineNumber = buggyLineNumber,
+    hint = hint
 )
 
 private fun GlossaryEntryDto.toDomain(): GlossaryEntry = GlossaryEntry(

@@ -2,93 +2,323 @@
   "id": "phase_07_jump_kickback",
   "order": 7,
   "title": "Jump & Kickback Cards",
-  "summary": "Resolve chains of Jacks (jumps) and Kings (kickbacks) with an iterative counter — and learn why a forgotten increment turns a tidy loop into an infinite freeze.",
+  "summary": "Resolve chains of Jump Cards (Jacks) and Kickback Cards (Kings): skip one player per Jack played, reverse table direction per King played, and allow countering!",
   "estimatedMinutes": 60,
-  "concepts": ["Recursion", "Iterative counters", "Direction state"],
-  "programmingConcepts": ["Iteration", "Recursion", "Loop invariants", "State variables", "Modulo arithmetic"],
+  "concepts": [
+    "Iterative counters",
+    "Direction state",
+    "Loop invariants",
+    "Recursion"
+  ],
+  "programmingConcepts": [
+    "Iteration",
+    "Recursion",
+    "Loop invariants",
+    "State variables",
+    "Parity math"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/turn_manager.gd",
+    "res://scenes/table/table.gd"
+  ],
+  "sceneTreeBlueprint": "HUD (CanvasLayer)\n└── TopBar (HBoxContainer)\n    └── DirectionLabel (Label)  [Displays \"Direction: ↻ Clockwise\" or \"Direction: ↺ Anti-Clockwise\"]",
+  "learningObjectives": [
+    "Count Jump Cards (Jacks) in a move using an iterative counter (`skips += 1`) and pass `skips` to `TurnManager.advance_turn(skips)`.",
+    "Flip turn direction (`TurnManager.reverse_direction()`) for each Kickback Card (King) played and understand parity (even vs. odd Kings).",
+    "Maintain strict loop invariants (`i += 1` in every branch of a `while` loop) so chain resolution never freezes the game."
+  ],
   "lessons": [
     {
       "id": "l_07_01_chain_resolution",
       "order": 1,
-      "title": "Resolving Jump Chains with a Counter",
-      "bodyMarkdown": "# Iterative Chain Resolution\n\nIn Kadi, a Jack **jumps** the next player (skips them); a King **kicks back** (reverses turn order). When several jumps land in sequence the effect compounds: each Jack skips one more player. Resolving the chain is a natural iterative problem.\n\n```gdscript\nfunc resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4\n```\n\nWe iterate with an explicit `i` counter so we can stop the moment a non-jump card appears. The accumulator `skips` tallies how many players to skip; the final return advances past them.\n\nThe same problem *could* be solved recursively (`resolve(chain[1:])`), but iteration here is clearer: there is no branching structure, just a linear walk. Recursion shines when each step reduces the problem in a structural way (trees, nested data); a flat list prefers a loop.\n\n> [!WHY]\n> Iterative counters expose the **loop invariant** — the condition that must hold every iteration for the loop to terminate. Here the invariant is `i` grows by 1 each step, so eventually `i >= chain.size()` and we exit. Forget the `i += 1` in one branch and the invariant breaks: `i` never changes, the loop never ends, the game freezes. Naming the invariant out loud before writing the loop catches this class of bug.\n\nAlways re-read each branch of a `while` loop and confirm the loop variable advances toward termination.",
+      "title": "Resolving Jump (Jack) Chains with an Iterative Counter",
+      "targetFile": "res://scripts/turn_manager.gd + res://scenes/table/table.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "In `table.gd`, when a legal move of `cards: Array[CardData]` is committed, count how many Jacks (`CardTypes.Ranks.JACK`) were played.",
+        "Pass that count (`skips`) into `TurnManager.advance_turn(skips)` so each Jack skips one player in the direction of play."
+      ],
+      "keyTakeaways": [
+        "In Kadi, each **Jump Card (Jack)** skips 1 player in the current direction of play; playing two Jacks in one move skips 2 players!",
+        "An **iterative counter** (`var skips: int = 0`) tallies how many Jacks appear in a move.",
+        "In any `while i < chain.size():` loop, every branch must increment `i += 1` (or `break`) to preserve the loop termination invariant."
+      ],
+      "bodyMarkdown": "# Resolving Jump Chains with an Iterative Counter\n\nLet's check `KADI.md` on **[[Jump Cards]]** (Jacks) and **[[Kickback Cards]]** (Kings):\n\n> [!KADI]\n> - *\"If a player plays a Jump Card, the next player is skipped. However, the player who was to play next can counter the move by playing their individual Jump Card...\"*\n> - *\"Multiple Jump Cards can be played by the same player, and with each card, a player is skipped in the direction of play. Similarly, if multiple Kickback Cards are played, the direction reverses with each card.\"*\n\nLet's write `resolve_jump_and_kickback_chain(chain: Array)` using an **[[Iterative counter]]**:\n\n```gdscript\nfunc resolve_jump_chain(chain: Array, start_player: int, player_count: int = 4) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            TurnManager.reverse_direction()\n            i += 1\n        else:\n            break\n    return (start_player + TurnManager.direction * (skips + 1) + player_count * 10) % player_count\n```\n\n> [!WHY]\n> Why is `i += 1` required inside **both** the `if card.rank == JACK:` branch and the `elif card.rank == KING:` branch? Because a `while` loop does not advance `i` automatically! The **loop invariant** that guarantees termination is: *on every iteration, `i` increases by 1 toward `chain.size()` (or exits via `break`)*. Forget `i += 1` in one branch and the game freezes the first time that card is played!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 7 (Jump & Kickback Cards) — Lesson 1: *Resolving Jump (Jack) Chains with an Iterative Counter* |\n| **Which File Do I Edit?** | `res://scripts/turn_manager.gd + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | In Kadi, each **Jump Card (Jack)** skips 1 player in the current direction of play; playing two Jacks in one move skips 2 players! |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `table.gd`, when a legal move of `cards: Array[CardData]` is committed, count how many Jacks (`CardTypes.Ranks.JACK`) were played.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Pass that count (`skips`) into `TurnManager.advance_turn(skips)` so each Jack skips one player in the direction of play.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Resolving Jump (Jack) Chains with an Iterative Counter` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/turn_manager.gd + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: In Kadi, each **Jump Card (Jack)** skips 1 player in the current direction of play; playing two Jacks in one move skips 2 players!\n- **Core Principle 2**: An **iterative counter** (`var skips: int = 0`) tallies how many Jacks appear in a move.\n- **Core Principle 3**: In any `while i < chain.size():` loop, every branch must increment `i += 1` (or `break`) to preserve the loop termination invariant.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What is the loop invariant that guarantees `while i < chain.size():` terminates?** | **`i` strictly increases on every non-breaking branch, eventually reaching `chain.size()`** — As long as `i` advances by at least 1 on every iteration (or `break` exits), `i < chain.size()` must eventually become false. |\n| **In a 4-player clockwise game, Player 0 plays TWO Jacks (`[J♥, J♠]`) in one move. How many players are skipped, and whose turn is it next?** | **2 players skipped (Players 1 and 2); Player 3's turn** — Each Jack skips one player in the direction of play: 2 Jacks skip Seat 1 and Seat 2, landing on Seat 3. |\n| **What must every recursive function have so it does not overflow the call stack?** | **A base case (such as `if i >= chain.size(): return 0`) that stops recursion** — A base case terminates the recursive calls once the end of the input is reached. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a recursive function `recursive_skips(chain: Array, i: int) -> int` that returns `0` if `i >= chain.size()` or `chain[i].rank != CardTypes.Ranks.JACK`, and otherwise returns `1 + recursive_skips(chain, i + 1)`.\n- **How Godot Evaluates It**: When your script runs `func recursive_skips(chain: Array, i: int) -> int:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Counts consecutive Jacks starting at index `i` using recursion.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func resolve_jump_chain(chain: Array, start_player: int) -> int:` | Defines function `resolve_jump_chain()` returning `int`. |\n| **Line 2** | `var skips: int = 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 3** | `var i: int = 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 4** | `while i < chain.size():` | Condition-driven loop that repeats as long as `i < chain.size()` evaluates to `true`. |\n| **Line 5** | `var card: CardData = chain[i]` | Declares a mutable typed variable to store state in memory. |\n| **Line 6** | `if card.rank == CardTypes.Ranks.JACK:` | Branches into the indented block only when `card.rank == CardTypes.Ranks.JACK` evaluates to `true`. |\n| **Line 7** | `skips += 1` | Compound assignment that updates the variable in place. |\n| **Line 8** | `i += 1` | Compound assignment that updates the variable in place. |\n| **Line 9** | `elif card.rank == CardTypes.Ranks.KING:` | Alternative branch tested only if all preceding `if`/`elif` conditions were `false`; runs if `card.rank == CardTypes.Ranks.KING` is `true`. |\n| **Line 10** | `TurnManager.reverse_direction()` | Executes this statement as part of the current block. |\n| **Line 11** | `i += 1` | Compound assignment that updates the variable in place. |\n| **Line 12** | `else:` | Fallback branch executed when every preceding `if` and `elif` condition evaluated to `false`. |\n| **Line 13** | `break` | Exits the enclosing loop immediately. |\n| **Line 14** | `return (start_player + skips + 1) % 4` | Immediately exits the current function and sends `(start_player + skips + 1) % 4` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_07_01_a",
           "language": "gdscript",
-          "code": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
-          "caption": "Iterative chain resolver that counts Jacks and handles Kings."
+          "code": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            TurnManager.reverse_direction()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
+          "caption": "Iterative chain resolver counting Jacks (skips) and applying Kings (reversals)."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write a recursive version `recursive_skips(chain, i)` that returns the number of Jacks in `chain` starting at index `i`, stopping at the first non-Jack.",
-        "hint": "Base case: i >= chain.size() or chain[i].rank != JACK returns 0. Recursive case: 1 + recursive_skips(chain, i + 1).",
+        "instructions": "Write a recursive function `recursive_skips(chain: Array, i: int) -> int` that returns `0` if `i >= chain.size()` or `chain[i].rank != CardTypes.Ranks.JACK`, and otherwise returns `1 + recursive_skips(chain, i + 1)`.",
+        "hint": "Add the two base-case `if` checks returning `0`, then `return 1 + recursive_skips(chain, i + 1)`.",
+        "starterCode": "func recursive_skips(chain: Array, i: int) -> int:\n    # Base cases for i >= chain.size() or non-Jack, then recursive step:\n",
+        "requiredTokens": [
+          "func",
+          "recursive_skips",
+          "if",
+          "chain.size()",
+          "return",
+          "0",
+          "1 + recursive_skips(chain, i + 1)"
+        ],
+        "expectedOutput": "Counts consecutive Jacks starting at index `i` using recursion.",
         "solutionCode": "func recursive_skips(chain: Array, i: int) -> int:\n    if i >= chain.size():\n        return 0\n    if chain[i].rank != CardTypes.Ranks.JACK:\n        return 0\n    return 1 + recursive_skips(chain, i + 1)"
       },
       "quizQuestions": [
         {
           "id": "q_07_01_a",
-          "prompt": "What is the loop invariant that guarantees `resolve_jump_chain` terminates?",
-          "choices": ["skips grows by 1", "`i` advances toward chain.size() on every iteration, so eventually the condition `i < chain.size()` becomes false", "The chain has no Kings", "skips stays below 4"],
+          "prompt": "What is the loop invariant that guarantees `while i < chain.size():` terminates?",
+          "choices": [
+            "`skips` stays less than 4",
+            "`i` strictly increases on every non-breaking branch, eventually reaching `chain.size()`",
+            "The array is sorted",
+            "`start_player` is 0"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Termination depends on `i` reaching `chain.size()`. Every branch must advance `i` (or `break`) or the loop spins forever.",
+          "explanation": "As long as `i` advances by at least 1 on every iteration (or `break` exits), `i < chain.size()` must eventually become false.",
           "concept": "Loop invariants"
         },
         {
           "id": "q_07_01_b",
-          "prompt": "When is recursion preferable to iteration?",
-          "choices": ["Always", "When the problem has a self-similar sub-structure (trees, nested data) rather than a flat list", "When speed matters most", "Never"],
+          "prompt": "In a 4-player clockwise game, Player 0 plays TWO Jacks (`[J♥, J♠]`) in one move. How many players are skipped, and whose turn is it next?",
+          "choices": [
+            "1 player skipped; Player 2's turn",
+            "2 players skipped (Players 1 and 2); Player 3's turn",
+            "All players skipped; Player 0 goes again",
+            "0 players skipped"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Recursion suits structurally-nested problems. Flat linear walks are clearer as loops and avoid stack overflow on long inputs.",
+          "explanation": "Each Jack skips one player in the direction of play: 2 Jacks skip Seat 1 and Seat 2, landing on Seat 3.",
+          "concept": "Iterative counters"
+        },
+        {
+          "id": "q_07_01_c",
+          "prompt": "What must every recursive function have so it does not overflow the call stack?",
+          "choices": [
+            "A global variable",
+            "A base case (such as `if i >= chain.size(): return 0`) that stops recursion",
+            "A `while` loop",
+            "An AudioStreamPlayer"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "A base case terminates the recursive calls once the end of the input is reached.",
           "concept": "Recursion"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/turn_manager.gd + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Resolving Jump (Jack) Chains with an Iterative Counter`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_07_02_kickback_direction",
       "order": 2,
-      "title": "Reversing Direction with Kickback",
-      "bodyMarkdown": "# Reversing Direction with Kickback\n\nA King is Kadi's **Kickback Card**: play it and the direction of the game reverses. If turns were flowing clockwise, they now flow anti-clockwise — and the player who *just* played goes again, because the turn bounces straight back toward them.\n\nThe cleanest encoding of direction is a single integer that is either `1` (clockwise) or `-1` (anti-clockwise). Reversing is then one multiplication, and advancing the turn is plain arithmetic:\n\n```gdscript\nvar direction: int = 1  # 1 = clockwise, -1 = anti-clockwise\n\nfunc apply_kickback() -> void:\n    direction *= -1\n\nfunc apply_kickbacks(count: int) -> void:\n    for _ in range(count):\n        direction *= -1\n\nfunc next_player(current: int, player_count: int) -> int:\n    return (current + direction + player_count) % player_count\n```\n\n`direction *= -1` flips `1` to `-1` and back — no if/else needed. The extra `+ player_count` in `next_player` matters: GDScript's `%` can return a negative result for negative operands, so `(0 - 1) % 4` is `-1`, not `3`. Adding `player_count` first keeps the index in range whichever way the game flows.\n\nCountering works exactly like Jump Cards: the player about to be kicked back can play their **own** King, which reverses direction *again* — back to the original flow. And because each King is just another `*= -1`, multiple Kickbacks compose by parity: an **even** number of Kings leaves direction unchanged, an **odd** number reverses it. `apply_kickbacks(3)` and `apply_kickbacks(1)` end in the same state.\n\n> [!WHY]\n> Encoding direction as `1`/`-1` instead of a string like `\"clockwise\"` makes the maths do the work. Reversal is multiplication, turn advance is addition, and stacked Kickbacks reduce to counting parity — three rules for the price of one integer. A string-based direction would need an if/else at every reversal and every turn advance, four places for the same bug to hide.\n\nKeep `direction` in your central game state alongside `current_player`; every rule that moves the turn should go through `next_player` so the Kickback logic lives in exactly one place.",
+      "title": "Reversing Direction with Kickback (King) Cards",
+      "targetFile": "res://scripts/turn_manager.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "In `TurnManager` (`res://scripts/turn_manager.gd`), ensure `reverse_direction()` multiplies `direction *= -1` and emits `direction_changed.emit(direction)`.",
+        "In `table.gd`, for each `CardTypes.Ranks.KING` in a played move, call `TurnManager.reverse_direction()` before calling `TurnManager.advance_turn(skips)`."
+      ],
+      "keyTakeaways": [
+        "Representing `direction` as `1` (clockwise) and `-1` (counter-clockwise) turns Kickback reversal into `direction *= -1`.",
+        "Playing an **odd** number of Kings (1 or 3) reverses the direction of play; playing an **even** number of Kings (2 or 4) flips twice and keeps the original direction!",
+        "Displaying `\"↻ Clockwise\"` vs `\"↺ Anti-Clockwise\"` on the HUD keeps players oriented after Kickback chains."
+      ],
+      "bodyMarkdown": "# Reversing Direction with Kickback (King) Cards\n\nA **King (K)** is Kadi's **[[Kickback Cards|Kickback Card]]**. Playing a King reverses the direction of play (`direction *= -1`).\n\nWhat happens if a player plays **two Kings** in a single move? Let's check `KADI.md`: *\"Similarly, if multiple Kickback Cards are played, the direction reverses with each card.\"*\n- 1 King: `1 * -1 = -1` (Direction **reverses**)\n- 2 Kings: `1 * -1 * -1 = 1` (Direction **bounces back to original!**)\n- 3 Kings: `1 * -1 * -1 * -1 = -1` (Direction **reverses**)\n\n```gdscript\n# Inside res://scripts/turn_manager.gd:\nvar direction: int = 1  # 1 = Clockwise, -1 = Counter-Clockwise\n\nfunc apply_kickback() -> void:\n    direction *= -1\n    direction_changed.emit(direction)\n\nfunc apply_kickbacks(count: int) -> void:\n    for _i in range(count):\n        direction *= -1\n    direction_changed.emit(direction)\n\nfunc direction_label() -> String:\n    return \"↻ Clockwise\" if direction == 1 else \"↺ Anti-Clockwise\"\n```\n\n> [!WHY]\n> Because we encoded `direction` as the integer `1` or `-1` instead of a String like `\"clockwise\"`, we never need an `if/else` to flip direction or to advance the turn! Multiplication (`*= -1`) handles any number of stacked Kickbacks automatically.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 7 (Jump & Kickback Cards) — Lesson 2: *Reversing Direction with Kickback (King) Cards* |\n| **Which File Do I Edit?** | `res://scripts/turn_manager.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | Representing `direction` as `1` (clockwise) and `-1` (counter-clockwise) turns Kickback reversal into `direction *= -1`. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `TurnManager` (`res://scripts/turn_manager.gd`), ensure `reverse_direction()` multiplies `direction *= -1` and emits `direction_changed.emit(direction)`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n2. **In `table.gd`, for each `CardTypes.Ranks.KING` in a played move, call `TurnManager.reverse_direction()` before calling `TurnManager.advance_turn(skips)`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/turn_manager.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Reversing Direction with Kickback (King) Cards` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/turn_manager.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Representing `direction` as `1` (clockwise) and `-1` (counter-clockwise) turns Kickback reversal into `direction *= -1`.\n- **Core Principle 2**: Playing an **odd** number of Kings (1 or 3) reverses the direction of play; playing an **even** number of Kings (2 or 4) flips twice and keeps the original direction!\n- **Core Principle 3**: Displaying `\"↻ Clockwise\"` vs `\"↺ Anti-Clockwise\"` on the HUD keeps players oriented after Kickback chains.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **If play is currently Clockwise (`direction = 1`) and a player plays THREE Kickback Cards (Kings) in a row, what is the resulting direction?** | **Counter-Clockwise (`-1`) — an odd number of reversals results in a net reversal** — Three flips (`1 -> -1 -> 1 -> -1`) leave `direction` at `-1` (Counter-Clockwise). |\n| **Why is encoding `direction` as `1` or `-1` superior to storing `\"clockwise\"` or `\"anticlockwise\"`?** | **Reversing is a single multiplication (`direction *= -1`) and advancing the turn is a single addition (`current + direction`), eliminating duplicate `if/else` branches** — Using `1` and `-1` unifies reversal and turn advancement into arithmetic. |\n| **In a 4-player game flowing Clockwise (`1`), Player 2 plays one King (Kickback). Which player's turn is it next?** | **Player 1 (direction flips to `-1`, so `2 + (-1) = 1`)** — Playing a King reverses `direction` from `1` to `-1`, so advancing from Seat 2 steps back to Seat 1. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `direction_after(kickback_count: int) -> int` that returns `1` when `kickback_count % 2 == 0` (even number of Kings) and `-1` otherwise (odd number of Kings).\n- **How Godot Evaluates It**: When your script runs `func direction_after(kickback_count: int) -> int:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Computes the net direction after any number of Kickback Kings in O(1) time.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `var direction: int = 1` | Declares a mutable typed variable to store state in memory. |\n| **Line 3** | `func apply_kickback() -> void:` | Defines function `apply_kickback()` returning `void`. |\n| **Line 4** | `direction *= -1` | Compound assignment that updates the variable in place. |\n| **Line 6** | `func apply_kickbacks(count: int) -> void:` | Defines function `apply_kickbacks()` returning `void`. |\n| **Line 7** | `for _i in range(count):` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 8** | `direction *= -1` | Compound assignment that updates the variable in place. |\n| **Line 10** | `func next_player(current: int, player_count: int) -> int:` | Defines function `next_player()` returning `int`. |\n| **Line 11** | `return (current + direction + player_count) % player_count` | Immediately exits the current function and sends `(current + direction + player_count) % player_count` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_07_02_a",
           "language": "gdscript",
-          "code": "var direction: int = 1\n\nfunc apply_kickback() -> void:\n    direction *= -1\n\nfunc apply_kickbacks(count: int) -> void:\n    for _ in range(count):\n        direction *= -1\n\nfunc next_player(current: int, player_count: int) -> int:\n    return (current + direction + player_count) % player_count",
-          "caption": "Direction as 1/-1: reversal is multiplication, turn advance is modulo arithmetic."
+          "code": "var direction: int = 1\n\nfunc apply_kickback() -> void:\n    direction *= -1\n\nfunc apply_kickbacks(count: int) -> void:\n    for _i in range(count):\n        direction *= -1\n\nfunc next_player(current: int, player_count: int) -> int:\n    return (current + direction + player_count) % player_count",
+          "caption": "Kickback direction math using 1 and -1."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `direction_after(kickback_count: int)` that returns the final direction (1 or -1) after `kickback_count` Kings are played, starting from clockwise (1) — without a loop.",
-        "hint": "Even counts leave direction at 1; odd counts flip it. Use the `%` operator.",
+        "instructions": "Write a function `direction_after(kickback_count: int) -> int` that returns `1` when `kickback_count % 2 == 0` (even number of Kings) and `-1` otherwise (odd number of Kings).",
+        "hint": "Check `if kickback_count % 2 == 0: return 1` followed by `return -1`.",
+        "starterCode": "func direction_after(kickback_count: int) -> int:\n    # Return 1 if kickback_count is even, -1 if odd:\n",
+        "requiredTokens": [
+          "func",
+          "direction_after",
+          "kickback_count",
+          "%",
+          "2",
+          "0",
+          "return",
+          "1",
+          "-1"
+        ],
+        "expectedOutput": "Computes the net direction after any number of Kickback Kings in O(1) time.",
         "solutionCode": "func direction_after(kickback_count: int) -> int:\n    if kickback_count % 2 == 0:\n        return 1\n    return -1"
       },
       "quizQuestions": [
         {
           "id": "q_07_02_a",
-          "prompt": "After THREE Kickback Cards are played in a row, what has happened to the direction of play?",
-          "choices": ["It is unchanged", "It is reversed — an odd number of flips is one net reversal", "The game skips two players", "The direction becomes 0"],
+          "prompt": "If play is currently Clockwise (`direction = 1`) and a player plays THREE Kickback Cards (Kings) in a row, what is the resulting direction?",
+          "choices": [
+            "Clockwise (`1`)",
+            "Counter-Clockwise (`-1`) — an odd number of reversals results in a net reversal",
+            "Direction becomes `0`",
+            "The game ends"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Each King multiplies direction by -1. Three flips: 1 → -1 → 1 → -1. Odd counts reverse, even counts cancel out — pure parity.",
+          "explanation": "Three flips (`1 -> -1 -> 1 -> -1`) leave `direction` at `-1` (Counter-Clockwise).",
           "concept": "Direction state"
         },
         {
           "id": "q_07_02_b",
-          "prompt": "Why does `next_player` add `player_count` before taking `% player_count`?",
-          "choices": ["To make the game harder", "GDScript's % can return a negative result, so `(0 - 1) % 4` is -1; adding player_count first keeps the index valid when direction is -1", "It is required by Godot", "To skip the dealer"],
+          "prompt": "Why is encoding `direction` as `1` or `-1` superior to storing `\"clockwise\"` or `\"anticlockwise\"`?",
+          "choices": [
+            "Strings are not allowed in Autoloads",
+            "Reversing is a single multiplication (`direction *= -1`) and advancing the turn is a single addition (`current + direction`), eliminating duplicate `if/else` branches",
+            "Integers glow in the Inspector",
+            "Strings cannot be printed"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Moving anti-clockwise from player 0 must land on the last player, not index -1. The `+ player_count` guarantees a non-negative operand before the modulo.",
+          "explanation": "Using `1` and `-1` unifies reversal and turn advancement into arithmetic.",
+          "concept": "Direction state"
+        },
+        {
+          "id": "q_07_02_c",
+          "prompt": "In a 4-player game flowing Clockwise (`1`), Player 2 plays one King (Kickback). Which player's turn is it next?",
+          "choices": [
+            "Player 3",
+            "Player 1 (direction flips to `-1`, so `2 + (-1) = 1`)",
+            "Player 0",
+            "Player 2 again"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Playing a King reverses `direction` from `1` to `-1`, so advancing from Seat 2 steps back to Seat 1.",
+          "concept": "Direction state"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/turn_manager.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Reversing Direction with Kickback (King) Cards`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ]
+    },
+    {
+      "id": "l_07_03_jump_kickback_hud",
+      "order": 3,
+      "title": "Displaying Turn Direction & Skipped Players on the HUD",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": "HUD (CanvasLayer)\n├── StatusLabel (Label)    [Shows \"Turn: P3 (↺ CCW) | Deck: 31\"]\n└── FeedbackLabel (Label)  [Shows \"Player 1 played J♥ — Player 2 skipped!\"]",
+      "editorSteps": [
+        "In `res://scenes/table/table.gd`, connect `TurnManager.direction_changed` to `refresh_table_ui`.",
+        "Format the direction indicator as `\"↻ CW\" if TurnManager.direction == 1 else \"↺ CCW\"`.",
+        "When `skips > 0` in `_execute_move()`, display how many players were jumped in `feedback_label.text`."
+      ],
+      "keyTakeaways": [
+        "Showing `\"↻ CW\"` (Clockwise) and `\"↺ CCW\"` (Counter-Clockwise) on the HUD keeps the human player oriented when AI players drop Kings.",
+        "Logging `\"Skipped %d player(s)!\" % skips` in `feedback_label` explains why the turn jumped across the table."
+      ],
+      "bodyMarkdown": "# Making Jumps & Kickbacks Clear on the HUD\n\nWhen Seat 1 plays a **King (Kickback)** and Seat 2 plays a **Jack (Jump)** right after, a human player watching the screen needs to see *why* the turn suddenly bounced back or skipped a seat!\n\nWe make both effects crystal clear in **`res://scenes/table/table.gd`**:\n\n```gdscript\nfunc format_direction_badge(dir: int) -> String:\n    return \"↻ Clockwise\" if dir == 1 else \"↺ Anti-Clockwise\"\n\nfunc format_jump_feedback(player: int, skips: int) -> String:\n    if skips <= 0:\n        return \"Player %d finished their move.\" % (player + 1)\n    return \"Player %d played %d Jump(s) — skipped %d player(s)!\" % [player + 1, skips, skips]\n```\n\n> [!TIP]\n> Connecting `TurnManager.direction_changed` to `_on_direction_changed(new_dir: int)` in `table.gd` lets you pulse the status bar whenever a King flips the table direction!\n\n> [!WHY]\n> Showing `\"↻ CW\"` (Clockwise) and `\"↺ CCW\"` (Counter-Clockwise) on the HUD keeps the human player oriented when AI players drop Kings.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 7 (Jump & Kickback Cards) — Lesson 3: *Displaying Turn Direction & Skipped Players on the HUD* |\n| **Which File Do I Edit?** | `res://scenes/table/table.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | Showing `\"↻ CW\"` (Clockwise) and `\"↺ CCW\"` (Counter-Clockwise) on the HUD keeps the human player oriented when AI players drop Kings. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `res://scenes/table/table.gd`, connect `TurnManager.direction_changed` to `refresh_table_ui`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Format the direction indicator as `\"↻ CW\" if TurnManager.direction == 1 else \"↺ CCW\"`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **When `skips > 0` in `_execute_move()`, display how many players were jumped in `feedback_label.text`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Displaying Turn Direction & Skipped Players on the HUD` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Showing `\"↻ CW\"` (Clockwise) and `\"↺ CCW\"` (Counter-Clockwise) on the HUD keeps the human player oriented when AI players drop Kings.\n- **Core Principle 2**: Logging `\"Skipped %d player(s)!\" % skips` in `feedback_label` explains why the turn jumped across the table.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why is it important to display `↻ CW` / `↺ CCW` on the HUD at all times?** | **Because Kickback cards (Kings) reverse turn order; showing the current direction tells the player who acts next and who will be hit by a Penalty or Jump card!** — Knowing who sits next in the current direction of play determines whether you should play a Penalty or Jump card now! |\n| **If `skips` is `2` when `TurnManager.advance_turn(skips)` runs, how many total steps around the table does `current_player_index` advance?** | **3 steps (`1 + skips`), skipping 2 players and landing on the 3rd player** — A normal turn advances 1 step; skipping 2 players advances `1 + 2 = 3` steps. |\n| **In a 4-player game, what happens if someone plays THREE Jump Cards (3 Jacks) in a single move?** | **All 3 opponents are skipped (`(start + 1 + 3) % 4 == start`), and the turn comes right back to the player who played the 3 Jacks!** — Skipping 3 opponents in a 4-player circle advances `1 + 3 = 4` seats (`% 4 == 0`), wrapping all the way back to the same player! |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write `direction_badge(dir: int) -> String` that returns `\"CW\"` when `dir == 1` and `\"CCW\"` otherwise.\n- **How Godot Evaluates It**: When your script runs `func direction_badge(dir: int) -> String:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns a concise direction badge string for the top HUD bar.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func format_direction_badge(dir: int) -> String:` | Defines function `format_direction_badge()` returning `String`. |\n| **Line 2** | `return \"↻ Clockwise\" if dir == 1 else \"↺ Anti-Clockwise\"` | Immediately exits the current function and sends `\"↻ Clockwise\" if dir == 1 else \"↺ Anti-Clockwise\"` back to the caller. |\n| **Line 4** | `func format_jump_feedback(player: int, skips: int) -> String:` | Defines function `format_jump_feedback()` returning `String`. |\n| **Line 5** | `if skips <= 0:` | Branches into the indented block only when `skips <= 0` evaluates to `true`. |\n| **Line 6** | `return \"Player %d played a card.\" % (player + 1)` | Immediately exits the current function and sends `\"Player %d played a card.\" % (player + 1)` back to the caller. |\n| **Line 7** | `return \"Player %d jumped %d player(s)!\" % [player + 1, skips]` | Immediately exits the current function and sends `\"Player %d jumped %d player(s)!\" % [player + 1, skips]` back to the caller. |",
+      "codeSnippets": [
+        {
+          "id": "cs_07_03_a",
+          "language": "gdscript",
+          "code": "func format_direction_badge(dir: int) -> String:\n    return \"↻ Clockwise\" if dir == 1 else \"↺ Anti-Clockwise\"\n\nfunc format_jump_feedback(player: int, skips: int) -> String:\n    if skips <= 0:\n        return \"Player %d played a card.\" % (player + 1)\n    return \"Player %d jumped %d player(s)!\" % [player + 1, skips]",
+          "caption": "Formatting direction and jump-skip messages for the HUD."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write `direction_badge(dir: int) -> String` that returns `\"CW\"` when `dir == 1` and `\"CCW\"` otherwise.",
+        "hint": "Use `if dir == 1: return \"CW\"` followed by `return \"CCW\"`.",
+        "starterCode": "func direction_badge(dir: int) -> String:\n    # Return \"CW\" if dir == 1 else \"CCW\":\n",
+        "requiredTokens": [
+          "func",
+          "direction_badge",
+          "dir",
+          "1",
+          "return",
+          "CW",
+          "CCW"
+        ],
+        "expectedOutput": "Returns a concise direction badge string for the top HUD bar.",
+        "solutionCode": "func direction_badge(dir: int) -> String:\n    if dir == 1:\n        return \"CW\"\n    return \"CCW\""
+      },
+      "quizQuestions": [
+        {
+          "id": "q_07_03_a",
+          "prompt": "Why is it important to display `↻ CW` / `↺ CCW` on the HUD at all times?",
+          "choices": [
+            "Godot requires Unicode arrows in Labels",
+            "Because Kickback cards (Kings) reverse turn order; showing the current direction tells the player who acts next and who will be hit by a Penalty or Jump card!",
+            "To increase frame rate",
+            "To unlock Phase 8"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Knowing who sits next in the current direction of play determines whether you should play a Penalty or Jump card now!",
+          "concept": "Direction state"
+        },
+        {
+          "id": "q_07_03_b",
+          "prompt": "If `skips` is `2` when `TurnManager.advance_turn(skips)` runs, how many total steps around the table does `current_player_index` advance?",
+          "choices": [
+            "1 step",
+            "3 steps (`1 + skips`), skipping 2 players and landing on the 3rd player",
+            "2 steps",
+            "0 steps"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "A normal turn advances 1 step; skipping 2 players advances `1 + 2 = 3` steps.",
+          "concept": "Iterative counters"
+        },
+        {
+          "id": "q_07_03_c",
+          "prompt": "In a 4-player game, what happens if someone plays THREE Jump Cards (3 Jacks) in a single move?",
+          "choices": [
+            "The game crashes",
+            "All 3 opponents are skipped (`(start + 1 + 3) % 4 == start`), and the turn comes right back to the player who played the 3 Jacks!",
+            "Only 1 opponent is skipped",
+            "The direction reverses"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Skipping 3 opponents in a 4-player circle advances `1 + 3 = 4` seats (`% 4 == 0`), wrapping all the way back to the same player!",
           "concept": "Iterative counters"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Displaying Turn Direction & Skipped Players on the HUD`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
   "debugChallenge": {
     "id": "dbg_07_infinite_chain",
     "brokenCode": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
-    "bugDescription": "The JACK branch increments `skips` but never advances `i`. As long as the top of the chain is a Jack, the loop reads the same Jack forever — `skips` climbs without bound and `i` never reaches `chain.size()`. The game freezes on any Jack-led chain.",
+    "bugDescription": "Whenever any player plays a Jack (Jump Card), the entire Godot game window freezes completely and stops responding!",
     "fixedCode": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
-    "explanation": "Every branch of a `while` loop must advance the loop variable toward termination. Adding `i += 1` to the JACK branch restores the invariant: `i` grows by 1 per iteration regardless of which card type was seen, so the loop exits when `i` reaches the chain length."
+    "explanation": "Look at the `if card.rank == CardTypes.Ranks.JACK:` branch on lines 6–7: it increments `skips += 1`, but **forgot `i += 1`!** Because `i` stays `0` forever, the `while i < chain.size():` loop inspects `chain[0]` in an infinite loop, freezing the main thread.",
+    "buggyLineNumber": 7,
+    "hint": "Compare the `JACK` branch (lines 6–7) with the `KING` branch (lines 8–10): why does `i` advance in the `KING` branch but not in the `JACK` branch?"
   }
 }

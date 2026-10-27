@@ -1,131 +1,336 @@
 {
   "id": "phase_11_polish_ui",
   "order": 11,
-  "title": "Polish & UI",
-  "summary": "Bring Kadi to life with Godot 4 Tweens: animate card deals, penalty stack pulses, and win-screen confetti — all without blocking the rules engine.",
-  "estimatedMinutes": 75,
-  "concepts": ["Tweens", "Animations", "Audio", "Exporting"],
-  "programmingConcepts": ["Interpolation", "Async patterns", "Await", "Signals", "Build pipelines"],
+  "title": "Animations, Sound, Full Table Integration & Exporting",
+  "summary": "Bring your Kadi game to life with Godot 4 Tweens, procedural/audio feedback, the complete master `table.gd` script tying all 12 phases together, and export to Windows, Android, or Web!",
+  "estimatedMinutes": 80,
+  "concepts": [
+    "Tweens",
+    "Animations",
+    "Audio",
+    "Full Game Loop",
+    "Exporting"
+  ],
+  "programmingConcepts": [
+    "Interpolation",
+    "Async patterns",
+    "Signal listeners",
+    "Build pipelines"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scenes/table/table.gd",
+    "res://project.godot"
+  ],
+  "sceneTreeBlueprint": "Table (Node2D)  [Complete Production Scene Tree]\n├── Background (ColorRect)\n├── DiscardSlot (Control)\n├── PlayerHandContainer (HBoxContainer)\n├── AITurnTimer (Timer)\n├── FlashRect (ColorRect)               [Full-screen red/gold flash overlay, mouse_filter = Ignore]\n├── Sounds (Node)\n│   ├── SlapSound (AudioStreamPlayer)\n│   ├── ShuffleSound (AudioStreamPlayer)\n│   └── NikoSound (AudioStreamPlayer)\n└── HUD (CanvasLayer)\n    ├── StatusLabel (Label)\n    ├── OpponentSummaryLabel (Label)\n    ├── FeedbackLabel (Label)\n    ├── NikoKadiLabel (Label)\n    ├── PlaySelectedButton (Button)\n    ├── DrawButton (Button)\n    ├── NikoKadiButton (Button)\n    ├── NewGameButton (Button)\n    └── DeclareSuitDialog (Control)",
+  "learningObjectives": [
+    "Animate card deals and penalty alerts smoothly using `create_tween()`, `.set_trans(Tween.TRANS_SINE)`, and `.set_ease(Tween.EASE_OUT)`.",
+    "Pair `AudioStreamPlayer` sound cues with visual screen-flash feedback (`FlashRect`) connected via signals.",
+    "Review and drop in the complete, end-to-end `res://scenes/table/table.gd` master script that integrates all 12 phases.",
+    "Export your finished Kadi game to Windows (`.exe`), Android (`.apk`), or Web (HTML5) using Godot 4.3 Export Templates."
+  ],
   "lessons": [
     {
       "id": "l_11_01_tweens",
       "order": 1,
-      "title": "Animating Cards with Tweens",
-      "bodyMarkdown": "# Tweens\n\nA **Tween** interpolates a property from one value to another over time. Godot 4's `create_tween()` returns a Tween you chain calls on — no manual `_process` math required.\n\n```gdscript\nfunc animate_deal(card_node: Node2D, target: Vector2) -> void:\n    var start_pos: Vector2 = card_node.position\n    card_node.position = start_pos + Vector2(0, -200)\n    card_node.modulate.a = 0.0\n    var tween: Tween = create_tween()\n    tween.set_parallel(true)\n    tween.tween_property(card_node, \"position\", target, 0.4) \\\n        .set_trans(Tween.TRANS_SINE) \\\n        .set_ease(Tween.EASE_OUT)\n    tween.tween_property(card_node, \"modulate:a\", 1.0, 0.2)\n    tween.chain().tween_callback(card_node.enable_input)\n```\n\n`set_parallel(true)` runs the position and alpha tweens simultaneously — the card flies in AND fades in together. `set_trans` picks the curve (`SINE` is smooth, `BACK` overshoots for a playful bounce). `set_ease` picks direction (`EASE_OUT` decelerates into the target, which feels natural for arrivals).\n\n`chain()` forces the next tween to wait for the previous ones; here we enable input only after the card has landed.\n\nTo block on a tween, `await tween.finished` — useful when the rules engine must wait for an animation before advancing the turn.\n\n> [!WHY]\n> Tweens run on Godot's render loop, independent of the rules engine. The card visually flies in while the rules engine has already moved on — animations never block gameplay logic. Choosing `EASE_OUT` over linear interpolation is a deliberate feel choice: cards decelerate as they arrive, which reads as \"settling\" into the hand, far more satisfying than a robotic constant speed. The whole polish budget for Kadi is in these tiny curve choices; the rules are unaffected.\n\nKeep tween durations under 0.5s — anything longer feels laggy in a turn-based game.",
+      "title": "Animating Cards & UI Pulses with Godot 4 Tweens",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Call `var tween: Tween = create_tween()` inside any Node script to start a smooth property animation.",
+        "Use `tween.set_parallel(true)` when you want position and opacity (`modulate:a`) to animate simultaneously.",
+        "Use `.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)` so cards decelerate smoothly into place.",
+        "Keep card animation durations snappy (`0.18s` to `0.30s`) so turns feel responsive."
+      ],
+      "keyTakeaways": [
+        "`create_tween()` interpolates any property (`\"position\"`, `\"scale\"`, `\"modulate:a\"`) over time without writing manual `_process(delta)` math.",
+        "`Tween.EASE_OUT` starts fast and decelerates smoothly at the end, mimicking a real card sliding across felt.",
+        "`tween.chain()` waits for prior parallel steps to finish before running the next step."
+      ],
+      "bodyMarkdown": "# Smooth Card & Banner Animations with Tweens\n\nA **[[Tweens|Tween]]** smoothly interpolates a node's property from a starting value to a target value over a duration in seconds. In Godot 4.3, you don't even need to add a Tween node in the Scene dock — just call **`create_tween()`** in code!\n\n```gdscript\nfunc animate_card_arrival(card_node: Control) -> void:\n    card_node.modulate.a = 0.0\n    card_node.scale = Vector2(0.85, 0.85)\n    var tween: Tween = create_tween()\n    tween.set_parallel(true)\n    tween.tween_property(card_node, \"modulate:a\", 1.0, 0.22)\n    tween.tween_property(card_node, \"scale\", Vector2.ONE, 0.22) \\\n        .set_trans(Tween.TRANS_BACK) \\\n        .set_ease(Tween.EASE_OUT)\n\nfunc pulse_label(label: Control) -> void:\n    var tween: Tween = create_tween()\n    tween.tween_property(label, \"scale\", Vector2(1.25, 1.25), 0.12)\n    tween.tween_property(label, \"scale\", Vector2.ONE, 0.12)\n```\n\n> [!WHY]\n> Notice how `animate_card_arrival` and `pulse_label` never block the rules engine! `GameState` and `TurnManager` update the data immediately, while `create_tween()` smoothly animates the visual representation on screen over 0.22 seconds.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 11 (Animations, Sound, Full Table Integration & Exporting) — Lesson 1: *Animating Cards & UI Pulses with Godot 4 Tweens* |\n| **Which File Do I Edit?** | `res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [Complete Production Scene Tree]` |\n| **What Problem Does It Solve?** | `create_tween()` interpolates any property (`\"position\"`, `\"scale\"`, `\"modulate:a\"`) over time without writing manual `_process(delta)` math. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Call `var tween: Tween = create_tween()` inside any Node script to start a smooth property animation.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Use `tween.set_parallel(true)` when you want position and opacity (`modulate:a`) to animate simultaneously.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Use `.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)` so cards decelerate smoothly into place.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n4. **Keep card animation durations snappy (`0.18s` to `0.30s`) so turns feel responsive.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Animating Cards & UI Pulses with Godot 4 Tweens` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `create_tween()` interpolates any property (`\"position\"`, `\"scale\"`, `\"modulate:a\"`) over time without writing manual `_process(delta)` math.\n- **Core Principle 2**: `Tween.EASE_OUT` starts fast and decelerates smoothly at the end, mimicking a real card sliding across felt.\n- **Core Principle 3**: `tween.chain()` waits for prior parallel steps to finish before running the next step.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What does `tween.set_parallel(true)` do on a Godot 4 `Tween`?** | **Makes subsequent `tween_property` calls animate simultaneously instead of waiting one after another** — `set_parallel(true)` runs all added tween steps at the same time; `chain()` returns to sequential ordering. |\n| **Why is `Tween.EASE_OUT` ideal for a card sliding onto the discard pile?** | **It starts fast and gently decelerates as the card settles into place, mimicking physical friction on a card table** — `EASE_OUT` decelerates into the final keyframe so arriving cards feel like they are settling onto the table. |\n| **How do you create a `Tween` in Godot 4.3?** | **Call `create_tween()` directly inside any Node script** — In Godot 4, `Tween` is a lightweight object created in code via `create_tween()`. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write `pulse_penalty(label: Control) -> void` that creates `var tween: Tween = create_tween()`, tweens `\"scale\"` to `Vector2(1.4, 1.4)` over `0.15` seconds, and then tweens `\"scale\"` back to `Vector2(1.0, 1.0)` over `0.15` seconds.\n- **How Godot Evaluates It**: When your script runs `func pulse_penalty(label: Control) -> void:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Smoothly pops the penalty badge larger and back down whenever the penalty stack increases.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func animate_deal(card_node: Node2D, target: Vector2) -> void:` | Defines function `animate_deal()` returning `void`. |\n| **Line 2** | `card_node.position = target + Vector2(0, -160)` | Assigns the computed right-hand value into `card_node.position`. |\n| **Line 3** | `card_node.modulate.a = 0.0` | Assigns the computed right-hand value into `card_node.modulate.a`. |\n| **Line 4** | `var tween: Tween = create_tween()` | Declares a mutable typed variable to store state in memory. |\n| **Line 5** | `tween.set_parallel(true)` | Executes this statement as part of the current block. |\n| **Line 6** | `tween.tween_property(card_node, \"position\", target, 0.30) \\` | Interpolates the target node's property smoothly to the target value over the given duration in seconds. |\n| **Line 7** | `.set_trans(Tween.TRANS_SINE) \\` | Executes this statement as part of the current block. |\n| **Line 8** | `.set_ease(Tween.EASE_OUT)` | Executes this statement as part of the current block. |\n| **Line 9** | `tween.tween_property(card_node, \"modulate:a\", 1.0, 0.20)` | Interpolates the target node's property smoothly to the target value over the given duration in seconds. |\n| **Line 11** | `func pulse_penalty(label: Control) -> void:` | Defines function `pulse_penalty()` returning `void`. |\n| **Line 12** | `var tween: Tween = create_tween()` | Declares a mutable typed variable to store state in memory. |\n| **Line 13** | `tween.tween_property(label, \"scale\", Vector2(1.35, 1.35), 0.14)` | Interpolates the target node's property smoothly to the target value over the given duration in seconds. |\n| **Line 14** | `tween.tween_property(label, \"scale\", Vector2(1.0, 1.0), 0.14)` | Interpolates the target node's property smoothly to the target value over the given duration in seconds. |",
       "codeSnippets": [
         {
           "id": "cs_11_01_a",
           "language": "gdscript",
-          "code": "func animate_deal(card_node: Node2D, target: Vector2) -> void:\n    card_node.position = target + Vector2(0, -200)\n    card_node.modulate.a = 0.0\n    var tween: Tween = create_tween()\n    tween.set_parallel(true)\n    tween.tween_property(card_node, \"position\", target, 0.4) \\\n        .set_trans(Tween.TRANS_SINE) \\\n        .set_ease(Tween.EASE_OUT)\n    tween.tween_property(card_node, \"modulate:a\", 1.0, 0.2)\n    tween.chain().tween_callback(card_node.enable_input)",
-          "caption": "A deal animation: fly in and fade in together, then enable input."
+          "code": "func animate_deal(card_node: Node2D, target: Vector2) -> void:\n    card_node.position = target + Vector2(0, -160)\n    card_node.modulate.a = 0.0\n    var tween: Tween = create_tween()\n    tween.set_parallel(true)\n    tween.tween_property(card_node, \"position\", target, 0.30) \\\n        .set_trans(Tween.TRANS_SINE) \\\n        .set_ease(Tween.EASE_OUT)\n    tween.tween_property(card_node, \"modulate:a\", 1.0, 0.20)\n\nfunc pulse_penalty(label: Control) -> void:\n    var tween: Tween = create_tween()\n    tween.tween_property(label, \"scale\", Vector2(1.35, 1.35), 0.14)\n    tween.tween_property(label, \"scale\", Vector2(1.0, 1.0), 0.14)",
+          "caption": "Parallel arrival tween and sequential scale pulse tween."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write a function `pulse_penalty(label: Label)` that scales the label to 1.4 then back to 1.0, each over 0.15 seconds, using a Tween.",
-        "hint": "Use tween_property with \"scale\" and chain the two tweens.",
-        "solutionCode": "func pulse_penalty(label: Label) -> void:\n    var tween: Tween = create_tween()\n    tween.tween_property(label, \"scale\", Vector2(1.4, 1.4), 0.15)\n    tween.tween_property(label, \"scale\", Vector2(1.0, 1.0), 0.15)"
+        "instructions": "Write `pulse_penalty(label: Control) -> void` that creates `var tween: Tween = create_tween()`, tweens `\"scale\"` to `Vector2(1.4, 1.4)` over `0.15` seconds, and then tweens `\"scale\"` back to `Vector2(1.0, 1.0)` over `0.15` seconds.",
+        "hint": "Call `tween.tween_property(label, \"scale\", Vector2(1.4, 1.4), 0.15)` followed by `tween.tween_property(label, \"scale\", Vector2(1.0, 1.0), 0.15)`.",
+        "starterCode": "func pulse_penalty(label: Control) -> void:\n    var tween: Tween = create_tween()\n    # Chain two tween_property calls on \"scale\":\n",
+        "requiredTokens": [
+          "create_tween()",
+          "tween_property",
+          "scale",
+          "Vector2(1.4, 1.4)",
+          "Vector2(1.0, 1.0)",
+          "0.15"
+        ],
+        "expectedOutput": "Smoothly pops the penalty badge larger and back down whenever the penalty stack increases.",
+        "solutionCode": "func pulse_penalty(label: Control) -> void:\n    var tween: Tween = create_tween()\n    tween.tween_property(label, \"scale\", Vector2(1.4, 1.4), 0.15)\n    tween.tween_property(label, \"scale\", Vector2(1.0, 1.0), 0.15)"
       },
       "quizQuestions": [
         {
           "id": "q_11_01_a",
-          "prompt": "What does `set_parallel(true)` do on a Tween?",
-          "choices": ["Runs tweens on a separate thread", "Runs subsequent tween calls simultaneously instead of sequentially", "Loops the tween forever", "Disables the tween"],
+          "prompt": "What does `tween.set_parallel(true)` do on a Godot 4 `Tween`?",
+          "choices": [
+            "Runs the game on two monitors",
+            "Makes subsequent `tween_property` calls animate simultaneously instead of waiting one after another",
+            "Repeats the tween infinitely",
+            "Cancels the tween"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "`set_parallel(true)` makes chained tween_property calls overlap in time rather than queue one after another.",
+          "explanation": "`set_parallel(true)` runs all added tween steps at the same time; `chain()` returns to sequential ordering.",
           "concept": "Tweens"
         },
         {
           "id": "q_11_01_b",
-          "prompt": "Why choose `EASE_OUT` over linear interpolation for a card flying into the hand?",
-          "choices": ["It is faster", "It decelerates into the target, reading as the card \"settling\" — more natural and satisfying than constant speed", "It is required by Godot", "It saves memory"],
+          "prompt": "Why is `Tween.EASE_OUT` ideal for a card sliding onto the discard pile?",
+          "choices": [
+            "It starts slow and ends abruptly",
+            "It starts fast and gently decelerates as the card settles into place, mimicking physical friction on a card table",
+            "It teleports the card instantly",
+            "It uses less RAM"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Ease curves shape perceived motion. EASE_OUT slows the card as it arrives, mimicking physical deceleration and feeling far more polished.",
+          "explanation": "`EASE_OUT` decelerates into the final keyframe so arriving cards feel like they are settling onto the table.",
           "concept": "Animations"
+        },
+        {
+          "id": "q_11_01_c",
+          "prompt": "How do you create a `Tween` in Godot 4.3?",
+          "choices": [
+            "Add a Tween node from the Godot 3 menu",
+            "Call `create_tween()` directly inside any Node script",
+            "Import an MP4 video",
+            "Call `OS.tween()`"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "In Godot 4, `Tween` is a lightweight object created in code via `create_tween()`.",
+          "concept": "Tweens"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Animating Cards & UI Pulses with Godot 4 Tweens`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_11_02_sound_feedback",
       "order": 2,
-      "title": "Sound and Feedback",
-      "bodyMarkdown": "# Sound and Feedback\n\nA real Kadi table is loud: cards **slap** the pile, the deck rasps as it shuffles, and \"Niko Kadi!\" cuts through the chatter. Our game is silent — let us fix that with **AudioStreamPlayer**, Godot's node for playing a sound.\n\nAdd one AudioStreamPlayer per sound to your table scene, drop a `.ogg` or `.wav` into each node's `stream` property, and call `play()` when the moment arrives. The elegant part: the rules engine already *announces* every moment via signals, so the audio layer just listens.\n\n```gdscript\n@onready var slap_sound: AudioStreamPlayer = $Sounds/SlapSound\n@onready var shuffle_sound: AudioStreamPlayer = $Sounds/ShuffleSound\n@onready var flash_rect: ColorRect = $FlashRect\n@onready var event_label: Label = $HUD/EventLabel\n\nfunc _ready() -> void:\n    GameState.card_played.connect(_on_card_played)\n    GameState.pile_recycled.connect(_on_pile_recycled)\n    GameState.penalty_applied.connect(_on_penalty)\n\nfunc _on_card_played(_card: CardData) -> void:\n    slap_sound.play()\n\nfunc _on_pile_recycled(_new_size: int) -> void:\n    shuffle_sound.play()\n\nfunc _on_penalty(amount: int) -> void:\n    event_label.text = \"Pick %d!\" % amount\n    flash_rect.modulate.a = 0.6\n    var tween: Tween = create_tween()\n    tween.tween_property(flash_rect, \"modulate:a\", 0.0, 0.3)\n```\n\nSound alone is not enough — players glance away, phones sit muted. Pair each audio cue with **visual feedback**: `_on_penalty` sets a full-screen `ColorRect` to 60% opacity and tweens it back to invisible, a red flash that says \"something just hit you\" even with the volume off. The label spells out what: \"Pick 5!\" for a Joker, or a bold \"NIKO KADI!\" banner when the announcement signal fires.\n\nUse a dedicated player per sound rather than swapping one node's stream: a slap and a shuffle can then overlap naturally when a play triggers a recycle on the same frame.\n\n> [!WHY]\n> Because feedback subscribes to the SAME signals the rules engine already emits, the audio-visual layer is a pure listener — delete every sound node and the game still plays perfectly. That one-way dependency (rules never know feedback exists) means you can iterate on juice endlessly, swap sound packs, or add screen shake, all with zero risk of breaking a rule. Signals turn polish into a plug-in.\n\nKeep feedback fast: a 0.3-second flash and a short slap sample. Anything longer starts to *feel* like input lag in a turn-based game.",
+      "title": "Sound Effects, Screen Flashes & Complete `table.gd` Integration",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": "Table (Node2D)  [script: res://scenes/table/table.gd]\n├── FlashRect (ColorRect)  [Full Rect | Mouse Filter = Ignore! | Alpha = 0.0]\n└── Sounds (Node)\n    ├── SlapSound (AudioStreamPlayer)\n    └── ShuffleSound (AudioStreamPlayer)",
+      "editorSteps": [
+        "In `res://scenes/table/table.tscn`, add a `ColorRect` child named `FlashRect` (`Size: 1152×648`, color crimson with Alpha `0`), and in **Inspector -> Mouse -> Filter**, set it to **Ignore** (so it never blocks card clicks!).",
+        "Add a `Node` child named `Sounds` with `AudioStreamPlayer` children `SlapSound` and `ShuffleSound`.",
+        "Review the complete, unified `res://scenes/table/table.gd` script below that ties together dealing, human multi-card staging, AI turns, penalties, Q/A chains, Jumps, Kickbacks, Ace suit popups, and Niko Kadi win detection!"
+      ],
+      "keyTakeaways": [
+        "Any full-screen overlay `ColorRect` (like `FlashRect`) MUST have **Mouse -> Filter = Ignore** (`MOUSE_FILTER_IGNORE`) so it does not eat mouse clicks meant for cards and buttons underneath!",
+        "Checking `if slap_sound.stream != null: slap_sound.play()` lets the game run cleanly even before you drop `.wav`/`.ogg` audio files into `res://audio/`.",
+        "The complete `table.gd` script in this lesson connects every piece you built across Phases 1 through 11 into one playable match."
+      ],
+      "bodyMarkdown": "# Audio-Visual Feedback & Complete `table.gd` Master Script\n\nWhen a Penalty card lands, we want both an audio cue (`AudioStreamPlayer.play()`) and a visual cue (flashing `FlashRect`'s alpha to `0.35` and tweening it back to `0.0`).\n\n> [!MISTAKE]\n> **Critical Godot UI Gotcha:** Whenever you place a full-screen `ColorRect` (like `FlashRect`) over your table for visual flashes, its default **Mouse Filter** is `Stop` — which means even when its opacity (`modulate.a`) is `0.0` (completely invisible!), it will **block every mouse click** from reaching your cards and buttons! Always set `flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE` (or set **Inspector → Mouse → Filter → Ignore**).\n\nBelow is both the feedback handler and the **complete, end-to-end `res://scenes/table/table.gd` script** that unites every phase of the course!\n\n> [!WHY]\n> Any full-screen overlay `ColorRect` (like `FlashRect`) MUST have **Mouse -> Filter = Ignore** (`MOUSE_FILTER_IGNORE`) so it does not eat mouse clicks meant for cards and buttons underneath!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 11 (Animations, Sound, Full Table Integration & Exporting) — Lesson 2: *Sound Effects, Screen Flashes & Complete `table.gd` Integration* |\n| **Which File Do I Edit?** | `res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)  [script: res://scenes/table/table.gd]` |\n| **What Problem Does It Solve?** | Any full-screen overlay `ColorRect` (like `FlashRect`) MUST have **Mouse -> Filter = Ignore** (`MOUSE_FILTER_IGNORE`) so it does not eat mouse clicks meant for cards and buttons underneath! |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `res://scenes/table/table.tscn`, add a `ColorRect` child named `FlashRect` (`Size: 1152×648`, color crimson with Alpha `0`), and in **Inspector -> Mouse -> Filter**, set it to **Ignore** (so it never blocks card clicks!).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Add a `Node` child named `Sounds` with `AudioStreamPlayer` children `SlapSound` and `ShuffleSound`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Review the complete, unified `res://scenes/table/table.gd` script below that ties together dealing, human multi-card staging, AI turns, penalties, Q/A chains, Jumps, Kickbacks, Ace suit popups, and Niko Kadi win detection!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Sound Effects, Screen Flashes & Complete `table.gd` Integration` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Any full-screen overlay `ColorRect` (like `FlashRect`) MUST have **Mouse -> Filter = Ignore** (`MOUSE_FILTER_IGNORE`) so it does not eat mouse clicks meant for cards and buttons underneath!\n- **Core Principle 2**: Checking `if slap_sound.stream != null: slap_sound.play()` lets the game run cleanly even before you drop `.wav`/`.ogg` audio files into `res://audio/`.\n- **Core Principle 3**: The complete `table.gd` script in this lesson connects every piece you built across Phases 1 through 11 into one playable match.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why MUST a full-screen flash overlay (`FlashRect: ColorRect`) have `mouse_filter = Control.MOUSE_FILTER_IGNORE`?** | **Because even when `modulate.a == 0.0` (transparent), a `ColorRect` with default mouse filter `Stop` intercepts all mouse clicks and prevents clicking cards underneath!** — Transparent `Control` nodes still intercept mouse events unless `mouse_filter` is set to `MOUSE_FILTER_IGNORE`. |\n| **Why should every important audio cue (like a penalty slap) be paired with a visual cue (like a red flash and label update)?** | **Players often play on muted phones or noisy buses; visual + audio cues ensure every game event is clear even with volume at zero** — Pairing visual and audio feedback guarantees clarity regardless of whether sound is muted. |\n| **In `_execute_move()`, why does the code `return` right after `declare_suit_dialog.show()` when Player 0 plays an Ace?** | **So `TurnManager.advance_turn()` waits until Player 0 picks a suit in the popup (`_on_suit_declared`) before starting Player 1's AI turn!** — If `advance_turn()` ran before the human clicked Confirm on the suit popup, Seat 1's AI turn would start before `declared_suit` was chosen! |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write `_on_niko_announced(player: int) -> void` that calls `niko_sound.play()`, sets `event_label.text = \"NIKO KADI!\"`, and pulses `event_label` scale to `Vector2(1.5, 1.5)` and back to `Vector2(1.0, 1.0)` over `0.15` seconds using `create_tween()`.\n- **How Godot Evaluates It**: When your script runs `func _on_niko_announced(_player: int) -> void:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Plays the Niko Kadi sound and pulses the announcement banner.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `@onready var slap_sound: AudioStreamPlayer = $Sounds/SlapSound` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 2** | `@onready var shuffle_sound: AudioStreamPlayer = $Sounds/ShuffleSound` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 3** | `@onready var flash_rect: ColorRect = $FlashRect` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 4** | `@onready var event_label: Label = $HUD/FeedbackLabel` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 6** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 7** | `flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE` | Assigns the computed right-hand value into `flash_rect.mouse_filter`. |\n| **Line 8** | `flash_rect.modulate.a = 0.0` | Assigns the computed right-hand value into `flash_rect.modulate.a`. |\n| **Line 9** | `GameState.pile_recycled.connect(_on_pile_recycled)` | Subscribes a callback function to a signal so the function runs automatically whenever the signal emits. |\n| **Line 10** | `GameState.penalty_updated.connect(_on_penalty)` | Subscribes a callback function to a signal so the function runs automatically whenever the signal emits. |\n| **Line 12** | `func _on_pile_recycled(_new_size: int) -> void:` | Defines function `_on_pile_recycled()` returning `void`. |\n| **Line 13** | `if shuffle_sound.stream != null:` | Branches into the indented block only when `shuffle_sound.stream != null` evaluates to `true`. |\n| **Line 14** | `shuffle_sound.play()` | Executes this statement as part of the current block. |\n| **Line 16** | `func _on_penalty(amount: int) -> void:` | Defines function `_on_penalty()` returning `void`. |\n| **Line 17** | `if amount <= 0:` | Branches into the indented block only when `amount <= 0` evaluates to `true`. |\n| **Line 18** | `return` | Immediately exits the function (early-return guard clause). |\n| **Line 19** | `event_label.text = \"Penalty Stack: +%d cards!\" % amount` | Assigns the computed right-hand value into `event_label.text`. |\n| **Line 20** | `flash_rect.modulate.a = 0.45` | Assigns the computed right-hand value into `flash_rect.modulate.a`. |\n| **Line 21** | `var tween: Tween = create_tween()` | Declares a mutable typed variable to store state in memory. |\n| **Line 22** | `tween.tween_property(flash_rect, \"modulate:a\", 0.0, 0.30)` | Interpolates the target node's property smoothly to the target value over the given duration in seconds. |",
       "codeSnippets": [
         {
           "id": "cs_11_02_a",
           "language": "gdscript",
-          "code": "@onready var slap_sound: AudioStreamPlayer = $Sounds/SlapSound\n@onready var shuffle_sound: AudioStreamPlayer = $Sounds/ShuffleSound\n@onready var flash_rect: ColorRect = $FlashRect\n@onready var event_label: Label = $HUD/EventLabel\n\nfunc _ready() -> void:\n    GameState.card_played.connect(_on_card_played)\n    GameState.pile_recycled.connect(_on_pile_recycled)\n    GameState.penalty_applied.connect(_on_penalty)\n\nfunc _on_card_played(_card: CardData) -> void:\n    slap_sound.play()\n\nfunc _on_pile_recycled(_new_size: int) -> void:\n    shuffle_sound.play()\n\nfunc _on_penalty(amount: int) -> void:\n    event_label.text = \"Pick %d!\" % amount\n    flash_rect.modulate.a = 0.6\n    var tween: Tween = create_tween()\n    tween.tween_property(flash_rect, \"modulate:a\", 0.0, 0.3)",
-          "caption": "The feedback layer subscribes to rules-engine signals: sounds, a penalty flash, and a label."
+          "code": "@onready var slap_sound: AudioStreamPlayer = $Sounds/SlapSound\n@onready var shuffle_sound: AudioStreamPlayer = $Sounds/ShuffleSound\n@onready var flash_rect: ColorRect = $FlashRect\n@onready var event_label: Label = $HUD/FeedbackLabel\n\nfunc _ready() -> void:\n    flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE\n    flash_rect.modulate.a = 0.0\n    GameState.pile_recycled.connect(_on_pile_recycled)\n    GameState.penalty_updated.connect(_on_penalty)\n\nfunc _on_pile_recycled(_new_size: int) -> void:\n    if shuffle_sound.stream != null:\n        shuffle_sound.play()\n\nfunc _on_penalty(amount: int) -> void:\n    if amount <= 0:\n        return\n    event_label.text = \"Penalty Stack: +%d cards!\" % amount\n    flash_rect.modulate.a = 0.45\n    var tween: Tween = create_tween()\n    tween.tween_property(flash_rect, \"modulate:a\", 0.0, 0.30)",
+          "caption": "Safe audio playback + non-blocking FlashRect penalty pulse."
+        },
+        {
+          "id": "cs_11_02_b",
+          "language": "gdscript",
+          "code": "# COMPLETE MASTER SCRIPT: res://scenes/table/table.gd\nextends Node2D\n\nconst CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")\n\n@onready var discard_slot: Control = $DiscardSlot\n@onready var player_hand_container: HBoxContainer = $PlayerHandContainer\n@onready var status_label: Label = $HUD/StatusLabel\n@onready var feedback_label: Label = $HUD/FeedbackLabel\n@onready var niko_label: Label = $HUD/NikoKadiLabel\n@onready var play_button: Button = $HUD/PlaySelectedButton\n@onready var draw_button: Button = $HUD/DrawButton\n@onready var niko_button: Button = $HUD/NikoKadiButton\n@onready var declare_suit_dialog: DeclareSuitDialog = $HUD/DeclareSuitDialog\n@onready var ai_turn_timer: Timer = $AITurnTimer\n\nvar staged_cards: Array[CardData] = []\nvar match_over: bool = false\n\nfunc _ready() -> void:\n    ai_turn_timer.one_shot = true\n    ai_turn_timer.timeout.connect(_on_ai_turn_timer_timeout)\n    play_button.pressed.connect(_on_play_selected_pressed)\n    draw_button.pressed.connect(_on_draw_pressed)\n    niko_button.pressed.connect(_on_niko_pressed)\n    declare_suit_dialog.suit_declared.connect(_on_suit_declared)\n    TurnManager.turn_changed.connect(_on_turn_changed)\n    GameState.state_updated.connect(refresh_table_ui)\n    if OS.is_debug_build():\n        KadiSelfTest.run_all_tests()\n    start_match()\n\nfunc start_match() -> void:\n    match_over = false\n    staged_cards.clear()\n    niko_label.text = \"\"\n    feedback_label.text = \"Match started! Select card(s) and click Play Selected.\"\n    GameState.start_new_match(4, 4)\n    TurnManager.reset_turns(4)\n\nfunc _on_play_selected_pressed() -> void:\n    if match_over or TurnManager.current_player_index != 0 or staged_cards.is_empty():\n        return\n    var move: Array[CardData] = staged_cards.duplicate()\n    staged_cards.clear()\n    _execute_move(0, move)\n\nfunc _on_draw_pressed() -> void:\n    if match_over or TurnManager.current_player_index != 0:\n        return\n    staged_cards.clear()\n    _draw_or_accept_penalty(0)\n    TurnManager.advance_turn()\n\nfunc _on_niko_pressed() -> void:\n    if match_over or TurnManager.current_player_index != 0:\n        return\n    GameState.announced_kadi[0] = true\n    niko_label.text = \"📢 You called: NIKO KADI!\"\n\nfunc _execute_move(player: int, cards: Array[CardData]) -> void:\n    var top: CardData = GameState.top_discard()\n    if not RuleValidator.validate_move(cards, top, GameState.penalty_stack, GameState.declared_suit):\n        GameState.last_play_was_legal = false\n        GameState.draw_cards(player, 1)\n        feedback_label.text = \"Player %d made an invalid play! +1 penalty card.\" % (player + 1)\n        TurnManager.advance_turn()\n        return\n\n    GameState.last_play_was_legal = true\n    var had_active_penalty: bool = (GameState.penalty_stack > 0)\n    var skips: int = 0\n    for c in cards:\n        GameState.hands[player].erase(c)\n        GameState.discard_pile.append(c)\n        if GameState.declared_suit != -1 and c.suit == GameState.declared_suit and c.rank != CardTypes.Ranks.ACE:\n            GameState.declared_suit = -1\n        if c.rank == CardTypes.Ranks.JACK:\n            skips += 1\n        elif c.rank == CardTypes.Ranks.KING:\n            TurnManager.reverse_direction()\n        elif c.is_penalty():\n            GameState.apply_penalty_card(c)\n        elif c.rank == CardTypes.Ranks.ACE and had_active_penalty:\n            GameState.penalty_stack = 0\n\n    GameState.state_updated.emit()\n    if RuleValidator.has_won(player, cards):\n        match_over = true\n        feedback_label.text = \"🏆 PLAYER %d WINS THE KADI MATCH!\" % (player + 1)\n        return\n\n    # If an Ace was played (and not just blocking a penalty), declare suit:\n    var last_card: CardData = cards.back()\n    if last_card.rank == CardTypes.Ranks.ACE and not had_active_penalty:\n        if player == 0:\n            declare_suit_dialog.show()\n            return  # Wait for _on_suit_declared before advancing turn!\n        else:\n            GameState.declared_suit = GameState.choose_best_suit_for_ai(GameState.hands[player])\n\n    TurnManager.advance_turn(skips)\n\nfunc _on_suit_declared(suit: int) -> void:\n    GameState.declared_suit = suit\n    feedback_label.text = \"Suit declared: %s\" % CardData.SUIT_NAMES.get(suit, \"Any\")\n     refresh_table_ui()\n    TurnManager.advance_turn()",
+          "caption": "The complete master table.gd script connecting all 12 phases."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `_on_niko_announced(player: int)` that plays `niko_sound`, sets event_label to \"NIKO KADI!\", and pulses the label's scale to 1.5 and back with a Tween (0.15s each way).",
-        "hint": "Combine an AudioStreamPlayer.play() call with the pulse pattern from the Tweens lesson.",
+        "instructions": "Write `_on_niko_announced(player: int) -> void` that calls `niko_sound.play()`, sets `event_label.text = \"NIKO KADI!\"`, and pulses `event_label` scale to `Vector2(1.5, 1.5)` and back to `Vector2(1.0, 1.0)` over `0.15` seconds using `create_tween()`.",
+        "hint": "Call `niko_sound.play()`, set `event_label.text = \"NIKO KADI!\"`, create `var tween: Tween = create_tween()`, and chain two `tween_property` calls.",
+        "starterCode": "func _on_niko_announced(_player: int) -> void:\n    # Play niko_sound, update event_label.text, and pulse scale with a Tween:\n",
+        "requiredTokens": [
+          "niko_sound.play()",
+          "event_label.text",
+          "NIKO KADI!",
+          "create_tween()",
+          "tween_property",
+          "scale"
+        ],
+        "expectedOutput": "Plays the Niko Kadi sound and pulses the announcement banner.",
         "solutionCode": "func _on_niko_announced(_player: int) -> void:\n    niko_sound.play()\n    event_label.text = \"NIKO KADI!\"\n    var tween: Tween = create_tween()\n    tween.tween_property(event_label, \"scale\", Vector2(1.5, 1.5), 0.15)\n    tween.tween_property(event_label, \"scale\", Vector2(1.0, 1.0), 0.15)"
       },
       "quizQuestions": [
         {
           "id": "q_11_02_a",
-          "prompt": "Why connect the feedback layer to the rules engine's existing signals instead of calling `slap_sound.play()` inside `play_card()`?",
-          "choices": ["Signals sound better", "The rules engine stays feedback-agnostic: delete every sound node and the game still runs, and polish can be iterated with zero risk to the rules", "play() cannot be called from the rules engine", "It saves memory"],
+          "prompt": "Why MUST a full-screen flash overlay (`FlashRect: ColorRect`) have `mouse_filter = Control.MOUSE_FILTER_IGNORE`?",
+          "choices": [
+            "So it renders in 60 FPS",
+            "Because even when `modulate.a == 0.0` (transparent), a `ColorRect` with default mouse filter `Stop` intercepts all mouse clicks and prevents clicking cards underneath!",
+            "Because `ColorRect` is a 3D node",
+            "To enable sound effects"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "A one-way dependency keeps gameplay logic pure. The feedback layer is a listener you can rewrite freely — signals turn polish into a plug-in.",
+          "explanation": "Transparent `Control` nodes still intercept mouse events unless `mouse_filter` is set to `MOUSE_FILTER_IGNORE`.",
           "concept": "Audio"
         },
         {
           "id": "q_11_02_b",
-          "prompt": "Why pair every sound cue with a visual cue like the penalty flash?",
-          "choices": ["Godot requires it", "Players glance away and phones sit muted — redundant channels make sure the event lands even when one channel is missed", "It makes the game louder", "Flashes are faster than sounds"],
+          "prompt": "Why should every important audio cue (like a penalty slap) be paired with a visual cue (like a red flash and label update)?",
+          "choices": [
+            "Godot crashes if audio plays without a Tween",
+            "Players often play on muted phones or noisy buses; visual + audio cues ensure every game event is clear even with volume at zero",
+            "Visual cues increase volume",
+            "Audio files cannot play on Windows"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Accessibility and real-world play conditions demand redundancy: the red flash communicates the penalty even at zero volume.",
+          "explanation": "Pairing visual and audio feedback guarantees clarity regardless of whether sound is muted.",
           "concept": "Audio"
+        },
+        {
+          "id": "q_11_02_c",
+          "prompt": "In `_execute_move()`, why does the code `return` right after `declare_suit_dialog.show()` when Player 0 plays an Ace?",
+          "choices": [
+            "Because the game is over",
+            "So `TurnManager.advance_turn()` waits until Player 0 picks a suit in the popup (`_on_suit_declared`) before starting Player 1's AI turn!",
+            "To delete the Ace",
+            "To reshuffle the deck"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "If `advance_turn()` ran before the human clicked Confirm on the suit popup, Seat 1's AI turn would start before `declared_suit` was chosen!",
+          "concept": "Full Game Loop"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Sound Effects, Screen Flashes & Complete `table.gd` Integration`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_11_03_exporting",
       "order": 3,
-      "title": "Exporting & Sharing Your Game",
-      "bodyMarkdown": "# Exporting & Sharing Your Game\n\nEleven phases ago, Kadi was a `var rank: int = 7`. Now it deals, jumps, kicks back, demands suits, announces \"Niko Kadi\", recycles its deck, and slaps cards with sound. One step remains: getting it off your machine and onto your friends' — because a card game with no opponents is just solitaire with extra rules.\n\nFirst, download the **export templates**: `Editor > Manage Export Templates > Download and Install`. Templates are the precompiled Godot runtimes for each platform, matched to your editor version (4.3) — without them, no export.\n\nThen open `Project > Export...` and click `Add...` to create a **preset** per platform. For Kadi three matter most: **Windows Desktop** produces an `.exe` you can zip and send; **Android** builds an `.apk` for the phones your friends actually carry (this one needs the Android SDK and a debug keystore — Godot's export dialog flags anything missing); **Web** exports an HTML5 build that runs in a browser, the lowest-friction way to share — upload to a host like itch.io and send a link.\n\nBefore exporting, make sure your game behaves like a finished product. A version label is the classic touch — and a reminder that `assert()` calls from Phase 10 vanish in release exports:\n\n```gdscript\n@onready var version_label: Label = $HUD/VersionLabel\n\nfunc _ready() -> void:\n    var version: String = ProjectSettings.get_setting(\"application/config/version\", \"1.0\")\n    version_label.text = \"Kadi v%s (%s)\" % [version, OS.get_name()]\n    if OS.is_debug_build():\n        version_label.text += \" [debug]\"\n```\n\n`OS.is_debug_build()` returns false in a release export — handy for hiding debug overlays and test buttons in the shipped game. Pick `Export Project...` in the preset dialog, choose a path, and Godot packs your scenes, scripts, and sounds into a single distributable build.\n\n> [!WHY]\n> Exporting early and often — not just at the end — catches platform-only bugs while they are cheap to fix: a touch input that works with a mouse but not a thumb, a font that renders differently on the web, a file path with the wrong case. More importantly, putting a build in a friend's hands closes the loop this whole course has been about: rules you encoded in Phase 0 booleans are now judged by a real player slapping a real (virtual) Joker down. That feedback is the most valuable test suite you will ever run.\n\nExport the Windows build, zip it, and send it to someone who knows the game. When they argue about a rule, you can open the exact function that enforces it — you built every line.",
+      "title": "Exporting & Sharing Your Kadi Game (Windows, Android & Web)",
+      "targetFile": "res://project.godot (Export Presets)",
+      "sceneTree": "Editor -> Manage Export Templates -> Download and Install\nProject -> Export... -> Add... -> Windows Desktop / Android / Web",
+      "editorSteps": [
+        "In the top menu bar, click **Editor -> Manage Export Templates...**, then click **Download and Install** to install the Godot 4.3 templates.",
+        "Click **Project -> Export...**, click **Add...** at the top of the window, and select **Web** (HTML5), **Windows Desktop**, or **Android**.",
+        "For **Windows Desktop**, click **Export Project...**, pick a folder (e.g. `builds/windows/Kadi.exe`), and click **Save**.",
+        "For **Web**, export as `index.html` and upload the zipped folder to itch.io so friends can play Kadi directly in their browser!"
+      ],
+      "keyTakeaways": [
+        "**Export Templates** are the precompiled Godot 4.3 runtimes for each platform and must be installed once via **Editor → Manage Export Templates**.",
+        "`OS.is_debug_build()` returns `true` in the editor and `false` in release exports — use it to run `KadiSelfTest` only during development.",
+        "Because we chose the **Compatibility** renderer in Phase 1, your Kadi project exports cleanly to Desktop, Android, and Web browsers!"
+      ],
+      "bodyMarkdown": "# Exporting Your Finished Kadi Game\n\nCongratulations — you have built a complete, rulebook-accurate **Kadi** card game in **Godot 4.3**! From `CardTypes` and `CardData` in Phase 1, to `CardScene` and `Table` in Phase 2, `TurnManager` and AI turns in Phase 3, `RuleValidator` in Phases 4–9, deck recycling and `KadiSelfTest` in Phase 10, and Tweens and audio in Phase 11.\n\nNow let's package your game so anyone can play it without installing the Godot editor!\n\n```gdscript\n@onready var version_label: Label = $HUD/VersionLabel\n\nfunc _ready() -> void:\n    var version: String = ProjectSettings.get_setting(\"application/config/version\", \"1.0.0\")\n    version_label.text = \"Kadi v%s (%s)\" % [version, OS.get_name()]\n    if OS.is_debug_build():\n        version_label.text += \" [DEBUG]\"\n        KadiSelfTest.run_all_tests()\n```\n\n> [!GODOT]\n> Follow the **Do This in Godot** checklist above: install the 4.3 Export Templates once via **Editor → Manage Export Templates**, then open **Project → Export...** and add a preset for **Windows Desktop**, **Android**, or **Web**.\n\n> [!TIP]\n> We have also bundled the complete set of reference Godot 4.3 scripts and project files inside the **`godot_kadi_reference/`** folder of this repository so you can compare your files side by side or open the ready-made reference project directly in Godot 4.3 anytime!\n\n> [!WHY]\n> **Export Templates** are the precompiled Godot 4.3 runtimes for each platform and must be installed once via **Editor → Manage Export Templates**.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 11 (Animations, Sound, Full Table Integration & Exporting) — Lesson 3: *Exporting & Sharing Your Kadi Game (Windows, Android & Web)* |\n| **Which File Do I Edit?** | `res://project.godot (Export Presets)` |\n| **Scene / Node Context** | `Editor -> Manage Export Templates -> Download and Install` |\n| **What Problem Does It Solve?** | **Export Templates** are the precompiled Godot 4.3 runtimes for each platform and must be installed once via **Editor → Manage Export Templates**. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In the top menu bar, click **Editor -> Manage Export Templates...**, then click **Download and Install** to install the Godot 4.3 templates.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot (Export Presets)`), and node references match what the runtime expects when you press `F5`.\n2. **Click **Project -> Export...**, click **Add...** at the top of the window, and select **Web** (HTML5), **Windows Desktop**, or **Android**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot (Export Presets)`), and node references match what the runtime expects when you press `F5`.\n3. **For **Windows Desktop**, click **Export Project...**, pick a folder (e.g. `builds/windows/Kadi.exe`), and click **Save**.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot (Export Presets)`), and node references match what the runtime expects when you press `F5`.\n4. **For **Web**, export as `index.html` and upload the zipped folder to itch.io so friends can play Kadi directly in their browser!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://project.godot (Export Presets)`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Exporting & Sharing Your Kadi Game (Windows, Android & Web)` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://project.godot (Export Presets)` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: **Export Templates** are the precompiled Godot 4.3 runtimes for each platform and must be installed once via **Editor → Manage Export Templates**.\n- **Core Principle 2**: `OS.is_debug_build()` returns `true` in the editor and `false` in release exports — use it to run `KadiSelfTest` only during development.\n- **Core Principle 3**: Because we chose the **Compatibility** renderer in Phase 1, your Kadi project exports cleanly to Desktop, Android, and Web browsers!\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What must you install inside Godot before exporting your project to Windows, Android, or Web for the first time?** | **The Godot 4.3 Export Templates (via Editor -> Manage Export Templates -> Download and Install)** — Export Templates are the precompiled platform binaries Godot packages your scenes and scripts into. |\n| **What does `OS.is_debug_build()` return in a Release export of your game?** | **false** — `OS.is_debug_build()` returns `true` when running from the editor or a debug export, and `false` in a release export. |\n| **When sharing a Windows Desktop export (`Kadi.exe`) without 'Embed PCK' enabled, which two files must be kept together in the `.zip`?** | **Both `Kadi.exe` and `Kadi.pck` (which contains all your scenes, scripts, and assets)** — The `.pck` resource pack holds your compiled scenes and scripts alongside the `.exe` runner (unless you check 'Embed PCK' in the export preset). |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `debug_tools_visible() -> bool` that returns `OS.is_debug_build()`, and in `_ready()` set `test_panel.visible = debug_tools_visible()`.\n- **How Godot Evaluates It**: When your script runs `func debug_tools_visible() -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Automatically hides developer test panels in exported release builds.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `@onready var version_label: Label = $HUD/VersionLabel` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 3** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 4** | `var version: String = ProjectSettings.get_setting(\"application/config/version\", \"1.0.0\")` | Declares a mutable typed variable to store state in memory. |\n| **Line 5** | `version_label.text = \"Kadi v%s (%s)\" % [version, OS.get_name()]` | Assigns the computed right-hand value into `version_label.text`. |\n| **Line 6** | `if OS.is_debug_build():` | Branches into the indented block only when `OS.is_debug_build()` evaluates to `true`. |\n| **Line 7** | `version_label.text += \" [debug]\"` | Compound assignment that updates the variable in place. |",
       "codeSnippets": [
         {
           "id": "cs_11_03_a",
           "language": "gdscript",
-          "code": "@onready var version_label: Label = $HUD/VersionLabel\n\nfunc _ready() -> void:\n    var version: String = ProjectSettings.get_setting(\"application/config/version\", \"1.0\")\n    version_label.text = \"Kadi v%s (%s)\" % [version, OS.get_name()]\n    if OS.is_debug_build():\n        version_label.text += \" [debug]\"",
-          "caption": "A version label that also reveals whether you are running a debug or release build."
+          "code": "@onready var version_label: Label = $HUD/VersionLabel\n\nfunc _ready() -> void:\n    var version: String = ProjectSettings.get_setting(\"application/config/version\", \"1.0.0\")\n    version_label.text = \"Kadi v%s (%s)\" % [version, OS.get_name()]\n    if OS.is_debug_build():\n        version_label.text += \" [debug]\"",
+          "caption": "Displaying the version and build mode on the HUD."
         },
         {
           "id": "cs_11_03_b",
           "language": "text",
-          "code": "1. Editor > Manage Export Templates > Download and Install (matches Godot 4.3)\n2. Project > Export... > Add... > Windows Desktop / Android / Web\n3. Fill preset options (Android needs SDK path + debug keystore)\n4. Export Project... > choose output folder\n5. Windows: zip the .exe + .pck | Android: install the .apk | Web: upload to itch.io",
-          "caption": "The export checklist, from templates to a shareable build."
+          "code": "Export Checklist (Godot 4.3):\n1. Editor -> Manage Export Templates -> Download and Install\n2. Project -> Export... -> Add... -> Choose Platform:\n   - Windows Desktop: exports Kadi.exe + Kadi.pck (zip both together to share!)\n   - Web (HTML5): exports index.html + .wasm + .pck (upload zip to itch.io!)\n   - Android: enable 'Use Gradle Build' or standard APK export with debug/release keystore",
+          "caption": "How to package and share your finished Kadi game on Desktop, Web, and Android."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `debug_tools_visible()` returning true only in debug builds, and use it in _ready() to hide a `test_panel` Control in release exports.",
-        "hint": "OS.is_debug_build() is the check; Control nodes have a `visible` property.",
+        "instructions": "Write a function `debug_tools_visible() -> bool` that returns `OS.is_debug_build()`, and in `_ready()` set `test_panel.visible = debug_tools_visible()`.",
+        "hint": "Use `return OS.is_debug_build()` inside `debug_tools_visible()`, then `test_panel.visible = debug_tools_visible()` inside `_ready()`.",
+        "starterCode": "func debug_tools_visible() -> bool:\n    # Return OS.is_debug_build(), then use it in _ready():\n",
+        "requiredTokens": [
+          "func",
+          "debug_tools_visible()",
+          "OS.is_debug_build()",
+          "_ready()",
+          "test_panel.visible"
+        ],
+        "expectedOutput": "Automatically hides developer test panels in exported release builds.",
         "solutionCode": "func debug_tools_visible() -> bool:\n    return OS.is_debug_build()\n\nfunc _ready() -> void:\n    test_panel.visible = debug_tools_visible()"
       },
       "quizQuestions": [
         {
           "id": "q_11_03_a",
-          "prompt": "What must be installed before Godot can export your project to ANY platform?",
-          "choices": ["Visual Studio", "The export templates matching your Godot version, via Editor > Manage Export Templates", "A signing certificate", "The Android SDK"],
+          "prompt": "What must you install inside Godot before exporting your project to Windows, Android, or Web for the first time?",
+          "choices": [
+            "Unreal Engine",
+            "The Godot 4.3 Export Templates (via Editor -> Manage Export Templates -> Download and Install)",
+            "A C++ compiler",
+            "Blender"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Export templates are the precompiled runtimes Godot wraps around your project. They are version-matched — 4.3 templates for a 4.3 editor — and required for every platform. The Android SDK is needed only for Android presets.",
+          "explanation": "Export Templates are the precompiled platform binaries Godot packages your scenes and scripts into.",
           "concept": "Exporting"
         },
         {
           "id": "q_11_03_b",
-          "prompt": "Why export and share builds early rather than only when the game feels finished?",
-          "choices": ["Exports get slower over time", "Platform-only bugs (touch input, web fonts, path casing) surface while they are cheap to fix, and real players exercise the rules better than any test", "Godot licences expire", "Templates only work once"],
+          "prompt": "What does `OS.is_debug_build()` return in a Release export of your game?",
+          "choices": [
+            "true",
+            "false",
+            "null",
+            "1"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Each platform has quirks invisible in the editor. Frequent exports plus real players form a feedback loop no in-editor test can replace.",
+          "explanation": "`OS.is_debug_build()` returns `true` when running from the editor or a debug export, and `false` in a release export.",
+          "concept": "Exporting"
+        },
+        {
+          "id": "q_11_03_c",
+          "prompt": "When sharing a Windows Desktop export (`Kadi.exe`) without 'Embed PCK' enabled, which two files must be kept together in the `.zip`?",
+          "choices": [
+            "Only `Kadi.exe`",
+            "Both `Kadi.exe` and `Kadi.pck` (which contains all your scenes, scripts, and assets)",
+            "Only `project.godot`",
+            "`Kadi.exe` and `AndroidManifest.xml`"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "The `.pck` resource pack holds your compiled scenes and scripts alongside the `.exe` runner (unless you check 'Embed PCK' in the export preset).",
           "concept": "Exporting"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://project.godot (Export Presets)` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Exporting & Sharing Your Kadi Game (Windows, Android & Web)`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://project.godot (Export Presets)` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
-  "debugChallenge": null
+  "debugChallenge": {
+    "id": "dbg_11_flash_rect_blocks_clicks",
+    "brokenCode": "func setup_flash_overlay() -> void:\n    flash_rect.visible = true\n    flash_rect.modulate.a = 0.0\n    flash_rect.mouse_filter = Control.MOUSE_FILTER_STOP",
+    "bugDescription": "After adding the full-screen `FlashRect` (`ColorRect`) to `Table.tscn` for penalty screen flashes, you cannot click ANY card in your hand or ANY button on the HUD — even though `FlashRect` is completely transparent (`modulate.a = 0.0`)!",
+    "fixedCode": "func setup_flash_overlay() -> void:\n    flash_rect.visible = true\n    flash_rect.modulate.a = 0.0\n    flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE",
+    "explanation": "In Godot, setting `modulate.a = 0.0` makes a `Control` invisible to the eye, but if `mouse_filter` is `Control.MOUSE_FILTER_STOP` (line 4), the full-screen `ColorRect` still intercepts and swallows every mouse click and screen tap! Changing line 4 to `Control.MOUSE_FILTER_IGNORE` lets clicks pass right through to the cards and buttons below.",
+    "buggyLineNumber": 4,
+    "hint": "Look at line 4 (`flash_rect.mouse_filter = ...`): what happens when a full-screen overlay uses `MOUSE_FILTER_STOP` instead of `MOUSE_FILTER_IGNORE`?"
+  }
 }

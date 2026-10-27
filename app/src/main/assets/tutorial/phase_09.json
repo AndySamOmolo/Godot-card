@@ -2,93 +2,324 @@
   "id": "phase_09_niko_win",
   "order": 9,
   "title": "\"Niko Kadi\" & Win Detection",
-  "summary": "Detect a Kadi win with compound booleans and an explicit invariant: empty hand, valid Niko Kadi declaration, legal final play, and no opponent simultaneously cardless.",
-  "estimatedMinutes": 60,
-  "concepts": ["Compound booleans", "Invariants", "UI signals"],
-  "programmingConcepts": ["Compound conditions", "Invariants", "Validation", "Signals", "Boolean flags"],
+  "summary": "Implement the iconic Kenyan Kadi endgame: wire the 'Niko Kadi!' announcement button, enforce the 4-clause win invariant (empty hand, prior Niko Kadi call, winning card type, and no cardless opponent), and show the Win Banner.",
+  "estimatedMinutes": 65,
+  "concepts": [
+    "Compound booleans",
+    "Invariants",
+    "UI signals",
+    "Winning Card Rules"
+  ],
+  "programmingConcepts": [
+    "Compound conditions",
+    "Invariants",
+    "Validation",
+    "Signals",
+    "Boolean flags"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/rule_validator.gd",
+    "res://scripts/game_state.gd",
+    "res://scenes/table/table.gd"
+  ],
+  "sceneTreeBlueprint": "HUD (CanvasLayer)\n├── NikoKadiButton (Button)  [pressed -> _on_niko_pressed() | Sets announced_kadi[0] = true]\n├── NikoKadiLabel (Label)    [Shows \"📢 Player 1 called NIKO KADI!\"]\n└── WinOverlay (Panel)       [Hidden until has_won(player) == true; includes PlayAgainButton]",
+  "learningObjectives": [
+    "Encode all 5 rules from the **Winning** section of `KADI.md` using named boolean variables.",
+    "Verify that a winning move consists ONLY of Answer Cards (or Question Cards paired with their matching Answer Cards) — you cannot win on a Penalty, Jump, or Kickback card!",
+    "Enforce the prior-round announcement rule: `announced_kadi[player]` must have been set BEFORE the winning turn, and is revoked if the player draws a card."
+  ],
   "lessons": [
     {
       "id": "l_09_01_win_detection",
       "order": 1,
-      "title": "Four Conditions for a Win",
-      "bodyMarkdown": "# Win Detection with Compound Booleans\n\nA Kadi win is not a single test — it is the conjunction of four conditions. Encoding them as one compound boolean makes the rule auditable at a glance.\n\n```gdscript\nfunc has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var no_opponent_cardless: bool = true\n    for other in range(4):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and no_opponent_cardless\n```\n\nEach named boolean reads like a rule clause. The final `return` is just the rule itself joined with `and` — all four must hold.\n\nThe **invariant** is: *exactly one* player can be cardless at the moment of victory. The loop checks that no opponent shares the empty-hand state, because if two players hit zero on the same trick the round is a tie, not a win. Naming that invariant as its own boolean makes the intent explicit; inlining the loop into the return would hide it.\n\n> [!WHY]\n> Compound booleans get dangerous when inlined: `return a and (b or c) and not d` is hard to read and impossible to debug. Splitting each condition into a named variable lets you `print()` each one during testing, and each becomes a self-documenting clause of the rule. When the designer asks \"why didn't the game end?\", you have four booleans to inspect instead of one opaque expression.\n\nMissing the `no_opponent_cardless` check is the classic bug: two players empty on the same trick, the first to be tested is wrongly declared winner. Make the invariant explicit.",
+      "title": "The Five Conditions for a Legal Kadi Win",
+      "targetFile": "res://scripts/rule_validator.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "Open `res://scripts/rule_validator.gd`.",
+        "Add `is_winning_card_set(cards: Array) -> bool` checking that every card in the final move is an Answer Card or a Question Card settled by an Answer Card (no Penalty 2/3/Joker, Jump Jack, or Kickback King!).",
+        "Add `has_won(player: int, played_cards: Array) -> bool` combining all named boolean conditions with `and`."
+      ],
+      "keyTakeaways": [
+        "Per `KADI.md`, a player can ONLY win on **Answer Cards** or **Question Cards followed by their matching Answer Cards** (never on a Penalty, Jump, or Kickback card!).",
+        "A player CANNOT win if any other player at the table is currently cardless (`no_opponent_cardless`).",
+        "The player must have announced **\"Niko Kadi\"** in the previous round (`declared_niko`), and their hand must now be empty (`hand_empty`)."
+      ],
+      "bodyMarkdown": "# Encoding Kadi's Exact Win Conditions\n\nIn **Kadi**, emptying your hand is **not** enough to win! Let's read the **Winning** section of `KADI.md` word for word:\n\n> [!KADI]\n> - *\"A player cannot win if any of the players is cardless.\"*\n> - *\"For a player to win, they must play all their winning cards in one move and, have had said 'Niko Kadi' in the previous round.\"*\n> - *\"The winning cards are: **Answer Cards**, or **Question Cards followed by their matching answer cards**.\"*\n\nThat means you **cannot** win by playing a Jump (Jack), Kickback (King), or Penalty (2, 3, Joker) as your final card! Let's write this in **`res://scripts/rule_validator.gd`** using self-documenting **[[Compound boolean conditions|compound booleans]]**:\n\n```gdscript\nstatic func is_winning_move_cards(cards: Array) -> bool:\n    if cards.is_empty():\n        return false\n    for c in cards:\n        # Every card in a winning move must be an Answer card or a Question card:\n        if not (is_answer_card(c.rank) or is_question_card(c.rank)):\n            return false\n    # And if any Question card is present, it must end in a valid Answer card:\n    return validate_question_chain(cards)\n\nstatic func has_won(player: int, played_cards: Array) -> bool:\n    var hand_empty: bool = (GameState.hands[player].size() == 0)\n    var declared_niko: bool = GameState.announced_kadi[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var valid_winning_cards: bool = is_winning_move_cards(played_cards)\n    var no_opponent_cardless: bool = true\n    for other in range(GameState.hands.size()):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and valid_winning_cards and no_opponent_cardless\n```\n\n> [!WHY]\n> Look how clear `has_won()` is when every clause has its own named `bool` variable! If a player empties their hand on a Jack (Jump Card) and wonders why they didn't win, `valid_winning_cards` is `false` and the HUD can explain: *\"Cannot win on a Jump card — must finish on an Answer card!\"*\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 9 (\"Niko Kadi\" & Win Detection) — Lesson 1: *The Five Conditions for a Legal Kadi Win* |\n| **Which File Do I Edit?** | `res://scripts/rule_validator.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | Per `KADI.md`, a player can ONLY win on **Answer Cards** or **Question Cards followed by their matching Answer Cards** (never on a Penalty, Jump, or Kickback card!). |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Open `res://scripts/rule_validator.gd`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Add `is_winning_card_set(cards: Array) -> bool` checking that every card in the final move is an Answer Card or a Question Card settled by an Answer Card (no Penalty 2/3/Joker, Jump Jack, or Kickback King!).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Add `has_won(player: int, played_cards: Array) -> bool` combining all named boolean conditions with `and`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `The Five Conditions for a Legal Kadi Win` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/rule_validator.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Per `KADI.md`, a player can ONLY win on **Answer Cards** or **Question Cards followed by their matching Answer Cards** (never on a Penalty, Jump, or Kickback card!).\n- **Core Principle 2**: A player CANNOT win if any other player at the table is currently cardless (`no_opponent_cardless`).\n- **Core Principle 3**: The player must have announced **\"Niko Kadi\"** in the previous round (`declared_niko`), and their hand must now be empty (`hand_empty`).\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Per KADI.md, which of the following hands can win the game in a single move (assuming 'Niko Kadi' was announced on the previous round)?** | **A Queen of Clubs accompanied by the 7 of Clubs (Question + matching Answer Card)** — Per KADI.md: 'The winning cards are: Answer Cards, or Question Cards followed by their matching answer cards.' |\n| **What rule does the `no_opponent_cardless` loop enforce in `has_won()`?** | **That a player cannot win while any other player at the table has 0 cards ('cardless')** — Per KADI.md: 'A player cannot win if any of the players is cardless.' |\n| **Why split a complex win check into 4 or 5 named `bool` variables instead of writing one giant `return` line?** | **Each rule clause is self-documenting and can be printed or inspected individually when debugging why a win did or didn't trigger** — Named booleans make each requirement of the rulebook explicit and easy to log. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Declare a fifth boolean `var valid_winning_card: bool = is_answer_card(last_card.rank)` and combine it with `hand_empty and declared_niko and no_opponent_cardless and valid_winning_card` in a `return` statement.\n- **How Godot Evaluates It**: When your script runs `var valid_winning_card: bool = is_answer_card(last_card.rank)`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Verifies all win clauses including that the final card is a valid Answer card.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `static func has_won(player: int) -> bool:` | Defines static helper method `has_won()` callable directly on the class without instantiating an object. |\n| **Line 2** | `var hand_empty: bool = GameState.hands[player].size() == 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 3** | `var declared_niko: bool = GameState.announced_kadi[player]` | Declares a mutable typed variable to store state in memory. |\n| **Line 4** | `var final_play_legal: bool = GameState.last_play_was_legal` | Declares a mutable typed variable to store state in memory. |\n| **Line 5** | `var no_opponent_cardless: bool = true` | Declares a mutable typed variable to store state in memory. |\n| **Line 6** | `for other in range(GameState.hands.size()):` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 7** | `if other != player and GameState.hands[other].size() == 0:` | Branches into the indented block only when `other != player and GameState.hands[other].size() == 0` evaluates to `true`. |\n| **Line 8** | `no_opponent_cardless = false` | Assigns the computed right-hand value into `no_opponent_cardless`. |\n| **Line 9** | `return hand_empty and declared_niko and final_play_legal and no_opponent_cardless` | Immediately exits the current function and sends `hand_empty and declared_niko and final_play_legal and no_opponent_cardless` back to the caller. |",
       "codeSnippets": [
         {
           "id": "cs_09_01_a",
           "language": "gdscript",
-          "code": "func has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var no_opponent_cardless: bool = true\n    for other in range(4):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and no_opponent_cardless",
-          "caption": "Four named booleans combined with `and` for a complete win check."
+          "code": "static func has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.announced_kadi[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var no_opponent_cardless: bool = true\n    for other in range(GameState.hands.size()):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and no_opponent_cardless",
+          "caption": "Named boolean clauses combined with `and` for auditable win detection."
         }
       ],
       "practicePrompt": {
-        "instructions": "Add a fifth condition `deck_was_not_empty_at_start` (a bool on GameState) to the compound return. Name it as a local boolean first.",
-        "hint": "Declare a var, then add it to the `and` chain.",
-        "solutionCode": "var deck_was_not_empty: bool = GameState.deck_was_not_empty_at_start\nreturn hand_empty and declared_niko and final_play_legal and no_opponent_cardless and deck_was_not_empty"
+        "instructions": "Declare a fifth boolean `var valid_winning_card: bool = is_answer_card(last_card.rank)` and combine it with `hand_empty and declared_niko and no_opponent_cardless and valid_winning_card` in a `return` statement.",
+        "hint": "Declare `var valid_winning_card: bool = is_answer_card(last_card.rank)` then `return hand_empty and declared_niko and no_opponent_cardless and valid_winning_card`.",
+        "starterCode": "# Declare valid_winning_card and return the compound boolean:\n",
+        "requiredTokens": [
+          "var",
+          "valid_winning_card",
+          "is_answer_card",
+          "return",
+          "hand_empty",
+          "and",
+          "declared_niko",
+          "no_opponent_cardless"
+        ],
+        "expectedOutput": "Verifies all win clauses including that the final card is a valid Answer card.",
+        "solutionCode": "var valid_winning_card: bool = is_answer_card(last_card.rank)\nreturn hand_empty and declared_niko and no_opponent_cardless and valid_winning_card"
       },
       "quizQuestions": [
         {
           "id": "q_09_01_a",
-          "prompt": "Why split each win condition into its own named boolean rather than inlining them in the return?",
-          "choices": ["It runs faster", "Each clause is self-documenting and printable for debugging; the compound return reads like the rule itself", "Inlining is forbidden by Godot", "It saves memory"],
-          "correctChoiceIndex": 1,
-          "explanation": "Named booleans make the rule auditable and debuggable — you can log each one when a win is missed.",
-          "concept": "Compound booleans"
+          "prompt": "Per KADI.md, which of the following hands can win the game in a single move (assuming 'Niko Kadi' was announced on the previous round)?",
+          "choices": [
+            "A single Jack of Spades (Jump Card)",
+            "A single 2 of Hearts (Penalty Card)",
+            "A Queen of Clubs accompanied by the 7 of Clubs (Question + matching Answer Card)",
+            "A King of Diamonds (Kickback Card)"
+          ],
+          "correctChoiceIndex": 2,
+          "explanation": "Per KADI.md: 'The winning cards are: Answer Cards, or Question Cards followed by their matching answer cards.'",
+          "concept": "Winning Card Rules"
         },
         {
           "id": "q_09_01_b",
-          "prompt": "What invariant does the `no_opponent_cardless` check enforce?",
-          "choices": ["That the winner has the most cards", "That exactly one player is cardless — no simultaneous empty hands (a tie scenario)", "That the deck is empty", "That Niko Kadi was declared"],
+          "prompt": "What rule does the `no_opponent_cardless` loop enforce in `has_won()`?",
+          "choices": [
+            "That the deck still has cards",
+            "That a player cannot win while any other player at the table has 0 cards ('cardless')",
+            "That all opponents hold Aces",
+            "That penalties are zero"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Two players emptying on the same trick is a tie, not a win. The check guarantees the tested player is the sole cardless one.",
+          "explanation": "Per KADI.md: 'A player cannot win if any of the players is cardless.'",
           "concept": "Invariants"
+        },
+        {
+          "id": "q_09_01_c",
+          "prompt": "Why split a complex win check into 4 or 5 named `bool` variables instead of writing one giant `return` line?",
+          "choices": [
+            "Named booleans run on the GPU",
+            "Each rule clause is self-documenting and can be printed or inspected individually when debugging why a win did or didn't trigger",
+            "GDScript forbids `and` with functions",
+            "It uses fewer lines"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Named booleans make each requirement of the rulebook explicit and easy to log.",
+          "concept": "Compound booleans"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/rule_validator.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `The Five Conditions for a Legal Kadi Win`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_09_02_niko_button",
       "order": 2,
-      "title": "The Niko Kadi Button",
-      "bodyMarkdown": "# The Niko Kadi Button\n\nIn Kadi, spotting a winning hand is not enough — you must **announce** it. A player who realises they can win on their next round must say \"Niko Kadi\" out loud; without that announcement in the previous round, they cannot win. Our digital table needs a way to say it: a Button.\n\nThe announcement is per-player state, so we store one boolean flag for each seat and wire the Button's `pressed` signal to set it:\n\n```gdscript\n@onready var niko_button: Button = $HUD/NikoKadiButton\n@onready var niko_label: Label = $HUD/NikoKadiLabel\n\nvar announced_kadi: Array[bool] = [false, false, false, false]\n\nfunc _ready() -> void:\n    niko_button.pressed.connect(_on_niko_pressed)\n\nfunc _on_niko_pressed() -> void:\n    announced_kadi[GameState.current_player] = true\n    niko_label.text = \"Niko Kadi!\"\n\nfunc on_player_drew(player: int) -> void:\n    announced_kadi[player] = false  # a draw voids the announcement\n```\n\n`announced_kadi` is an `Array[bool]` indexed by player — the same pattern as `hands`. When the human presses the button, the flag flips for the current player and the label broadcasts it to the table, exactly like calling it out loud.\n\nThe win check from the last lesson already reads this flag as its `declared_niko` clause: `has_won` only passes when `announced_kadi[player]` was set on the **previous round**. The order matters — announce first, win on a later turn. Pressing the button on the same move you empty your hand is too late.\n\nJust as important is **resetting** the flag. If a player announces but then has to draw a card, their hand has grown — the claim of \"one round from winning\" no longer holds, so `on_player_drew` clears it. They must press the button again once they are genuinely back on the brink.\n\n> [!WHY]\n> The announcement flag is a promise about the *future* (\"I will win next round\"), and promises must be revocable when circumstances change. Setting a flag is easy; the discipline is enumerating every event that should clear it — drawing a card, picking up a penalty stack. For each boolean flag you add to game state, immediately ask: \"what unsets this?\" A flag with no clearing path is a rule violation waiting to happen.\n\nWith the button wired, the flag stored, and the reset in place, the social heart of Kadi — the tension of hearing \"Niko Kadi!\" across the table — now lives in your game.",
+      "title": "Wiring the 'Niko Kadi!' Button & Previous-Round Rule",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": "HUD (CanvasLayer)\n├── NikoKadiButton (Button)  [Click at end of turn when 1 move away from winning!]\n└── NikoKadiLabel (Label)    [Displays active announcements at the table]",
+      "editorSteps": [
+        "In `res://scenes/table/table.gd`, connect `$HUD/NikoKadiButton.pressed` to `_on_niko_pressed`.",
+        "Track `GameState.announced_kadi[player]`: when a player presses `NikoKadiButton` (or an AI has 1 winning card left at the end of its turn), set `announced_kadi[player] = true`.",
+        "When any player draws a card (`draw_cards`), reset `announced_kadi[player] = false` so they must announce again once ready!"
+      ],
+      "keyTakeaways": [
+        "A player must announce **\"Niko Kadi\"** in the round **before** playing their winning move.",
+        "In our AI turn logic (`_execute_ai_turn`), if an AI opponent ends its turn holding 1 Answer Card (or a Q+A pair), the AI automatically announces `\"Niko Kadi!\"` so you get a fair warning to hit them with a Penalty or Jump card!",
+        "Drawing any card immediately revokes `announced_kadi[player] = false`."
+      ],
+      "bodyMarkdown": "# The 'Niko Kadi!' Button & AI Announcements\n\nThe most exciting rule in **Kadi** is the mandatory warning call: **\"Niko Kadi!\"** (Swahili for *\"I am on Kadi / one move from winning!\"*).\n\nWhy does that rule exist at a real Kenyan card table? Because announcing *\"Niko Kadi!\"* a full round before you can win alerts every other player to team up and attack you with Penalty 2s, 3s, Jokers, Jumps, or Kickbacks before your turn comes back around!\n\n```gdscript\n# Inside res://scenes/table/table.gd:\n@onready var niko_button: Button = $HUD/NikoKadiButton\n@onready var niko_label: Label = $HUD/NikoKadiLabel\n\nfunc _ready() -> void:\n    niko_button.pressed.connect(_on_niko_pressed)\n\nfunc _on_niko_pressed() -> void:\n    if TurnManager.current_player_index != 0:\n        return\n    GameState.announced_kadi[0] = true\n    niko_label.text = \"📢 You announced: NIKO KADI!\"\n\nfunc _check_ai_niko_announcement(ai_player: int) -> void:\n    var hand: Array = GameState.hands[ai_player]\n    if hand.size() == 1 and RuleValidator.is_answer_card(hand[0].rank):\n        GameState.announced_kadi[ai_player] = true\n        niko_label.text = \"📢 Player %d says: NIKO KADI!\" % (ai_player + 1)\n```\n\n> [!WHY]\n> Notice what happens if a player empties their hand (`GameState.hands[player].is_empty()`) on a turn where `GameState.announced_kadi[player]` was `false` (they forgot to call \"Niko Kadi!\" on the previous round) or where they finished on a non-winning card (like a Jump Jack or Kickback King): they **cannot win** while cardless, so on their next turn they are forced to draw a card from the pile!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 9 (\"Niko Kadi\" & Win Detection) — Lesson 2: *Wiring the 'Niko Kadi!' Button & Previous-Round Rule* |\n| **Which File Do I Edit?** | `res://scenes/table/table.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | A player must announce **\"Niko Kadi\"** in the round **before** playing their winning move. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `res://scenes/table/table.gd`, connect `$HUD/NikoKadiButton.pressed` to `_on_niko_pressed`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Track `GameState.announced_kadi[player]`: when a player presses `NikoKadiButton` (or an AI has 1 winning card left at the end of its turn), set `announced_kadi[player] = true`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **When any player draws a card (`draw_cards`), reset `announced_kadi[player] = false` so they must announce again once ready!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Wiring the 'Niko Kadi!' Button & Previous-Round Rule` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: A player must announce **\"Niko Kadi\"** in the round **before** playing their winning move.\n- **Core Principle 2**: In our AI turn logic (`_execute_ai_turn`), if an AI opponent ends its turn holding 1 Answer Card (or a Q+A pair), the AI automatically announces `\"Niko Kadi!\"` so you get a fair warning to hit them with a Penalty or Jump card!\n- **Core Principle 3**: Drawing any card immediately revokes `announced_kadi[player] = false`.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **When must a player announce 'Niko Kadi' in order to win?** | **In the round BEFORE their winning move — announcing on the same turn you empty your hand is too late!** — Per KADI.md: 'For a player to win, they must play all their winning cards in one move and, have had said Niko Kadi in the previous round.' |\n| **What happens to `GameState.announced_kadi[player]` if that player is forced to draw a card (or pick up a penalty)?** | **It resets to `false` because their hand changed and they must re-announce when they are 1 move from winning again** — Drawing cards invalidates the prior 'Niko Kadi' call, so `on_player_drew` resets the flag to `false`. |\n| **Why does the 'Niko Kadi' rule make Kadi tactically exciting?** | **It warns all opponents one full round ahead that a player is about to win, giving opponents a chance to play Penalty, Jump, or Kickback cards to stop them!** — Hearing 'Niko Kadi!' alerts the table to defend by skipping, reversing, or stacking penalties on the player about to win. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write `reset_announcements() -> void` that loops `for i in range(announced_kadi.size()):`, sets `announced_kadi[i] = false`, and sets `niko_label.text = \"\"`.\n- **How Godot Evaluates It**: When your script runs `func reset_announcements() -> void:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Clears all players' Niko Kadi flags and banner text when starting a new match.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `@onready var niko_button: Button = $HUD/NikoKadiButton` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 2** | `@onready var niko_label: Label = $HUD/NikoKadiLabel` | Fetches and caches the child Node reference from the SceneTree automatically right before `_ready()` executes. |\n| **Line 4** | `func _on_niko_pressed() -> void:` | Defines function `_on_niko_pressed()` returning `void`. |\n| **Line 5** | `GameState.announced_kadi[TurnManager.current_player_index] = true` | Assigns the computed right-hand value into `GameState.announced_kadi[TurnManager.current_player_index]`. |\n| **Line 6** | `niko_label.text = \"Niko Kadi!\"` | Assigns the computed right-hand value into `niko_label.text`. |\n| **Line 8** | `func on_player_drew(player: int) -> void:` | Defines function `on_player_drew()` returning `void`. |\n| **Line 9** | `GameState.announced_kadi[player] = false` | Assigns the computed right-hand value into `GameState.announced_kadi[player]`. |\n| **Line 11** | `func reset_announcements() -> void:` | Defines function `reset_announcements()` returning `void`. |\n| **Line 12** | `for i in range(GameState.announced_kadi.size()):` | Bounded `for` loop that iterates once per element in the collection or `range()`. |\n| **Line 13** | `GameState.announced_kadi[i] = false` | Assigns the computed right-hand value into `GameState.announced_kadi[i]`. |\n| **Line 14** | `niko_label.text = \"\"` | Assigns the computed right-hand value into `niko_label.text`. |",
       "codeSnippets": [
         {
           "id": "cs_09_02_a",
           "language": "gdscript",
-          "code": "@onready var niko_button: Button = $HUD/NikoKadiButton\n@onready var niko_label: Label = $HUD/NikoKadiLabel\n\nvar announced_kadi: Array[bool] = [false, false, false, false]\n\nfunc _ready() -> void:\n    niko_button.pressed.connect(_on_niko_pressed)\n\nfunc _on_niko_pressed() -> void:\n    announced_kadi[GameState.current_player] = true\n    niko_label.text = \"Niko Kadi!\"\n\nfunc on_player_drew(player: int) -> void:\n    announced_kadi[player] = false",
-          "caption": "Button, per-player flag, and the draw event that revokes the announcement."
+          "code": "@onready var niko_button: Button = $HUD/NikoKadiButton\n@onready var niko_label: Label = $HUD/NikoKadiLabel\n\nfunc _on_niko_pressed() -> void:\n    GameState.announced_kadi[TurnManager.current_player_index] = true\n    niko_label.text = \"Niko Kadi!\"\n\nfunc on_player_drew(player: int) -> void:\n    GameState.announced_kadi[player] = false\n\nfunc reset_announcements() -> void:\n    for i in range(GameState.announced_kadi.size()):\n        GameState.announced_kadi[i] = false\n    niko_label.text = \"\"",
+          "caption": "Setting, revoking on draw, and resetting the per-player Niko Kadi flags."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `reset_announcements()` that clears every player's announced_kadi flag and blanks niko_label — called at the start of each new round.",
-        "hint": "Loop over the array indices with range(), set each entry to false, then clear the label text.",
+        "instructions": "Write `reset_announcements() -> void` that loops `for i in range(announced_kadi.size()):`, sets `announced_kadi[i] = false`, and sets `niko_label.text = \"\"`.",
+        "hint": "Use `for i in range(announced_kadi.size()): announced_kadi[i] = false` then `niko_label.text = \"\"`.",
+        "starterCode": "func reset_announcements() -> void:\n    # Clear every entry in announced_kadi and empty niko_label.text:\n",
+        "requiredTokens": [
+          "func",
+          "reset_announcements()",
+          "for",
+          "range(announced_kadi.size())",
+          "announced_kadi[i]",
+          "false",
+          "niko_label.text"
+        ],
+        "expectedOutput": "Clears all players' Niko Kadi flags and banner text when starting a new match.",
         "solutionCode": "func reset_announcements() -> void:\n    for i in range(announced_kadi.size()):\n        announced_kadi[i] = false\n    niko_label.text = \"\""
       },
       "quizQuestions": [
         {
           "id": "q_09_02_a",
-          "prompt": "Per the Kadi rules, when must a player announce \"Niko Kadi\" in order to win?",
-          "choices": ["On the same move they play their winning cards", "In the round BEFORE the winning move — without the prior announcement, they cannot win", "At the start of the game", "Only if another player asks"],
+          "prompt": "When must a player announce 'Niko Kadi' in order to win?",
+          "choices": [
+            "After they have already won",
+            "In the round BEFORE their winning move — announcing on the same turn you empty your hand is too late!",
+            "Before the cards are dealt",
+            "Only when holding a Joker"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "The announcement is a promise made one round ahead. The has_won check reads announced_kadi from the previous round; pressing the button as you win is too late.",
+          "explanation": "Per KADI.md: 'For a player to win, they must play all their winning cards in one move and, have had said Niko Kadi in the previous round.'",
           "concept": "UI signals"
         },
         {
           "id": "q_09_02_b",
-          "prompt": "Why does `on_player_drew` reset the player's announced_kadi flag to false?",
-          "choices": ["To punish the player", "Drawing grows the hand, so the claim of being one round from winning no longer holds — the promise must be revoked and re-announced", "Godot clears booleans automatically", "Because the label needs updating"],
+          "prompt": "What happens to `GameState.announced_kadi[player]` if that player is forced to draw a card (or pick up a penalty)?",
+          "choices": [
+            "It stays `true` forever",
+            "It resets to `false` because their hand changed and they must re-announce when they are 1 move from winning again",
+            "They immediately win",
+            "It flips turn direction"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "A flag describing a future state must be cleared whenever that future becomes false. For every boolean flag you add, enumerate the events that unset it.",
+          "explanation": "Drawing cards invalidates the prior 'Niko Kadi' call, so `on_player_drew` resets the flag to `false`.",
+          "concept": "Invariants"
+        },
+        {
+          "id": "q_09_02_c",
+          "prompt": "Why does the 'Niko Kadi' rule make Kadi tactically exciting?",
+          "choices": [
+            "It makes the deck smaller",
+            "It warns all opponents one full round ahead that a player is about to win, giving opponents a chance to play Penalty, Jump, or Kickback cards to stop them!",
+            "It skips the dealer",
+            "It changes all suits to Spades"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Hearing 'Niko Kadi!' alerts the table to defend by skipping, reversing, or stacking penalties on the player about to win.",
+          "concept": "UI signals"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Wiring the 'Niko Kadi!' Button & Previous-Round Rule`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ]
+    },
+    {
+      "id": "l_09_03_win_overlay",
+      "order": 3,
+      "title": "Handling Match Victory, Cardless Draws & Play Again",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": "HUD (CanvasLayer)\n├── FeedbackLabel (Label)   [Shows \"🏆 PLAYER 1 WINS THE KADI MATCH!\"]\n└── NewGameButton (Button)  [pressed -> start_match()]",
+      "editorSteps": [
+        "In `res://scenes/table/table.gd`, declare `var match_over: bool = false`.",
+        "When `RuleValidator.has_won(player, cards)` returns `true`, set `match_over = true`, stop `ai_turn_timer`, and display the winner in `feedback_label`.",
+        "If a player's hand is empty (`GameState.hands[player].is_empty()`) at the start of their turn (because they emptied their hand without calling Niko Kadi or on a non-answer card), require them to draw 1 card!"
+      ],
+      "keyTakeaways": [
+        "Setting `match_over = true` stops `AITurnTimer` from continuing to fire after someone has won.",
+        "If a player becomes **cardless** without meeting all win requirements (e.g. they finished on a Jump Jack or forgot to call Niko Kadi in the prior round), the game continues and they must draw when their turn comes back around!",
+        "Wiring a `NewGameButton` to `start_match()` lets players start a fresh round with one click."
+      ],
+      "bodyMarkdown": "# Victory State, Cardless Players & Starting a New Match\n\nWhat happens in Kadi when a player plays their last card, **empties their hand**, and yet `RuleValidator.has_won(player, cards)` returns **`false`**?\n\nHow could someone have 0 cards and *not* win?\n1. They forgot to announce **\"Niko Kadi!\"** on the previous round (`announced_kadi[player] == false`).\n2. Their final card was a **Jump (Jack)**, **Kickback (King)**, or **Penalty (2, 3, Joker)** instead of an Answer Card.\n3. Another opponent at the table was **already cardless** (`no_opponent_cardless == false`).\n\nIn all three cases, that player is now **cardless** (`hands[player].size() == 0`), the match continues, no other player can win while they are cardless, and on their next turn they must draw from the draw pile!\n\n```gdscript\nfunc handle_post_move_win_check(player: int, played_cards: Array) -> bool:\n    if RuleValidator.has_won(player, played_cards):\n        match_over = true\n        ai_turn_timer.stop()\n        feedback_label.text = \"🏆 PLAYER %d WINS THE KADI MATCH!\" % (player + 1)\n        return true\n    if GameState.hands[player].is_empty():\n        feedback_label.text = \"Player %d is cardless (no Niko Kadi / non-answer finish) — play continues!\" % (player + 1)\n    return false\n```\n\n> [!WHY]\n> Setting `match_over = true` stops `AITurnTimer` from continuing to fire after someone has won.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 9 (\"Niko Kadi\" & Win Detection) — Lesson 3: *Handling Match Victory, Cardless Draws & Play Again* |\n| **Which File Do I Edit?** | `res://scenes/table/table.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | Setting `match_over = true` stops `AITurnTimer` from continuing to fire after someone has won. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `res://scenes/table/table.gd`, declare `var match_over: bool = false`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **When `RuleValidator.has_won(player, cards)` returns `true`, set `match_over = true`, stop `ai_turn_timer`, and display the winner in `feedback_label`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **If a player's hand is empty (`GameState.hands[player].is_empty()`) at the start of their turn (because they emptied their hand without calling Niko Kadi or on a non-answer card), require them to draw 1 card!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Handling Match Victory, Cardless Draws & Play Again` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Setting `match_over = true` stops `AITurnTimer` from continuing to fire after someone has won.\n- **Core Principle 2**: If a player becomes **cardless** without meeting all win requirements (e.g. they finished on a Jump Jack or forgot to call Niko Kadi in the prior round), the game continues and they must draw when their turn comes back around!\n- **Core Principle 3**: Wiring a `NewGameButton` to `start_match()` lets players start a fresh round with one click.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Can a player in Kadi have 0 cards in their hand ('cardless') and STILL not have won the game?** | **Yes — if they did not announce 'Niko Kadi' on the previous round, or finished on a non-Answer card (like a Jump/Kickback/Penalty), or another opponent was already cardless!** — Emptying your hand without meeting all Kadi win conditions leaves you 'cardless' while the match continues. |\n| **Why do we set `match_over = true` and call `ai_turn_timer.stop()` as soon as `has_won()` returns `true`?** | **To freeze further card plays and prevent AI timers from continuing to play turns after the match is already won** — Stopping the turn loop on victory keeps the final winning state intact on screen until the player starts a new match. |\n| **What must a cardless player do when their turn comes back around?** | **Since they have no cards to play, they must draw a card from the draw pile (re-entering the round)** — A player who cannot play a card on their turn must draw from the draw pile. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `is_player_cardless(player: int) -> bool` that returns `true` when `GameState.hands[player].size() == 0`.\n- **How Godot Evaluates It**: When your script runs `func is_player_cardless(player: int) -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Checks whether a given seat currently holds 0 cards.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func handle_post_move_win_check(player: int, played_cards: Array) -> bool:` | Defines function `handle_post_move_win_check()` returning `bool`. |\n| **Line 2** | `if RuleValidator.has_won(player, played_cards):` | Branches into the indented block only when `RuleValidator.has_won(player, played_cards)` evaluates to `true`. |\n| **Line 3** | `match_over = true` | Assigns the computed right-hand value into `match_over`. |\n| **Line 4** | `ai_turn_timer.stop()` | Executes this statement as part of the current block. |\n| **Line 5** | `feedback_label.text = \"🏆 PLAYER %d WINS THE KADI MATCH!\" % (player + 1)` | Assigns the computed right-hand value into `feedback_label.text`. |\n| **Line 6** | `return true` | Immediately exits the current function and sends `true` back to the caller. |\n| **Line 7** | `if GameState.hands[player].is_empty():` | Branches into the indented block only when `GameState.hands[player].is_empty()` evaluates to `true`. |\n| **Line 8** | `feedback_label.text = \"Player %d is cardless — game continues!\" % (player + 1)` | Assigns the computed right-hand value into `feedback_label.text`. |\n| **Line 9** | `return false` | Immediately exits the current function and sends `false` back to the caller. |",
+      "codeSnippets": [
+        {
+          "id": "cs_09_03_a",
+          "language": "gdscript",
+          "code": "func handle_post_move_win_check(player: int, played_cards: Array) -> bool:\n    if RuleValidator.has_won(player, played_cards):\n        match_over = true\n        ai_turn_timer.stop()\n        feedback_label.text = \"🏆 PLAYER %d WINS THE KADI MATCH!\" % (player + 1)\n        return true\n    if GameState.hands[player].is_empty():\n        feedback_label.text = \"Player %d is cardless — game continues!\" % (player + 1)\n    return false",
+          "caption": "Distinguishing a genuine Kadi victory from a cardless state."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `is_player_cardless(player: int) -> bool` that returns `true` when `GameState.hands[player].size() == 0`.",
+        "hint": "Use `return GameState.hands[player].size() == 0`.",
+        "starterCode": "func is_player_cardless(player: int) -> bool:\n    # Return true if GameState.hands[player] has 0 cards:\n",
+        "requiredTokens": [
+          "func",
+          "is_player_cardless",
+          "return",
+          "GameState.hands[player].size()",
+          "0"
+        ],
+        "expectedOutput": "Checks whether a given seat currently holds 0 cards.",
+        "solutionCode": "func is_player_cardless(player: int) -> bool:\n    return GameState.hands[player].size() == 0"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_09_03_a",
+          "prompt": "Can a player in Kadi have 0 cards in their hand ('cardless') and STILL not have won the game?",
+          "choices": [
+            "No, 0 cards is always an instant win",
+            "Yes — if they did not announce 'Niko Kadi' on the previous round, or finished on a non-Answer card (like a Jump/Kickback/Penalty), or another opponent was already cardless!",
+            "Only if they hold a Joker",
+            "Only on turn 1"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Emptying your hand without meeting all Kadi win conditions leaves you 'cardless' while the match continues.",
+          "concept": "Invariants"
+        },
+        {
+          "id": "q_09_03_b",
+          "prompt": "Why do we set `match_over = true` and call `ai_turn_timer.stop()` as soon as `has_won()` returns `true`?",
+          "choices": [
+            "To delete the scene",
+            "To freeze further card plays and prevent AI timers from continuing to play turns after the match is already won",
+            "To mute audio",
+            "To clear the screen"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Stopping the turn loop on victory keeps the final winning state intact on screen until the player starts a new match.",
+          "concept": "UI signals"
+        },
+        {
+          "id": "q_09_03_c",
+          "prompt": "What must a cardless player do when their turn comes back around?",
+          "choices": [
+            "They win automatically",
+            "Since they have no cards to play, they must draw a card from the draw pile (re-entering the round)",
+            "They are permanently eliminated",
+            "They flip the table direction"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "A player who cannot play a card on their turn must draw from the draw pile.",
           "concept": "Invariants"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Handling Match Victory, Cardless Draws & Play Again`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
   "debugChallenge": {
     "id": "dbg_09_missing_opponent_check",
     "brokenCode": "func has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    return hand_empty and declared_niko and final_play_legal",
-    "bugDescription": "The win check omits the `no_opponent_cardless` invariant. If two players empty their hands on the same trick (a known edge case in four-player Kadi), the first one tested is wrongly declared winner — the round ends with an incorrect result and the tie-break rule is silently broken.",
+    "bugDescription": "Player 1 emptied their hand on a Jump Card (so they are currently cardless, waiting to draw on their next turn). On the very next turn, Player 0 empties their hand and the game declares Player 0 the winner — directly violating KADI.md's rule: 'A player cannot win if any of the players is cardless'!",
     "fixedCode": "func has_won(player: int) -> bool:\n    var hand_empty: bool = GameState.hands[player].size() == 0\n    var declared_niko: bool = GameState.niko_declared[player]\n    var final_play_legal: bool = GameState.last_play_was_legal\n    var no_opponent_cardless: bool = true\n    for other in range(4):\n        if other != player and GameState.hands[other].size() == 0:\n            no_opponent_cardless = false\n    return hand_empty and declared_niko and final_play_legal and no_opponent_cardless",
-    "explanation": "Adding the `no_opponent_cardless` invariant restores the tie-break rule: a player only wins if they are the SOLE cardless player at that instant. The compound boolean now expresses the full four-clause win condition, including the structural invariant that prevents false victories."
+    "explanation": "Line 5 returned `hand_empty and declared_niko and final_play_legal` without checking whether any other player (`other != player`) currently had `GameState.hands[other].size() == 0`! Adding the `no_opponent_cardless` invariant enforces Kadi's rule that no player can win while any opponent is cardless.",
+    "buggyLineNumber": 5,
+    "hint": "Look at line 5 (`return hand_empty and declared_niko and final_play_legal`): which 4th condition from KADI.md ('A player cannot win if any of the players is cardless') is missing?"
   }
 }

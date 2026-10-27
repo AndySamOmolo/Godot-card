@@ -16,5 +16,7 @@ data class DebugChallenge(
     val brokenCode: String,
     val bugDescription: String,
     val fixedCode: String,
-    val explanation: String
+    val explanation: String,
+    val buggyLineNumber: Int? = null,
+    val hint: String? = null
 )

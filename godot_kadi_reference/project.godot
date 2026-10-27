@@ -1,0 +1,26 @@
+; Engine configuration file.
+; Complete Godot 4.3 Kadi Reference Project bundled with Kadi Companion v2.0.0
+
+config_version=5
+
+[application]
+
+config/name="Kadi (Godot 4.3 Reference)"
+config/version="2.0.0"
+run/main_scene="res://scenes/table/table.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+GameState="*res://scripts/game_state.gd"
+TurnManager="*res://scripts/turn_manager.gd"
+
+[display]
+
+window/size/viewport_width=1152
+window/size/viewport_height=648
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

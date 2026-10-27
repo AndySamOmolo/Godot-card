@@ -18,6 +18,8 @@ data class LessonDetailUiState(
     val lesson: Lesson? = null,
     val phaseTitle: String? = null,
     val phaseId: String? = null,
+    val totalLessonsInPhase: Int = 0,
+    val previousLessonId: String? = null,
     val nextLessonId: String? = null,
     val hasDebugChallenge: Boolean = false,
     val isCompleted: Boolean = false,
@@ -30,6 +32,8 @@ private data class LessonBundle(
     val lesson: Lesson?,
     val phaseTitle: String?,
     val phaseId: String?,
+    val totalLessonsInPhase: Int,
+    val previousLessonId: String?,
     val nextLessonId: String?,
     val hasDebugChallenge: Boolean
 )
@@ -47,6 +51,8 @@ class LessonDetailViewModel @Inject constructor(
         flow {
             val lesson = tutorialRepository.getLesson(lessonId)
             val phase = lesson?.let { tutorialRepository.getPhase(it.phaseId) }
+            val prev = tutorialRepository.getPreviousLesson(lessonId)
+                ?: lesson?.let { tutorialRepository.getLastLessonOfPreviousPhase(it.phaseId) }
             val next = tutorialRepository.getNextLesson(lessonId)
                 ?: lesson?.let { tutorialRepository.getFirstLessonOfNextPhase(it.phaseId) }
             emit(
@@ -54,6 +60,8 @@ class LessonDetailViewModel @Inject constructor(
                     lesson = lesson,
                     phaseTitle = phase?.title,
                     phaseId = lesson?.phaseId,
+                    totalLessonsInPhase = phase?.lessons?.size ?: 0,
+                    previousLessonId = prev?.id,
                     nextLessonId = next?.id,
                     hasDebugChallenge = phase?.debugChallenge != null
                 )
@@ -66,6 +74,8 @@ class LessonDetailViewModel @Inject constructor(
             lesson = bundle.lesson,
             phaseTitle = bundle.phaseTitle,
             phaseId = bundle.phaseId,
+            totalLessonsInPhase = bundle.totalLessonsInPhase,
+            previousLessonId = bundle.previousLessonId,
             nextLessonId = bundle.nextLessonId,
             hasDebugChallenge = bundle.hasDebugChallenge,
             isCompleted = progress?.isCompleted == true,

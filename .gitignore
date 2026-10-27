@@ -1,9 +1,18 @@
 # Build artifacts
 build/
+*/build/
 .gradle/
 .idea/
 local.properties
 *.iml
+
+# Built Android packages & binaries
+*.apk
+*.aab
+*.ap_
+*.dex
+app/release/
+app/debug/
 
 # Gradle wrapper JAR is REQUIRED (don't ignore it)
 !gradle/wrapper/gradle-wrapper.jar

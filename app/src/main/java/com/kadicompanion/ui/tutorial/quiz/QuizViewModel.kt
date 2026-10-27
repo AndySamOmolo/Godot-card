@@ -18,11 +18,14 @@ data class QuizUiState(
     val selectedChoice: Int? = null,
     val wasCorrect: Boolean? = null,
     val canRetry: Boolean = true,
+    val firstTryCorrectCount: Int = 0,
+    val attemptedOnCurrentQuestion: Boolean = false,
     val isLoading: Boolean = true
 ) {
     val current: QuizQuestion? get() = questions.getOrNull(currentIndex)
     val isLast: Boolean get() = currentIndex >= questions.size - 1
-    val finished: Boolean get() = currentIndex >= questions.size
+    val finished: Boolean get() = questions.isNotEmpty() && currentIndex >= questions.size
+    val scoreFraction: Float get() = if (questions.isEmpty()) 1f else firstTryCorrectCount.toFloat() / questions.size
 }
 
 @HiltViewModel
@@ -49,14 +52,40 @@ class QuizViewModel @Inject constructor(
         val q = s.current ?: return
         if (s.wasCorrect != null) return
         val correct = choiceIndex == q.correctChoiceIndex
-        _ui.value = s.copy(selectedChoice = choiceIndex, wasCorrect = correct)
+        val newCorrectCount = if (correct && !s.attemptedOnCurrentQuestion) {
+            s.firstTryCorrectCount + 1
+        } else {
+            s.firstTryCorrectCount
+        }
+        _ui.value = s.copy(
+            selectedChoice = choiceIndex,
+            wasCorrect = correct,
+            firstTryCorrectCount = newCorrectCount,
+            attemptedOnCurrentQuestion = true
+        )
         viewModelScope.launch { assessmentRepository.recordQuizAttempt(q.id, q.concept, correct) }
     }
 
-    fun retry() { _ui.value = _ui.value.copy(selectedChoice = null, wasCorrect = null, canRetry = false) }
+    fun retry() {
+        _ui.value = _ui.value.copy(selectedChoice = null, wasCorrect = null, canRetry = false)
+    }
 
     fun next() {
         val s = _ui.value
-        _ui.value = s.copy(currentIndex = s.currentIndex + 1, selectedChoice = null, wasCorrect = null, canRetry = true)
+        _ui.value = s.copy(
+            currentIndex = s.currentIndex + 1,
+            selectedChoice = null,
+            wasCorrect = null,
+            canRetry = true,
+            attemptedOnCurrentQuestion = false
+        )
+    }
+
+    fun restartQuiz() {
+        val s = _ui.value
+        _ui.value = QuizUiState(
+            questions = s.questions,
+            isLoading = false
+        )
     }
 }

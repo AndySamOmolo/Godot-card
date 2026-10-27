@@ -4,7 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,11 +31,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,28 +56,76 @@ import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.theme.LocalReduceMotion
 
-/**
- * The A–Z index. A pill search box on top, then terms grouped under a hairline
- * letter rule, each one carrying a round letter badge so the list scans fast.
- */
+private val KADI_TERMS = setOf(
+    "Kadi", "Penalty Cards", "Jump Cards", "Kickback Cards", "Question Cards",
+    "Answer Cards", "Niko Kadi", "Draw Pile", "Discard Pile", "Suit", "Rank"
+)
+
+private val GODOT_NODE_TERMS = setOf(
+    "Node", "Control", "Resource", "Autoloads", "Scenes", "_ready()", "Signals",
+    "State Machines", "Tweens", "PackedScene", "Object", "Button", "Label",
+    "Timer", "@onready", "@export", "HBoxContainer", "CanvasLayer", "OptionButton"
+)
+
 @Composable
 fun GlossaryListScreen(onTermClick: (String) -> Unit, vm: GlossaryListViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    var selectedCategory by rememberSaveable { mutableIntStateOf(0) }
+    val categories = listOf("All Terms", "Kadi Rules", "Godot Engine", "GDScript")
+
+    val categoryFiltered = state.filtered.filter { entry ->
+        when (selectedCategory) {
+            1 -> entry.term in KADI_TERMS
+            2 -> entry.term in GODOT_NODE_TERMS
+            3 -> entry.term !in KADI_TERMS && entry.term !in GODOT_NODE_TERMS
+            else -> true
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         GlossarySearchPill(
             query = state.query,
             onQueryChange = vm::setQuery,
             placeholder = stringResource(R.string.search_glossary_placeholder),
             modifier = Modifier.padding(horizontal = 16.dp)
         )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            categories.forEachIndexed { idx, label ->
+                val active = selectedCategory == idx
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    border = BorderStroke(
+                        width = if (active) 1.5.dp else 0.5.dp,
+                        color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                    ),
+                    modifier = Modifier.clickable { selectedCategory = idx }
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                        color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
         when {
             state.isLoading -> LoadingSkeleton(lines = 7)
-            state.filtered.isEmpty() -> EmptyState(
+            categoryFiltered.isEmpty() -> EmptyState(
                 title = "No terms",
                 message = stringResource(R.string.empty_search)
             )
             else -> {
-                val grouped = state.filtered.groupBy { it.term.firstOrNull()?.uppercaseChar() ?: '#' }
+                val grouped = categoryFiltered.groupBy { it.term.firstOrNull()?.uppercaseChar() ?: '#' }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
@@ -129,7 +185,7 @@ private fun TermCard(entry: GlossaryEntry, onClick: () -> Unit) {
                     text = entry.shortDefinition,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                    maxLines = 2
                 )
             }
             Icon(

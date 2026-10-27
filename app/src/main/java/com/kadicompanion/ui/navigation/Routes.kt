@@ -16,6 +16,7 @@ object Routes {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val PHASE_LIST = "tutorials"
+    const val BLUEPRINT = "blueprint"
     const val DOCS = "docs"
     const val BOOKMARKS = "bookmarks"
     const val INSIGHTS = "insights"

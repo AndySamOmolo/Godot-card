@@ -8,5 +8,11 @@ data class Lesson(
     val bodyMarkdown: String,
     val codeSnippets: List<CodeSnippet>,
     val practicePrompt: PracticePrompt? = null,
-    val quizQuestions: List<QuizQuestion> = emptyList()
+    val quizQuestions: List<QuizQuestion> = emptyList(),
+    val targetFile: String? = null,
+    val sceneTree: String? = null,
+    val editorSteps: List<String> = emptyList(),
+    val verificationSteps: List<String> = emptyList(),
+    val troubleshootingTips: List<String> = emptyList(),
+    val keyTakeaways: List<String> = emptyList()
 )

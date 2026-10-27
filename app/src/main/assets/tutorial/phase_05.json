@@ -1,88 +1,321 @@
 {
   "id": "phase_05_penalty_cards",
   "order": 5,
-  "title": "Penalty Cards",
-  "summary": "Stack penalties with an accumulator variable: a 2 adds two cards, a 3 adds three, a Joker adds five, and the next player either counters (same-rank penalty or an Ace) or picks up the lot.",
-  "estimatedMinutes": 50,
-  "concepts": ["Accumulators", "Enums", "Guard clauses"],
-  "programmingConcepts": ["Accumulator pattern", "State variables", "Compound assignment", "Early returns"],
+  "title": "Penalty Cards, Stacking & Countering",
+  "summary": "Implement Kadi's Penalty Cards (2 adds +2, 3 adds +3, Joker adds +5), forward penalties with a same-rank counter, cancel penalties with an Ace, and preserve active suit after Jokers.",
+  "estimatedMinutes": 65,
+  "concepts": [
+    "Accumulators",
+    "Guard clauses",
+    "Penalty Countering"
+  ],
+  "programmingConcepts": [
+    "Accumulator pattern",
+    "State variables",
+    "Compound assignment",
+    "Early returns"
+  ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/game_state.gd",
+    "res://scripts/rule_validator.gd",
+    "res://scenes/table/table.gd"
+  ],
+  "sceneTreeBlueprint": "HUD (CanvasLayer)\n├── PenaltyBadge (Label)  [Shows \"PENALTY ACTIVE: Pick +5 (or play Joker / Ace)\"]\n└── DrawButton (Button)   [Text dynamically updates to \"Pick +5 Cards\" when penalty_stack > 0]",
+  "learningObjectives": [
+    "Use the Accumulator Pattern (`GameState.penalty_stack += card.penalty_value()`) to stack +2, +3, and +5 penalties.",
+    "Enforce Kadi's exact penalty counter rules: only a Penalty Card of the **same rank** (forwards the stack) or an **Ace** (cancels the stack) can counter a live penalty.",
+    "Preserve the active suit/rank when a Joker or Ace counters a penalty so the next player knows which suit is in force."
+  ],
   "lessons": [
     {
       "id": "l_05_01_accumulator",
       "order": 1,
-      "title": "The Accumulator Pattern for Penalties",
-      "bodyMarkdown": "# The Accumulator Pattern\n\nAn **accumulator** is a variable that grows (or shrinks) across iterations or events. In Kadi the penalty stack is the canonical accumulator: each penalty card adds its value, and the next player must either counter or pick up the running total.\n\n```gdscript\nvar penalty_stack: int = 0\n\nfunc apply_penalty_card(card: CardData) -> void:\n    match card.rank:\n        CardTypes.Ranks.TWO:\n            penalty_stack += 2\n        CardTypes.Ranks.THREE:\n            penalty_stack += 3\n        CardTypes.Ranks.JOKER:\n            penalty_stack += 5\n        _:\n            pick_up(penalty_stack)\n            penalty_stack = 0\n\nfunc pick_up(count: int) -> void:\n    for _ in range(count):\n        if GameState.deck.size() > 0:\n            GameState.hands[GameState.current_player].append(\n                GameState.deck.pop_back())\n```\n\n`+=` is compound assignment — shorthand for `penalty_stack = penalty_stack + 2`. Use it for any variable that changes by a delta.\n\nThe accumulator persists across turns because it lives on the TurnManager (a Node in the scene tree, not a local). When a player picks up, the accumulator **resets to 0** — that reset is the rule, not an optimisation.\n\n> [!WHY]\n> Penalties are the heart of Kadi's tension. By making `penalty_stack` an explicit, observable variable rather than recomputing it from history, every UI element (a stack counter, an animation, an AI's threat assessment) can read it directly via a signal. The accumulator turns \"what is the current threat?\" into an O(1) field read, not a scan of the discard pile.\n\nAlways reset accumulators at the documented rule boundary — here, when a player picks up — or the stack leaks into the next round.",
+      "title": "The Accumulator Pattern for Penalty Stacks (+2, +3, +5)",
+      "targetFile": "res://scripts/game_state.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "In `res://scripts/game_state.gd`, ensure `var penalty_stack: int = 0` and `var last_active_suit: int = 0` are declared.",
+        "When a Penalty Card (2, 3, or Joker) is played, increment `penalty_stack += card.penalty_value()` and emit `penalty_updated.emit(penalty_stack)`.",
+        "When a player picks up the penalty stack, draw `penalty_stack` cards and immediately reset `penalty_stack = 0`."
+      ],
+      "keyTakeaways": [
+        "A `2` adds `+2`, a `3` adds `+3`, and a `Joker` (rank 15) adds `+5` to `GameState.penalty_stack`.",
+        "`+=` (compound addition) grows the accumulator across turns as players chain matching penalty cards.",
+        "Resetting `penalty_stack = 0` the instant a player picks up (or plays an Ace) prevents penalty leaks into later turns."
+      ],
+      "bodyMarkdown": "# Stacking Penalties with the Accumulator Pattern\n\nFew moments in **Kadi** are more dramatic than a penalty chain: Player 0 slaps down a **2** (+2 cards), Player 1 counters with another **2** (now +4 cards!), and Player 2 has no 2 or Ace so they must pick up all **4 cards**!\n\nIn programming, `GameState.penalty_stack` is an **[[Accumulator variable|accumulator]]** — a state variable that grows across turns via `+=` until a rule boundary resets it to `0`.\n\n```gdscript\n# Inside res://scripts/game_state.gd:\nvar penalty_stack: int = 0\nvar active_suit_before_joker: int = CardTypes.Suits.HEARTS\n\nfunc apply_penalty_card(card: CardData) -> void:\n    match card.rank:\n        CardTypes.Ranks.TWO:\n            penalty_stack += 2\n        CardTypes.Ranks.THREE:\n            penalty_stack += 3\n        CardTypes.Ranks.JOKER:\n            penalty_stack += 5\n    penalty_updated.emit(penalty_stack)\n\nfunc consume_penalty_stack(player: int) -> int:\n    var count: int = penalty_stack\n    penalty_stack = 0  # MUST reset to 0 immediately!\n    draw_cards(player, count)\n    penalty_updated.emit(0)\n    return count\n```\n\n> [!KADI]\n> Notice what `KADI.md` says about Jokers: *\"After a Joker card is played the game continues with the suit/rank from the Penalty Card.\"* Because a Joker has no suit of its own, storing `active_suit_before_joker` whenever a non-Joker card lands on the discard pile ensures that after a Joker penalty is resolved, play continues seamlessly with the previous card's suit!\n\n> [!WHY]\n> A `2` adds `+2`, a `3` adds `+3`, and a `Joker` (rank 15) adds `+5` to `GameState.penalty_stack`.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 5 (Penalty Cards, Stacking & Countering) — Lesson 1: *The Accumulator Pattern for Penalty Stacks (+2, +3, +5)* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | A `2` adds `+2`, a `3` adds `+3`, and a `Joker` (rank 15) adds `+5` to `GameState.penalty_stack`. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `res://scripts/game_state.gd`, ensure `var penalty_stack: int = 0` and `var last_active_suit: int = 0` are declared.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n2. **When a Penalty Card (2, 3, or Joker) is played, increment `penalty_stack += card.penalty_value()` and emit `penalty_updated.emit(penalty_stack)`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n3. **When a player picks up the penalty stack, draw `penalty_stack` cards and immediately reset `penalty_stack = 0`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/game_state.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `The Accumulator Pattern for Penalty Stacks (+2, +3, +5)` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: A `2` adds `+2`, a `3` adds `+3`, and a `Joker` (rank 15) adds `+5` to `GameState.penalty_stack`.\n- **Core Principle 2**: `+=` (compound addition) grows the accumulator across turns as players chain matching penalty cards.\n- **Core Principle 3**: Resetting `penalty_stack = 0` the instant a player picks up (or plays an Ace) prevents penalty leaks into later turns.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What does `penalty_stack += 3` do when `penalty_stack` currently equals `3`?** | **Adds 3 to `penalty_stack`, making it `6`** — `+=` adds the right-hand value to the current value of the variable (`3 + 3 = 6`). |\n| **What happens if `consume_penalty_stack()` draws the penalty cards for Player 1 but forgets to set `penalty_stack = 0`?** | **Player 2 on the very next turn will ALSO be forced to counter or pick up the same penalty stack!** — Failing to reset an accumulator at its rule boundary leaks the penalty onto subsequent players. |\n| **How many cards does a Joker add to `penalty_stack` in Kadi?** | **5 cards** — In Kadi, 2 adds 2 cards, 3 adds 3 cards, and a Joker adds 5 cards. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Declare `var total_cards_picked_up: int = 0` and write `func pick_up(count: int) -> void` that adds `count` to `total_cards_picked_up` using `+=`.\n- **How Godot Evaluates It**: When your script runs `var total_cards_picked_up: int = 0`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Accumulates the lifetime number of penalty cards picked up across the match.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `var penalty_stack: int = 0` | Declares a mutable typed variable to store state in memory. |\n| **Line 3** | `func apply_penalty_card(card: CardData) -> void:` | Defines function `apply_penalty_card()` returning `void`. |\n| **Line 4** | `match card.rank:` | Pattern-matches `card.rank` against the discrete cases indented below (no fall-through). |\n| **Line 5** | `CardTypes.Ranks.TWO:` | Executes this statement as part of the current block. |\n| **Line 6** | `penalty_stack += 2` | Compound assignment that updates the variable in place. |\n| **Line 7** | `CardTypes.Ranks.THREE:` | Executes this statement as part of the current block. |\n| **Line 8** | `penalty_stack += 3` | Compound assignment that updates the variable in place. |\n| **Line 9** | `CardTypes.Ranks.JOKER:` | Executes this statement as part of the current block. |\n| **Line 10** | `penalty_stack += 5` | Compound assignment that updates the variable in place. |\n| **Line 11** | `_:` | Wildcard default branch of the `match` statement — catches any value not matched above. |\n| **Line 12** | `draw_cards(TurnManager.current_player_index, penalty_stack)` | Executes this statement as part of the current block. |\n| **Line 13** | `penalty_stack = 0` | Assigns the computed right-hand value into `penalty_stack`. |\n| **Line 14** | `penalty_updated.emit(penalty_stack)` | Broadcasts the signal to all connected listener nodes along with any arguments. |",
       "codeSnippets": [
         {
           "id": "cs_05_01_a",
           "language": "gdscript",
-          "code": "var penalty_stack: int = 0\n\nfunc apply_penalty_card(card: CardData) -> void:\n    match card.rank:\n        CardTypes.Ranks.TWO:\n            penalty_stack += 2\n        CardTypes.Ranks.THREE:\n            penalty_stack += 3\n        CardTypes.Ranks.JOKER:\n            penalty_stack += 5\n        _:\n            pick_up(penalty_stack)\n            penalty_stack = 0",
-          "caption": "Accumulating penalty values, resetting on pick-up."
+          "code": "var penalty_stack: int = 0\n\nfunc apply_penalty_card(card: CardData) -> void:\n    match card.rank:\n        CardTypes.Ranks.TWO:\n            penalty_stack += 2\n        CardTypes.Ranks.THREE:\n            penalty_stack += 3\n        CardTypes.Ranks.JOKER:\n            penalty_stack += 5\n        _:\n            draw_cards(TurnManager.current_player_index, penalty_stack)\n            penalty_stack = 0\n    penalty_updated.emit(penalty_stack)",
+          "caption": "Accumulating +2, +3, and +5 penalty cards and resetting on pickup."
         }
       ],
       "practicePrompt": {
-        "instructions": "Add a `total_cards_picked_up: int` accumulator and increment it by `count` inside `pick_up` so we can display lifetime stats.",
-        "hint": "Declare a new field and use `+=`.",
-        "solutionCode": "var total_cards_picked_up: int = 0\n\nfunc pick_up(count: int) -> void:\n    total_cards_picked_up += count\n    for _ in range(count):\n        if GameState.deck.size() > 0:\n            GameState.hands[GameState.current_player].append(GameState.deck.pop_back())"
+        "instructions": "Declare `var total_cards_picked_up: int = 0` and write `func pick_up(count: int) -> void` that adds `count` to `total_cards_picked_up` using `+=`.",
+        "hint": "Use `total_cards_picked_up += count` inside `func pick_up(count: int) -> void:`.",
+        "starterCode": "var total_cards_picked_up: int = 0\n\nfunc pick_up(count: int) -> void:\n    # Increment total_cards_picked_up by count:\n",
+        "requiredTokens": [
+          "var",
+          "total_cards_picked_up",
+          "func",
+          "pick_up",
+          "+=",
+          "count"
+        ],
+        "expectedOutput": "Accumulates the lifetime number of penalty cards picked up across the match.",
+        "solutionCode": "var total_cards_picked_up: int = 0\n\nfunc pick_up(count: int) -> void:\n    total_cards_picked_up += count"
       },
       "quizQuestions": [
         {
           "id": "q_05_01_a",
-          "prompt": "What does `penalty_stack += 3` do?",
-          "choices": ["Sets penalty_stack to 3", "Adds 3 to penalty_stack (equivalent to penalty_stack = penalty_stack + 3)", "Multiplies penalty_stack by 3", "Compares penalty_stack to 3"],
+          "prompt": "What does `penalty_stack += 3` do when `penalty_stack` currently equals `3`?",
+          "choices": [
+            "Sets `penalty_stack` to 3",
+            "Adds 3 to `penalty_stack`, making it `6`",
+            "Multiplies `penalty_stack` by 3",
+            "Resets `penalty_stack` to 0"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "`+=` is compound assignment: it adds the right operand to the left variable and stores the result back.",
+          "explanation": "`+=` adds the right-hand value to the current value of the variable (`3 + 3 = 6`).",
           "concept": "Accumulators"
         },
         {
           "id": "q_05_01_b",
-          "prompt": "Why must the penalty stack be reset to 0 when a player picks up?",
-          "choices": ["To free memory", "Because the rule says the stack is cleared once picked up — otherwise the same penalty haunts the next round", "To make the game faster", "Godot requires it"],
+          "prompt": "What happens if `consume_penalty_stack()` draws the penalty cards for Player 1 but forgets to set `penalty_stack = 0`?",
+          "choices": [
+            "Nothing, Godot resets ints automatically",
+            "Player 2 on the very next turn will ALSO be forced to counter or pick up the same penalty stack!",
+            "The deck is deleted",
+            "Player 1 wins"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "The Kadi rule is that picking up consumes the entire stack. Failing to reset leaks the penalty into subsequent turns, breaking the game balance.",
+          "explanation": "Failing to reset an accumulator at its rule boundary leaks the penalty onto subsequent players.",
+          "concept": "Accumulators"
+        },
+        {
+          "id": "q_05_01_c",
+          "prompt": "How many cards does a Joker add to `penalty_stack` in Kadi?",
+          "choices": [
+            "2 cards",
+            "3 cards",
+            "5 cards",
+            "15 cards"
+          ],
+          "correctChoiceIndex": 2,
+          "explanation": "In Kadi, 2 adds 2 cards, 3 adds 3 cards, and a Joker adds 5 cards.",
           "concept": "Accumulators"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/game_state.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `The Accumulator Pattern for Penalty Stacks (+2, +3, +5)`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     },
     {
       "id": "l_05_02_countering",
       "order": 2,
-      "title": "Countering a Penalty",
-      "bodyMarkdown": "# Countering a Penalty\n\nA penalty stack is not a sentence — the next player has ways out. In Kadi, when you face a live penalty you may **avoid picking up** by either playing another **penalty card of the same rank** (which forwards the whole stack to the *next* player) or playing an **Ace** (which cancels the pick-up; play then continues with the suit that was in force before the penalty). If you can do neither, you draw the full stack and it resets to zero.\n\n```gdscript\nfunc can_counter(card: CardData, top_penalty: CardData) -> bool:\n    if top_penalty == null:\n        return false\n    if card.rank == CardTypes.Ranks.ACE:\n        return true\n    return card.rank == top_penalty.rank\n\nfunc resolve_penalty(card: CardData) -> void:\n    if not can_counter(card, GameState.top_penalty):\n        pick_up(GameState.penalty_stack)\n        GameState.penalty_stack = 0\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0  # Ace cancels the stack\n        return\n    GameState.penalty_stack += penalty_value(card.rank)  # same-rank forwards it on\n```\n\nNotice the **guard clauses**: each `return` handles one outcome and exits, so the happy path never nests three levels deep. Reading top to bottom, the function says: 'can't counter? pick up and stop. Ace? clear the stack and stop. Otherwise forward the penalty.'\n\nAn important subtlety from the rules: forwarding with a same-rank penalty only *moves* the obligation — it does not clear it — while an Ace *cancels* it outright. Modelling those two counters as separate branches keeps each rule honest.\n\n> [!WHY]\n> Early-return guard clauses turn a tangled `if/else` tree into a checklist. Each branch owns exactly one rule outcome and is independently testable, so when a designer asks 'what happens if I play an Ace on a 3?' you point at one line. Bundling all three outcomes into nested conditionals is how subtle penalty-leak bugs — the stack surviving when it should have cleared — sneak in.\n\nPrefer 'handle-and-return' for each special case; leave the ordinary path unindented at the bottom.",
+      "title": "Countering a Penalty: Same-Rank Forward vs. Ace Cancel",
+      "targetFile": "res://scripts/rule_validator.gd + res://scenes/table/table.gd",
+      "sceneTree": null,
+      "editorSteps": [
+        "In `RuleValidator`, check `can_counter_penalty(card: CardData, top_penalty: CardData) -> bool`.",
+        "Allow `card.rank == CardTypes.Ranks.ACE` (which cancels `penalty_stack = 0` and continues with the suit of the penalty card).",
+        "Allow `card.rank == top_penalty.rank` (which adds `card.penalty_value()` to `penalty_stack` and forwards it to the next player)."
+      ],
+      "keyTakeaways": [
+        "In Kadi, a penalty of **2** can ONLY be countered by another **2** or an **Ace** (you cannot counter a 2 with a 3!).",
+        "Playing a same-rank penalty **forwards** the accumulated stack (`penalty_stack += card.penalty_value()`).",
+        "Playing an **Ace** against a penalty **cancels** the penalty (`penalty_stack = 0`), and the game continues with the suit from the previous Penalty Card (rather than opening the suit-declaration popup!)."
+      ],
+      "bodyMarkdown": "# Countering Penalties with Guard Clauses\n\nLet's check the exact wording in `KADI.md` for avoiding a penalty:\n\n> [!KADI]\n> *\"Penalty Cards (2, 3, and Jokers) must be followed by the next player drawing 2, 3 or 5 cards, respectively. The next player can avoid the penalty by:*\n> *- Playing a Penalty Card of the **same rank** (forwards the penalty to the next player).*\n> *- Playing an **Ace** card. The game continues with the suit from the previous Penalty Card.\"*\n\nNotice two critical Kadi rules here that trip up developers:\n1. **Same Rank Only**: You can counter a **2** with another **2**, or a **3** with another **3**, or a **Joker** with another **Joker** — you cannot play a 3 on a live 2 penalty!\n2. **Ace Blocks Without Suit Declaration**: When you play an **Ace** to block a live penalty, it cancels `penalty_stack = 0` and play continues with the suit of the Penalty Card (you do *not* declare a new suit when using an Ace as a penalty shield!).\n\n```gdscript\nstatic func can_counter_penalty(card: CardData, top_penalty: CardData) -> bool:\n    if top_penalty == null:\n        return false\n    if card.rank == CardTypes.Ranks.ACE:\n        return true\n    return card.is_penalty() and card.rank == top_penalty.rank\n\nfunc resolve_penalty_play(card: CardData) -> void:\n    var top: CardData = GameState.top_discard()\n    if not RuleValidator.can_counter_penalty(card, top):\n        GameState.consume_penalty_stack(TurnManager.current_player_index)\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0  # Ace cancels the penalty outright!\n        GameState.declared_suit = top.suit  # Continue with suit of the penalty card\n        return\n    # Otherwise it is a same-rank penalty card: add to stack and forward!\n    GameState.penalty_stack += card.penalty_value()\n```\n\n> [!WHY]\n> In Kadi, a penalty of **2** can ONLY be countered by another **2** or an **Ace** (you cannot counter a 2 with a 3!).\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 5 (Penalty Cards, Stacking & Countering) — Lesson 2: *Countering a Penalty: Same-Rank Forward vs. Ace Cancel* |\n| **Which File Do I Edit?** | `res://scripts/rule_validator.gd + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | In Kadi, a penalty of **2** can ONLY be countered by another **2** or an **Ace** (you cannot counter a 2 with a 3!). |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `RuleValidator`, check `can_counter_penalty(card: CardData, top_penalty: CardData) -> bool`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Allow `card.rank == CardTypes.Ranks.ACE` (which cancels `penalty_stack = 0` and continues with the suit of the penalty card).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **Allow `card.rank == top_penalty.rank` (which adds `card.penalty_value()` to `penalty_stack` and forwards it to the next player).** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scripts/rule_validator.gd + res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Countering a Penalty: Same-Rank Forward vs. Ace Cancel` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/rule_validator.gd + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: In Kadi, a penalty of **2** can ONLY be countered by another **2** or an **Ace** (you cannot counter a 2 with a 3!).\n- **Core Principle 2**: Playing a same-rank penalty **forwards** the accumulated stack (`penalty_stack += card.penalty_value()`).\n- **Core Principle 3**: Playing an **Ace** against a penalty **cancels** the penalty (`penalty_stack = 0`), and the game continues with the suit from the previous Penalty Card (rather than opening the suit-declaration popup!).\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Player 0 plays a 2 of Hearts (`penalty_stack = 2`). Can Player 1 counter it with a 3 of Hearts?** | **No — in Kadi, a live penalty can only be countered by a Penalty Card of the SAME rank (another 2) or an Ace** — Per KADI.md, you can avoid a penalty only by playing a Penalty Card of the **same rank** or an Ace. |\n| **What is the difference between countering a penalty with a same-rank Penalty Card vs. countering with an Ace?** | **A same-rank Penalty Card adds to and forwards the penalty stack to the next player; an Ace cancels the penalty stack to 0** — Forwarding grows `penalty_stack` for the next player, whereas an Ace cancels `penalty_stack = 0`. |\n| **When an Ace is played to block a 3 of Diamonds penalty, what suit continues play on the next turn?** | **The suit of the previous Penalty Card (Diamonds)** — Per KADI.md: 'Playing an Ace card. The game continues with the suit from the previous Penalty Card.' |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `is_ace_escape(card: CardData) -> bool` that returns `true` when `card.rank == CardTypes.Ranks.ACE`.\n- **How Godot Evaluates It**: When your script runs `func is_ace_escape(card: CardData) -> bool:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Returns true when the played card is an Ace capable of cancelling a penalty stack.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `static func can_counter_penalty(card: CardData, top_penalty: CardData) -> bool:` | Defines static helper method `can_counter_penalty()` callable directly on the class without instantiating an object. |\n| **Line 2** | `if top_penalty == null:` | Branches into the indented block only when `top_penalty == null` evaluates to `true`. |\n| **Line 3** | `return false` | Immediately exits the current function and sends `false` back to the caller. |\n| **Line 4** | `if card.rank == CardTypes.Ranks.ACE:` | Branches into the indented block only when `card.rank == CardTypes.Ranks.ACE` evaluates to `true`. |\n| **Line 5** | `return true` | Immediately exits the current function and sends `true` back to the caller. |\n| **Line 6** | `return card.is_penalty() and card.rank == top_penalty.rank` | Immediately exits the current function and sends `card.is_penalty() and card.rank == top_penalty.rank` back to the caller. |\n| **Line 8** | `func resolve_penalty_play(card: CardData) -> void:` | Defines function `resolve_penalty_play()` returning `void`. |\n| **Line 9** | `var top: CardData = GameState.top_discard()` | Declares a mutable typed variable to store state in memory. |\n| **Line 10** | `if not RuleValidator.can_counter_penalty(card, top):` | Branches into the indented block only when `not RuleValidator.can_counter_penalty(card, top)` evaluates to `true`. |\n| **Line 11** | `GameState.consume_penalty_stack(TurnManager.current_player_index)` | Executes this statement as part of the current block. |\n| **Line 12** | `return` | Immediately exits the function (early-return guard clause). |\n| **Line 13** | `if card.rank == CardTypes.Ranks.ACE:` | Branches into the indented block only when `card.rank == CardTypes.Ranks.ACE` evaluates to `true`. |\n| **Line 14** | `GameState.penalty_stack = 0` | Assigns the computed right-hand value into `GameState.penalty_stack`. |\n| **Line 15** | `return` | Immediately exits the function (early-return guard clause). |\n| **Line 16** | `GameState.penalty_stack += card.penalty_value()` | Compound assignment that updates the variable in place. |",
       "codeSnippets": [
         {
           "id": "cs_05_02_a",
           "language": "gdscript",
-          "code": "func can_counter(card: CardData, top_penalty: CardData) -> bool:\n    if top_penalty == null:\n        return false\n    if card.rank == CardTypes.Ranks.ACE:\n        return true\n    return card.rank == top_penalty.rank\n\nfunc resolve_penalty(card: CardData) -> void:\n    if not can_counter(card, GameState.top_penalty):\n        pick_up(GameState.penalty_stack)\n        GameState.penalty_stack = 0\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0\n        return\n    GameState.penalty_stack += penalty_value(card.rank)",
-          "caption": "Guard clauses resolve the three penalty responses: pick up, cancel with Ace, or forward."
+          "code": "static func can_counter_penalty(card: CardData, top_penalty: CardData) -> bool:\n    if top_penalty == null:\n        return false\n    if card.rank == CardTypes.Ranks.ACE:\n        return true\n    return card.is_penalty() and card.rank == top_penalty.rank\n\nfunc resolve_penalty_play(card: CardData) -> void:\n    var top: CardData = GameState.top_discard()\n    if not RuleValidator.can_counter_penalty(card, top):\n        GameState.consume_penalty_stack(TurnManager.current_player_index)\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0\n        return\n    GameState.penalty_stack += card.penalty_value()",
+          "caption": "Flat guard clauses handle all three penalty outcomes: pick up, cancel with Ace, or forward with same rank."
         }
       ],
       "practicePrompt": {
-        "instructions": "Write `is_ace_escape(card)` returning true when the card is an Ace, using a single guard-clause return. This is the counter that cancels a penalty outright.",
-        "hint": "One line: return card.rank == CardTypes.Ranks.ACE.",
+        "instructions": "Write a function `is_ace_escape(card: CardData) -> bool` that returns `true` when `card.rank == CardTypes.Ranks.ACE`.",
+        "hint": "Use `return card.rank == CardTypes.Ranks.ACE`.",
+        "starterCode": "func is_ace_escape(card: CardData) -> bool:\n    # Return true if card is an Ace:\n",
+        "requiredTokens": [
+          "func",
+          "is_ace_escape",
+          "return",
+          "card.rank",
+          "CardTypes.Ranks.ACE"
+        ],
+        "expectedOutput": "Returns true when the played card is an Ace capable of cancelling a penalty stack.",
         "solutionCode": "func is_ace_escape(card: CardData) -> bool:\n    return card.rank == CardTypes.Ranks.ACE"
       },
       "quizQuestions": [
         {
           "id": "q_05_02_a",
-          "prompt": "A player facing a penalty plays a card of the SAME rank as the penalty card. What happens?",
-          "choices": ["The stack is cleared", "The whole penalty stack is forwarded to the next player", "The player still picks up", "The game ends"],
+          "prompt": "Player 0 plays a 2 of Hearts (`penalty_stack = 2`). Can Player 1 counter it with a 3 of Hearts?",
+          "choices": [
+            "Yes, because both are Hearts",
+            "No — in Kadi, a live penalty can only be countered by a Penalty Card of the SAME rank (another 2) or an Ace",
+            "Yes, because 3 is higher than 2",
+            "Only on odd turns"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Playing a same-rank penalty does not cancel the penalty; it adds to and forwards the entire stack to the next player, who must then respond.",
-          "concept": "Guard clauses"
+          "explanation": "Per KADI.md, you can avoid a penalty only by playing a Penalty Card of the **same rank** or an Ace.",
+          "concept": "Penalty Countering"
         },
         {
           "id": "q_05_02_b",
-          "prompt": "Why express the three penalty responses as early-return guard clauses instead of nested if/else?",
-          "choices": ["It runs faster", "Each outcome is handled and exited in one place, keeping the happy path flat and each rule independently testable", "Godot forbids else", "It saves memory"],
+          "prompt": "What is the difference between countering a penalty with a same-rank Penalty Card vs. countering with an Ace?",
+          "choices": [
+            "They do the exact same thing",
+            "A same-rank Penalty Card adds to and forwards the penalty stack to the next player; an Ace cancels the penalty stack to 0",
+            "An Ace doubles the penalty stack",
+            "A same-rank Penalty Card ends the game"
+          ],
           "correctChoiceIndex": 1,
-          "explanation": "Guard clauses give every special case its own exit, so the logic reads as a checklist and penalty-leak bugs are far harder to introduce.",
+          "explanation": "Forwarding grows `penalty_stack` for the next player, whereas an Ace cancels `penalty_stack = 0`.",
+          "concept": "Guard clauses"
+        },
+        {
+          "id": "q_05_02_c",
+          "prompt": "When an Ace is played to block a 3 of Diamonds penalty, what suit continues play on the next turn?",
+          "choices": [
+            "The suit of the previous Penalty Card (Diamonds)",
+            "Spades always",
+            "The game restarts",
+            "Jokers only"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Per KADI.md: 'Playing an Ace card. The game continues with the suit from the previous Penalty Card.'",
+          "concept": "Penalty Countering"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scripts/rule_validator.gd + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Countering a Penalty: Same-Rank Forward vs. Ace Cancel`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ]
+    },
+    {
+      "id": "l_05_03_penalty_ui_ai",
+      "order": 3,
+      "title": "Penalty HUD Badges & Teaching AI Opponents to Counter",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": "HUD (CanvasLayer)\n├── DrawButton (Button)   [Shows \"Pick +4 Penalty\" when penalty_stack == 4, else \"Draw Card\"]\n└── StatusLabel (Label)   [Shows active penalty & active suit]",
+      "editorSteps": [
+        "In `res://scenes/table/table.gd`, inside `refresh_table_ui()`, check `if GameState.penalty_stack > 0:`.",
+        "Set `draw_button.text = \"Accept Penalty (+%d)\" % GameState.penalty_stack` when a penalty is active, and `\"Draw Card\"` when `penalty_stack == 0`.",
+        "In `_execute_ai_turn(player: int)`, check if the AI holds a valid counter card (`can_counter_penalty`); if not, call `GameState.consume_penalty_stack(player)`!"
+      ],
+      "keyTakeaways": [
+        "Updating `draw_button.text` dynamically to `\"Accept Penalty (+%d)\"` makes it 100% obvious why normal cards cannot be played when a penalty is active.",
+        "When an AI opponent faces `penalty_stack > 0`, it scans its hand for a same-rank Penalty Card or an Ace first; if it has neither, it calls `consume_penalty_stack(ai_seat)`."
+      ],
+      "bodyMarkdown": "# Updating the HUD & AI for Active Penalties\n\nWhen `GameState.penalty_stack > 0`, the rules at the table tighten dramatically: you cannot play normal cards! If the UI still just says `\"Draw Card\"`, a new player might click a normal 7 of Hearts, get rejected, and wonder what is happening.\n\nBy updating `draw_button.text` inside `refresh_table_ui()`, the button itself tells the player what is at stake:\n\n```gdscript\n# Inside refresh_table_ui() in res://scenes/table/table.gd:\nif GameState.penalty_stack > 0:\n    draw_button.text = \"Accept Penalty (+%d)\" % GameState.penalty_stack\nelse:\n    draw_button.text = \"Draw Card\"\n```\n\nAnd how does an **AI opponent** handle a live penalty on its turn? Look at `_execute_ai_turn(ai_seat: int)`:\n\n```gdscript\nfunc _execute_ai_turn(ai_seat: int) -> void:\n    var top: CardData = GameState.top_discard()\n    var hand: Array = GameState.hands[ai_seat]\n\n    # 1. If facing a live penalty stack, look for a same-rank penalty or Ace:\n    if GameState.penalty_stack > 0:\n        for c in hand:\n            if RuleValidator.can_counter_penalty(c, top):\n                _execute_move(ai_seat, [c])\n                return\n        var picked: int = GameState.consume_penalty_stack(ai_seat)\n        feedback_label.text = \"Player %d picked up +%d penalty cards!\" % [ai_seat + 1, picked]\n        TurnManager.advance_turn()\n        return\n```\n\n> [!WHY]\n> Updating `draw_button.text` dynamically to `\"Accept Penalty (+%d)\"` makes it 100% obvious why normal cards cannot be played when a penalty is active.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 5 (Penalty Cards, Stacking & Countering) — Lesson 3: *Penalty HUD Badges & Teaching AI Opponents to Counter* |\n| **Which File Do I Edit?** | `res://scenes/table/table.gd` |\n| **Scene / Node Context** | `HUD (CanvasLayer)` |\n| **What Problem Does It Solve?** | Updating `draw_button.text` dynamically to `\"Accept Penalty (+%d)\"` makes it 100% obvious why normal cards cannot be played when a penalty is active. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In `res://scenes/table/table.gd`, inside `refresh_table_ui()`, check `if GameState.penalty_stack > 0:`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n2. **Set `draw_button.text = \"Accept Penalty (+%d)\" % GameState.penalty_stack` when a penalty is active, and `\"Draw Card\"` when `penalty_stack == 0`.** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n3. **In `_execute_ai_turn(player: int)`, check if the AI holds a valid counter card (`can_counter_penalty`); if not, call `GameState.consume_penalty_stack(player)`!** — Performing this step in Godot 4.3 ensures the scene file (`.tscn`), script path (`res://scenes/table/table.gd`), and node references match what the runtime expects when you press `F5`.\n\n\n## Deep-Dive Walkthrough: How `Penalty HUD Badges & Teaching AI Opponents to Counter` Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Updating `draw_button.text` dynamically to `\"Accept Penalty (+%d)\"` makes it 100% obvious why normal cards cannot be played when a penalty is active.\n- **Core Principle 2**: When an AI opponent faces `penalty_stack > 0`, it scans its hand for a same-rank Penalty Card or an Ace first; if it has neither, it calls `consume_penalty_stack(ai_seat)`.\n\n### Answering the 'Why?' Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why should `DrawButton.text` change to `\"Accept Penalty (+4)\"` when `GameState.penalty_stack == 4`?** | **So the player immediately understands why ordinary cards are blocked and knows clicking the button will pick up the 4 penalty cards** — Clear state visibility on the primary action button prevents confusion when normal cards cannot be played. |\n| **In `_execute_ai_turn(ai_seat)`, what does the AI do when `GameState.penalty_stack > 0` and none of the cards in its hand pass `can_counter_penalty()`?** | **It calls `GameState.consume_penalty_stack(ai_seat)` (drawing the penalty stack and resetting `penalty_stack = 0`) and advances the turn** — Just like a human player, an AI without a valid counter must pick up the accumulated penalty stack. |\n| **If an AI holds both a matching-rank Penalty Card (e.g. a 2) and normal Answer cards while facing a +2 penalty, why does checking `if GameState.penalty_stack > 0:` first make the AI smart?** | **The AI immediately counters and forwards the penalty to the next player instead of picking up!** — Prioritizing `can_counter_penalty()` lets AI players forward or block penalties just like real opponents. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `draw_button_label(penalty: int) -> String` that returns `\"Accept Penalty (+%d)\" % penalty` when `penalty > 0`, and `\"Draw Card\"` otherwise.\n- **How Godot Evaluates It**: When your script runs `func draw_button_label(penalty: int) -> String:`, Godot checks each typed variable and condition in order, ensuring no invalid card state or null reference can slip through.\n- **Expected Runtime Behavior**: Formats the Draw button label to clearly show any active penalty stack.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func update_draw_button_label(draw_btn: Button) -> void:` | Defines function `update_draw_button_label()` returning `void`. |\n| **Line 2** | `if GameState.penalty_stack > 0:` | Branches into the indented block only when `GameState.penalty_stack > 0` evaluates to `true`. |\n| **Line 3** | `draw_btn.text = \"Accept Penalty (+%d)\" % GameState.penalty_stack` | Assigns the computed right-hand value into `draw_btn.text`. |\n| **Line 4** | `else:` | Fallback branch executed when every preceding `if` and `elif` condition evaluated to `false`. |\n| **Line 5** | `draw_btn.text = \"Draw Card\"` | Assigns the computed right-hand value into `draw_btn.text`. |",
+      "codeSnippets": [
+        {
+          "id": "cs_05_03_a",
+          "language": "gdscript",
+          "code": "func update_draw_button_label(draw_btn: Button) -> void:\n    if GameState.penalty_stack > 0:\n        draw_btn.text = \"Accept Penalty (+%d)\" % GameState.penalty_stack\n    else:\n        draw_btn.text = \"Draw Card\"",
+          "caption": "Dynamic DrawButton text reflecting whether a penalty stack is active."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `draw_button_label(penalty: int) -> String` that returns `\"Accept Penalty (+%d)\" % penalty` when `penalty > 0`, and `\"Draw Card\"` otherwise.",
+        "hint": "Use `if penalty > 0: return \"Accept Penalty (+%d)\" % penalty` followed by `return \"Draw Card\"`.",
+        "starterCode": "func draw_button_label(penalty: int) -> String:\n    # Return the dynamic button label based on penalty:\n",
+        "requiredTokens": [
+          "func",
+          "draw_button_label",
+          "if",
+          "penalty",
+          ">",
+          "0",
+          "return",
+          "Draw Card"
+        ],
+        "expectedOutput": "Formats the Draw button label to clearly show any active penalty stack.",
+        "solutionCode": "func draw_button_label(penalty: int) -> String:\n    if penalty > 0:\n        return \"Accept Penalty (+%d)\" % penalty\n    return \"Draw Card\""
+      },
+      "quizQuestions": [
+        {
+          "id": "q_05_03_a",
+          "prompt": "Why should `DrawButton.text` change to `\"Accept Penalty (+4)\"` when `GameState.penalty_stack == 4`?",
+          "choices": [
+            "To make the button wider",
+            "So the player immediately understands why ordinary cards are blocked and knows clicking the button will pick up the 4 penalty cards",
+            "Because Godot buttons reset their text every frame",
+            "To end the game"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Clear state visibility on the primary action button prevents confusion when normal cards cannot be played.",
+          "concept": "Penalty Countering"
+        },
+        {
+          "id": "q_05_03_b",
+          "prompt": "In `_execute_ai_turn(ai_seat)`, what does the AI do when `GameState.penalty_stack > 0` and none of the cards in its hand pass `can_counter_penalty()`?",
+          "choices": [
+            "It skips its turn without drawing",
+            "It calls `GameState.consume_penalty_stack(ai_seat)` (drawing the penalty stack and resetting `penalty_stack = 0`) and advances the turn",
+            "It plays a random 7 anyway",
+            "It restarts the match"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Just like a human player, an AI without a valid counter must pick up the accumulated penalty stack.",
+          "concept": "Penalty Countering"
+        },
+        {
+          "id": "q_05_03_c",
+          "prompt": "If an AI holds both a matching-rank Penalty Card (e.g. a 2) and normal Answer cards while facing a +2 penalty, why does checking `if GameState.penalty_stack > 0:` first make the AI smart?",
+          "choices": [
+            "It lets the AI cheat",
+            "The AI immediately counters and forwards the penalty to the next player instead of picking up!",
+            "It deletes the AI's hand",
+            "It turns all cards into Aces"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Prioritizing `can_counter_penalty()` lets AI players forward or block penalties just like real opponents.",
           "concept": "Guard clauses"
         }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
+        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
+        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
+        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in `Penalty HUD Badges & Teaching AI Opponents to Counter`."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ]
     }
   ],
-  "debugChallenge": null
+  "debugChallenge": {
+    "id": "dbg_05_penalty_leak",
+    "brokenCode": "func resolve_penalty(card: CardData) -> void:\n    if not can_counter(card, GameState.top_discard()):\n        pick_up(GameState.penalty_stack)\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0\n        return\n    GameState.penalty_stack += card.penalty_value()",
+    "bugDescription": "When Player 1 cannot counter a +2 penalty, they pick up 2 cards — but then on Player 2's turn, Player 2 is ALSO forced to pick up 2 cards, and Player 3 after them! The penalty never goes away unless someone plays an Ace!",
+    "fixedCode": "func resolve_penalty(card: CardData) -> void:\n    if not can_counter(card, GameState.top_discard()):\n        pick_up(GameState.penalty_stack)\n        GameState.penalty_stack = 0\n        return\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0\n        return\n    GameState.penalty_stack += card.penalty_value()",
+    "explanation": "In the first guard clause (lines 2–4), `pick_up(GameState.penalty_stack)` drew the penalty cards, but forgot `GameState.penalty_stack = 0` before returning! Without resetting the accumulator to `0`, `penalty_stack` stayed positive for every subsequent player.",
+    "buggyLineNumber": 4,
+    "hint": "Look at lines 2–4 where `not can_counter(...)` is handled: after `pick_up(GameState.penalty_stack)` runs, what happens to `GameState.penalty_stack` before `return`?"
+  }
 }

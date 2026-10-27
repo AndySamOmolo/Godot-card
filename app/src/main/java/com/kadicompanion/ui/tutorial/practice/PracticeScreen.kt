@@ -9,6 +9,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,16 +27,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,12 +76,14 @@ import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
-/*
- * Practice reads like a coding exercise sheet: the task in a card, an optional
- * hint that expands in place, a dark editor-style scratch panel, and the model
- * solution kept behind a deliberate reveal.
+/**
+ * Interactive GDScript Coding Workbench:
+ * - Shows the task instructions & target Godot file
+ * - Expandable Hint card
+ * - Interactive GDScript editor with quick-insert token chips (`func`, `var`, `if`, `return`, `->`, etc.)
+ * - "Check My Code" validator with instant diagnostic feedback
+ * - Model solution reveal with live syntax highlighting
  */
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) {
@@ -79,12 +93,15 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
 
     Scaffold(
         containerColor = Color.Transparent,
-        topBar = { KadiTopBar(title = "Practice", subtitle = "Exercise", onBack = onBack) }
+        topBar = { KadiTopBar(title = "Practice Workbench", subtitle = "Interactive Exercise", onBack = onBack) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> LoadingSkeleton()
-                state.lesson?.practicePrompt == null -> EmptyState(title = "No practice for this lesson", message = "Continue to the knowledge check.")
+                state.lesson?.practicePrompt == null -> EmptyState(
+                    title = "No practice for this lesson",
+                    message = "Continue to the knowledge check."
+                )
                 else -> {
                     val lesson = state.lesson!!
                     val prompt = lesson.practicePrompt!!
@@ -103,7 +120,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                 IconBubble(icon = Icons.Outlined.EditNote, tint = MaterialTheme.colorScheme.primary)
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "YOUR TASK",
+                                        text = "YOUR CODING TASK",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -115,16 +132,23 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                     )
                                 }
                                 Pill(
-                                    text = "Practice",
+                                    text = "GDScript 4.3",
                                     color = MaterialTheme.colorScheme.secondary,
                                     icon = Icons.Outlined.Bolt
                                 )
                             }
                             Text(
                                 text = prompt.instructions,
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
+                            lesson.targetFile?.let { path ->
+                                Text(
+                                    text = "Target file in Godot: $path",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
 
                         prompt.hint?.let { hint ->
@@ -132,7 +156,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                 OutlinedButton(
                                     onClick = vm::toggleHint,
                                     shape = MaterialTheme.shapes.large,
-                                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                                    modifier = Modifier.fillMaxWidth().height(48.dp)
                                 ) {
                                     Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(8.dp))
@@ -172,28 +196,73 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                             }
                         }
 
-                        SectionHeader(title = "Your workspace", eyebrow = "Write it yourself")
-                        EditorPanel()
+                        SectionHeader(title = "Interactive GDScript Editor", eyebrow = "Write & check your code")
 
-                        prompt.solutionCode?.let { code ->
-                            if (!state.solutionShown) {
-                                Button(
+                        InteractiveEditorPanel(
+                            code = state.userCode,
+                            onCodeChange = vm::updateUserCode,
+                            onInsertToken = vm::insertToken,
+                            onReset = vm::resetCode
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Button(
+                                onClick = vm::checkCode,
+                                shape = MaterialTheme.shapes.large,
+                                modifier = Modifier.weight(1.3f).height(50.dp)
+                            ) {
+                                Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Check My Code", fontWeight = FontWeight.Bold)
+                            }
+                            if (!state.solutionShown && prompt.solutionCode != null) {
+                                FilledTonalButton(
                                     onClick = vm::revealSolution,
                                     shape = MaterialTheme.shapes.large,
-                                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                                    modifier = Modifier.weight(1f).height(50.dp)
                                 ) {
-                                    Icon(Icons.Outlined.LockOpen, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(stringResource(R.string.action_reveal_solution), fontWeight = FontWeight.Bold)
+                                    Icon(Icons.Outlined.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("Solution", fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+
+                        // Diagnostic result card from Check My Code
+                        state.checkFeedback?.let { feedback ->
+                            val passed = state.checkPassed == true
+                            val accent = if (passed) successColor() else MaterialTheme.colorScheme.tertiary
+                            KadiCard(accent = accent) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    IconBubble(
+                                        icon = if (passed) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
+                                        tint = accent,
+                                        size = 34.dp
+                                    )
+                                    Text(
+                                        text = if (passed) "CHECK PASSED!" else "KEEP TWEAKING",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = accent
+                                    )
                                 }
                                 Text(
-                                    text = "Try it in Godot first — the solution sticks better afterwards.",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    text = feedback,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
+                        }
+
+                        prompt.solutionCode?.let { code ->
                             AnimatedVisibility(
-                                visible = state.solutionShown,
+                                visible = state.solutionShown || state.checkPassed == true,
                                 enter = fadeIn(animationSpec = tween(durationMillis = duration)) +
                                     expandVertically(animationSpec = tween(durationMillis = duration))
                             ) {
@@ -201,7 +270,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                             }
                         }
 
-                        Spacer(Modifier.height(20.dp))
+                        Spacer(Modifier.height(24.dp))
                     }
                 }
             }
@@ -209,13 +278,23 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
     }
 }
 
-/** Dark monospace scratch panel — the "type it here" surface of the exercise. */
+private val QUICK_TOKENS = listOf(
+    "func ", "var ", "const ", "if ", "elif ", "else:", "for ", "in ",
+    "while ", "match ", "return ", "-> ", ": ", "==", "!=", "and ", "or ", "true", "false"
+)
+
 @Composable
-private fun EditorPanel() {
+private fun InteractiveEditorPanel(
+    code: String,
+    onCodeChange: (String) -> Unit,
+    onInsertToken: (String) -> Unit,
+    onReset: () -> Unit
+) {
     val dark = isDarkScheme()
     val panel = if (dark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
     val quiet = if (dark) SyntaxColors.darkComment else SyntaxColors.lightComment
     val shape = RoundedCornerShape(18.dp)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,11 +302,12 @@ private fun EditorPanel() {
             .background(panel)
             .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)), shape)
     ) {
+        // Editor Header Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(if (dark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.04f))
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+                .padding(horizontal = 14.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -238,55 +318,74 @@ private fun EditorPanel() {
                 modifier = Modifier.size(15.dp)
             )
             Text(
-                text = "SCRATCHPAD",
+                text = "GDSCRIPT WORKBENCH",
                 style = MaterialTheme.typography.labelSmall,
                 fontFamily = CodeFontFamily,
                 fontWeight = FontWeight.Bold,
-                color = quiet
+                color = quiet,
+                modifier = Modifier.weight(1f)
             )
+            IconButton(onClick = onReset, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    Icons.Outlined.Refresh,
+                    contentDescription = "Reset starter code",
+                    tint = quiet,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            EditorLine(1, "# write your attempt here", quiet)
-            EditorLine(2, "# then compare with the solution", quiet)
-            EditorLine(3, "", quiet)
-        }
-    }
-}
 
-@Composable
-private fun EditorLine(number: Int, text: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = number.toString(),
-            style = MaterialTheme.typography.bodySmall,
-            fontFamily = CodeFontFamily,
-            fontSize = 13.sp,
-            color = color.copy(alpha = 0.6f),
-            modifier = Modifier.width(24.dp)
-        )
-        if (text.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(16.dp)
-                    .background(color.copy(alpha = 0.7f))
-            )
-        } else {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodySmall,
+        // Quick-insert GDScript token bar for easy mobile typing
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            QUICK_TOKENS.forEach { token ->
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
+                    modifier = Modifier.clickable { onInsertToken(token) }
+                ) {
+                    Text(
+                        text = token.trim(),
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+
+        // Editable Monospace Code Field
+        OutlinedTextField(
+            value = code,
+            onValueChange = onCodeChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            textStyle = TextStyle(
                 fontFamily = CodeFontFamily,
                 fontSize = 13.sp,
-                color = color
+                lineHeight = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            minLines = 5,
+            maxLines = 14,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                unfocusedBorderColor = Color.Transparent
             )
-        }
+        )
     }
 }
 
-/** The revealed solution gets its own success-tinted frame so it reads as an answer. */
 @Composable
 private fun SolutionPanel(code: String) {
     val success = successColor()
@@ -297,7 +396,7 @@ private fun SolutionPanel(code: String) {
         ) {
             IconBubble(icon = Icons.Outlined.LockOpen, tint = success, size = 32.dp)
             Text(
-                text = "SOLUTION",
+                text = "REFERENCE SOLUTION",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = success
@@ -311,7 +410,7 @@ private fun SolutionPanel(code: String) {
                 .border(BorderStroke(1.dp, success.copy(alpha = 0.35f)), RoundedCornerShape(22.dp))
                 .padding(10.dp)
         ) {
-            CodeBlock(snippet = CodeSnippet(id = "sol", code = code, caption = "One possible solution"))
+            CodeBlock(snippet = CodeSnippet(id = "sol", code = code, caption = "Copy this into your Godot script and press F5 to test!"))
         }
     }
 }

@@ -13,6 +13,9 @@ data class PhaseDto(
     val programmingConcepts: List<String>,
     val isSkippableForTrack: List<String> = emptyList(),
     val verifiedAgainstGodotVersion: String,
+    val projectFiles: List<String> = emptyList(),
+    val sceneTreeBlueprint: String? = null,
+    val learningObjectives: List<String> = emptyList(),
     val lessons: List<LessonDto>,
     val debugChallenge: DebugChallengeDto? = null
 )
@@ -22,6 +25,12 @@ data class LessonDto(
     val id: String,
     val order: Int,
     val title: String,
+    val targetFile: String? = null,
+    val sceneTree: String? = null,
+    val editorSteps: List<String> = emptyList(),
+    val verificationSteps: List<String> = emptyList(),
+    val troubleshootingTips: List<String> = emptyList(),
+    val keyTakeaways: List<String> = emptyList(),
     val bodyMarkdown: String,
     val codeSnippets: List<CodeSnippetDto> = emptyList(),
     val practicePrompt: PracticePromptDto? = null,
@@ -40,6 +49,9 @@ data class CodeSnippetDto(
 data class PracticePromptDto(
     val instructions: String,
     val hint: String? = null,
+    val starterCode: String? = null,
+    val requiredTokens: List<String> = emptyList(),
+    val expectedOutput: String? = null,
     val solutionCode: String? = null
 )
 
@@ -59,7 +71,9 @@ data class DebugChallengeDto(
     val brokenCode: String,
     val bugDescription: String,
     val fixedCode: String,
-    val explanation: String
+    val explanation: String,
+    val buggyLineNumber: Int? = null,
+    val hint: String? = null
 )
 
 @Serializable

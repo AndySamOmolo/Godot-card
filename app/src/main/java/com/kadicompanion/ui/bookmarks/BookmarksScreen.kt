@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Code
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,14 +44,13 @@ import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.SectionHeader
 
-/*
- * Bookmarks reads as a shelf: one quiet section per kind (lessons, Godot
- * classes, glossary terms), each entry a soft card with a type-tinted bubble
- * and a matching pill so the kind is legible at a glance.
- */
-
 @Composable
-fun BookmarksScreen(onLessonClick: (String) -> Unit, onDocClick: (String) -> Unit, onGlossaryClick: (String) -> Unit, vm: BookmarksViewModel = hiltViewModel()) {
+fun BookmarksScreen(
+    onLessonClick: (String) -> Unit,
+    onDocClick: (String) -> Unit,
+    onGlossaryClick: (String) -> Unit,
+    vm: BookmarksViewModel = hiltViewModel()
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     Scaffold(
         containerColor = Color.Transparent,
@@ -74,7 +73,11 @@ fun BookmarksScreen(onLessonClick: (String) -> Unit, onDocClick: (String) -> Uni
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> LoadingSkeleton()
-                state.bookmarks.isEmpty() -> EmptyState(title = "No bookmarks yet", message = stringResource(R.string.empty_bookmarks), icon = Icons.Outlined.Bookmark)
+                state.bookmarks.isEmpty() -> EmptyState(
+                    title = "No bookmarks yet",
+                    message = stringResource(R.string.empty_bookmarks),
+                    icon = Icons.Outlined.Bookmark
+                )
                 else -> {
                     val grouped = state.bookmarks.groupBy { kindOf(it) }
                     LazyColumn(
@@ -94,8 +97,18 @@ fun BookmarksScreen(onLessonClick: (String) -> Unit, onDocClick: (String) -> Uni
                                     )
                                 }
                                 items(rows, key = { it.id }) { bookmark ->
+                                    val displayTitle = bookmark.glossaryTerm
+                                        ?: bookmark.lessonId?.let { state.lessonTitles[it] ?: it }
+                                        ?: state.phaseTitles[bookmark.phaseId]
+                                        ?: bookmark.phaseId
+                                    val subtitle = if (bookmark.lessonId != null) {
+                                        state.phaseTitles[bookmark.phaseId]
+                                    } else {
+                                        bookmark.note
+                                    }
                                     BookmarkRow(
-                                        bookmark = bookmark,
+                                        displayTitle = displayTitle,
+                                        subtitle = subtitle,
                                         kind = kind,
                                         accent = accentFor(kind),
                                         onClick = {
@@ -117,7 +130,6 @@ fun BookmarksScreen(onLessonClick: (String) -> Unit, onDocClick: (String) -> Uni
     }
 }
 
-/** The three shapes a bookmark can take, in the order they are listed. */
 private enum class BookmarkKind(val label: String, val groupTitle: String) {
     LESSON(label = "Lesson", groupTitle = "Lessons"),
     DOC(label = "Godot class", groupTitle = "Godot classes"),
@@ -145,7 +157,8 @@ private fun accentFor(kind: BookmarkKind): Color = when (kind) {
 
 @Composable
 private fun BookmarkRow(
-    bookmark: Bookmark,
+    displayTitle: String,
+    subtitle: String?,
     kind: BookmarkKind,
     accent: Color,
     onClick: () -> Unit,
@@ -159,18 +172,17 @@ private fun BookmarkRow(
         ) {
             IconBubble(icon = iconFor(kind), tint = accent)
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                val title = bookmark.glossaryTerm ?: bookmark.lessonId ?: bookmark.phaseId
                 Text(
-                    text = title,
+                    text = displayTitle,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                bookmark.note?.let {
+                subtitle?.let {
                     Text(
                         text = it,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis

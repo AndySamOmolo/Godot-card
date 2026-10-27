@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -58,6 +59,7 @@ import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.ProgressRing
 import com.kadicompanion.ui.common.SPADE
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.successColor
@@ -96,7 +98,13 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                     title = "No quiz yet",
                     message = "This lesson doesn't have a quiz."
                 )
-                state.finished -> QuizCelebration(onComplete = onComplete)
+                state.finished -> QuizCelebration(
+                    correctCount = state.firstTryCorrectCount,
+                    totalCount = state.questions.size,
+                    fraction = state.scoreFraction,
+                    onRetake = vm::restartQuiz,
+                    onComplete = onComplete
+                )
                 else -> {
                     AnimatedContent(
                         targetState = state.currentIndex,
@@ -123,12 +131,18 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                                 trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
                                 strokeCap = StrokeCap.Round
                             )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Pill(text = q.concept, color = MaterialTheme.colorScheme.secondary)
+                            }
                             Text(
                                 text = q.prompt,
                                 style = MaterialTheme.typography.titleLarge,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(2.dp))
                             q.choices.forEachIndexed { idx, choice ->
                                 AnswerOption(
                                     index = idx,
@@ -184,12 +198,12 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                                             onClick = vm::retry,
                                             modifier = Modifier.weight(1f),
                                             shape = MaterialTheme.shapes.medium
-                                        ) { Text("Retry") }
+                                        ) { Text("Try Again") }
                                         Button(
                                             onClick = vm::next,
                                             modifier = Modifier.weight(1f),
                                             shape = MaterialTheme.shapes.medium
-                                        ) { Text("Next") }
+                                        ) { Text(if (state.isLast) "Finish" else "Next") }
                                     } else {
                                         Button(
                                             onClick = vm::next,
@@ -197,7 +211,7 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                                             shape = MaterialTheme.shapes.medium
                                         ) {
                                             Text(
-                                                if (state.isLast) "Finish" else "Next question",
+                                                if (state.isLast) "See Results" else "Next question",
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
@@ -213,9 +227,15 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
     }
 }
 
-/** Celebratory completion screen with large trophy and suit glyph accents. */
+/** Celebratory completion screen with score ring, trophy, and retake option. */
 @Composable
-private fun QuizCelebration(onComplete: () -> Unit) {
+private fun QuizCelebration(
+    correctCount: Int,
+    totalCount: Int,
+    fraction: Float,
+    onRetake: () -> Unit,
+    onComplete: () -> Unit
+) {
     val success = successColor()
     Column(
         modifier = Modifier
@@ -224,53 +244,57 @@ private fun QuizCelebration(onComplete: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(110.dp)
-                .clip(CircleShape)
-                .background(success.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Outlined.EmojiEvents,
-                contentDescription = null,
-                tint = success,
-                modifier = Modifier.size(56.dp)
-            )
-        }
-        Spacer(Modifier.height(22.dp))
+        ProgressRing(fraction = fraction, size = 116.dp, strokeWidth = 10.dp, label = "score")
+        Spacer(Modifier.height(20.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(SPADE, HEART, CLUB, DIAMOND).forEach { glyph ->
                 Text(
                     text = glyph,
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 )
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
         Text(
-            text = "All done!",
+            text = if (correctCount == totalCount) "Perfect Score!" else "Knowledge Check Complete!",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "You finished this lesson's knowledge check.\nGreat job!",
+            text = "You answered $correctCount of $totalCount questions right on the first try.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(28.dp))
-        Button(
-            onClick = onComplete,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Done", fontWeight = FontWeight.Bold)
+            if (correctCount < totalCount) {
+                OutlinedButton(
+                    onClick = onRetake,
+                    modifier = Modifier.weight(1f).height(52.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Retake", fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Button(
+                onClick = onComplete,
+                modifier = Modifier.weight(1.2f).height(52.dp),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Back to Lesson", fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -311,7 +335,6 @@ private fun AnswerOption(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Letter badge (A, B, C, D)
             val letter = ('A' + index).toString()
             val badgeColor = when {
                 showResult && isCorrect -> success
