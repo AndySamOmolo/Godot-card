@@ -58,6 +58,9 @@ import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.ProgressRing
+import com.kadicompanion.ui.common.RichInlineText
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.successColor
@@ -68,6 +71,8 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
     val state by vm.uiState.collectAsStateWithLifecycle()
     val reduceMotion = LocalReduceMotion.current
     val duration = if (reduceMotion) 0 else 220
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -82,7 +87,7 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                     if (!state.finished && state.questions.isNotEmpty()) {
                         Pill(
                             text = "${state.currentIndex + 1}/${state.questions.size}",
-                            modifier = Modifier.padding(end = 12.dp)
+                            modifier = Modifier.padding(end = 4.dp)
                         )
                     }
                 }
@@ -116,8 +121,8 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                             modifier = Modifier
                                 .fillMaxSize()
                                 .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                                .padding(horizontal = hPad, vertical = 14.dp),
+                            verticalArrangement = Arrangement.spacedBy(vGap)
                         ) {
                             LinearProgressIndicator(
                                 progress = { (state.currentIndex + 1).toFloat() / state.questions.size },
@@ -130,10 +135,9 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                                 strokeCap = StrokeCap.Round
                             )
                             Pill(text = q.concept, color = MaterialTheme.colorScheme.secondary)
-                            Text(
+                            RichInlineText(
                                 text = q.prompt,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             q.choices.forEachIndexed { idx, choice ->
@@ -176,7 +180,7 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                                             )
                                         }
                                     }
-                                    Text(
+                                    RichInlineText(
                                         text = q.explanation,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -190,18 +194,18 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                                         OutlinedButton(
                                             onClick = vm::retry,
                                             modifier = Modifier.weight(1f).height(46.dp),
-                                            shape = RoundedCornerShape(10.dp)
+                                            shape = MaterialTheme.shapes.small
                                         ) { Text("Try Again", fontWeight = FontWeight.SemiBold) }
                                         Button(
                                             onClick = vm::next,
                                             modifier = Modifier.weight(1f).height(46.dp),
-                                            shape = RoundedCornerShape(10.dp)
+                                            shape = MaterialTheme.shapes.small
                                         ) { Text(if (state.isLast) "Finish" else "Next", fontWeight = FontWeight.Bold) }
                                     } else {
                                         Button(
                                             onClick = vm::next,
                                             modifier = Modifier.fillMaxWidth().height(46.dp),
-                                            shape = RoundedCornerShape(10.dp)
+                                            shape = MaterialTheme.shapes.small
                                         ) {
                                             Text(
                                                 if (state.isLast) "See Results" else "Next Question",
@@ -268,7 +272,7 @@ private fun QuizCelebration(
                         OutlinedButton(
                             onClick = onRetake,
                             modifier = Modifier.weight(1f).height(48.dp),
-                            shape = RoundedCornerShape(10.dp)
+                            shape = MaterialTheme.shapes.small
                         ) {
                             Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
@@ -278,7 +282,7 @@ private fun QuizCelebration(
                     Button(
                         onClick = onComplete,
                         modifier = Modifier.weight(1.2f).height(48.dp),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
@@ -339,9 +343,9 @@ private fun AnswerOption(
             Box(
                 modifier = Modifier
                     .size(30.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(badgeColor.copy(alpha = 0.15f))
-                    .border(1.dp, badgeColor.copy(alpha = 0.35f), RoundedCornerShape(8.dp)),
+                    .border(1.dp, badgeColor.copy(alpha = 0.35f), MaterialTheme.shapes.extraSmall),
                 contentAlignment = Alignment.Center
             ) {
                 if (showResult && isCorrect) {
@@ -357,7 +361,7 @@ private fun AnswerOption(
                     )
                 }
             }
-            Text(
+            RichInlineText(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,

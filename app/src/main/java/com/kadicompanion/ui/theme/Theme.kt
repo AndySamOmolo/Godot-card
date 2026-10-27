@@ -3,6 +3,7 @@ package com.kadicompanion.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
@@ -16,6 +17,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.kadicompanion.data.local.datastore.AccentPreset
+import com.kadicompanion.data.local.datastore.ThemePref
+import com.kadicompanion.data.local.datastore.UiPreferences
 
 private val DarkColors = darkColorScheme(
     primary = DarkPrimary,
@@ -91,8 +95,9 @@ private val LightColors = lightColorScheme(
 
 val LocalReduceMotion = staticCompositionLocalOf { false }
 val LocalDyslexiaFont = staticCompositionLocalOf { false }
+val LocalUiPreferences = staticCompositionLocalOf { UiPreferences() }
+val LocalOpenQuickCustomizer = staticCompositionLocalOf<(() -> Unit)?> { null }
 
-/** Crisp architectural studio corners across all components. */
 val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(10.dp),
@@ -100,6 +105,157 @@ val AppShapes = Shapes(
     large = RoundedCornerShape(18.dp),
     extraLarge = RoundedCornerShape(22.dp)
 )
+
+fun buildCustomizableShapes(cornerRadiusDp: Int): Shapes {
+    val base = cornerRadiusDp.coerceIn(0, 32)
+    val xs = (base * 0.55f).toInt().dp
+    val sm = (base * 0.75f).toInt().dp
+    val md = base.dp
+    val lg = (base * 1.25f).toInt().coerceAtMost(32).dp
+    val xl = (base * 1.5f).toInt().coerceAtMost(36).dp
+    return Shapes(
+        extraSmall = RoundedCornerShape(xs),
+        small = RoundedCornerShape(sm),
+        medium = RoundedCornerShape(md),
+        large = RoundedCornerShape(lg),
+        extraLarge = RoundedCornerShape(xl)
+    )
+}
+
+private data class AccentPaletteTriplet(
+    val darkPrimary: Color,
+    val darkSecondary: Color,
+    val darkTertiary: Color,
+    val lightPrimary: Color,
+    val lightSecondary: Color,
+    val lightTertiary: Color,
+    val heroStart: Color,
+    val heroMid: Color,
+    val heroEnd: Color
+)
+
+private fun paletteFor(preset: AccentPreset): AccentPaletteTriplet = when (preset) {
+    AccentPreset.GODOT_SAPPHIRE -> AccentPaletteTriplet(
+        darkPrimary = Color(0xFF38BDF8),
+        darkSecondary = Color(0xFF10B981),
+        darkTertiary = Color(0xFFF59E0B),
+        lightPrimary = Color(0xFF2563EB),
+        lightSecondary = Color(0xFF059669),
+        lightTertiary = Color(0xFFD97706),
+        heroStart = Color(0xFF0F172A),
+        heroMid = Color(0xFF1E3A8A),
+        heroEnd = Color(0xFF0284C7)
+    )
+    AccentPreset.NAIROBI_GOLD -> AccentPaletteTriplet(
+        darkPrimary = Color(0xFFFBBF24),
+        darkSecondary = Color(0xFF34D399),
+        darkTertiary = Color(0xFFFB7185),
+        lightPrimary = Color(0xFFB45309),
+        lightSecondary = Color(0xFF047857),
+        lightTertiary = Color(0xFFE11D48),
+        heroStart = Color(0xFF1C1917),
+        heroMid = Color(0xFF78350F),
+        heroEnd = Color(0xFFB45309)
+    )
+    AccentPreset.EMERALD_FELT -> AccentPaletteTriplet(
+        darkPrimary = Color(0xFF34D399),
+        darkSecondary = Color(0xFFFBBF24),
+        darkTertiary = Color(0xFF38BDF8),
+        lightPrimary = Color(0xFF059669),
+        lightSecondary = Color(0xFFD97706),
+        lightTertiary = Color(0xFF0284C7),
+        heroStart = Color(0xFF042F2E),
+        heroMid = Color(0xFF065F46),
+        heroEnd = Color(0xFF059669)
+    )
+    AccentPreset.CYBER_VIOLET -> AccentPaletteTriplet(
+        darkPrimary = Color(0xFFC084FC),
+        darkSecondary = Color(0xFF22D3EE),
+        darkTertiary = Color(0xFFF472B6),
+        lightPrimary = Color(0xFF7C3AED),
+        lightSecondary = Color(0xFF0891B2),
+        lightTertiary = Color(0xFFDB2777),
+        heroStart = Color(0xFF1E1B4B),
+        heroMid = Color(0xFF4C1D95),
+        heroEnd = Color(0xFF7C3AED)
+    )
+    AccentPreset.CRIMSON_ACE -> AccentPaletteTriplet(
+        darkPrimary = Color(0xFFFB7185),
+        darkSecondary = Color(0xFFFBBF24),
+        darkTertiary = Color(0xFF818CF8),
+        lightPrimary = Color(0xFFE11D48),
+        lightSecondary = Color(0xFFD97706),
+        lightTertiary = Color(0xFF4F46E5),
+        heroStart = Color(0xFF2A0A18),
+        heroMid = Color(0xFF881337),
+        heroEnd = Color(0xFFE11D48)
+    )
+    AccentPreset.SUNSET_ORANGE -> AccentPaletteTriplet(
+        darkPrimary = Color(0xFFFB923C),
+        darkSecondary = Color(0xFF2DD4BF),
+        darkTertiary = Color(0xFFFACC15),
+        lightPrimary = Color(0xFFEA580C),
+        lightSecondary = Color(0xFF0D9488),
+        lightTertiary = Color(0xFFCA8A04),
+        heroStart = Color(0xFF271206),
+        heroMid = Color(0xFF7C2D12),
+        heroEnd = Color(0xFFEA580C)
+    )
+    AccentPreset.MONOCHROME_SLATE -> AccentPaletteTriplet(
+        darkPrimary = Color(0xFFE2E8F0),
+        darkSecondary = Color(0xFF94A3B8),
+        darkTertiary = Color(0xFFCBD5E1),
+        lightPrimary = Color(0xFF0F172A),
+        lightSecondary = Color(0xFF334155),
+        lightTertiary = Color(0xFF475569),
+        heroStart = Color(0xFF090D16),
+        heroMid = Color(0xFF1E293B),
+        heroEnd = Color(0xFF334155)
+    )
+}
+
+private fun applyPresetAndMode(
+    base: ColorScheme,
+    preset: AccentPreset,
+    darkTheme: Boolean,
+    amoled: Boolean
+): ColorScheme {
+    val p = paletteFor(preset)
+    val customized = if (darkTheme) {
+        base.copy(
+            primary = p.darkPrimary,
+            secondary = p.darkSecondary,
+            tertiary = p.darkTertiary,
+            primaryContainer = p.darkPrimary.copy(alpha = 0.22f),
+            secondaryContainer = p.darkSecondary.copy(alpha = 0.22f),
+            tertiaryContainer = p.darkTertiary.copy(alpha = 0.22f)
+        )
+    } else {
+        base.copy(
+            primary = p.lightPrimary,
+            secondary = p.lightSecondary,
+            tertiary = p.lightTertiary,
+            primaryContainer = p.lightPrimary.copy(alpha = 0.15f),
+            secondaryContainer = p.lightSecondary.copy(alpha = 0.15f),
+            tertiaryContainer = p.lightTertiary.copy(alpha = 0.15f)
+        )
+    }
+
+    return if (darkTheme && amoled) {
+        customized.copy(
+            background = Color(0xFF000000),
+            surface = Color(0xFF05070B),
+            surfaceContainerLowest = Color(0xFF000000),
+            surfaceContainerLow = Color(0xFF06090F),
+            surfaceContainer = Color(0xFF0A0F18),
+            surfaceContainerHigh = Color(0xFF111826),
+            surfaceContainerHighest = Color(0xFF192234),
+            outlineVariant = Color(0xFF1E293B)
+        )
+    } else {
+        customized
+    }
+}
 
 @Composable
 fun successColor(): Color = if (isDarkScheme()) SuccessGreen else SuccessGreenLight
@@ -117,18 +273,13 @@ fun isDarkScheme(): Boolean {
 @Composable fun heroTextSecondary(): Color = HeroTextSecondary
 @Composable fun heroTextTertiary(): Color = HeroTextTertiary
 
-/**
- * Deep Navy-to-Sapphire Studio Hero gradient. Always provides crisp contrast
- * for white hero text in both light and dark modes without loud neon glare.
- */
 @Composable
-fun brandGradient(): Brush = Brush.linearGradient(
-    colors = listOf(
-        StudioHeroStart,
-        StudioHeroMid,
-        StudioHeroEnd
+fun brandGradient(): Brush {
+    val p = paletteFor(LocalUiPreferences.current.accentPreset)
+    return Brush.linearGradient(
+        colors = listOf(p.heroStart, p.heroMid, p.heroEnd)
     )
-)
+}
 
 @Composable
 fun coolGradient(): Brush = Brush.linearGradient(
@@ -147,9 +298,6 @@ fun headerWashGradient(): Brush = Brush.verticalGradient(
     )
 )
 
-/**
- * Clean, solid studio background with zero muddy color washes.
- */
 @Composable
 fun appBackgroundBrush(): Brush {
     val bg = MaterialTheme.colorScheme.background
@@ -186,20 +334,52 @@ fun KadiTheme(
     dynamicColor: Boolean = false,
     reduceMotion: Boolean = false,
     dyslexiaFont: Boolean = false,
+    uiPrefs: UiPreferences = UiPreferences(
+        theme = if (darkTheme) ThemePref.DARK else ThemePref.LIGHT,
+        dynamicColor = dynamicColor,
+        reduceMotion = reduceMotion,
+        dyslexiaFont = dyslexiaFont
+    ),
+    onOpenQuickCustomizer: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    val colors = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val ctx = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
-        }
-        darkTheme -> DarkColors
-        else -> LightColors
+    val systemDark = isSystemInDarkTheme()
+    val effectiveDark = when (uiPrefs.theme) {
+        ThemePref.DARK, ThemePref.AMOLED -> true
+        ThemePref.LIGHT -> false
+        ThemePref.SYSTEM -> systemDark
     }
+    val isAmoled = uiPrefs.theme == ThemePref.AMOLED
+
+    val baseColors = when {
+        uiPrefs.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val ctx = LocalContext.current
+            val dyn = if (effectiveDark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
+            if (isAmoled) applyPresetAndMode(dyn, uiPrefs.accentPreset, true, true) else dyn
+        }
+        effectiveDark -> applyPresetAndMode(DarkColors, uiPrefs.accentPreset, darkTheme = true, amoled = isAmoled)
+        else -> applyPresetAndMode(LightColors, uiPrefs.accentPreset, darkTheme = false, amoled = false)
+    }
+
+    val typography = buildCustomizableTypography(
+        fontScale = uiPrefs.fontScale,
+        fontFamilyPreset = uiPrefs.fontFamilyPreset,
+        lineSpacingPreset = uiPrefs.lineSpacingPreset,
+        dyslexiaFont = uiPrefs.dyslexiaFont
+    )
+    val shapes = buildCustomizableShapes(uiPrefs.cornerRadiusDp)
+
     CompositionLocalProvider(
-        LocalReduceMotion provides reduceMotion,
-        LocalDyslexiaFont provides dyslexiaFont
+        LocalReduceMotion provides uiPrefs.reduceMotion,
+        LocalDyslexiaFont provides uiPrefs.dyslexiaFont,
+        LocalUiPreferences provides uiPrefs,
+        LocalOpenQuickCustomizer provides onOpenQuickCustomizer
     ) {
-        MaterialTheme(colorScheme = colors, typography = AppTypography, shapes = AppShapes, content = content)
+        MaterialTheme(
+            colorScheme = baseColors,
+            typography = typography,
+            shapes = shapes,
+            content = content
+        )
     }
 }

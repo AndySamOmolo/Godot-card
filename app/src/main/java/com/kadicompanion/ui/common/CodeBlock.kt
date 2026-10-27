@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.WrapText
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material3.HorizontalDivider
@@ -45,18 +45,20 @@ import androidx.compose.ui.unit.sp
 import com.kadicompanion.R
 import com.kadicompanion.domain.model.CodeSnippet
 import com.kadicompanion.ui.theme.CodeFontFamily
+import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * Studio IDE Code Block with macOS/Godot-style window header dots, language + line count badge,
- * one-tap copy button with animated "Copied!" confirmation, and a line-numbered gutter.
+ * Studio IDE Code Block with customizable window header dots, word-wrap toggle for phones,
+ * adjustable code font scale, optional line-number gutter, and one-tap copy confirmation.
  */
 @Composable
 fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val uiPrefs = LocalUiPreferences.current
     val isDark = isDarkScheme()
     val panelColor = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
     val headerBg = if (isDark) Color(0xFF131B2B) else Color(0xFFE2E8F0)
@@ -64,6 +66,11 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
     val borderColor = if (isDark) Color(0xFF24324B) else Color(0xFFCBD5E1)
     val lines = remember(snippet.code) { snippet.code.lines() }
     var copied by remember { mutableStateOf(false) }
+    var wrapLines by remember(uiPrefs.codeWordWrap) { mutableStateOf(uiPrefs.codeWordWrap) }
+
+    val codeFontSize = (13f * uiPrefs.codeFontScale).sp
+    val codeLineHeight = (20f * uiPrefs.codeFontScale).sp
+    val gutterFontSize = (12f * uiPrefs.codeFontScale).sp
 
     LaunchedEffect(copied) {
         if (copied) {
@@ -74,7 +81,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         color = panelColor,
         border = BorderStroke(1.dp, borderColor)
     ) {
@@ -92,10 +99,12 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFEF4444).copy(alpha = 0.8f)))
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFF59E0B).copy(alpha = 0.8f)))
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF10B981).copy(alpha = 0.8f)))
+                    if (uiPrefs.showCodeWindowDots) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFEF4444).copy(alpha = 0.8f)))
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFF59E0B).copy(alpha = 0.8f)))
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF10B981).copy(alpha = 0.8f)))
+                        }
                     }
                     Text(
                         text = "${snippet.language.uppercase()} · ${lines.size} ${if (lines.size == 1) "LINE" else "LINES"}",
@@ -106,95 +115,168 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                     )
                 }
 
-                val copyTint = if (copied) successColor() else MaterialTheme.colorScheme.primary
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = copyTint.copy(alpha = 0.14f),
-                    border = BorderStroke(1.dp, copyTint.copy(alpha = 0.30f)),
-                    modifier = Modifier.clickable {
-                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        cm.setPrimaryClip(ClipData.newPlainText("GDScript", snippet.code))
-                        copied = true
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    // Mobile Word-Wrap toggle chip
+                    val wrapTint = if (wrapLines) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = if (wrapLines) wrapTint.copy(alpha = 0.14f) else Color.Transparent,
+                        border = BorderStroke(1.dp, wrapTint.copy(alpha = 0.30f)),
+                        modifier = Modifier.clickable { wrapLines = !wrapLines }
                     ) {
-                        Icon(
-                            imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
-                            contentDescription = stringResource(R.string.action_copy_code),
-                            tint = copyTint,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = if (copied) "Copied" else "Copy",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = copyTint
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.WrapText,
+                                contentDescription = "Toggle word wrap",
+                                tint = wrapTint,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = if (wrapLines) "Wrap" else "Scroll",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = wrapTint
+                            )
+                        }
+                    }
+
+                    // One-tap Copy button
+                    val copyTint = if (copied) successColor() else MaterialTheme.colorScheme.primary
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = copyTint.copy(alpha = 0.14f),
+                        border = BorderStroke(1.dp, copyTint.copy(alpha = 0.30f)),
+                        modifier = Modifier.clickable {
+                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            cm.setPrimaryClip(ClipData.newPlainText("GDScript", snippet.code))
+                            copied = true
+                        }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
+                                contentDescription = stringResource(R.string.action_copy_code),
+                                tint = copyTint,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = if (copied) "Copied" else "Copy",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = copyTint
+                            )
+                        }
                     }
                 }
             }
 
             HorizontalDivider(thickness = 1.dp, color = borderColor.copy(alpha = 0.6f))
 
-            // Code body with line-number gutter
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
-            ) {
+            // Code body
+            if (wrapLines) {
                 Column(
-                    modifier = Modifier.padding(end = 10.dp),
-                    horizontalAlignment = Alignment.End
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    lines.forEachIndexed { idx, _ ->
-                        Text(
-                            text = "${idx + 1}",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = CodeFontFamily,
-                                fontSize = 12.5.sp,
-                                lineHeight = 20.sp
-                            ),
-                            color = gutterColor,
-                            textAlign = TextAlign.End,
-                            modifier = Modifier.width(24.dp)
-                        )
+                    lines.forEachIndexed { idx, lineText ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            if (uiPrefs.showCodeLineNumbers) {
+                                Text(
+                                    text = "${idx + 1}",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontFamily = CodeFontFamily,
+                                        fontSize = gutterFontSize,
+                                        lineHeight = codeLineHeight
+                                    ),
+                                    color = gutterColor,
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier.width(26.dp).padding(end = 8.dp)
+                                )
+                            }
+                            Text(
+                                text = GDScriptHighlighter.highlight(lineText, isDark),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontFamily = CodeFontFamily,
+                                    fontSize = codeFontSize,
+                                    lineHeight = codeLineHeight
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
-                Box(
+            } else {
+                Row(
                     modifier = Modifier
-                        .width(1.dp)
-                        .padding(end = 10.dp)
-                )
-                Column {
-                    lines.forEach { lineText ->
-                        Text(
-                            text = GDScriptHighlighter.highlight(lineText, isDark),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = CodeFontFamily,
-                                fontSize = 13.sp,
-                                lineHeight = 20.sp
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    if (uiPrefs.showCodeLineNumbers) {
+                        Column(
+                            modifier = Modifier.padding(end = 10.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            lines.forEachIndexed { idx, _ ->
+                                Text(
+                                    text = "${idx + 1}",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontFamily = CodeFontFamily,
+                                        fontSize = gutterFontSize,
+                                        lineHeight = codeLineHeight
+                                    ),
+                                    color = gutterColor,
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier.width(24.dp)
+                                )
+                            }
+                        }
+                    }
+                    Column {
+                        lines.forEach { lineText ->
+                            Text(
+                                text = GDScriptHighlighter.highlight(lineText, isDark),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontFamily = CodeFontFamily,
+                                    fontSize = codeFontSize,
+                                    lineHeight = codeLineHeight
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
 
             snippet.caption?.let {
                 HorizontalDivider(thickness = 1.dp, color = borderColor.copy(alpha = 0.5f))
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(headerBg.copy(alpha = 0.5f))
                         .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
+                ) {
+                    RichInlineText(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

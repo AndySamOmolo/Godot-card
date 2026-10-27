@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,11 +39,13 @@ class DocsRepositoryImpl @Inject constructor(
         }
 
     override suspend fun get(className: String): GodotDocEntry? = withContext(Dispatchers.IO) {
+        reindexIfNeeded()
         val row = godotDocDao.get(className) ?: return@withContext null
         runCatching { json.decodeFromString<GodotDocEntry>(row.json) }.getOrNull()
     }
 
     override suspend fun search(query: String): List<String> = withContext(Dispatchers.IO) {
+        reindexIfNeeded()
         if (query.isBlank()) return@withContext emptyList()
         val sanitized = query.trim().replace("\"", "").replace("'", "")
         if (sanitized.isEmpty()) return@withContext emptyList()

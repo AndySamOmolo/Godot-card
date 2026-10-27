@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -40,7 +41,10 @@ import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.MarkdownText
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 
 @Composable
 fun DocDetailScreen(
@@ -61,7 +65,7 @@ fun DocDetailScreen(
                     state.entry?.let {
                         Pill(
                             text = "Godot ${it.lastVerifiedAgainstGodotVersion}",
-                            modifier = Modifier.padding(end = 12.dp)
+                            modifier = Modifier.padding(end = 4.dp)
                         )
                     }
                 }
@@ -86,14 +90,16 @@ fun DocDetailScreen(
 
 @Composable
 private fun DocDetailContent(entry: GodotDocEntry, onGlossaryTermClick: (String) -> Unit) {
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(hPad),
+        verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
-        KadiCard {
+        KadiCard(accent = MaterialTheme.colorScheme.primary) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -124,35 +130,39 @@ private fun DocDetailContent(entry: GodotDocEntry, onGlossaryTermClick: (String)
                     )
                 }
             }
-            Text(
+            RichInlineText(
                 text = entry.shortDescription,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                onTermClick = onGlossaryTermClick
             )
         }
         if (entry.properties.isNotEmpty()) {
             CollapsibleSection(
                 title = "Properties",
                 count = entry.properties.size,
-                members = entry.properties
+                members = entry.properties,
+                onTermClick = onGlossaryTermClick
             )
         }
         if (entry.methods.isNotEmpty()) {
             CollapsibleSection(
                 title = "Methods",
                 count = entry.methods.size,
-                members = entry.methods
+                members = entry.methods,
+                onTermClick = onGlossaryTermClick
             )
         }
         if (entry.signals.isNotEmpty()) {
             CollapsibleSection(
                 title = "Signals",
                 count = entry.signals.size,
-                members = entry.signals
+                members = entry.signals,
+                onTermClick = onGlossaryTermClick
             )
         }
         if (entry.bodyMarkdown.isNotBlank()) {
-            SectionHeader(title = "Description", eyebrow = "details")
+            SectionHeader(title = "Description", eyebrow = "DETAILS")
             MarkdownText(
                 markdown = entry.bodyMarkdown,
                 onTermClick = onGlossaryTermClick
@@ -162,7 +172,12 @@ private fun DocDetailContent(entry: GodotDocEntry, onGlossaryTermClick: (String)
 }
 
 @Composable
-private fun CollapsibleSection(title: String, count: Int, members: List<DocMember>) {
+private fun CollapsibleSection(
+    title: String,
+    count: Int,
+    members: List<DocMember>,
+    onTermClick: (String) -> Unit
+) {
     var expanded by remember { mutableStateOf(true) }
     KadiCard(onClick = { expanded = !expanded }) {
         Row(
@@ -191,21 +206,21 @@ private fun CollapsibleSection(title: String, count: Int, members: List<DocMembe
         AnimatedVisibility(visible = expanded) {
             Column(
                 modifier = Modifier.padding(top = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                members.forEach { m ->
-                    Column {
+                members.forEachIndexed { idx, m ->
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                m.name,
+                                text = m.name,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
                             m.type?.let {
                                 Text(
-                                    ": $it",
+                                    text = ": $it",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontFamily = FontFamily.Monospace,
                                     color = MaterialTheme.colorScheme.secondary
@@ -213,12 +228,16 @@ private fun CollapsibleSection(title: String, count: Int, members: List<DocMembe
                             }
                         }
                         if (m.description.isNotBlank()) {
-                            Text(
-                                m.description,
+                            RichInlineText(
+                                text = m.description,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                onTermClick = onTermClick
                             )
                         }
+                    }
+                    if (idx < members.lastIndex) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                     }
                 }
             }

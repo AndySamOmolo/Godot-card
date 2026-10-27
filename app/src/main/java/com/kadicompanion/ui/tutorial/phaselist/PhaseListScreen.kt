@@ -69,16 +69,14 @@ import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
+import com.kadicompanion.ui.common.cleanPlainText
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.successColor
 
 private val PHASE_FILTERS = listOf("All Phases", "In Progress", "To Do", "Completed")
 
-/**
- * Connected Vertical Curriculum Timeline:
- * Shows overall course progress, live search + filter chips, a Project Blueprint shortcut,
- * and a vertical connected roadmap of Phases 00 through 11.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhaseListScreen(
@@ -90,6 +88,7 @@ fun PhaseListScreen(
     val state by vm.uiState.collectAsStateWithLifecycle()
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
+    val hPad = studioScreenPadding()
 
     val totalLessons = state.phases.sumOf { it.totalLessons }
     val completedLessons = state.phases.sumOf { it.completedLessons }
@@ -150,14 +149,13 @@ fun PhaseListScreen(
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
+                        start = hPad,
+                        end = hPad,
                         top = 12.dp,
                         bottom = 28.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
-                    // Course Progress + Blueprint Banner
                     item(key = "course_summary_header") {
                         Column(
                             modifier = Modifier.padding(bottom = 14.dp),
@@ -200,7 +198,7 @@ fun PhaseListScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(MaterialTheme.shapes.small)
                                             .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f))
                                             .clickable(onClick = onOpenBlueprint)
                                             .padding(horizontal = 10.dp, vertical = 8.dp),
@@ -214,7 +212,7 @@ fun PhaseListScreen(
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Text(
-                                            text = "Open Godot 4.3 `res://` Blueprint & Kadi Rule Simulator",
+                                            text = "Open Godot 4.3 res:// Blueprint & Kadi Rule Simulator",
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.secondary,
@@ -230,7 +228,6 @@ fun PhaseListScreen(
                                 }
                             }
 
-                            // Search Bar
                             Surface(
                                 shape = MaterialTheme.shapes.medium,
                                 color = MaterialTheme.colorScheme.surfaceContainer,
@@ -272,7 +269,6 @@ fun PhaseListScreen(
                                 )
                             }
 
-                            // Status Filter Tabs
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -282,7 +278,7 @@ fun PhaseListScreen(
                                 PHASE_FILTERS.forEachIndexed { idx, label ->
                                     val selected = selectedFilter == idx
                                     Surface(
-                                        shape = RoundedCornerShape(8.dp),
+                                        shape = MaterialTheme.shapes.small,
                                         color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                                         else MaterialTheme.colorScheme.surfaceContainer,
                                         border = BorderStroke(
@@ -351,7 +347,6 @@ private fun TimelinePhaseRow(
             .alpha(if (item.isLocked) 0.6f else 1f),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Left Timeline Rail
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.width(34.dp).fillMaxHeight()
@@ -359,7 +354,7 @@ private fun TimelinePhaseRow(
             Box(
                 modifier = Modifier
                     .size(32.dp)
-                    .clip(RoundedCornerShape(9.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(
                         when {
                             isDone -> successColor()
@@ -370,7 +365,7 @@ private fun TimelinePhaseRow(
                     .border(
                         width = 1.dp,
                         color = nodeColor,
-                        shape = RoundedCornerShape(9.dp)
+                        shape = MaterialTheme.shapes.small
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -409,7 +404,6 @@ private fun TimelinePhaseRow(
             }
         }
 
-        // Right Studio Module Card
         Box(modifier = Modifier.weight(1f).padding(bottom = 12.dp)) {
             val targetFilesCount = item.phase.lessons.mapNotNull { lesson -> lesson.targetFile }.distinct().size
             KadiCard(
@@ -449,13 +443,13 @@ private fun TimelinePhaseRow(
                 }
 
                 Text(
-                    text = item.phase.title,
+                    text = cleanPlainText(item.phase.title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Text(
+                RichInlineText(
                     text = item.phase.summary,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -493,6 +493,662 @@
         "OptionButton",
         "Button"
       ]
+    },
+    {
+      "term": "AnimationPlayer",
+      "shortDefinition": "A node that stores and plays named animations authored in the animation editor.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AnimationPlayer"
+      ]
+    },
+    {
+      "term": "Area2D",
+      "shortDefinition": "A 2D region that detects overlapping bodies and areas and can override physics like gravity.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Area2D"
+      ]
+    },
+    {
+      "term": "Array",
+      "shortDefinition": "An ordered, dynamic, mutable list of values accessed by index.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Array"
+      ]
+    },
+    {
+      "term": "AudioListener2D",
+      "shortDefinition": "A 2D node that overrides the location sounds are heard from in 2D space.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer2D"
+      ]
+    },
+    {
+      "term": "AudioListener3D",
+      "shortDefinition": "A 3D node that overrides the location sounds are heard from in 3D space.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer3D"
+      ]
+    },
+    {
+      "term": "AudioStream",
+      "shortDefinition": "A base resource for audio data (such as `.wav` or `.ogg` sound files) played by `AudioStreamPlayer`.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer",
+        "Resource"
+      ]
+    },
+    {
+      "term": "AudioStreamPlayer",
+      "shortDefinition": "A node that plays an AudioStream at a non-positional, screen-wide volume.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer"
+      ]
+    },
+    {
+      "term": "AudioStreamPlayer2D",
+      "shortDefinition": "A 2D-positioned audio player whose volume attenuates with distance from the Camera2D.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer2D"
+      ]
+    },
+    {
+      "term": "AudioStreamPlayer3D",
+      "shortDefinition": "A 3D-positioned audio player with distance attenuation, panning, and doppler.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer3D"
+      ]
+    },
+    {
+      "term": "BaseButton",
+      "shortDefinition": "The abstract base class for all GUI buttons in Godot (`Button`, `TextureButton`, `CheckButton`, `OptionButton`).",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Button",
+        "TextureButton",
+        "CheckButton"
+      ]
+    },
+    {
+      "term": "CPUParticles2D",
+      "shortDefinition": "A 2D particle emitter simulated on the CPU, configurable entirely from properties without a shader.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CPUParticles2D"
+      ]
+    },
+    {
+      "term": "Callable",
+      "shortDefinition": "A first-class reference to a method or function, callable later with its arguments.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Callable"
+      ]
+    },
+    {
+      "term": "Camera2D",
+      "shortDefinition": "A 2D camera that scrolls, zooms, and limits the visible region of the scene.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Camera2D"
+      ]
+    },
+    {
+      "term": "Camera3D",
+      "shortDefinition": "A 3D camera that defines the perspective, field of view, and clip planes of a viewport.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Camera3D"
+      ]
+    },
+    {
+      "term": "CanvasItem",
+      "shortDefinition": "Base class for anything 2D that can be drawn to the screen, such as Node2D and Control.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CanvasItem"
+      ]
+    },
+    {
+      "term": "CharacterBody2D",
+      "shortDefinition": "A physics body specialized for player- or code-controlled movement with built-in collision sliding.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CharacterBody2D"
+      ]
+    },
+    {
+      "term": "CheckButton",
+      "shortDefinition": "A toggle button that displays a checkmark and a text label, like a checkbox.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CheckButton"
+      ]
+    },
+    {
+      "term": "CollisionShape2D",
+      "shortDefinition": "A node that gives a collision object its 2D shape via a Shape2D resource.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CollisionShape2D"
+      ]
+    },
+    {
+      "term": "Color",
+      "shortDefinition": "A built-in RGBA color with floating-point channels in the 0–1 range.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Color"
+      ]
+    },
+    {
+      "term": "ColorRect",
+      "shortDefinition": "A control that fills its rectangle with a single flat color.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "ColorRect"
+      ]
+    },
+    {
+      "term": "Container",
+      "shortDefinition": "A base control that automatically positions and resizes its child controls.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Container"
+      ]
+    },
+    {
+      "term": "Dictionary",
+      "shortDefinition": "An associative container mapping hashable keys to values, like a hash map.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Dictionary"
+      ]
+    },
+    {
+      "term": "Engine",
+      "shortDefinition": "A singleton exposing engine version, frames, time scale, and run-mode information.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Engine"
+      ]
+    },
+    {
+      "term": "FileAccess",
+      "shortDefinition": "A static class for reading from and writing to files on disk.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "FileAccess"
+      ]
+    },
+    {
+      "term": "GPUParticles2D",
+      "shortDefinition": "A 2D particle emitter simulated on the GPU for large, cheap bursts and continuous effects.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "GPUParticles2D"
+      ]
+    },
+    {
+      "term": "GridContainer",
+      "shortDefinition": "A container that arranges its children into a grid with a fixed number of columns.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "GridContainer"
+      ]
+    },
+    {
+      "term": "Image",
+      "shortDefinition": "A native image buffer storing raw pixel data in CPU memory before being uploaded to a `Texture2D`.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D"
+      ]
+    },
+    {
+      "term": "ImageTexture",
+      "shortDefinition": "A `Texture2D` resource created dynamically from an `Image` at runtime.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D"
+      ]
+    },
+    {
+      "term": "Input",
+      "shortDefinition": "A singleton providing global, polled access to the current input state and action strength.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Input"
+      ]
+    },
+    {
+      "term": "InputEvent",
+      "shortDefinition": "The base class for all input events such as key presses, mouse clicks, and touch.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "InputEvent"
+      ]
+    },
+    {
+      "term": "InputMap",
+      "shortDefinition": "Godot's global table mapping named input actions (like `ui_accept`) to physical keys, mouse buttons, or touch events.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Input",
+        "InputEvent"
+      ]
+    },
+    {
+      "term": "JSON",
+      "shortDefinition": "A utility class for parsing JSON text into native Variant data and back.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "JSON"
+      ]
+    },
+    {
+      "term": "Light2D",
+      "shortDefinition": "A 2D node that casts light and shadows onto 2D `CanvasItem` nodes.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CanvasItem",
+        "Node2D"
+      ]
+    },
+    {
+      "term": "LineEdit",
+      "shortDefinition": "A single-line text input field the user can type into.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "LineEdit"
+      ]
+    },
+    {
+      "term": "MainLoop",
+      "shortDefinition": "The abstract base class for the game's main loop in Godot; `SceneTree` is the default implementation used by games.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "SceneTree",
+        "Engine"
+      ]
+    },
+    {
+      "term": "MarginContainer",
+      "shortDefinition": "A container that adds configurable margins around a single child.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "MarginContainer"
+      ]
+    },
+    {
+      "term": "Node2D",
+      "shortDefinition": "A 2D-positioned node with position, rotation, scale, and a transform.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Node2D"
+      ]
+    },
+    {
+      "term": "Node3D",
+      "shortDefinition": "A 3D-positioned node with transform, rotation, scale, and a basis; base for 3D scenes.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Node3D"
+      ]
+    },
+    {
+      "term": "NodePath",
+      "shortDefinition": "A pre-parsed relative or absolute path to a node in the `SceneTree` (for example, `\"HUD/PlaySelectedButton\"`).",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Node",
+        "SceneTree"
+      ]
+    },
+    {
+      "term": "Panel",
+      "shortDefinition": "A Control that draws a styled background rectangle, used to group other UI.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Panel"
+      ]
+    },
+    {
+      "term": "PhysicsBody2D",
+      "shortDefinition": "The abstract base class for all 2D physics objects (`StaticBody2D`, `RigidBody2D`, `CharacterBody2D`).",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "StaticBody2D",
+        "RigidBody2D",
+        "CharacterBody2D"
+      ]
+    },
+    {
+      "term": "ProgressBar",
+      "shortDefinition": "A control that visualises progress from min to max as a filled bar.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "ProgressBar"
+      ]
+    },
+    {
+      "term": "ProjectSettings",
+      "shortDefinition": "The singleton holding all project-wide settings: rendering, physics, input map, and autoloads.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "ProjectSettings"
+      ]
+    },
+    {
+      "term": "Quaternion",
+      "shortDefinition": "A 4-component mathematical structure used to represent smooth 3D rotations without gimbal lock.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Node3D"
+      ]
+    },
+    {
+      "term": "Range",
+      "shortDefinition": "The abstract base class for UI controls that represent a number within a `[min_value, max_value]` range (`ProgressBar`, `Slider`).",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "ProgressBar",
+        "Slider"
+      ]
+    },
+    {
+      "term": "Rect2",
+      "shortDefinition": "A built-in axis-aligned 2D rectangle defined by a position and a size.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Rect2"
+      ]
+    },
+    {
+      "term": "RefCounted",
+      "shortDefinition": "An Object that frees itself automatically once no references to it remain.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "RefCounted"
+      ]
+    },
+    {
+      "term": "ResourceLoader",
+      "shortDefinition": "A singleton for loading resources at runtime, optionally in the background thread.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "ResourceLoader"
+      ]
+    },
+    {
+      "term": "SceneTree",
+      "shortDefinition": "The main loop that owns the scene, groups, and the root window.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "SceneTree"
+      ]
+    },
+    {
+      "term": "ScrollContainer",
+      "shortDefinition": "A container that scrolls a single child control that is larger than the viewport.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "ScrollContainer"
+      ]
+    },
+    {
+      "term": "SpinBox",
+      "shortDefinition": "A numerical input `Range` control with up/down step arrows.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Slider",
+        "LineEdit"
+      ]
+    },
+    {
+      "term": "Sprite2D",
+      "shortDefinition": "A 2D node that draws a Texture2D, optionally split into frames or a region.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Sprite2D"
+      ]
+    },
+    {
+      "term": "StaticBody2D",
+      "shortDefinition": "An immovable 2D physics body used for floors, walls, and other fixed collision.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "StaticBody2D"
+      ]
+    },
+    {
+      "term": "StyleBox",
+      "shortDefinition": "A resource that defines how UI panels and buttons draw their background, rounded corners, and borders in a `Theme`.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Panel",
+        "Button",
+        "Theme"
+      ]
+    },
+    {
+      "term": "TextEdit",
+      "shortDefinition": "A multi-line text editor with syntax highlighting, selection, and clipboard support.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "TextEdit"
+      ]
+    },
+    {
+      "term": "Texture2D",
+      "shortDefinition": "A 2D image resource that can be sampled and drawn by CanvasItem, Sprite2D, Control, and others.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D"
+      ]
+    },
+    {
+      "term": "TextureRect",
+      "shortDefinition": "A Control that draws a Texture2D, with stretching and flipping options.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "TextureRect"
+      ]
+    },
+    {
+      "term": "Tween",
+      "shortDefinition": "A code-created interpolator that animates properties of objects over time.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Tween"
+      ]
+    },
+    {
+      "term": "VBoxContainer",
+      "shortDefinition": "A container that arranges its children in a vertical column, top to bottom.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "VBoxContainer"
+      ]
+    },
+    {
+      "term": "Variant",
+      "shortDefinition": "Godot's dynamic container type capable of holding any GDScript value (`int`, `float`, `String`, `Array`, `Object`, etc.).",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Object",
+        "Array",
+        "Dictionary"
+      ]
+    },
+    {
+      "term": "Vector2",
+      "shortDefinition": "A built-in 2D vector of two floats used for positions, sizes, and directions.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Vector2"
+      ]
+    },
+    {
+      "term": "Viewport",
+      "shortDefinition": "A node that renders its child scene, handling its own drawing, input, and camera.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Viewport"
+      ]
+    },
+    {
+      "term": "Window",
+      "shortDefinition": "A viewport that is also an operating-system window or embedded sub-window with a title and decorations.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Window"
+      ]
+    },
+    {
+      "term": "World2D",
+      "shortDefinition": "Holds all 2D physics space, canvas, and navigation state shared by a `Viewport`'s 2D nodes.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Viewport",
+        "Node2D"
+      ]
     }
   ]
 }

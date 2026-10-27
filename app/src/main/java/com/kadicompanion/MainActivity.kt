@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -34,6 +37,7 @@ import com.kadicompanion.ui.navigation.KadiBottomBar
 import com.kadicompanion.ui.navigation.Routes
 import com.kadicompanion.ui.navigation.TopLevelDestination
 import com.kadicompanion.ui.onboarding.OnboardingScreen
+import com.kadicompanion.ui.settings.QuickUiCustomizerSheet
 import com.kadicompanion.ui.settings.SettingsScreen
 import com.kadicompanion.ui.theme.KadiTheme
 import com.kadicompanion.ui.tutorial.blueprint.ProjectBlueprintScreen
@@ -56,9 +60,32 @@ class MainActivity : ComponentActivity() {
         setContent {
             val rootVm: RootViewModel = hiltViewModel()
             val state by rootVm.uiState.collectAsStateWithLifecycle()
-            KadiTheme(darkTheme = state.darkTheme, dynamicColor = state.dynamicColor, reduceMotion = state.reduceMotion, dyslexiaFont = state.dyslexiaFont) {
+            var showQuickCustomizer by rememberSaveable { mutableStateOf(false) }
+            val navController: NavHostController = rememberNavController()
+
+            KadiTheme(
+                darkTheme = state.darkTheme,
+                dynamicColor = state.dynamicColor,
+                reduceMotion = state.reduceMotion,
+                dyslexiaFont = state.dyslexiaFont,
+                uiPrefs = state.uiPrefs,
+                onOpenQuickCustomizer = { showQuickCustomizer = true }
+            ) {
                 KadiBackground {
-                    AppContent(state = state, onOnboarded = rootVm::onOnboarded)
+                    AppContent(
+                        state = state,
+                        navController = navController,
+                        onOnboarded = rootVm::onOnboarded
+                    )
+                    if (showQuickCustomizer) {
+                        QuickUiCustomizerSheet(
+                            onDismiss = { showQuickCustomizer = false },
+                            onOpenFullSettings = {
+                                showQuickCustomizer = false
+                                navController.navigate(Routes.SETTINGS)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -66,8 +93,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AppContent(state: RootUiState, onOnboarded: () -> Unit) {
-    val navController: NavHostController = rememberNavController()
+private fun AppContent(
+    state: RootUiState,
+    navController: NavHostController,
+    onOnboarded: () -> Unit
+) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute in TopLevelDestination.entries.map { it.route }.toSet()
@@ -75,9 +105,20 @@ private fun AppContent(state: RootUiState, onOnboarded: () -> Unit) {
         bottomBar = { if (showBottomBar) KadiBottomBar(navController = navController) },
         containerColor = Color.Transparent
     ) { padding ->
-        NavHost(navController = navController, startDestination = if (state.isOnboarded) Routes.HOME else Routes.ONBOARDING, modifier = Modifier.fillMaxSize().padding(padding)) {
+        NavHost(
+            navController = navController,
+            startDestination = if (state.isOnboarded) Routes.HOME else Routes.ONBOARDING,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
             composable(Routes.ONBOARDING) {
-                OnboardingScreen(onFinished = { onOnboarded(); navController.navigate(Routes.HOME) { popUpTo(Routes.ONBOARDING) { inclusive = true } } })
+                OnboardingScreen(
+                    onFinished = {
+                        onOnboarded()
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(Routes.HOME) {
                 HomeScreen(
@@ -103,21 +144,52 @@ private fun AppContent(state: RootUiState, onOnboarded: () -> Unit) {
                     onNavigateToPhase = { phaseId -> navController.navigate(Routes.phaseDetail(phaseId)) }
                 )
             }
-            composable(Routes.PHASE_DETAIL, arguments = listOf(navArgument(Routes.ARG_PHASE_ID) { type = NavType.StringType })) { entry ->
+            composable(
+                Routes.PHASE_DETAIL,
+                arguments = listOf(navArgument(Routes.ARG_PHASE_ID) { type = NavType.StringType })
+            ) { entry ->
                 val phaseId = entry.arguments?.getString(Routes.ARG_PHASE_ID).orEmpty()
-                PhaseDetailScreen(phaseId = phaseId, onLessonClick = { lessonId -> navController.navigate(Routes.lesson(lessonId)) }, onDebugChallenge = { navController.navigate(Routes.debugChallenge(phaseId)) }, onBack = { navController.popBackStack() })
+                PhaseDetailScreen(
+                    phaseId = phaseId,
+                    onLessonClick = { lessonId -> navController.navigate(Routes.lesson(lessonId)) },
+                    onDebugChallenge = { navController.navigate(Routes.debugChallenge(phaseId)) },
+                    onBack = { navController.popBackStack() }
+                )
             }
-            composable(Routes.LESSON_DETAIL, arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })) { entry ->
+            composable(
+                Routes.LESSON_DETAIL,
+                arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })
+            ) { entry ->
                 val lessonId = entry.arguments?.getString(Routes.ARG_LESSON_ID).orEmpty()
-                LessonDetailScreen(onBack = { navController.popBackStack() }, onQuiz = { navController.navigate(Routes.quiz(lessonId)) }, onPractice = { navController.navigate(Routes.practice(lessonId)) }, onNextLesson = { nextId -> navController.navigate(Routes.lesson(nextId)) { popUpTo(Routes.LESSON_DETAIL) { inclusive = true } } }, onDebugChallenge = { phaseId -> navController.navigate(Routes.debugChallenge(phaseId)) }, onTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) })
+                LessonDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onQuiz = { navController.navigate(Routes.quiz(lessonId)) },
+                    onPractice = { navController.navigate(Routes.practice(lessonId)) },
+                    onNextLesson = { nextId ->
+                        navController.navigate(Routes.lesson(nextId)) {
+                            popUpTo(Routes.LESSON_DETAIL) { inclusive = true }
+                        }
+                    },
+                    onDebugChallenge = { phaseId -> navController.navigate(Routes.debugChallenge(phaseId)) },
+                    onTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) }
+                )
             }
-            composable(Routes.QUIZ, arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })) {
+            composable(
+                Routes.QUIZ,
+                arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })
+            ) {
                 QuizScreen(onBack = { navController.popBackStack() }, onComplete = { navController.popBackStack() })
             }
-            composable(Routes.PRACTICE, arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })) {
+            composable(
+                Routes.PRACTICE,
+                arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })
+            ) {
                 PracticeScreen(onBack = { navController.popBackStack() })
             }
-            composable(Routes.DEBUG_CHALLENGE, arguments = listOf(navArgument(Routes.ARG_PHASE_ID) { type = NavType.StringType })) {
+            composable(
+                Routes.DEBUG_CHALLENGE,
+                arguments = listOf(navArgument(Routes.ARG_PHASE_ID) { type = NavType.StringType })
+            ) {
                 DebugChallengeScreen(onBack = { navController.popBackStack() }, onComplete = { navController.popBackStack() })
             }
             composable(Routes.DOCS) {
@@ -126,19 +198,38 @@ private fun AppContent(state: RootUiState, onOnboarded: () -> Unit) {
                     onOpenGlossary = { term -> navController.navigate(Routes.glossaryDetail(term)) }
                 )
             }
-            composable(Routes.DOC_DETAIL, arguments = listOf(navArgument(Routes.ARG_CLASS_NAME) { type = NavType.StringType })) { entry ->
+            composable(
+                Routes.DOC_DETAIL,
+                arguments = listOf(navArgument(Routes.ARG_CLASS_NAME) { type = NavType.StringType })
+            ) { entry ->
                 val className = entry.arguments?.getString(Routes.ARG_CLASS_NAME).orEmpty()
-                DocDetailScreen(className = className, onBack = { navController.popBackStack() }, onGlossaryTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) })
+                DocDetailScreen(
+                    className = className,
+                    onBack = { navController.popBackStack() },
+                    onGlossaryTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) }
+                )
             }
             composable(Routes.GLOSSARY) {
                 GlossaryListScreen(onTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) })
             }
-            composable(Routes.GLOSSARY_DETAIL, arguments = listOf(navArgument(Routes.ARG_TERM) { type = NavType.StringType })) { entry ->
+            composable(
+                Routes.GLOSSARY_DETAIL,
+                arguments = listOf(navArgument(Routes.ARG_TERM) { type = NavType.StringType })
+            ) { entry ->
                 val term = entry.arguments?.getString(Routes.ARG_TERM).orEmpty()
-                GlossaryDetailScreen(term = term, onBack = { navController.popBackStack() }, onLessonClick = { lessonId -> navController.navigate(Routes.lesson(lessonId)) }, onDocClick = { className -> navController.navigate(Routes.docDetail(className)) })
+                GlossaryDetailScreen(
+                    term = term,
+                    onBack = { navController.popBackStack() },
+                    onLessonClick = { lessonId -> navController.navigate(Routes.lesson(lessonId)) },
+                    onDocClick = { className -> navController.navigate(Routes.docDetail(className)) }
+                )
             }
             composable(Routes.BOOKMARKS) {
-                BookmarksScreen(onLessonClick = { lessonId -> navController.navigate(Routes.lesson(lessonId)) }, onDocClick = { className -> navController.navigate(Routes.docDetail(className)) }, onGlossaryClick = { term -> navController.navigate(Routes.glossaryDetail(term)) })
+                BookmarksScreen(
+                    onLessonClick = { lessonId -> navController.navigate(Routes.lesson(lessonId)) },
+                    onDocClick = { className -> navController.navigate(Routes.docDetail(className)) },
+                    onGlossaryClick = { term -> navController.navigate(Routes.glossaryDetail(term)) }
+                )
             }
             composable(Routes.INSIGHTS) { InsightsScreen(onBack = { navController.popBackStack() }) }
             composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }

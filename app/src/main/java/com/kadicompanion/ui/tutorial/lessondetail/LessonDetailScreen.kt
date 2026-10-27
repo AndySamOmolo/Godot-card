@@ -44,6 +44,7 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.ViewStream
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -79,6 +80,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.R
+import com.kadicompanion.data.local.datastore.LessonLayoutMode
 import com.kadicompanion.domain.model.Lesson
 import com.kadicompanion.ui.common.CodeBlock
 import com.kadicompanion.ui.common.EmptyState
@@ -88,20 +90,23 @@ import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.MarkdownText
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
+import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * 3-Tab Interactive Learning Studio:
- * Instead of dumping 10 stacked cards into an endless vertical scroll,
- * the Lesson Studio organizes learning into 3 focused workspace tabs:
- *   - Tab 0: Guide & Code (Concept walkthrough, architecture tables, callouts, copyable GDScript)
- *   - Tab 1: Godot Steps  (Scene Tree hierarchy, interactive step-by-step Editor Checklist, F5/F6 verification, troubleshooting)
- *   - Tab 2: Lab & Quiz   (Key Takeaways summary + direct launch cards for Practice Workbench, Quiz, and Debug Lab)
+ * Interactive Lesson Studio supporting both:
+ * - 3-Tab Studio Mode (Guide & Code · Godot Steps · Lab & Quiz)
+ * - Continuous Single-Scroll Mode (All sections on one vertical page)
+ * Uses RichInlineText across every checklist step, verification item, troubleshooting tip,
+ * takeaway, and lab description so zero raw `''` or `[]` characters ever appear.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -117,11 +122,17 @@ fun LessonDetailScreen(
     val state by vm.uiState.collectAsStateWithLifecycle()
     val lesson = state.lesson
     val context = LocalContext.current
+    val uiPrefs = LocalUiPreferences.current
 
     var activeTab by rememberSaveable(lesson?.id) { mutableIntStateOf(0) }
+    var singleScrollOverride by rememberSaveable(uiPrefs.lessonLayoutMode) {
+        mutableStateOf(uiPrefs.lessonLayoutMode == LessonLayoutMode.SINGLE_SCROLL)
+    }
+
     val guideScroll = rememberScrollState()
     val stepsScroll = rememberScrollState()
     val labScroll = rememberScrollState()
+    val singlePageScroll = rememberScrollState()
 
     val checkedSteps = remember(lesson?.id, lesson?.editorSteps?.size) {
         mutableStateListOf<Boolean>().apply {
@@ -179,9 +190,10 @@ fun LessonDetailScreen(
                     message = "This lesson may have been moved or removed."
                 )
                 else -> {
-                    val activeScroll = when (activeTab) {
-                        0 -> guideScroll
-                        1 -> stepsScroll
+                    val activeScroll = when {
+                        singleScrollOverride -> singlePageScroll
+                        activeTab == 0 -> guideScroll
+                        activeTab == 1 -> stepsScroll
                         else -> labScroll
                     }
                     val readFraction = if (activeScroll.maxValue > 0) {
@@ -198,13 +210,14 @@ fun LessonDetailScreen(
                         trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
                     )
 
-                    // Compact Studio Header + 3-Tab Segmented Switcher
+                    val hPad = studioScreenPadding()
+                    // Compact Studio Header + Mode/Tab Switcher
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.surface)
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                            .padding(horizontal = hPad, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val readingMinutes = remember(lesson.id) {
                             ((lesson.bodyMarkdown.length + lesson.codeSnippets.sumOf { it.code.length }) / 950)
@@ -218,7 +231,7 @@ fun LessonDetailScreen(
                                 Pill(text = "Completed", color = successColor(), icon = Icons.Outlined.CheckCircle)
                             }
                             Pill(
-                                text = "~$readingMinutes min read",
+                                text = "~$readingMinutes min",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 icon = Icons.Outlined.Schedule
                             )
@@ -231,16 +244,43 @@ fun LessonDetailScreen(
                                     }
                                 )
                             }
+                            // Quick 1-Tap Switch between 3-Tab Studio & Single Scroll
+                            Surface(
+                                shape = MaterialTheme.shapes.extraSmall,
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.32f)),
+                                modifier = Modifier.clickable { singleScrollOverride = !singleScrollOverride }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.ViewStream,
+                                        contentDescription = "Toggle layout mode",
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Text(
+                                        text = if (singleScrollOverride) "1-Page View" else "3-Tab View",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                            }
                         }
 
-                        // Segmented 3-Tab Studio Switcher
-                        StudioSegmentedTabs(
-                            activeTab = activeTab,
-                            stepsCount = lesson.editorSteps.size,
-                            completedSteps = completedStepsCount,
-                            quizCount = lesson.quizQuestions.size,
-                            onSelectTab = { activeTab = it }
-                        )
+                        if (!singleScrollOverride) {
+                            StudioSegmentedTabs(
+                                activeTab = activeTab,
+                                stepsCount = lesson.editorSteps.size,
+                                completedSteps = completedStepsCount,
+                                quizCount = lesson.quizQuestions.size,
+                                onSelectTab = { activeTab = it }
+                            )
+                        }
                     }
 
                     HorizontalDivider(
@@ -248,28 +288,42 @@ fun LessonDetailScreen(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
                     )
 
-                    // Tab Content Area
-                    when (activeTab) {
-                        0 -> GuideAndCodeTab(
-                            lesson = lesson,
-                            scrollState = guideScroll,
-                            onTermClick = onTermClick,
-                            onSwitchToSteps = { activeTab = 1 }
-                        )
-                        1 -> GodotStepsTab(
+                    if (singleScrollOverride) {
+                        SingleScrollLessonContent(
                             lesson = lesson,
                             checkedSteps = checkedSteps,
-                            scrollState = stepsScroll,
-                            onSwitchToLab = { activeTab = 2 }
-                        )
-                        else -> LabAndQuizTab(
-                            lesson = lesson,
                             hasDebugChallenge = state.hasDebugChallenge && state.phaseId != null,
-                            scrollState = labScroll,
+                            scrollState = singlePageScroll,
+                            onTermClick = onTermClick,
                             onPractice = onPractice,
                             onQuiz = onQuiz,
                             onDebugChallenge = { state.phaseId?.let(onDebugChallenge) }
                         )
+                    } else {
+                        when (activeTab) {
+                            0 -> GuideAndCodeTab(
+                                lesson = lesson,
+                                scrollState = guideScroll,
+                                onTermClick = onTermClick,
+                                onSwitchToSteps = { activeTab = 1 }
+                            )
+                            1 -> GodotStepsTab(
+                                lesson = lesson,
+                                checkedSteps = checkedSteps,
+                                scrollState = stepsScroll,
+                                onTermClick = onTermClick,
+                                onSwitchToLab = { activeTab = 2 }
+                            )
+                            else -> LabAndQuizTab(
+                                lesson = lesson,
+                                hasDebugChallenge = state.hasDebugChallenge && state.phaseId != null,
+                                scrollState = labScroll,
+                                onTermClick = onTermClick,
+                                onPractice = onPractice,
+                                onQuiz = onQuiz,
+                                onDebugChallenge = { state.phaseId?.let(onDebugChallenge) }
+                            )
+                        }
                     }
                 }
             }
@@ -290,7 +344,7 @@ private fun CopyableFileChip(filePath: String, onCopy: () -> Unit) {
     }
 
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.extraSmall,
         color = tint.copy(alpha = 0.12f),
         border = BorderStroke(1.dp, tint.copy(alpha = 0.35f)),
         modifier = Modifier.clickable {
@@ -327,6 +381,9 @@ private fun CopyableFileChip(filePath: String, onCopy: () -> Unit) {
     }
 }
 
+/**
+ * Phone-optimized 3-Tab Segmented Switcher with short, crisp labels that never truncate on narrow screens.
+ */
 @Composable
 private fun StudioSegmentedTabs(
     activeTab: Int,
@@ -335,23 +392,23 @@ private fun StudioSegmentedTabs(
     quizCount: Int,
     onSelectTab: (Int) -> Unit
 ) {
-    val stepsLabel = if (stepsCount > 0) "Godot Steps ($completedSteps/$stepsCount)" else "Godot Steps"
+    val stepsLabel = if (stepsCount > 0) "Steps ($completedSteps/$stepsCount)" else "Steps"
     val labLabel = if (quizCount > 0) "Lab & Quiz ($quizCount)" else "Lab & Quiz"
     val tabs = listOf(
-        Triple(0, "Guide & Code", Icons.AutoMirrored.Outlined.MenuBook),
+        Triple(0, "Guide", Icons.AutoMirrored.Outlined.MenuBook),
         Triple(1, stepsLabel, Icons.Outlined.Checklist),
         Triple(2, labLabel, Icons.Outlined.Lightbulb)
     )
 
     Surface(
-        shape = RoundedCornerShape(10.dp),
+        shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(4.dp),
+                .padding(3.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             tabs.forEach { (idx, title, icon) ->
@@ -359,13 +416,13 @@ private fun StudioSegmentedTabs(
                 Surface(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .clickable { onSelectTab(idx) },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                     color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -373,7 +430,7 @@ private fun StudioSegmentedTabs(
                             imageVector = icon,
                             contentDescription = null,
                             tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(13.dp)
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
@@ -392,23 +449,120 @@ private fun StudioSegmentedTabs(
 }
 
 @Composable
+private fun SingleScrollLessonContent(
+    lesson: Lesson,
+    checkedSteps: MutableList<Boolean>,
+    hasDebugChallenge: Boolean,
+    scrollState: androidx.compose.foundation.ScrollState,
+    onTermClick: (String) -> Unit,
+    onPractice: () -> Unit,
+    onQuiz: () -> Unit,
+    onDebugChallenge: () -> Unit
+) {
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(horizontal = hPad, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(vGap)
+    ) {
+        MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
+
+        if (lesson.codeSnippets.isNotEmpty()) {
+            SectionHeader(title = "Complete Reference Script", eyebrow = "COPY-READY GDSCRIPT")
+            for (snippet in lesson.codeSnippets) {
+                CodeBlock(snippet = snippet)
+            }
+        }
+
+        lesson.sceneTree?.let { tree ->
+            SceneTreeBlueprintCard(sceneTree = tree)
+        }
+
+        if (lesson.editorSteps.isNotEmpty()) {
+            EditorChecklistStudioCard(
+                steps = lesson.editorSteps,
+                checkedStates = checkedSteps,
+                onTermClick = onTermClick
+            )
+        }
+
+        if (lesson.verificationSteps.isNotEmpty()) {
+            VerificationStudioCard(steps = lesson.verificationSteps, onTermClick = onTermClick)
+        }
+
+        if (lesson.troubleshootingTips.isNotEmpty()) {
+            TroubleshootingStudioCard(tips = lesson.troubleshootingTips, onTermClick = onTermClick)
+        }
+
+        if (lesson.keyTakeaways.isNotEmpty()) {
+            KeyTakeawaysStudioCard(takeaways = lesson.keyTakeaways, onTermClick = onTermClick)
+        }
+
+        SectionHeader(title = "Interactive Exercises", eyebrow = "HANDS-ON LABS")
+
+        lesson.practicePrompt?.let { prompt ->
+            LabLaunchCard(
+                eyebrow = "GDSCRIPT WORKBENCH",
+                title = "Interactive Code Practice",
+                description = prompt.instructions,
+                buttonLabel = "Practice",
+                icon = Icons.Outlined.Lightbulb,
+                accent = MaterialTheme.colorScheme.secondary,
+                onClick = onPractice,
+                onTermClick = onTermClick
+            )
+        }
+
+        if (lesson.quizQuestions.isNotEmpty()) {
+            LabLaunchCard(
+                eyebrow = "${lesson.quizQuestions.size} QUESTIONS",
+                title = "Lesson Knowledge Quiz",
+                description = "Check your understanding of **${lesson.title}** with instant explanations.",
+                buttonLabel = "Start Quiz",
+                icon = Icons.Outlined.Quiz,
+                accent = MaterialTheme.colorScheme.primary,
+                onClick = onQuiz,
+                onTermClick = onTermClick
+            )
+        }
+
+        if (hasDebugChallenge) {
+            LabLaunchCard(
+                eyebrow = "PHASE BUG HUNT",
+                title = "Interactive Debug Challenge",
+                description = "Inspect a broken GDScript snippet from this module and tap the exact line causing the bug.",
+                buttonLabel = "Bug Hunt",
+                icon = Icons.Outlined.BugReport,
+                accent = MaterialTheme.colorScheme.tertiary,
+                onClick = onDebugChallenge,
+                onTermClick = onTermClick
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
 private fun GuideAndCodeTab(
     lesson: Lesson,
     scrollState: androidx.compose.foundation.ScrollState,
     onTermClick: (String) -> Unit,
     onSwitchToSteps: () -> Unit
 ) {
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = hPad, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
-        // Main Deeply Explained Lesson Markdown Prose
         MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
 
-        // Complete Reference Code Snippets
         if (lesson.codeSnippets.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SectionHeader(
@@ -421,7 +575,6 @@ private fun GuideAndCodeTab(
             }
         }
 
-        // Prompt to jump to the Godot Steps tab
         if (lesson.editorSteps.isNotEmpty() || lesson.sceneTree != null) {
             KadiCard(
                 onClick = onSwitchToSteps,
@@ -445,7 +598,7 @@ private fun GuideAndCodeTab(
                             color = MaterialTheme.colorScheme.secondary
                         )
                         Text(
-                            text = "Open the Godot Steps tab for the Scene Tree & ${lesson.editorSteps.size}-step checklist",
+                            text = "Open the Steps tab for the Scene Tree & ${lesson.editorSteps.size}-step checklist",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -469,14 +622,17 @@ private fun GodotStepsTab(
     lesson: Lesson,
     checkedSteps: MutableList<Boolean>,
     scrollState: androidx.compose.foundation.ScrollState,
+    onTermClick: (String) -> Unit,
     onSwitchToLab: () -> Unit
 ) {
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = hPad, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
         lesson.sceneTree?.let { tree ->
             SceneTreeBlueprintCard(sceneTree = tree)
@@ -485,16 +641,17 @@ private fun GodotStepsTab(
         if (lesson.editorSteps.isNotEmpty()) {
             EditorChecklistStudioCard(
                 steps = lesson.editorSteps,
-                checkedStates = checkedSteps
+                checkedStates = checkedSteps,
+                onTermClick = onTermClick
             )
         }
 
         if (lesson.verificationSteps.isNotEmpty()) {
-            VerificationStudioCard(steps = lesson.verificationSteps)
+            VerificationStudioCard(steps = lesson.verificationSteps, onTermClick = onTermClick)
         }
 
         if (lesson.troubleshootingTips.isNotEmpty()) {
-            TroubleshootingStudioCard(tips = lesson.troubleshootingTips)
+            TroubleshootingStudioCard(tips = lesson.troubleshootingTips, onTermClick = onTermClick)
         }
 
         KadiCard(
@@ -542,19 +699,22 @@ private fun LabAndQuizTab(
     lesson: Lesson,
     hasDebugChallenge: Boolean,
     scrollState: androidx.compose.foundation.ScrollState,
+    onTermClick: (String) -> Unit,
     onPractice: () -> Unit,
     onQuiz: () -> Unit,
     onDebugChallenge: () -> Unit
 ) {
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(horizontal = hPad, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
         if (lesson.keyTakeaways.isNotEmpty()) {
-            KeyTakeawaysStudioCard(takeaways = lesson.keyTakeaways)
+            KeyTakeawaysStudioCard(takeaways = lesson.keyTakeaways, onTermClick = onTermClick)
         }
 
         SectionHeader(
@@ -567,10 +727,11 @@ private fun LabAndQuizTab(
                 eyebrow = "GDSCRIPT WORKBENCH",
                 title = "Interactive Code Practice",
                 description = prompt.instructions,
-                buttonLabel = "Open Code Workbench",
+                buttonLabel = "Practice",
                 icon = Icons.Outlined.Lightbulb,
                 accent = MaterialTheme.colorScheme.secondary,
-                onClick = onPractice
+                onClick = onPractice,
+                onTermClick = onTermClick
             )
         }
 
@@ -578,11 +739,12 @@ private fun LabAndQuizTab(
             LabLaunchCard(
                 eyebrow = "${lesson.quizQuestions.size} QUESTIONS",
                 title = "Lesson Knowledge Quiz",
-                description = "Check your understanding of ${lesson.title} with instant explanations.",
+                description = "Check your understanding of **${lesson.title}** with instant explanations.",
                 buttonLabel = "Start Quiz",
                 icon = Icons.Outlined.Quiz,
                 accent = MaterialTheme.colorScheme.primary,
-                onClick = onQuiz
+                onClick = onQuiz,
+                onTermClick = onTermClick
             )
         }
 
@@ -591,10 +753,11 @@ private fun LabAndQuizTab(
                 eyebrow = "PHASE BUG HUNT",
                 title = "Interactive Debug Challenge",
                 description = "Inspect a broken GDScript snippet from this module and tap the exact line causing the bug.",
-                buttonLabel = "Launch Bug Hunt",
+                buttonLabel = "Bug Hunt",
                 icon = Icons.Outlined.BugReport,
                 accent = MaterialTheme.colorScheme.tertiary,
-                onClick = onDebugChallenge
+                onClick = onDebugChallenge,
+                onTermClick = onTermClick
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -609,7 +772,8 @@ private fun LabLaunchCard(
     buttonLabel: String,
     icon: ImageVector,
     accent: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onTermClick: (String) -> Unit
 ) {
     KadiCard(onClick = onClick, accent = accent) {
         Row(
@@ -634,12 +798,13 @@ private fun LabLaunchCard(
             }
             Pill(text = buttonLabel, color = accent)
         }
-        Text(
+        RichInlineText(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
+            onTermClick = onTermClick
         )
     }
 }
@@ -647,12 +812,13 @@ private fun LabLaunchCard(
 @Composable
 private fun SceneTreeBlueprintCard(sceneTree: String) {
     val isDark = isDarkScheme()
+    val uiPrefs = LocalUiPreferences.current
     val bg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
     val accent = MaterialTheme.colorScheme.secondary
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         color = bg,
         border = BorderStroke(1.dp, accent.copy(alpha = 0.40f))
     ) {
@@ -688,8 +854,8 @@ private fun SceneTreeBlueprintCard(sceneTree: String) {
                     text = sceneTree,
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontFamily = CodeFontFamily,
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp
+                        fontSize = (13f * uiPrefs.codeFontScale).sp,
+                        lineHeight = (20f * uiPrefs.codeFontScale).sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -701,7 +867,8 @@ private fun SceneTreeBlueprintCard(sceneTree: String) {
 @Composable
 private fun EditorChecklistStudioCard(
     steps: List<String>,
-    checkedStates: MutableList<Boolean>
+    checkedStates: MutableList<Boolean>,
+    onTermClick: (String) -> Unit
 ) {
     val doneCount = checkedStates.count { it }
     val success = successColor()
@@ -745,7 +912,7 @@ private fun EditorChecklistStudioCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(
                             if (isChecked) success.copy(alpha = 0.10f)
                             else MaterialTheme.colorScheme.surfaceContainerLow
@@ -754,7 +921,7 @@ private fun EditorChecklistStudioCard(
                             width = 1.dp,
                             color = if (isChecked) success.copy(alpha = 0.40f)
                             else MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(10.dp)
+                            shape = MaterialTheme.shapes.small
                         )
                         .clickable {
                             if (idx < checkedStates.size) {
@@ -791,12 +958,13 @@ private fun EditorChecklistStudioCard(
                             )
                         }
                     }
-                    Text(
+                    RichInlineText(
                         text = stepText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        onTermClick = onTermClick
                     )
                 }
             }
@@ -805,7 +973,7 @@ private fun EditorChecklistStudioCard(
 }
 
 @Composable
-private fun VerificationStudioCard(steps: List<String>) {
+private fun VerificationStudioCard(steps: List<String>, onTermClick: (String) -> Unit) {
     val accent = successColor()
     KadiCard(accent = accent) {
         Row(
@@ -839,10 +1007,12 @@ private fun VerificationStudioCard(steps: List<String>) {
                         fontWeight = FontWeight.Bold,
                         color = accent
                     )
-                    Text(
+                    RichInlineText(
                         text = item,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                        onTermClick = onTermClick
                     )
                 }
             }
@@ -851,7 +1021,7 @@ private fun VerificationStudioCard(steps: List<String>) {
 }
 
 @Composable
-private fun TroubleshootingStudioCard(tips: List<String>) {
+private fun TroubleshootingStudioCard(tips: List<String>, onTermClick: (String) -> Unit) {
     val accent = MaterialTheme.colorScheme.tertiary
     KadiCard(accent = accent) {
         Row(
@@ -885,10 +1055,12 @@ private fun TroubleshootingStudioCard(tips: List<String>) {
                         fontWeight = FontWeight.Bold,
                         color = accent
                     )
-                    Text(
+                    RichInlineText(
                         text = item,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                        onTermClick = onTermClick
                     )
                 }
             }
@@ -897,7 +1069,7 @@ private fun TroubleshootingStudioCard(tips: List<String>) {
 }
 
 @Composable
-private fun KeyTakeawaysStudioCard(takeaways: List<String>) {
+private fun KeyTakeawaysStudioCard(takeaways: List<String>, onTermClick: (String) -> Unit) {
     val accent = MaterialTheme.colorScheme.primary
     KadiCard(accent = accent) {
         Row(
@@ -924,10 +1096,12 @@ private fun KeyTakeawaysStudioCard(takeaways: List<String>) {
                         fontWeight = FontWeight.Bold,
                         color = successColor()
                     )
-                    Text(
+                    RichInlineText(
                         text = item,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                        onTermClick = onTermClick
                     )
                 }
             }
@@ -944,6 +1118,7 @@ private fun StudioLessonBottomBar(
     onNavigateLesson: (String) -> Unit,
     onMarkComplete: () -> Unit
 ) {
+    val hPad = studioScreenPadding()
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp,
@@ -954,14 +1129,14 @@ private fun StudioLessonBottomBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = hPad, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (previousLessonId != null) {
                     FilledTonalButton(
                         onClick = { onNavigateLesson(previousLessonId) },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         modifier = Modifier.weight(0.85f).height(44.dp)
                     ) {
                         Icon(
@@ -970,12 +1145,12 @@ private fun StudioLessonBottomBar(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Prev", fontWeight = FontWeight.SemiBold)
+                        Text("Prev", fontWeight = FontWeight.SemiBold, maxLines = 1)
                     }
                 }
                 Button(
                     onClick = onMarkComplete,
-                    shape = RoundedCornerShape(10.dp),
+                    shape = MaterialTheme.shapes.small,
                     modifier = Modifier.weight(1.4f).height(44.dp)
                 ) {
                     Icon(
@@ -992,16 +1167,17 @@ private fun StudioLessonBottomBar(
                             else -> stringResource(R.string.action_mark_complete)
                         },
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 if (nextLessonId != null) {
                     FilledTonalButton(
                         onClick = { onNavigateLesson(nextLessonId) },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         modifier = Modifier.weight(0.85f).height(44.dp)
                     ) {
-                        Text("Next", fontWeight = FontWeight.SemiBold)
+                        Text("Next", fontWeight = FontWeight.SemiBold, maxLines = 1)
                         Spacer(Modifier.width(4.dp))
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowForward,

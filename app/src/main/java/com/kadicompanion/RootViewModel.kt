@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kadicompanion.data.local.datastore.PreferencesRepository
 import com.kadicompanion.data.local.datastore.ThemePref
+import com.kadicompanion.data.local.datastore.UiPreferences
 import com.kadicompanion.domain.repository.LearnerProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,11 +16,18 @@ import javax.inject.Inject
 
 data class RootUiState(
     val isOnboarded: Boolean = false,
-    val darkTheme: Boolean = true,
-    val dynamicColor: Boolean = false,
-    val reduceMotion: Boolean = false,
-    val dyslexiaFont: Boolean = false
-)
+    val uiPrefs: UiPreferences = UiPreferences()
+) {
+    val darkTheme: Boolean
+        get() = when (uiPrefs.theme) {
+            ThemePref.DARK, ThemePref.AMOLED -> true
+            ThemePref.LIGHT -> false
+            ThemePref.SYSTEM -> false
+        }
+    val dynamicColor: Boolean get() = uiPrefs.dynamicColor
+    val reduceMotion: Boolean get() = uiPrefs.reduceMotion
+    val dyslexiaFont: Boolean get() = uiPrefs.dyslexiaFont
+}
 
 @HiltViewModel
 class RootViewModel @Inject constructor(
@@ -28,18 +36,12 @@ class RootViewModel @Inject constructor(
 ) : ViewModel() {
 
     val uiState: StateFlow<RootUiState> = combine(
-        prefs.observeTheme(),
-        prefs.observeDynamicColor(),
-        prefs.observeReduceMotion(),
-        prefs.observeDyslexiaFont(),
+        prefs.observeUiPreferences(),
         learnerProfile.observeTrack()
-    ) { theme, dynamic, motion, dyslexia, track ->
+    ) { uiPrefs, track ->
         RootUiState(
             isOnboarded = track != null,
-            darkTheme = when (theme) { ThemePref.DARK -> true; ThemePref.LIGHT -> false; ThemePref.SYSTEM -> false },
-            dynamicColor = dynamic,
-            reduceMotion = motion,
-            dyslexiaFont = dyslexia
+            uiPrefs = uiPrefs
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RootUiState())
 

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Build
@@ -47,10 +46,16 @@ private data class CalloutStyle(
 )
 
 /**
- * Crisp developer-docs callout banner with a 4dp left stripe and clean header badge.
+ * Crisp developer-docs callout banner with a 4dp left stripe, header badge,
+ * and full RichInlineText parsing so inline code and glossary links render cleanly.
  */
 @Composable
-fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
+fun Callout(
+    type: CalloutType,
+    body: String,
+    modifier: Modifier = Modifier,
+    onTermClick: ((String) -> Unit)? = null
+) {
     val dark = isDarkScheme()
     val scheme = MaterialTheme.colorScheme
     val style = when (type) {
@@ -95,7 +100,7 @@ fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
             icon = Icons.Outlined.Bolt
         )
     }
-    val shape = RoundedCornerShape(12.dp)
+    val shape = MaterialTheme.shapes.small
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -121,10 +126,11 @@ fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
                     color = style.accent
                 )
             }
-            Text(
+            RichInlineText(
                 text = body,
                 style = MaterialTheme.typography.bodyMedium,
-                color = style.body
+                color = style.body,
+                onTermClick = onTermClick
             )
         }
     }

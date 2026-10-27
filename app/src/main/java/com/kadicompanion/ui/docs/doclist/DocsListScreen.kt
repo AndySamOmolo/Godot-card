@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,7 +62,10 @@ import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.glossary.GlossaryListScreen
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
@@ -93,17 +97,19 @@ fun DocsListScreen(
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(0) }
+    val hPad = studioScreenPadding()
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             KadiTopBar(
                 title = stringResource(R.string.nav_docs),
-                subtitle = "Reference desk",
+                subtitle = "REFERENCE DESK",
                 actions = {
                     if (state.all.isNotEmpty()) {
                         Pill(
                             text = "${state.all.size} classes",
-                            modifier = Modifier.padding(end = 16.dp),
+                            modifier = Modifier.padding(end = 4.dp),
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
@@ -113,12 +119,12 @@ fun DocsListScreen(
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             DocsSegmentedTabs(
                 selected = selectedTab,
                 onSelect = { selectedTab = it },
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = hPad, vertical = 4.dp)
             )
             when (selectedTab) {
                 0 -> ClassesTab(state = state, onQueryChange = vm::setQuery, onDocClick = onDocClick)
@@ -133,9 +139,9 @@ private fun DocsSegmentedTabs(selected: Int, onSelect: (Int) -> Unit, modifier: 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(50))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .border(BorderStroke(0.5.dp, glassBorderColor()), RoundedCornerShape(50))
+            .border(BorderStroke(1.dp, glassBorderColor()), MaterialTheme.shapes.medium)
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -147,7 +153,7 @@ private fun DocsSegmentedTabs(selected: Int, onSelect: (Int) -> Unit, modifier: 
             modifier = Modifier.weight(1f)
         )
         SegmentButton(
-            label = "Kadi & GDScript Glossary",
+            label = "Kadi Glossary",
             icon = Icons.Outlined.Translate,
             active = selected == 1,
             onClick = { onSelect(1) },
@@ -167,10 +173,10 @@ private fun SegmentButton(
     val content = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(50))
+            .clip(MaterialTheme.shapes.small)
             .background(if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent)
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .padding(vertical = 9.dp, horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
@@ -180,6 +186,8 @@ private fun SegmentButton(
             style = MaterialTheme.typography.labelLarge,
             color = content,
             fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 6.dp)
         )
     }
@@ -189,6 +197,8 @@ private fun SegmentButton(
 private fun ClassesTab(state: DocsListUiState, onQueryChange: (String) -> Unit, onDocClick: (String) -> Unit) {
     var selectedCategory by rememberSaveable { mutableIntStateOf(0) }
     val categories = listOf("All", "UI & Controls", "2D & Scenes", "Audio & Timers", "Core & Data")
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
 
     val categoryFiltered = state.filtered.filter { entry ->
         when (selectedCategory) {
@@ -205,23 +215,23 @@ private fun ClassesTab(state: DocsListUiState, onQueryChange: (String) -> Unit, 
             query = state.query,
             onQueryChange = onQueryChange,
             placeholder = stringResource(R.string.search_docs_placeholder),
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = hPad)
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = hPad),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             categories.forEachIndexed { idx, label ->
                 val active = selectedCategory == idx
                 Surface(
-                    shape = RoundedCornerShape(50),
+                    shape = MaterialTheme.shapes.small,
                     color = if (active) MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f)
                     else MaterialTheme.colorScheme.surfaceContainerHigh,
                     border = BorderStroke(
-                        width = if (active) 1.5.dp else 0.5.dp,
+                        width = if (active) 1.5.dp else 1.dp,
                         color = if (active) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant
                     ),
                     modifier = Modifier.clickable { selectedCategory = idx }
@@ -248,13 +258,13 @@ private fun ClassesTab(state: DocsListUiState, onQueryChange: (String) -> Unit, 
             )
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                contentPadding = PaddingValues(start = hPad, end = hPad, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(vGap)
             ) {
                 item {
                     SectionHeader(
                         title = categories[selectedCategory],
-                        eyebrow = "godot 4.3 classes",
+                        eyebrow = "GODOT 4.3 CLASSES",
                         trailing = { Pill(text = "${categoryFiltered.size}", color = MaterialTheme.colorScheme.secondary) }
                     )
                 }
@@ -293,11 +303,12 @@ private fun ClassRow(entry: GodotDocEntry, onClick: () -> Unit) {
                         maxLines = 1
                     )
                 }
-                Text(
+                RichInlineText(
                     text = entry.shortDescription,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Icon(

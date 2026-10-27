@@ -22,14 +22,18 @@ class GlossaryRepositoryImpl @Inject constructor(
     private val cache = _cache.asStateFlow()
     private var loadStarted = false
 
-    // *** THE FIX *** — same as TutorialRepositoryImpl
     override fun observeAll(): Flow<List<GlossaryEntry>> = cache.onEach {
         if (!loadStarted) ensureLoaded()
     }
 
     override suspend fun get(term: String): GlossaryEntry? {
         ensureLoaded()
-        return _cache.value.firstOrNull { it.term.equals(term, ignoreCase = true) }
+        val normalized = term.substringBefore('|').trim()
+        return _cache.value.firstOrNull { it.term.equals(normalized, ignoreCase = true) }
+            ?: _cache.value.firstOrNull {
+                it.term.equals("${normalized}s", ignoreCase = true) ||
+                    it.term.equals(normalized.removeSuffix("s"), ignoreCase = true)
+            }
     }
 
     override suspend fun search(query: String): List<GlossaryEntry> {

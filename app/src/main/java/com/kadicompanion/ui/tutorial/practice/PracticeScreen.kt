@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bolt
@@ -69,31 +68,30 @@ import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.cleanPlainText
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
+import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
-/**
- * Interactive GDScript Coding Workbench:
- * - Shows the task instructions & target Godot file
- * - Expandable Hint card
- * - Interactive GDScript editor with quick-insert token chips (`func`, `var`, `if`, `return`, `->`, etc.)
- * - "Check My Code" validator with instant diagnostic feedback
- * - Model solution reveal with live syntax highlighting
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val reduceMotion = LocalReduceMotion.current
     val duration = if (reduceMotion) 0 else 240
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
 
     Scaffold(
         containerColor = Color.Transparent,
-        topBar = { KadiTopBar(title = "Practice Workbench", subtitle = "Interactive Exercise", onBack = onBack) }
+        topBar = { KadiTopBar(title = "Practice Workbench", subtitle = "INTERACTIVE EXERCISE", onBack = onBack) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
@@ -109,10 +107,10 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                            .padding(horizontal = hPad, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(vGap)
                     ) {
-                        KadiCard {
+                        KadiCard(accent = MaterialTheme.colorScheme.primary) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -126,7 +124,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        text = lesson.title,
+                                        text = cleanPlainText(lesson.title),
                                         style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -137,9 +135,9 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                     icon = Icons.Outlined.Bolt
                                 )
                             }
-                            Text(
+                            RichInlineText(
                                 text = prompt.instructions,
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             lesson.targetFile?.let { path ->
@@ -155,7 +153,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                             if (!state.hintShown) {
                                 OutlinedButton(
                                     onClick = vm::toggleHint,
-                                    shape = MaterialTheme.shapes.large,
+                                    shape = MaterialTheme.shapes.medium,
                                     modifier = Modifier.fillMaxWidth().height(48.dp)
                                 ) {
                                     Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -187,7 +185,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                     }
-                                    Text(
+                                    RichInlineText(
                                         text = hint,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -196,7 +194,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                             }
                         }
 
-                        SectionHeader(title = "Interactive GDScript Editor", eyebrow = "Write & check your code")
+                        SectionHeader(title = "Interactive GDScript Editor", eyebrow = "WRITE & CHECK YOUR CODE")
 
                         InteractiveEditorPanel(
                             code = state.userCode,
@@ -211,7 +209,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                         ) {
                             Button(
                                 onClick = vm::checkCode,
-                                shape = MaterialTheme.shapes.large,
+                                shape = MaterialTheme.shapes.medium,
                                 modifier = Modifier.weight(1.3f).height(50.dp)
                             ) {
                                 Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -221,7 +219,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                             if (!state.solutionShown && prompt.solutionCode != null) {
                                 FilledTonalButton(
                                     onClick = vm::revealSolution,
-                                    shape = MaterialTheme.shapes.large,
+                                    shape = MaterialTheme.shapes.medium,
                                     modifier = Modifier.weight(1f).height(50.dp)
                                 ) {
                                     Icon(Icons.Outlined.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -231,7 +229,6 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                             }
                         }
 
-                        // Diagnostic result card from Check My Code
                         state.checkFeedback?.let { feedback ->
                             val passed = state.checkPassed == true
                             val accent = if (passed) successColor() else MaterialTheme.colorScheme.tertiary
@@ -252,7 +249,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                         color = accent
                                     )
                                 }
-                                Text(
+                                RichInlineText(
                                     text = feedback,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -291,9 +288,10 @@ private fun InteractiveEditorPanel(
     onReset: () -> Unit
 ) {
     val dark = isDarkScheme()
+    val uiPrefs = LocalUiPreferences.current
     val panel = if (dark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
     val quiet = if (dark) SyntaxColors.darkComment else SyntaxColors.lightComment
-    val shape = RoundedCornerShape(18.dp)
+    val shape = MaterialTheme.shapes.medium
 
     Column(
         modifier = Modifier
@@ -302,7 +300,6 @@ private fun InteractiveEditorPanel(
             .background(panel)
             .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)), shape)
     ) {
-        // Editor Header Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -335,7 +332,6 @@ private fun InteractiveEditorPanel(
             }
         }
 
-        // Quick-insert GDScript token bar for easy mobile typing
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -345,7 +341,7 @@ private fun InteractiveEditorPanel(
         ) {
             QUICK_TOKENS.forEach { token ->
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
                     border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
                     modifier = Modifier.clickable { onInsertToken(token) }
@@ -361,7 +357,6 @@ private fun InteractiveEditorPanel(
             }
         }
 
-        // Editable Monospace Code Field
         OutlinedTextField(
             value = code,
             onValueChange = onCodeChange,
@@ -370,8 +365,8 @@ private fun InteractiveEditorPanel(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             textStyle = TextStyle(
                 fontFamily = CodeFontFamily,
-                fontSize = 13.sp,
-                lineHeight = 20.sp,
+                fontSize = (13f * uiPrefs.codeFontScale).sp,
+                lineHeight = (20f * uiPrefs.codeFontScale).sp,
                 color = MaterialTheme.colorScheme.onSurface
             ),
             minLines = 5,
@@ -405,12 +400,12 @@ private fun SolutionPanel(code: String) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(22.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(success.copy(alpha = 0.10f))
-                .border(BorderStroke(1.dp, success.copy(alpha = 0.35f)), RoundedCornerShape(22.dp))
+                .border(BorderStroke(1.dp, success.copy(alpha = 0.35f)), MaterialTheme.shapes.medium)
                 .padding(10.dp)
         ) {
-            CodeBlock(snippet = CodeSnippet(id = "sol", code = code, caption = "Copy this into your Godot script and press F5 to test!"))
+            CodeBlock(snippet = CodeSnippet(id = "sol", code = code, caption = "Copy this into your Godot script and press **F5** to test!"))
         }
     }
 }

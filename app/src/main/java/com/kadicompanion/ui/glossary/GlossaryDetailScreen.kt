@@ -2,18 +2,15 @@ package com.kadicompanion.ui.glossary
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,7 +30,10 @@ import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 
 @Composable
 fun GlossaryDetailScreen(
@@ -43,12 +44,15 @@ fun GlossaryDetailScreen(
     vm: GlossaryDetailViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             KadiTopBar(
-                title = state.entry?.term ?: term,
-                subtitle = "Glossary term",
+                title = state.entry?.term ?: term.substringBefore('|'),
+                subtitle = "GLOSSARY TERM",
                 onBack = onBack
             )
         }
@@ -65,18 +69,18 @@ fun GlossaryDetailScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                            .padding(hPad),
+                        verticalArrangement = Arrangement.spacedBy(vGap)
                     ) {
                         item {
-                            KadiCard {
+                            KadiCard(accent = MaterialTheme.colorScheme.primary) {
                                 Text(
                                     text = entry.term,
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                Text(
+                                RichInlineText(
                                     text = entry.shortDefinition,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -86,8 +90,8 @@ fun GlossaryDetailScreen(
                         if (entry.relatedLessonIds.isNotEmpty()) {
                             item {
                                 SectionHeader(
-                                    title = "Related lessons",
-                                    eyebrow = "learn more",
+                                    title = "Related Lessons",
+                                    eyebrow = "LEARN MORE",
                                     trailing = {
                                         Pill(
                                             text = "${entry.relatedLessonIds.size}",
@@ -97,6 +101,7 @@ fun GlossaryDetailScreen(
                                 )
                             }
                             items(items = entry.relatedLessonIds) { lessonId ->
+                                val lessonTitle = state.lessonTitles[lessonId] ?: lessonId
                                 KadiCard(
                                     onClick = { onLessonClick(lessonId) },
                                     accent = MaterialTheme.colorScheme.primary
@@ -112,10 +117,13 @@ fun GlossaryDetailScreen(
                                             size = 36.dp
                                         )
                                         Text(
-                                            text = lessonId,
-                                            style = MaterialTheme.typography.titleMedium,
+                                            text = lessonTitle,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.weight(1f),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                         Pill(text = "Open", color = MaterialTheme.colorScheme.primary)
                                     }
@@ -125,8 +133,8 @@ fun GlossaryDetailScreen(
                         if (entry.relatedDocClassNames.isNotEmpty()) {
                             item {
                                 SectionHeader(
-                                    title = "Related docs",
-                                    eyebrow = "Godot classes",
+                                    title = "Related Godot Docs",
+                                    eyebrow = "GODOT 4.3 CLASSES",
                                     trailing = {
                                         Pill(
                                             text = "${entry.relatedDocClassNames.size}",
@@ -153,6 +161,7 @@ fun GlossaryDetailScreen(
                                         Text(
                                             text = className,
                                             style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface,
                                             modifier = Modifier.weight(1f)
                                         )

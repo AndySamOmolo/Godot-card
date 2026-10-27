@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +55,9 @@ import com.kadicompanion.domain.model.GlossaryEntry
 import com.kadicompanion.ui.common.EmptyState
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.LoadingSkeleton
+import com.kadicompanion.ui.common.RichInlineText
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.LocalReduceMotion
 
 private val KADI_TERMS = setOf(
@@ -72,12 +76,14 @@ fun GlossaryListScreen(onTermClick: (String) -> Unit, vm: GlossaryListViewModel 
     val state by vm.uiState.collectAsStateWithLifecycle()
     var selectedCategory by rememberSaveable { mutableIntStateOf(0) }
     val categories = listOf("All Terms", "Kadi Rules", "Godot Engine", "GDScript")
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
 
     val categoryFiltered = state.filtered.filter { entry ->
         when (selectedCategory) {
             1 -> entry.term in KADI_TERMS
-            2 -> entry.term in GODOT_NODE_TERMS
-            3 -> entry.term !in KADI_TERMS && entry.term !in GODOT_NODE_TERMS
+            2 -> entry.term in GODOT_NODE_TERMS || entry.relatedDocClassNames.isNotEmpty()
+            3 -> entry.term !in KADI_TERMS && entry.term !in GODOT_NODE_TERMS && entry.relatedDocClassNames.isEmpty()
             else -> true
         }
     }
@@ -87,23 +93,23 @@ fun GlossaryListScreen(onTermClick: (String) -> Unit, vm: GlossaryListViewModel 
             query = state.query,
             onQueryChange = vm::setQuery,
             placeholder = stringResource(R.string.search_glossary_placeholder),
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = hPad)
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = hPad),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             categories.forEachIndexed { idx, label ->
                 val active = selectedCategory == idx
                 Surface(
-                    shape = RoundedCornerShape(50),
+                    shape = MaterialTheme.shapes.small,
                     color = if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
                     else MaterialTheme.colorScheme.surfaceContainerHigh,
                     border = BorderStroke(
-                        width = if (active) 1.5.dp else 0.5.dp,
+                        width = if (active) 1.5.dp else 1.dp,
                         color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
                     ),
                     modifier = Modifier.clickable { selectedCategory = idx }
@@ -128,8 +134,8 @@ fun GlossaryListScreen(onTermClick: (String) -> Unit, vm: GlossaryListViewModel 
                 val grouped = categoryFiltered.groupBy { it.term.firstOrNull()?.uppercaseChar() ?: '#' }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentPadding = PaddingValues(start = hPad, end = hPad, bottom = 28.dp),
+                    verticalArrangement = Arrangement.spacedBy(vGap)
                 ) {
                     grouped.forEach { (letter, entries) ->
                         item(key = "letter-$letter") { LetterRule(letter = letter) }
@@ -178,14 +184,16 @@ private fun TermCard(entry: GlossaryEntry, onClick: () -> Unit) {
                 Text(
                     text = entry.term,
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1
                 )
-                Text(
+                RichInlineText(
                     text = entry.shortDefinition,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Icon(

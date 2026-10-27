@@ -55,7 +55,11 @@ import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.cleanPlainText
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
@@ -71,6 +75,9 @@ fun PhaseDetailScreen(
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val phase = state.phase
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -92,12 +99,12 @@ fun PhaseDetailScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
-                            start = 16.dp,
-                            end = 16.dp,
+                            start = hPad,
+                            end = hPad,
                             top = 12.dp,
                             bottom = 28.dp
                         ),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(vGap)
                     ) {
                         item(key = "hero") {
                             ModuleHeaderCard(
@@ -117,7 +124,7 @@ fun PhaseDetailScreen(
                                 eyebrow = "${phase.lessons.size} GUIDED LESSONS",
                                 trailing = {
                                     Pill(
-                                        text = "$completedCount/${phase.lessons.size} Completed",
+                                        text = "$completedCount/${phase.lessons.size} Done",
                                         color = if (completedCount == phase.lessons.size && phase.lessons.isNotEmpty()) {
                                             successColor()
                                         } else {
@@ -173,7 +180,7 @@ private fun ModuleHeaderCard(
     val heroWhite = heroTextPrimary()
     val heroSub = heroTextSecondary()
 
-    HeroPanel(contentPadding = PaddingValues(18.dp)) {
+    HeroPanel {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -200,12 +207,12 @@ private fun ModuleHeaderCard(
             )
         }
         Text(
-            text = title,
+            text = cleanPlainText(title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = heroWhite
         )
-        Text(
+        RichInlineText(
             text = summary,
             style = MaterialTheme.typography.bodyMedium,
             color = heroSub
@@ -224,7 +231,7 @@ private fun ModuleHeaderCard(
         if (nextLessonTitle != null) {
             Button(
                 onClick = onStartOrContinue,
-                shape = RoundedCornerShape(10.dp),
+                shape = MaterialTheme.shapes.small,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Color(0xFF0F172A)
@@ -235,9 +242,9 @@ private fun ModuleHeaderCard(
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = when {
-                        completed == 0 -> "Start Lesson 1: $nextLessonTitle"
-                        completed >= total -> "Review Module: $nextLessonTitle"
-                        else -> "Continue: $nextLessonTitle"
+                        completed == 0 -> "Start Lesson 1: ${cleanPlainText(nextLessonTitle)}"
+                        completed >= total -> "Review Module: ${cleanPlainText(nextLessonTitle)}"
+                        else -> "Continue: ${cleanPlainText(nextLessonTitle)}"
                     },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
@@ -280,7 +287,7 @@ private fun SyllabusLessonRow(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(
                         when {
                             completed -> doneColor
@@ -288,7 +295,7 @@ private fun SyllabusLessonRow(
                             else -> MaterialTheme.colorScheme.surfaceContainerHigh
                         }
                     )
-                    .border(1.dp, stepColor, RoundedCornerShape(10.dp)),
+                    .border(1.dp, stepColor, MaterialTheme.shapes.small),
                 contentAlignment = Alignment.Center
             ) {
                 if (completed) {
@@ -317,12 +324,12 @@ private fun SyllabusLessonRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = lesson.title,
+                        text = cleanPlainText(lesson.title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                     if (isNext) {
@@ -416,7 +423,7 @@ private fun DebugLabCard(bugSummary: String, onClick: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
+                RichInlineText(
                     text = bugSummary,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -1,7 +1,6 @@
 package com.kadicompanion.ui.tutorial.blueprint
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -13,18 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountTree
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Style
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -39,7 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,9 +49,13 @@ import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SPADE
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
+import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
@@ -64,11 +63,6 @@ import com.kadicompanion.ui.theme.heroTextTertiary
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
-/**
- * Interactive Blueprint & Kadi Rule Simulator Screen:
- * Gives learners the complete architectural big picture of the Godot 4.3 Kadi project
- * plus an interactive Kadi Rule & GDScript Validator Sandbox!
- */
 @Composable
 fun ProjectBlueprintScreen(
     onBack: () -> Unit,
@@ -76,13 +70,15 @@ fun ProjectBlueprintScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Project Map", "Scene & Signals", "Rule Simulator")
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
 
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             KadiTopBar(
                 title = "Kadi Game Blueprint",
-                subtitle = "Architecture & Interactive Sandbox",
+                subtitle = "ARCHITECTURE & SANDBOX",
                 onBack = onBack
             )
         }
@@ -96,7 +92,7 @@ fun ProjectBlueprintScreen(
                 selectedTabIndex = selectedTab,
                 containerColor = Color.Transparent,
                 contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = hPad)
             ) {
                 tabs.forEachIndexed { idx, title ->
                     Tab(
@@ -117,8 +113,8 @@ fun ProjectBlueprintScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .padding(horizontal = hPad, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(vGap)
             ) {
                 when (selectedTab) {
                     0 -> ProjectMapTab(onNavigateToPhase = onNavigateToPhase)
@@ -201,6 +197,7 @@ private val PROJECT_FILES = listOf(
 @Composable
 private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
     val isDark = isDarkScheme()
+    val uiPrefs = LocalUiPreferences.current
     val codeBg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
 
     HeroPanel {
@@ -224,7 +221,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.medium,
         color = codeBg,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
     ) {
@@ -258,15 +255,15 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
                 """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontFamily = CodeFontFamily,
-                    fontSize = 12.sp,
-                    lineHeight = 19.sp
+                    fontSize = (12f * uiPrefs.codeFontScale).sp,
+                    lineHeight = (19f * uiPrefs.codeFontScale).sp
                 ),
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 
-    SectionHeader(title = "File-by-File Breakdown", eyebrow = "Tap to open phase")
+    SectionHeader(title = "File-by-File Breakdown", eyebrow = "TAP TO OPEN PHASE")
 
     PROJECT_FILES.forEach { entry ->
         KadiCard(onClick = { onNavigateToPhase(entry.phaseId) }) {
@@ -286,7 +283,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
                 }
                 Pill(text = entry.phaseLabel, color = MaterialTheme.colorScheme.secondary)
             }
-            Text(
+            RichInlineText(
                 text = entry.role,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -306,6 +303,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
 @Composable
 private fun SceneAndSignalsTab() {
     val isDark = isDarkScheme()
+    val uiPrefs = LocalUiPreferences.current
     val codeBg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
 
     KadiCard(accent = MaterialTheme.colorScheme.primary) {
@@ -313,8 +311,8 @@ private fun SceneAndSignalsTab() {
             IconBubble(icon = Icons.Outlined.AccountTree, tint = MaterialTheme.colorScheme.primary, size = 36.dp)
             Column {
                 Text(
-                    text = "MAIN TABLE SCENE (`res://scenes/table/table.tscn`)",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "MAIN TABLE SCENE · res://scenes/table/table.tscn",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -327,7 +325,7 @@ private fun SceneAndSignalsTab() {
         }
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(14.dp),
+            shape = MaterialTheme.shapes.small,
             color = codeBg,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
         ) {
@@ -365,8 +363,8 @@ private fun SceneAndSignalsTab() {
                     """.trimIndent(),
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontFamily = CodeFontFamily,
-                        fontSize = 12.sp,
-                        lineHeight = 19.sp
+                        fontSize = (12f * uiPrefs.codeFontScale).sp,
+                        lineHeight = (19f * uiPrefs.codeFontScale).sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -418,8 +416,6 @@ private fun SceneAndSignalsTab() {
         )
     }
 }
-
-private data class SimCard(val rank: Int, val label: String, val suit: Int)
 
 private val SIM_SUITS = listOf(
     0 to "$HEART Hearts",
@@ -482,16 +478,8 @@ private fun RuleSimulatorTab() {
         }
 
         Text("1. Top Card on Discard Pile:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-        ChipSelectorRow(
-            items = SIM_SUITS,
-            selected = topSuit,
-            onSelect = { topSuit = it }
-        )
-        ChipSelectorRow(
-            items = SIM_RANKS,
-            selected = topRank,
-            onSelect = { topRank = it }
-        )
+        ChipSelectorRow(items = SIM_SUITS, selected = topSuit, onSelect = { topSuit = it })
+        ChipSelectorRow(items = SIM_RANKS, selected = topRank, onSelect = { topRank = it })
 
         Text("2. Active Table Modifiers:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         ChipSelectorRow(
@@ -506,16 +494,8 @@ private fun RuleSimulatorTab() {
         )
 
         Text("3. Card You Want to Play:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-        ChipSelectorRow(
-            items = SIM_SUITS,
-            selected = playSuit,
-            onSelect = { playSuit = it }
-        )
-        ChipSelectorRow(
-            items = SIM_RANKS,
-            selected = playRank,
-            onSelect = { playRank = it }
-        )
+        ChipSelectorRow(items = SIM_SUITS, selected = playSuit, onSelect = { playSuit = it })
+        ChipSelectorRow(items = SIM_RANKS, selected = playRank, onSelect = { playRank = it })
 
         if (playRank == 8 || playRank == 12) {
             ChipSelectorRow(
@@ -541,15 +521,14 @@ private fun RuleSimulatorTab() {
                     fontWeight = FontWeight.Bold,
                     color = resultAccent
                 )
-                Text(
+                RichInlineText(
                     text = eval.headline,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
-        Text(
+        RichInlineText(
             text = eval.explanation,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -580,11 +559,11 @@ private fun ChipSelectorRow(
         items.forEach { (value, label) ->
             val isSel = value == selected
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = MaterialTheme.shapes.extraSmall,
                 color = if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
                 else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
                 border = BorderStroke(
-                    width = if (isSel) 1.5.dp else 0.5.dp,
+                    width = if (isSel) 1.5.dp else 1.dp,
                     color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
                 ),
                 modifier = Modifier.clickable { onSelect(value) }
@@ -617,13 +596,12 @@ private fun evaluateSimulatedPlay(
     declaredSuit: Int,
     hasAnswerCompanion: Boolean
 ): SimEvaluation {
-    // 1. Live Penalty Stack check
     if (penaltyStack > 0) {
         if (playRank == 14) {
             return SimEvaluation(
                 isLegal = true,
                 headline = "Ace cancels the +$penaltyStack penalty stack!",
-                explanation = "Per Kadi rules, playing an Ace blocks an active penalty stack outright and resets penalty_stack to 0.",
+                explanation = "Per Kadi rules, playing an Ace blocks an active penalty stack outright and resets `penalty_stack` to `0`.",
                 gdscriptTrace = "if GameState.penalty_stack > 0:\n    if card.rank == CardTypes.Ranks.ACE:\n        GameState.penalty_stack = 0  # Penalty cancelled!\n        return true"
             )
         }
@@ -632,36 +610,34 @@ private fun evaluateSimulatedPlay(
             return SimEvaluation(
                 isLegal = true,
                 headline = "Same-rank Penalty Card forwards stack (+${penaltyStack + added} total)!",
-                explanation = "Playing a matching Penalty rank ($playRank) adds +$added and forwards the obligation to the next player.",
+                explanation = "Playing a matching Penalty rank (`$playRank`) adds `+$added` and forwards the obligation to the next player.",
                 gdscriptTrace = "if GameState.penalty_stack > 0:\n    if card.rank == top.rank:\n        GameState.penalty_stack += card.penalty_value() # Now ${penaltyStack + added}\n        return true"
             )
         }
         return SimEvaluation(
             isLegal = false,
             headline = "Cannot play this card while facing a +$penaltyStack penalty!",
-            explanation = "When penalty_stack > 0, you must either play a Penalty Card of the SAME rank or play an Ace, otherwise you must draw $penaltyStack cards.",
+            explanation = "When `penalty_stack > 0`, you must either play a Penalty Card of the **same rank** or play an **Ace**, otherwise you must draw `$penaltyStack` cards.",
             gdscriptTrace = "if GameState.penalty_stack > 0:\n    # Card is neither an Ace nor matching penalty rank!\n    pick_up(GameState.penalty_stack)\n    GameState.penalty_stack = 0\n    return false"
         )
     }
 
-    // 2. Question card unaccompanied check
     if ((playRank == 8 || playRank == 12) && !hasAnswerCompanion) {
         return SimEvaluation(
             isLegal = false,
             headline = "Question Card (Q or 8) played without an Answer Card!",
-            explanation = "In Kadi, a Question Card must be accompanied in the same move by a matching Answer Card (4, 5, 6, 7, 9, 10, or Ace). Without one, you must draw from the pile.",
+            explanation = "In Kadi, a Question Card must be accompanied in the same move by a matching Answer Card (**4, 5, 6, 7, 9, 10, or Ace**). Without one, you must draw from the pile.",
             gdscriptTrace = "if is_question_card(card.rank) and companion_answer == null:\n    draw_card(current_player) # Must accompany Question with Answer!\n    return false"
         )
     }
 
-    // 3. Active Declared Suit check
     if (declaredSuit != -1) {
         val suitMatch = playSuit == declaredSuit || playRank == 14 || playRank == 15
         return if (suitMatch) {
             SimEvaluation(
                 isLegal = true,
                 headline = "Satisfies the active Suit Declaration!",
-                explanation = "Your card matches the demanded suit (or is a wild Ace/Joker). Once played, `declared_suit` resets to -1.",
+                explanation = "Your card matches the demanded suit (or is a wild Ace/Joker). Once played, `declared_suit` resets to `-1`.",
                 gdscriptTrace = "if GameState.declared_suit != -1:\n    if card.suit == GameState.declared_suit or card.rank == Ranks.ACE:\n        GameState.declared_suit = -1 # Demand satisfied!\n        return true"
             )
         } else {
@@ -674,17 +650,16 @@ private fun evaluateSimulatedPlay(
         }
     }
 
-    // 4. Standard Play Validation
     val isWild = playRank == 14 || playRank == 15
     val matchesSuitOrRank = (playSuit == topSuit) || (playRank == topRank)
     return if (isWild || matchesSuitOrRank) {
         val effectNote = when (playRank) {
-            11 -> "Jump Card: skips the next player (`TurnManager.skip_player()`)."
-            13 -> "Kickback Card: reverses direction (`TurnManager.reverse_direction()`)."
-            2, 3, 15 -> "Penalty Card: adds to `GameState.penalty_stack` for the next player."
-            8, 12 -> "Question + Answer combo: both cards land on the discard pile in one move."
-            14 -> "Ace played: opens `DeclareSuitDialog` so you can demand the next suit."
-            else -> "Answer Card: lands cleanly on the discard pile and advances the turn."
+            11 -> "**Jump Card**: skips the next player (`TurnManager.advance_turn(1)`)."
+            13 -> "**Kickback Card**: reverses turn direction (`TurnManager.reverse_direction()`)."
+            2, 3, 15 -> "**Penalty Card**: adds to `GameState.penalty_stack` for the next player."
+            8, 12 -> "**Question + Answer combo**: both cards land on the discard pile in one move."
+            14 -> "**Ace played**: opens `DeclareSuitDialog` so you can demand the next suit."
+            else -> "**Answer Card**: lands cleanly on the discard pile and advances the turn."
         }
         SimEvaluation(
             isLegal = true,

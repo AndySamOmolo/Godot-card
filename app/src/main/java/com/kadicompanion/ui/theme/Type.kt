@@ -6,10 +6,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
+import com.kadicompanion.data.local.datastore.FontFamilyPreset
+import com.kadicompanion.data.local.datastore.LineSpacingPreset
 
 val CodeFontFamily = FontFamily.Monospace
 
-/** Extra-large hero display style — used on onboarding and large gradient panels. */
 val DisplayHero = TextStyle(
     fontWeight = FontWeight.Black,
     fontSize = 46.sp,
@@ -17,12 +18,6 @@ val DisplayHero = TextStyle(
     letterSpacing = (-1.5).sp
 )
 
-/**
- * Reading-first type scale: display/headline styles are tightened (negative
- * tracking, heavier weights) so headers feel designed, while body styles get
- * generous line height for long tutorial prose. Labels are slightly tracked out
- * so uppercase eyebrows and pills read as deliberate UI chrome.
- */
 private val ProseLineHeight = LineHeightStyle(
     alignment = LineHeightStyle.Alignment.Center,
     trim = LineHeightStyle.Trim.None
@@ -45,3 +40,50 @@ val AppTypography = Typography(
     labelMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.6.sp),
     labelSmall = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 11.sp, lineHeight = 15.sp, letterSpacing = 0.5.sp)
 )
+
+fun buildCustomizableTypography(
+    fontScale: Float = 1.0f,
+    fontFamilyPreset: FontFamilyPreset = FontFamilyPreset.SANS_SERIF,
+    lineSpacingPreset: LineSpacingPreset = LineSpacingPreset.COMFORTABLE,
+    dyslexiaFont: Boolean = false
+): Typography {
+    val s = fontScale.coerceIn(0.80f, 1.35f)
+    val lh = lineSpacingPreset.multiplier
+    val extraTracking = if (dyslexiaFont) 0.45.sp else 0.sp
+    val family = when (fontFamilyPreset) {
+        FontFamilyPreset.SANS_SERIF -> FontFamily.SansSerif
+        FontFamilyPreset.SERIF -> FontFamily.Serif
+        FontFamilyPreset.MONOSPACE -> FontFamily.Monospace
+        FontFamilyPreset.ROUNDED -> FontFamily.Default
+    }
+
+    fun TextStyle.scaleStyle(isBody: Boolean = false): TextStyle {
+        val scaledSize = (fontSize.value * s).sp
+        val baseLh = lineHeight.value * s * (if (isBody) lh else 1.0f)
+        val tracking = if (dyslexiaFont && isBody) extraTracking else letterSpacing
+        return copy(
+            fontFamily = family,
+            fontSize = scaledSize,
+            lineHeight = baseLh.sp,
+            letterSpacing = tracking
+        )
+    }
+
+    return Typography(
+        displayLarge = AppTypography.displayLarge.scaleStyle(),
+        displayMedium = AppTypography.displayMedium.scaleStyle(),
+        displaySmall = AppTypography.displaySmall.scaleStyle(),
+        headlineLarge = AppTypography.headlineLarge.scaleStyle(),
+        headlineMedium = AppTypography.headlineMedium.scaleStyle(),
+        headlineSmall = AppTypography.headlineSmall.scaleStyle(),
+        titleLarge = AppTypography.titleLarge.scaleStyle(),
+        titleMedium = AppTypography.titleMedium.scaleStyle(),
+        titleSmall = AppTypography.titleSmall.scaleStyle(),
+        bodyLarge = AppTypography.bodyLarge.scaleStyle(isBody = true),
+        bodyMedium = AppTypography.bodyMedium.scaleStyle(isBody = true),
+        bodySmall = AppTypography.bodySmall.scaleStyle(isBody = true),
+        labelLarge = AppTypography.labelLarge.scaleStyle(),
+        labelMedium = AppTypography.labelMedium.scaleStyle(),
+        labelSmall = AppTypography.labelSmall.scaleStyle()
+    )
+}

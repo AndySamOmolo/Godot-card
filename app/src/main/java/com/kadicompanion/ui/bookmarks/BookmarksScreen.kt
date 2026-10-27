@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,6 +44,9 @@ import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.cleanPlainText
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 
 @Composable
 fun BookmarksScreen(
@@ -52,17 +56,20 @@ fun BookmarksScreen(
     vm: BookmarksViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             KadiTopBar(
                 title = stringResource(R.string.nav_bookmarks),
-                subtitle = "Saved for later",
+                subtitle = "SAVED FOR LATER",
                 actions = {
                     if (state.bookmarks.isNotEmpty()) {
                         Pill(
                             text = "${state.bookmarks.size}",
-                            modifier = Modifier.padding(end = 16.dp),
+                            modifier = Modifier.padding(end = 4.dp),
                             icon = Icons.Outlined.Bookmarks
                         )
                     }
@@ -82,8 +89,8 @@ fun BookmarksScreen(
                     val grouped = state.bookmarks.groupBy { kindOf(it) }
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        contentPadding = PaddingValues(start = hPad, end = hPad, top = 4.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(vGap)
                     ) {
                         BookmarkKind.entries.forEach { kind ->
                             val rows = grouped[kind].orEmpty()
@@ -92,7 +99,7 @@ fun BookmarksScreen(
                                     SectionHeader(
                                         title = kind.groupTitle,
                                         modifier = Modifier.padding(top = 10.dp, bottom = 2.dp),
-                                        eyebrow = "Bookmarked",
+                                        eyebrow = "BOOKMARKED",
                                         trailing = { Pill(text = "${rows.size}", color = accentFor(kind)) }
                                     )
                                 }
@@ -107,8 +114,8 @@ fun BookmarksScreen(
                                         bookmark.note
                                     }
                                     BookmarkRow(
-                                        displayTitle = displayTitle,
-                                        subtitle = subtitle,
+                                        displayTitle = cleanPlainText(displayTitle),
+                                        subtitle = subtitle?.let(::cleanPlainText),
                                         kind = kind,
                                         accent = accentFor(kind),
                                         onClick = {
@@ -175,6 +182,7 @@ private fun BookmarkRow(
                 Text(
                     text = displayTitle,
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis

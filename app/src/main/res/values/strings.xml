@@ -69,7 +69,7 @@
     <string name="settings_track">Learner track</string>
     <string name="settings_content_version">Content version</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_text">Kadi Companion v1.0.1 — an offline-first learning tool for programming and Godot, built around the Kenyan card game Kadi. No accounts, no telemetry, no network required.</string>
+    <string name="settings_about_text">Kadi Companion v2.2.0 — an offline-first learning studio for programming and Godot 4.3, built around the Kenyan card game Kadi. Includes live UI Studio customization, zero accounts, and 100% offline access.</string>
 
     <string name="insights_accuracy">Quiz accuracy</string>
     <string name="insights_attempted">Questions attempted</string>

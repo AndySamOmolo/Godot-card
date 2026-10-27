@@ -6,7 +6,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
@@ -64,9 +62,13 @@ import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.MarkdownText
 import com.kadicompanion.ui.common.Pill
+import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
+import com.kadicompanion.ui.common.studioCardSpacing
+import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
+import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
@@ -74,22 +76,18 @@ import com.kadicompanion.ui.theme.heroTextTertiary
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
-/**
- * Interactive Bug Hunt:
- * - Crimson hero states the gameplay symptom
- * - Tappable line-by-line GDScript view lets the learner tap the exact buggy line to solve it!
- * - Optional Hint toggle and Reveal Fix fallback
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugChallengeViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val reduceMotion = LocalReduceMotion.current
     val duration = if (reduceMotion) 0 else 260
+    val hPad = studioScreenPadding()
+    val vGap = studioCardSpacing()
 
     Scaffold(
         containerColor = Color.Transparent,
-        topBar = { KadiTopBar(title = "Fix the Bug", subtitle = "Interactive debug challenge", onBack = onBack) }
+        topBar = { KadiTopBar(title = "Fix the Bug", subtitle = "INTERACTIVE DEBUG CHALLENGE", onBack = onBack) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
@@ -104,8 +102,8 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                            .padding(horizontal = hPad, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(vGap)
                     ) {
                         BugHero(symptom = ch.bugDescription)
 
@@ -133,7 +131,7 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
                             val isSolved = state.solvedByAttempt
                             val accent = if (isSolved) successColor() else MaterialTheme.colorScheme.tertiary
                             KadiCard(accent = accent) {
-                                Text(
+                                RichInlineText(
                                     text = feedback,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -149,7 +147,7 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
                                 if (!ch.hint.isNullOrBlank()) {
                                     OutlinedButton(
                                         onClick = vm::toggleHint,
-                                        shape = MaterialTheme.shapes.large,
+                                        shape = MaterialTheme.shapes.medium,
                                         modifier = Modifier.weight(1f).height(50.dp)
                                     ) {
                                         Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -159,7 +157,7 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
                                 }
                                 OutlinedButton(
                                     onClick = vm::revealFix,
-                                    shape = MaterialTheme.shapes.large,
+                                    shape = MaterialTheme.shapes.medium,
                                     modifier = Modifier.weight(1f).height(50.dp)
                                 ) {
                                     Icon(Icons.Outlined.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -176,7 +174,7 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
-                                    Text(
+                                    RichInlineText(
                                         text = ch.hint.orEmpty(),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -192,13 +190,13 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                                verticalArrangement = Arrangement.spacedBy(vGap)
                             ) {
                                 SolvedBanner(solvedByAttempt = state.solvedByAttempt)
 
                                 SectionHeader(
                                     title = stringResource(R.string.debug_fixed_code),
-                                    eyebrow = "The fix"
+                                    eyebrow = "THE FIX"
                                 )
                                 CodeBlock(snippet = CodeSnippet(id = "fixed", code = ch.fixedCode, caption = "Corrected GDScript"))
 
@@ -224,7 +222,7 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
 
                                 Button(
                                     onClick = onComplete,
-                                    shape = MaterialTheme.shapes.large,
+                                    shape = MaterialTheme.shapes.medium,
                                     modifier = Modifier.fillMaxWidth().height(54.dp)
                                 ) {
                                     Text("Continue", fontWeight = FontWeight.Bold)
@@ -249,21 +247,22 @@ private fun TappableBrokenCodePanel(
     onLineClick: (Int) -> Unit
 ) {
     val isDark = isDarkScheme()
+    val uiPrefs = LocalUiPreferences.current
     val bg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
     val lines = brokenCode.lines()
     val success = successColor()
+    val codeFontSize = (13f * uiPrefs.codeFontScale).sp
+    val codeLineHeight = (20f * uiPrefs.codeFontScale).sp
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.medium,
         color = bg,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
     ) {
+        val scrollMod = if (uiPrefs.codeWordWrap) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(vertical = 10.dp)
+            modifier = scrollMod.padding(vertical = 10.dp)
         ) {
             lines.forEachIndexed { idx, lineText ->
                 val lineNum = idx + 1
@@ -280,14 +279,15 @@ private fun TappableBrokenCodePanel(
                         .fillMaxWidth()
                         .background(rowBg)
                         .clickable(enabled = !fixShown) { onLineClick(lineNum) }
-                        .padding(horizontal = 14.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 14.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.Top
                 ) {
                     Text(
                         text = lineNum.toString().padStart(2, ' '),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontFamily = CodeFontFamily,
-                            fontSize = 12.sp
+                            fontSize = (12f * uiPrefs.codeFontScale).sp,
+                            lineHeight = codeLineHeight
                         ),
                         color = if (fixShown && isBuggy) success else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         fontWeight = if (isSelected || (fixShown && isBuggy)) FontWeight.Bold else FontWeight.Normal,
@@ -297,8 +297,8 @@ private fun TappableBrokenCodePanel(
                         text = GDScriptHighlighter.highlight(lineText, isDark),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontFamily = CodeFontFamily,
-                            fontSize = 13.sp,
-                            lineHeight = 20.sp
+                            fontSize = codeFontSize,
+                            lineHeight = codeLineHeight
                         )
                     )
                 }
@@ -315,9 +315,8 @@ private fun BugHero(symptom: String) {
     val heroTextMuted = heroTextTertiary()
     HeroPanel(
         gradient = Brush.linearGradient(
-            colors = listOf(scheme.tertiary, scheme.tertiary.copy(alpha = 0.85f), scheme.primary)
-        ),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)
+            colors = listOf(Color(0xFF450A0A), Color(0xFF991B1B), scheme.tertiary)
+        )
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -325,7 +324,7 @@ private fun BugHero(symptom: String) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
                     .background(heroText.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
@@ -334,7 +333,7 @@ private fun BugHero(symptom: String) {
                     Icons.Outlined.BugReport,
                     contentDescription = null,
                     tint = heroText,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
@@ -347,11 +346,12 @@ private fun BugHero(symptom: String) {
                 Text(
                     text = "Spot the bug in the GDScript",
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = heroText
                 )
             }
         }
-        Text(
+        RichInlineText(
             text = symptom,
             style = MaterialTheme.typography.bodyLarge,
             color = heroTextSub
