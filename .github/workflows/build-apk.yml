@@ -40,7 +40,7 @@ jobs:
 
       - name: Validate Tutorial & Glossary JSON Assets
         run: |
-          python3 -c '
+          python3 - << 'EOF'
           import json, glob
           phases = sorted(glob.glob("app/src/main/assets/tutorial/phase_*.json"))
           assert len(phases) == 12, f"Expected 12 phases, found {len(phases)}"
@@ -50,8 +50,9 @@ jobs:
               assert len(d["lessons"]) > 0, f"Empty lessons in {p}"
           with open("app/src/main/assets/glossary/terms.json", encoding="utf-8") as f:
               g = json.load(f)
-          print(f"Validated {len(phases)} phases and {len(g[\"terms\"])} glossary terms successfully.")
-          '
+          terms_count = len(g["terms"])
+          print(f"Validated {len(phases)} phases and {terms_count} glossary terms successfully.")
+          EOF
 
       - name: Build Debug and Unsigned Release APKs with Gradle
         run: ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
