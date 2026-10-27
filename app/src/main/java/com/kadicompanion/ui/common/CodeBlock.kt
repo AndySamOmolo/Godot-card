@@ -3,11 +3,6 @@ package com.kadicompanion.ui.common
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,8 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -45,13 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kadicompanion.R
 import com.kadicompanion.domain.model.CodeSnippet
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.SyntaxColors
@@ -60,27 +51,20 @@ import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * Editor-style code panel:
- * - Faux window title bar (three suit-colored dots, language tag, line count badge, and animated Copy/Copied! pill)
- * - Left-rail line numbers gutter (1..N) aligned with syntax-highlighted code lines so Line-by-Line Walkthrough tables match 1-to-1
- * - Optional caption footer
+ * Studio IDE Code Block with macOS/Godot-style window header dots, language + line count badge,
+ * one-tap copy button with animated "Copied!" confirmation, and a line-numbered gutter.
  */
 @Composable
 fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
-    val isDark = isDarkScheme()
     val context = LocalContext.current
+    val isDark = isDarkScheme()
+    val panelColor = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
+    val headerBg = if (isDark) Color(0xFF131B2B) else Color(0xFFE2E8F0)
+    val gutterColor = if (isDark) SyntaxColors.darkComment.copy(alpha = 0.55f) else SyntaxColors.lightComment.copy(alpha = 0.65f)
+    val borderColor = if (isDark) Color(0xFF24324B) else Color(0xFFCBD5E1)
     val lines = remember(snippet.code) { snippet.code.lines() }
-    val lineCount = lines.size
-    val highlighted = remember(snippet.code, isDark) {
-        GDScriptHighlighter.highlight(snippet.code, isDark)
-    }
-    val bg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
-    val chromeColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.04f)
-    val gutterBg = if (isDark) Color.White.copy(alpha = 0.025f) else Color.Black.copy(alpha = 0.025f)
-    val headerColor = if (isDark) SyntaxColors.darkComment else SyntaxColors.lightComment
-    val hScroll = rememberScrollState()
-
     var copied by remember { mutableStateOf(false) }
+
     LaunchedEffect(copied) {
         if (copied) {
             delay(1800)
@@ -89,122 +73,129 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
     }
 
     Surface(
-        modifier = modifier.fillMaxWidth().semantics { contentDescription = "code block, $lineCount lines" },
-        shape = RoundedCornerShape(18.dp),
-        color = bg,
-        tonalElevation = 0.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = panelColor,
+        border = BorderStroke(1.dp, borderColor)
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // IDE Window Header Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(chromeColor)
-                    .padding(start = 14.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+                    .background(headerBg)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                WindowDot(MaterialTheme.colorScheme.tertiary)
-                WindowDot(MaterialTheme.colorScheme.primary)
-                WindowDot(MaterialTheme.colorScheme.secondary)
-                Text(
-                    text = "${snippet.language.uppercase()} · $lineCount ${if (lineCount == 1) "LINE" else "LINES"}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = headerColor,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = CodeFontFamily,
-                    modifier = Modifier.padding(start = 6.dp).weight(1f)
-                )
-                val copyAccent = if (copied) successColor() else MaterialTheme.colorScheme.primary
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFEF4444).copy(alpha = 0.8f)))
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFF59E0B).copy(alpha = 0.8f)))
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF10B981).copy(alpha = 0.8f)))
+                    }
+                    Text(
+                        text = "${snippet.language.uppercase()} · ${lines.size} ${if (lines.size == 1) "LINE" else "LINES"}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = CodeFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                    )
+                }
+
+                val copyTint = if (copied) successColor() else MaterialTheme.colorScheme.primary
                 Surface(
-                    shape = RoundedCornerShape(50),
-                    color = copyAccent.copy(alpha = 0.14f),
-                    border = BorderStroke(0.5.dp, copyAccent.copy(alpha = 0.35f)),
+                    shape = RoundedCornerShape(6.dp),
+                    color = copyTint.copy(alpha = 0.14f),
+                    border = BorderStroke(1.dp, copyTint.copy(alpha = 0.30f)),
                     modifier = Modifier.clickable {
-                        copyToClipboard(context, snippet.code)
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("GDScript", snippet.code))
                         copied = true
                     }
                 ) {
-                    AnimatedContent(
-                        targetState = copied,
-                        transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) },
-                        label = "copyFeedback"
-                    ) { isCopied ->
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isCopied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
-                                contentDescription = "Copy code",
-                                tint = copyAccent,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Text(
-                                text = if (isCopied) "Copied!" else "Copy",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = copyAccent,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
+                            contentDescription = stringResource(R.string.action_copy_code),
+                            tint = copyTint,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = if (copied) "Copied" else "Copy",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = copyTint
+                        )
                     }
                 }
             }
-            Row(modifier = Modifier.fillMaxWidth()) {
-                // Line numbers gutter
+
+            HorizontalDivider(thickness = 1.dp, color = borderColor.copy(alpha = 0.6f))
+
+            // Code body with line-number gutter
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
                 Column(
-                    modifier = Modifier
-                        .background(gutterBg)
-                        .padding(start = 10.dp, end = 8.dp, top = 12.dp, bottom = 14.dp),
+                    modifier = Modifier.padding(end = 10.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    for (lineNum in 1..lineCount) {
-                        BasicText(
-                            text = lineNum.toString(),
-                            style = TextStyle(
+                    lines.forEachIndexed { idx, _ ->
+                        Text(
+                            text = "${idx + 1}",
+                            style = MaterialTheme.typography.bodyMedium.copy(
                                 fontFamily = CodeFontFamily,
-                                fontSize = 12.sp,
-                                lineHeight = 20.sp,
-                                color = headerColor.copy(alpha = 0.55f),
-                                textAlign = TextAlign.End
+                                fontSize = 12.5.sp,
+                                lineHeight = 20.sp
+                            ),
+                            color = gutterColor,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.width(24.dp)
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .padding(end = 10.dp)
+                )
+                Column {
+                    lines.forEach { lineText ->
+                        Text(
+                            text = GDScriptHighlighter.highlight(lineText, isDark),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = CodeFontFamily,
+                                fontSize = 13.sp,
+                                lineHeight = 20.sp
                             )
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(2.dp))
-                SelectionContainer(
-                    modifier = Modifier
-                        .weight(1f)
-                        .horizontalScroll(hScroll)
-                        .padding(start = 10.dp, end = 14.dp, top = 12.dp, bottom = 14.dp)
-                ) {
-                    BasicText(
-                        text = highlighted,
-                        style = TextStyle(fontFamily = CodeFontFamily, fontSize = 13.sp, lineHeight = 20.sp)
-                    )
-                }
             }
-            snippet.caption?.let { cap ->
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            snippet.caption?.let {
+                HorizontalDivider(thickness = 1.dp, color = borderColor.copy(alpha = 0.5f))
                 Text(
-                    text = cap,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = headerColor,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(headerBg.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                 )
             }
         }
     }
-}
-
-@Composable
-private fun WindowDot(color: Color) {
-    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(color.copy(alpha = 0.65f)))
-}
-
-private fun copyToClipboard(context: Context, text: String) {
-    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("Kadi code", text))
 }

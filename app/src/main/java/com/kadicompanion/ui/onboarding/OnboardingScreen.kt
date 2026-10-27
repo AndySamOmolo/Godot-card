@@ -3,7 +3,6 @@ package com.kadicompanion.ui.onboarding
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -33,55 +32,46 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SportsEsports
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.R
 import com.kadicompanion.domain.model.LearnerTrack
-import com.kadicompanion.ui.common.CLUB
-import com.kadicompanion.ui.common.DIAMOND
-import com.kadicompanion.ui.common.HEART
 import com.kadicompanion.ui.common.HeroPanel
 import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.Pill
-import com.kadicompanion.ui.common.SPADE
 import com.kadicompanion.ui.common.SectionHeader
-import com.kadicompanion.ui.theme.DisplayHero
+import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.brandGradient
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
 import com.kadicompanion.ui.theme.heroTextTertiary
 
-/*
- * First impression: a gradient hero with a fanned card-suit motif, then the two
- * placement questions rendered as large selectable cards, and a pinned CTA.
- */
-
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val reduceMotion = LocalReduceMotion.current
-    val motion = tween<Float>(durationMillis = if (reduceMotion) 0 else 260)
+    val motion = tween<Float>(durationMillis = if (reduceMotion) 0 else 240)
 
     Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         Column(
@@ -91,8 +81,8 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Spacer(Modifier.height(12.dp))
-            OnboardingHero()
+            Spacer(Modifier.height(10.dp))
+            StudioOnboardingHero()
 
             StepDots(
                 total = 2,
@@ -102,20 +92,20 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
 
             SectionHeader(
                 title = stringResource(R.string.onboarding_q1),
-                eyebrow = "Question 1 of 2"
+                eyebrow = "STEP 01 OF 02"
             )
             ChoiceCard(
                 icon = Icons.Outlined.Code,
-                title = "Yes",
-                description = "I have written code in some language before.",
+                title = "Yes, I've coded before",
+                description = "I know variables, loops, and functions in at least one language.",
                 selected = state.programmedBefore == true,
                 enabled = state.programmedBefore != true,
                 onClick = { vm.setProgrammedBefore(true) }
             )
             ChoiceCard(
                 icon = Icons.Outlined.School,
-                title = "No",
-                description = "This is my first time programming.",
+                title = "No, I'm brand new to coding",
+                description = "Teach me programming fundamentals from scratch using Kadi examples.",
                 selected = state.programmedBefore == false,
                 enabled = state.programmedBefore != false,
                 onClick = { vm.setProgrammedBefore(false) }
@@ -123,21 +113,21 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
 
             SectionHeader(
                 title = stringResource(R.string.onboarding_q2),
-                eyebrow = "Question 2 of 2",
-                modifier = Modifier.padding(top = 6.dp)
+                eyebrow = "STEP 02 OF 02",
+                modifier = Modifier.padding(top = 4.dp)
             )
             ChoiceCard(
                 icon = Icons.Outlined.SportsEsports,
-                title = "Yes",
-                description = "I have opened the Godot editor and built something.",
+                title = "Yes, I've used Godot",
+                description = "I have opened the Godot editor and worked with Scenes and Nodes.",
                 selected = state.usedGodotBefore == true,
                 enabled = state.usedGodotBefore != true,
                 onClick = { vm.setUsedGodotBefore(true) }
             )
             ChoiceCard(
                 icon = Icons.Outlined.Explore,
-                title = "No",
-                description = "Godot is brand new territory for me.",
+                title = "No, Godot is new to me",
+                description = "Walk me through every click, node, and Inspector setting in Godot 4.3.",
                 selected = state.usedGodotBefore == false,
                 enabled = state.usedGodotBefore != false,
                 onClick = { vm.setUsedGodotBefore(false) }
@@ -146,109 +136,108 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
             AnimatedVisibility(
                 visible = state.resolvedTrack != null,
                 enter = fadeIn(animationSpec = motion) + expandVertically(
-                    animationSpec = tween(durationMillis = if (reduceMotion) 0 else 260)
+                    animationSpec = tween(durationMillis = if (reduceMotion) 0 else 240)
                 )
             ) {
                 state.resolvedTrack?.let { track ->
-                    TrackPreview(track = track, modifier = Modifier.padding(top = 8.dp))
+                    TrackPreview(track = track, modifier = Modifier.padding(top = 6.dp))
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Button(
-                onClick = { vm.finish(); onFinished() },
-                enabled = state.canFinish,
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.fillMaxWidth().height(56.dp)
+        Surface(color = MaterialTheme.colorScheme.surface) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
             ) {
-                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    stringResource(R.string.onboarding_finish),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(
+                        onClick = { vm.finish(); onFinished() },
+                        enabled = state.canFinish,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(50.dp)
+                    ) {
+                        Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(R.string.onboarding_finish),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Text(
+                        text = if (state.canFinish) "You can switch your learning track anytime in Settings."
+                        else "Select both answers above to unlock your curriculum.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
-            Text(
-                text = if (state.canFinish) "You can change this later in Settings." else "Answer both questions to continue.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
 
 @Composable
-private fun OnboardingHero() {
+private fun StudioOnboardingHero() {
     val heroText = heroTextPrimary()
     val heroTextSub = heroTextSecondary()
     HeroPanel(
         gradient = brandGradient(),
-        shape = RoundedCornerShape(34.dp),
-        contentPadding = PaddingValues(
-            start = 22.dp,
-            end = 22.dp,
-            top = 28.dp,
-            bottom = 26.dp
-        )
+        shape = RoundedCornerShape(18.dp),
+        contentPadding = PaddingValues(22.dp)
     ) {
-        SuitFan()
-        Spacer(Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFF38BDF8).copy(alpha = 0.22f),
+                border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.45f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.Terminal,
+                        contentDescription = null,
+                        tint = Color(0xFF7DD3FC),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "GODOT 4.3 · GDSCRIPT STUDIO",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF7DD3FC)
+                    )
+                }
+            }
+        }
         Text(
             text = stringResource(R.string.app_name),
-            style = DisplayHero,
+            style = MaterialTheme.typography.displaySmall,
             color = heroText,
-            fontWeight = FontWeight.Black
+            fontWeight = FontWeight.ExtraBold
         )
         Text(
-            text = "Learn GDScript by building the card game you already love.",
+            text = "Master GDScript and Godot 4.3 by building a complete, playable Kenyan Kadi card game from scratch.",
             style = MaterialTheme.typography.bodyMedium,
             color = heroTextSub
         )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = stringResource(R.string.onboarding_title),
-            style = MaterialTheme.typography.titleLarge,
-            color = heroText
-        )
     }
 }
 
-/** Four suit glyphs fanned out like a hand of cards — larger and more dramatic. */
-@Composable
-private fun SuitFan() {
-    val heroText = heroTextPrimary()
-    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        SuitGlyph(SPADE, heroText, -22f, 0.88f)
-        SuitGlyph(HEART, heroText, -8f, 1f)
-        SuitGlyph(CLUB, heroText, 8f, 1f)
-        SuitGlyph(DIAMOND, heroText, 22f, 0.88f)
-    }
-}
-
-@Composable
-private fun SuitGlyph(glyph: String, color: Color, rotation: Float, opacity: Float) {
-    Text(
-        text = glyph,
-        fontSize = 38.sp,
-        fontWeight = FontWeight.Black,
-        color = color,
-        modifier = Modifier.rotate(rotation).alpha(opacity)
-    )
-}
-
-/** Progress dots for the two placement questions. */
 @Composable
 private fun StepDots(total: Int, answered: Int, modifier: Modifier = Modifier) {
     val reduceMotion = LocalReduceMotion.current
@@ -260,19 +249,19 @@ private fun StepDots(total: Int, answered: Int, modifier: Modifier = Modifier) {
         repeat(total) { index ->
             val done = index < answered
             val width by animateDpAsState(
-                targetValue = if (done) 26.dp else 8.dp,
-                animationSpec = tween(durationMillis = if (reduceMotion) 0 else 220),
+                targetValue = if (done) 28.dp else 8.dp,
+                animationSpec = tween(durationMillis = if (reduceMotion) 0 else 200),
                 label = "dotWidth"
             )
             val color by animateColorAsState(
                 targetValue = if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                animationSpec = tween(durationMillis = if (reduceMotion) 0 else 220),
+                animationSpec = tween(durationMillis = if (reduceMotion) 0 else 200),
                 label = "dotColor"
             )
             Box(
                 modifier = Modifier
                     .width(width)
-                    .height(8.dp)
+                    .height(6.dp)
                     .clip(CircleShape)
                     .background(color)
             )
@@ -280,7 +269,6 @@ private fun StepDots(total: Int, answered: Int, modifier: Modifier = Modifier) {
     }
 }
 
-/** Large tappable option card with an icon bubble and a selected state. */
 @Composable
 private fun ChoiceCard(
     icon: ImageVector,
@@ -291,10 +279,10 @@ private fun ChoiceCard(
     onClick: () -> Unit
 ) {
     val reduceMotion = LocalReduceMotion.current
-    val spec = tween<Color>(durationMillis = if (reduceMotion) 0 else 200)
+    val spec = tween<Color>(durationMillis = if (reduceMotion) 0 else 180)
     val container by animateColorAsState(
         targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
         } else {
             MaterialTheme.colorScheme.surfaceContainer
         },
@@ -306,9 +294,8 @@ private fun ChoiceCard(
         animationSpec = spec,
         label = "choiceBorder"
     )
-    // Animate the scale for a satisfying tap feel
     val borderWidth by animateDpAsState(
-        targetValue = if (selected) 2.dp else 1.dp,
+        targetValue = if (selected) 1.5.dp else 1.dp,
         animationSpec = tween(durationMillis = if (reduceMotion) 0 else 150),
         label = "choiceBorderWidth"
     )
@@ -319,35 +306,33 @@ private fun ChoiceCard(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = container, disabledContainerColor = container),
         border = BorderStroke(borderWidth, borderColor),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (selected) 4.dp else 1.dp,
-            disabledElevation = if (selected) 4.dp else 1.dp
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, disabledElevation = 0.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             IconBubble(
                 icon = icon,
                 tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                size = 46.dp
+                size = 42.dp
             )
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             if (selected) {
-                Pill(text = "Picked", color = MaterialTheme.colorScheme.primary)
+                Pill(text = "Selected", color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -355,25 +340,34 @@ private fun ChoiceCard(
 
 @Composable
 private fun TrackPreview(track: LearnerTrack, modifier: Modifier = Modifier) {
-    val title = when (track) { LearnerTrack.FOUNDATIONS -> R.string.track_foundations; LearnerTrack.EXPERIENCED_DEV -> R.string.track_experienced; LearnerTrack.GODOT_REFERENCE -> R.string.track_reference }
-    val desc = when (track) { LearnerTrack.FOUNDATIONS -> R.string.track_foundations_desc; LearnerTrack.EXPERIENCED_DEV -> R.string.track_experienced_desc; LearnerTrack.GODOT_REFERENCE -> R.string.track_reference_desc }
+    val title = when (track) {
+        LearnerTrack.FOUNDATIONS -> R.string.track_foundations
+        LearnerTrack.EXPERIENCED_DEV -> R.string.track_experienced
+        LearnerTrack.GODOT_REFERENCE -> R.string.track_reference
+    }
+    val desc = when (track) {
+        LearnerTrack.FOUNDATIONS -> R.string.track_foundations_desc
+        LearnerTrack.EXPERIENCED_DEV -> R.string.track_experienced_desc
+        LearnerTrack.GODOT_REFERENCE -> R.string.track_reference_desc
+    }
     val heroText = heroTextPrimary()
     val heroTextSub = heroTextSecondary()
     val heroTextMuted = heroTextTertiary()
     HeroPanel(
         modifier = modifier,
         gradient = brandGradient(),
-        shape = RoundedCornerShape(26.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Text(
-            text = "WE'LL START YOU ON",
-            style = MaterialTheme.typography.labelSmall,
+            text = "RECOMMENDED TRACK",
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
             fontWeight = FontWeight.Bold,
             color = heroTextMuted
         )
         Text(
             text = stringResource(title),
             style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
             color = heroText
         )
         Text(

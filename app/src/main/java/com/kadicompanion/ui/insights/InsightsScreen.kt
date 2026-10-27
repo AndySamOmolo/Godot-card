@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.Quiz
-import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -45,17 +45,12 @@ import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.ProgressRing
 import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.common.StatTile
+import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
 import com.kadicompanion.ui.theme.heroTextTertiary
 import com.kadicompanion.ui.theme.successColor
-
-/*
- * A small analytics dashboard: a gradient hero carrying the headline accuracy
- * ring, a row of metric tiles, then per-concept mastery as labelled bars that
- * are tinted by how well the concept is going.
- */
 
 @Composable
 fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) {
@@ -65,7 +60,7 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
         topBar = {
             KadiTopBar(
                 title = stringResource(R.string.action_insights),
-                subtitle = "Your progress",
+                subtitle = "LEARNING ANALYTICS",
                 onBack = onBack
             )
         }
@@ -74,7 +69,7 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
             when {
                 state.isLoading -> LoadingSkeleton()
                 state.totalQuestions == 0 && state.debugTotal == 0 -> EmptyState(
-                    title = "Nothing to show yet",
+                    title = "No analytics yet",
                     message = stringResource(R.string.empty_insights),
                     icon = Icons.Outlined.Insights
                 )
@@ -82,7 +77,7 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     AccuracyHero(
@@ -118,7 +113,7 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
                         SectionHeader(
                             title = stringResource(R.string.insights_weakest),
                             modifier = Modifier.padding(top = 6.dp),
-                            eyebrow = "Mastery"
+                            eyebrow = "CONCEPT MASTERY"
                         )
                         KadiCard {
                             state.weakestConcepts.forEachIndexed { index, entry ->
@@ -135,7 +130,7 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
                     SectionHeader(
                         title = stringResource(R.string.insights_debug),
                         modifier = Modifier.padding(top = 6.dp),
-                        eyebrow = "Practice"
+                        eyebrow = "DEBUG LAB"
                     )
                     KadiCard {
                         Row(
@@ -147,12 +142,13 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
                                     text = "Challenges attempted",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "${state.debugTotal} in total",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -166,12 +162,13 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
                                     text = stringResource(R.string.insights_debug_reveal_rate),
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "${state.debugRevealedWithoutAttempt} revealed the fix without attempting",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -196,14 +193,15 @@ private fun AccuracyHero(fraction: Float, totalQuestions: Int) {
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "This is how you are doing".uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "PERFORMANCE OVERVIEW",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     color = heroTextMuted,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = stringResource(R.string.insights_accuracy),
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
                     color = heroText
                 )
                 Text(
@@ -212,12 +210,18 @@ private fun AccuracyHero(fraction: Float, totalQuestions: Int) {
                     color = heroTextSub
                 )
             }
-            ProgressRing(fraction = fraction, size = 96.dp, strokeWidth = 9.dp)
+            ProgressRing(
+                fraction = fraction,
+                size = 84.dp,
+                strokeWidth = 8.dp,
+                textColor = heroText,
+                trackColor = heroText.copy(alpha = 0.18f),
+                activeColor = Color(0xFF38BDF8)
+            )
         }
     }
 }
 
-/** One concept, shown as mastery (the inverse of its miss rate) with a tinted bar. */
 @Composable
 private fun ConceptMasteryRow(concept: String, missRate: Float, modifier: Modifier = Modifier) {
     val mastery = (1f - missRate).coerceIn(0f, 1f)
@@ -225,7 +229,7 @@ private fun ConceptMasteryRow(concept: String, missRate: Float, modifier: Modifi
     val reduceMotion = LocalReduceMotion.current
     val animated by animateFloatAsState(
         targetValue = mastery,
-        animationSpec = if (reduceMotion) tween(durationMillis = 0) else tween(durationMillis = 650),
+        animationSpec = if (reduceMotion) tween(durationMillis = 0) else tween(durationMillis = 550),
         label = "mastery"
     )
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -236,7 +240,8 @@ private fun ConceptMasteryRow(concept: String, missRate: Float, modifier: Modifi
         ) {
             Text(
                 text = concept,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
@@ -246,7 +251,7 @@ private fun ConceptMasteryRow(concept: String, missRate: Float, modifier: Modifi
         }
         LinearProgressIndicator(
             progress = { animated },
-            modifier = Modifier.fillMaxWidth().height(9.dp),
+            modifier = Modifier.fillMaxWidth().height(7.dp),
             color = tint,
             trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
             strokeCap = StrokeCap.Round

@@ -3,126 +3,118 @@ package com.kadicompanion.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /*
- * Kadi palette.
+ * Kadi Studio Palette — Redesigned from scratch.
  *
- * The brand is built on three notes borrowed from a Kenyan card table:
- *   - Gold   (primary)   : lamplight over the table, progress, achievement
- *   - Teal   (secondary) : cool counterpoint for information and links
- *   - Crimson(tertiary)  : the red suits, penalties, urgency
- * Dark mode sits on an "ink" background so gold reads like light in a dark room;
- * light mode sits on warm ivory so it feels like paper rather than a hospital wall.
+ * Inspired by Godot 4.3 Engine, Linear, and Raycast:
+ * - Dark mode uses deep carbon-slate backgrounds (#0B0F17) and crisp elevated
+ *   slate containers (#111827 / #161F30) with sharp hairline borders (#24324B).
+ * - Light mode uses cool studio alabaster (#F8FAFC) and pure white surfaces
+ *   (#FFFFFF) with clean slate borders (#E2E8F0).
+ * - Accents:
+ *   - Primary   (Godot Azure / Sapphire) : #38BDF8 (dark) / #2563EB (light)
+ *   - Secondary (Emerald Mint)           : #10B981 (dark) / #059669 (light)
+ *   - Tertiary  (Warm Amber)             : #F59E0B (dark) / #D97706 (light)
  */
 
 // ---------------------------------------------------------------- dark scheme
-val DarkBackground = Color(0xFF090D13)
-val DarkSurface = Color(0xFF10161F)
-val DarkSurfaceContainerLowest = Color(0xFF0B1017)
-val DarkSurfaceContainerLow = Color(0xFF131A24)
-val DarkSurfaceContainer = Color(0xFF171F2A)
-val DarkSurfaceContainerHigh = Color(0xFF1E2733)
-val DarkSurfaceContainerHighest = Color(0xFF25303D)
-val DarkSurfaceVariant = Color(0xFF232C38)
-val DarkInverseSurface = Color(0xFFE6EDF3)
-val DarkInverseOnSurface = Color(0xFF10161F)
-val DarkOnBackground = Color(0xFFECF2F8)
-val DarkOnSurface = Color(0xFFECF2F8)
-val DarkOnSurfaceVariant = Color(0xFFB6C0CC)
+val DarkBackground = Color(0xFF0B0F17)
+val DarkSurface = Color(0xFF111827)
+val DarkSurfaceContainerLowest = Color(0xFF080B11)
+val DarkSurfaceContainerLow = Color(0xFF0F1623)
+val DarkSurfaceContainer = Color(0xFF151E2E)
+val DarkSurfaceContainerHigh = Color(0xFF1C273C)
+val DarkSurfaceContainerHighest = Color(0xFF24324B)
+val DarkSurfaceVariant = Color(0xFF1E293B)
+val DarkInverseSurface = Color(0xFFF1F5F9)
+val DarkInverseOnSurface = Color(0xFF0F172A)
+val DarkOnBackground = Color(0xFFF1F5F9)
+val DarkOnSurface = Color(0xFFF1F5F9)
+val DarkOnSurfaceVariant = Color(0xFF94A3B8)
 
-val DarkPrimary = Color(0xFFFFC44D)
-val DarkOnPrimary = Color(0xFF2B1D00)
-val DarkPrimaryContainer = Color(0xFF4A3300)
-val DarkOnPrimaryContainer = Color(0xFFFFE1A6)
+val DarkPrimary = Color(0xFF38BDF8)
+val DarkOnPrimary = Color(0xFF062032)
+val DarkPrimaryContainer = Color(0xFF0C4A6E)
+val DarkOnPrimaryContainer = Color(0xFFE0F2FE)
 
-val DarkSecondary = Color(0xFF63DCEC)
-val DarkOnSecondary = Color(0xFF00343B)
-val DarkSecondaryContainer = Color(0xFF004E57)
-val DarkOnSecondaryContainer = Color(0xFFB6F2FB)
+val DarkSecondary = Color(0xFF10B981)
+val DarkOnSecondary = Color(0xFF022C22)
+val DarkSecondaryContainer = Color(0xFF064E3B)
+val DarkOnSecondaryContainer = Color(0xFFD1FAE5)
 
-val DarkTertiary = Color(0xFFFF6B77)
-val DarkOnTertiary = Color(0xFF480009)
-val DarkTertiaryContainer = Color(0xFF7A1420)
-val DarkOnTertiaryContainer = Color(0xFFFFD9DC)
+val DarkTertiary = Color(0xFFF59E0B)
+val DarkOnTertiary = Color(0xFF3B1D00)
+val DarkTertiaryContainer = Color(0xFF78350F)
+val DarkOnTertiaryContainer = Color(0xFFFEF3C7)
 
-val DarkError = Color(0xFFFF8A8A)
-val DarkOnError = Color(0xFF4A0004)
-val DarkErrorContainer = Color(0xFF7A1417)
-val DarkOnErrorContainer = Color(0xFFFFDAD8)
+val DarkError = Color(0xFFF87171)
+val DarkOnError = Color(0xFF450A0A)
+val DarkErrorContainer = Color(0xFF7F1D1D)
+val DarkOnErrorContainer = Color(0xFFFEE2E2)
 
-val DarkOutline = Color(0xFF44505F)
-val DarkOutlineVariant = Color(0xFF2A333F)
+val DarkOutline = Color(0xFF334155)
+val DarkOutlineVariant = Color(0xFF24324B)
 val DarkScrim = Color(0xFF000000)
 
 // --------------------------------------------------------------- light scheme
-val LightBackground = Color(0xFFFCFAF5)
+val LightBackground = Color(0xFFF8FAFC)
 val LightSurface = Color(0xFFFFFFFF)
 val LightSurfaceContainerLowest = Color(0xFFFFFFFF)
-val LightSurfaceContainerLow = Color(0xFFFBF7EF)
-val LightSurfaceContainer = Color(0xFFF6F1E7)
-val LightSurfaceContainerHigh = Color(0xFFF0EADD)
-val LightSurfaceContainerHighest = Color(0xFFEAE3D4)
-val LightSurfaceVariant = Color(0xFFF2EDE2)
-val LightInverseSurface = Color(0xFF2B2A26)
-val LightInverseOnSurface = Color(0xFFFCFAF5)
-val LightOnBackground = Color(0xFF1B1A16)
-val LightOnSurface = Color(0xFF1B1A16)
-val LightOnSurfaceVariant = Color(0xFF56503F)
+val LightSurfaceContainerLow = Color(0xFFF1F5F9)
+val LightSurfaceContainer = Color(0xFFFFFFFF)
+val LightSurfaceContainerHigh = Color(0xFFF1F5F9)
+val LightSurfaceContainerHighest = Color(0xFFE2E8F0)
+val LightSurfaceVariant = Color(0xFFE2E8F0)
+val LightInverseSurface = Color(0xFF0F172A)
+val LightInverseOnSurface = Color(0xFFF8FAFC)
+val LightOnBackground = Color(0xFF0F172A)
+val LightOnSurface = Color(0xFF0F172A)
+val LightOnSurfaceVariant = Color(0xFF475569)
 
-val LightPrimary = Color(0xFF9A6200)
+val LightPrimary = Color(0xFF2563EB)
 val LightOnPrimary = Color(0xFFFFFFFF)
-val LightPrimaryContainer = Color(0xFFFFE1A6)
-val LightOnPrimaryContainer = Color(0xFF2B1D00)
+val LightPrimaryContainer = Color(0xFFDBEAFE)
+val LightOnPrimaryContainer = Color(0xFF1E3A8A)
 
-val LightSecondary = Color(0xFF006874)
+val LightSecondary = Color(0xFF059669)
 val LightOnSecondary = Color(0xFFFFFFFF)
-val LightSecondaryContainer = Color(0xFFB6F2FB)
-val LightOnSecondaryContainer = Color(0xFF00343B)
+val LightSecondaryContainer = Color(0xFFD1FAE5)
+val LightOnSecondaryContainer = Color(0xFF064E3B)
 
-val LightTertiary = Color(0xFFB3261E)
+val LightTertiary = Color(0xFFD97706)
 val LightOnTertiary = Color(0xFFFFFFFF)
-val LightTertiaryContainer = Color(0xFFFFD9DC)
-val LightOnTertiaryContainer = Color(0xFF480009)
+val LightTertiaryContainer = Color(0xFFFEF3C7)
+val LightOnTertiaryContainer = Color(0xFF78350F)
 
-val LightError = Color(0xFFB3261E)
+val LightError = Color(0xFFDC2626)
 val LightOnError = Color(0xFFFFFFFF)
-val LightErrorContainer = Color(0xFFFFDAD6)
-val LightOnErrorContainer = Color(0xFF410002)
+val LightErrorContainer = Color(0xFFFEE2E2)
+val LightOnErrorContainer = Color(0xFF7F1D1D)
 
-val LightOutline = Color(0xFF827A66)
-val LightOutlineVariant = Color(0xFFDDD5C3)
+val LightOutline = Color(0xFF94A3B8)
+val LightOutlineVariant = Color(0xFFE2E8F0)
 val LightScrim = Color(0xFF000000)
 
-// -------------------------------------------------- brand accents (both modes)
-val BrandGradientStart = Color(0xFFFFC44D)
-val BrandGradientMid = Color(0xFFFF8A3D)
-val BrandGradientEnd = Color(0xFFE63946)
+// -------------------------------------------------- studio hero & status colors
+val StudioHeroStart = Color(0xFF0F172A)
+val StudioHeroMid = Color(0xFF1E3A8A)
+val StudioHeroEnd = Color(0xFF0284C7)
 
-val SuccessGreen = Color(0xFF4CAF7D)
-val OnSuccessGreen = Color(0xFF00391E)
-val SuccessGreenLight = Color(0xFF1E7A4F)
-val SuccessContainerDark = Color(0xFF10412C)
-val SuccessContainerLight = Color(0xFFCDEEDB)
+val SuccessGreen = Color(0xFF10B981)
+val OnSuccessGreen = Color(0xFF022C22)
+val SuccessGreenLight = Color(0xFF059669)
+val SuccessContainerDark = Color(0xFF064E3B)
+val SuccessContainerLight = Color(0xFFD1FAE5)
 
-// ------------------------------------------------ hero text (always light/white)
-/**
- * Hero panels use vivid gradients in both light and dark modes, so text on top
- * must always be white/light — the default Material `onPrimary` is dark brown
- * in dark mode which looks black on the gradient.
- */
+// ------------------------------------------------ hero text (always crisp light)
 val HeroTextPrimary = Color(0xFFFFFFFF)
-val HeroTextSecondary = Color(0xDEFFFFFF) // 87% white
-val HeroTextTertiary = Color(0xB3FFFFFF) // 70% white
+val HeroTextSecondary = Color(0xE6F1F5F9)
+val HeroTextTertiary = Color(0xB394A3B8)
 
-// ------------------------------------------------ glow & glass accents
-val GlowGold = Color(0xFFFFD666)
-val GlowTeal = Color(0xFF7EE8F5)
-val GlowCrimson = Color(0xFFFF8A94)
-
-val CardGlassDark = Color(0x1AFFFFFF)     // 10% white overlay
-val CardGlassLight = Color(0x0DFFFFFF)    // 5% white overlay
-val GlassBorderDark = Color(0x26FFFFFF)   // 15% white border
-val GlassBorderLight = Color(0x1AFFFFFF)  // 10% white border
-
-val ShimmerGold = Color(0x33FFC44D)       // 20% gold for shimmer effects
+// ------------------------------------------------ borders & glass accents
+val CardGlassDark = Color(0x14FFFFFF)
+val CardGlassLight = Color(0x0A0F172A)
+val GlassBorderDark = Color(0xFF24324B)
+val GlassBorderLight = Color(0xFFE2E8F0)
 
 object SyntaxColors {
     val darkKeyword = Color(0xFFFF7B72)
@@ -132,7 +124,7 @@ object SyntaxColors {
     val darkNumber = Color(0xFF79C0FF)
     val darkFunction = Color(0xFFD2A8FF)
     val darkPlain = Color(0xFFE6EDF3)
-    val darkBackground = Color(0xFF0B1017)
+    val darkBackground = Color(0xFF090D16)
 
     val lightKeyword = Color(0xFFCF222E)
     val lightType = Color(0xFF953800)
@@ -140,29 +132,25 @@ object SyntaxColors {
     val lightComment = Color(0xFF6E7781)
     val lightNumber = Color(0xFF0550AE)
     val lightFunction = Color(0xFF8250DF)
-    val lightPlain = Color(0xFF24292F)
-    val lightBackground = Color(0xFFF7F4EC)
+    val lightPlain = Color(0xFF1E293B)
+    val lightBackground = Color(0xFFF1F5F9)
 }
 
-/**
- * Callout palettes. Both a dark and a light variant exist so the "why" and
- * "common mistake" boxes stay readable in either theme.
- */
 object CalloutColors {
-    val whyBackgroundDark = Color(0xFF12281D)
-    val whyBorderDark = Color(0xFF3E7A55)
-    val whyIconDark = Color(0xFF7BD88F)
-    val whyBackgroundLight = Color(0xFFE6F4EA)
-    val whyBorderLight = Color(0xFF9CCBAC)
-    val whyIconLight = Color(0xFF1E7A4F)
+    val whyBackgroundDark = Color(0xFF0C2922)
+    val whyBorderDark = Color(0xFF10B981)
+    val whyIconDark = Color(0xFF34D399)
+    val whyBackgroundLight = Color(0xFFECFDF5)
+    val whyBorderLight = Color(0xFF10B981)
+    val whyIconLight = Color(0xFF059669)
 
-    val mistakeBackgroundDark = Color(0xFF2C1518)
-    val mistakeBorderDark = Color(0xFFB05252)
-    val mistakeIconDark = Color(0xFFFF9F9F)
-    val mistakeBackgroundLight = Color(0xFFFDECEC)
-    val mistakeBorderLight = Color(0xFFE0A5A5)
-    val mistakeIconLight = Color(0xFFB3261E)
+    val mistakeBackgroundDark = Color(0xFF2A1215)
+    val mistakeBorderDark = Color(0xFFF87171)
+    val mistakeIconDark = Color(0xFFFCA5A5)
+    val mistakeBackgroundLight = Color(0xFFFEF2F2)
+    val mistakeBorderLight = Color(0xFFEF4444)
+    val mistakeIconLight = Color(0xFFDC2626)
 
-    val bodyDark = Color(0xFFE6EDF3)
-    val bodyLight = Color(0xFF2A2622)
+    val bodyDark = Color(0xFFE2E8F0)
+    val bodyLight = Color(0xFF1E293B)
 }

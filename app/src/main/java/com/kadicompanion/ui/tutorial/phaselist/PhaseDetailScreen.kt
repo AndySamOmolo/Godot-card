@@ -2,8 +2,7 @@ package com.kadicompanion.ui.tutorial.phaselist
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,14 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Checklist
@@ -30,6 +27,8 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -44,8 +43,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.domain.model.Lesson
@@ -58,11 +57,8 @@ import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.theme.CodeFontFamily
-import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
-import com.kadicompanion.ui.theme.heroTextTertiary
-import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
 @Composable
@@ -74,12 +70,13 @@ fun PhaseDetailScreen(
     vm: PhaseDetailViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    val phase = state.phase
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             KadiTopBar(
-                title = state.phase?.title ?: phaseId,
-                subtitle = state.phase?.let { "Phase ${it.order}" },
+                title = phase?.title ?: "Module",
+                subtitle = phase?.let { "MODULE ${it.order.toString().padStart(2, '0')}" },
                 onBack = onBack
             )
         }
@@ -87,70 +84,72 @@ fun PhaseDetailScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> LoadingSkeleton()
-                state.phase == null -> EmptyState(title = "Phase not found", message = "Go back and pick another phase.")
+                phase == null -> EmptyState(title = "Module not found", message = "")
                 else -> {
-                    val phase = state.phase!!
-                    val lessons = state.lessons
-                    val completedInPhase = lessons.count { it.id in state.completedIds }
-                    val nextUnfinishedLesson = lessons.firstOrNull { it.id !in state.completedIds } ?: lessons.firstOrNull()
-
+                    val completedCount = phase.lessons.count { it.id in state.completedIds }
+                    val nextUncompletedLesson = phase.lessons.firstOrNull { it.id !in state.completedIds }
+                        ?: phase.lessons.firstOrNull()
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 12.dp,
+                            bottom = 28.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        item {
-                            PhaseHero(
+                        item(key = "hero") {
+                            ModuleHeaderCard(
+                                order = phase.order,
+                                title = phase.title,
                                 summary = phase.summary,
-                                minutes = phase.estimatedMinutes,
-                                lessonCount = lessons.size,
-                                completedCount = completedInPhase,
-                                nextLessonTitle = nextUnfinishedLesson?.title,
-                                onStartOrContinue = { nextUnfinishedLesson?.let { onLessonClick(it.id) } }
+                                completed = completedCount,
+                                total = phase.lessons.size,
+                                nextLessonTitle = nextUncompletedLesson?.title,
+                                onStartOrContinue = { nextUncompletedLesson?.let { onLessonClick(it.id) } }
                             )
                         }
-                        if (phase.learningObjectives.isNotEmpty() || phase.projectFiles.isNotEmpty()) {
-                            item {
-                                PhaseBlueprintSummaryCard(
-                                    objectives = phase.learningObjectives,
-                                    projectFiles = phase.projectFiles,
-                                    sceneTree = phase.sceneTreeBlueprint
-                                )
-                            }
-                        }
-                        item {
+                        item(key = "lessons_header") {
                             SectionHeader(
-                                title = "Step-by-Step Lessons",
-                                eyebrow = "build in order",
+                                title = "Module Syllabus",
+                                modifier = Modifier.padding(top = 6.dp),
+                                eyebrow = "${phase.lessons.size} GUIDED LESSONS",
                                 trailing = {
                                     Pill(
-                                        text = "$completedInPhase/${lessons.size}",
-                                        color = successColor()
+                                        text = "$completedCount/${phase.lessons.size} Completed",
+                                        color = if (completedCount == phase.lessons.size && phase.lessons.isNotEmpty()) {
+                                            successColor()
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        }
                                     )
                                 }
                             )
                         }
-                        items(lessons, key = { it.id }) { lesson ->
-                            val index = lessons.indexOf(lesson) + 1
-                            val done = lesson.id in state.completedIds
-                            val isNextUp = lesson.id == nextUnfinishedLesson?.id && !done
-                            LessonRow(
-                                index = index,
+                        items(phase.lessons, key = { it.id }) { lesson ->
+                            val isCompleted = lesson.id in state.completedIds
+                            val isNext = !isCompleted && lesson.id == nextUncompletedLesson?.id
+                            SyllabusLessonRow(
                                 lesson = lesson,
-                                done = done,
-                                isNextUp = isNextUp,
+                                completed = isCompleted,
+                                isNext = isNext,
                                 onClick = { onLessonClick(lesson.id) }
                             )
                         }
                         if (phase.debugChallenge != null) {
-                            item {
+                            item(key = "debug_header") {
                                 SectionHeader(
-                                    title = "Phase Boss: Bug Hunt",
-                                    eyebrow = "test your debugging eyes"
+                                    title = "Hands-On Bug Hunt",
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    eyebrow = "PHASE LAB"
                                 )
                             }
-                            item {
-                                DebugChallengeRow(onClick = onDebugChallenge)
+                            item(key = "debug_card") {
+                                DebugLabCard(
+                                    bugSummary = phase.debugChallenge.bugDescription,
+                                    onClick = onDebugChallenge
+                                )
                             }
                         }
                     }
@@ -161,155 +160,89 @@ fun PhaseDetailScreen(
 }
 
 @Composable
-private fun PhaseBlueprintSummaryCard(
-    objectives: List<String>,
-    projectFiles: List<String>,
-    sceneTree: String?
-) {
-    val isDark = isDarkScheme()
-    val codeBg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
-    KadiCard(accent = MaterialTheme.colorScheme.secondary) {
-        if (objectives.isNotEmpty()) {
-            Text(
-                text = "WHAT YOU'LL MASTER IN THIS PHASE",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                objectives.forEach { obj ->
-                    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("\u2022", color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
-                        Text(obj, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-            }
-        }
-        if (projectFiles.isNotEmpty()) {
-            Text(
-                text = "GODOT PROJECT FILES IN THIS PHASE",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = if (objectives.isNotEmpty()) 6.dp else 0.dp)
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                projectFiles.forEach { file ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(
-                            Icons.Outlined.Description,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = file,
-                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = CodeFontFamily),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-        }
-        if (!sceneTree.isNullOrBlank()) {
-            Text(
-                text = "TARGET SCENE TREE STRUCTURE",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 6.dp)
-            )
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = codeBg,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(10.dp)
-                ) {
-                    Text(
-                        text = sceneTree,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = CodeFontFamily,
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PhaseHero(
+private fun ModuleHeaderCard(
+    order: Int,
+    title: String,
     summary: String,
-    minutes: Int,
-    lessonCount: Int,
-    completedCount: Int,
+    completed: Int,
+    total: Int,
     nextLessonTitle: String?,
     onStartOrContinue: () -> Unit
 ) {
-    val heroText = heroTextPrimary()
-    val heroTextSub = heroTextSecondary()
-    val heroTextMuted = heroTextTertiary()
-    val fraction = if (lessonCount == 0) 0f else completedCount.toFloat() / lessonCount
-    val ctaLabel = when {
-        completedCount == 0 -> "Start Phase: ${nextLessonTitle ?: "Lesson 1"}"
-        completedCount < lessonCount -> "Continue: ${nextLessonTitle ?: "Next Lesson"}"
-        else -> "Review Phase from Lesson 1"
-    }
-    HeroPanel(onClick = onStartOrContinue) {
+    val fraction = if (total == 0) 0f else completed.toFloat() / total
+    val heroWhite = heroTextPrimary()
+    val heroSub = heroTextSecondary()
+
+    HeroPanel(contentPadding = PaddingValues(18.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(6.dp),
+                color = Color(0xFF38BDF8).copy(alpha = 0.22f),
+                border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.45f))
+            ) {
+                Text(
+                    text = "MODULE ${order.toString().padStart(2, '0')}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF7DD3FC),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                )
+            }
+            Text(
+                text = "$completed of $total lessons (${(fraction * 100).toInt()}%)",
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                fontWeight = FontWeight.Bold,
+                color = heroSub
+            )
+        }
         Text(
-            text = "WHAT YOU'LL BUILD",
-            style = MaterialTheme.typography.labelMedium,
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = heroTextMuted
+            color = heroWhite
         )
         Text(
             text = summary,
-            style = MaterialTheme.typography.bodyLarge,
-            color = heroTextSub
+            style = MaterialTheme.typography.bodyMedium,
+            color = heroSub
         )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(Icons.Outlined.Schedule, contentDescription = null, tint = heroText, modifier = Modifier.size(14.dp))
-                Text("~$minutes min", style = MaterialTheme.typography.labelMedium, color = heroText)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(Icons.AutoMirrored.Outlined.MenuBook, contentDescription = null, tint = heroText, modifier = Modifier.size(14.dp))
-                Text("$lessonCount lessons", style = MaterialTheme.typography.labelMedium, color = heroText)
-            }
-        }
         LinearProgressIndicator(
             progress = { fraction },
-            modifier = Modifier.fillMaxWidth().height(7.dp),
-            color = heroText,
-            trackColor = heroText.copy(alpha = 0.25f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .height(6.dp)
+                .clip(RoundedCornerShape(50)),
+            color = Color(0xFF38BDF8),
+            trackColor = heroWhite.copy(alpha = 0.18f),
             strokeCap = StrokeCap.Round
         )
-        Spacer(Modifier.height(4.dp))
-        Surface(
-            shape = CircleShape,
-            color = heroText.copy(alpha = 0.22f),
-            modifier = Modifier.clickable(onClick = onStartOrContinue)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+        if (nextLessonTitle != null) {
+            Button(
+                onClick = onStartOrContinue,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = Color(0xFF0F172A)
+                ),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(44.dp)
             ) {
-                Icon(Icons.Outlined.PlayArrow, contentDescription = null, tint = heroText, modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
                 Text(
-                    text = ctaLabel,
+                    text = when {
+                        completed == 0 -> "Start Lesson 1: $nextLessonTitle"
+                        completed >= total -> "Review Module: $nextLessonTitle"
+                        else -> "Continue: $nextLessonTitle"
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = heroText
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -317,51 +250,117 @@ private fun PhaseHero(
 }
 
 @Composable
-private fun LessonRow(
-    index: Int,
+private fun SyllabusLessonRow(
     lesson: Lesson,
-    done: Boolean,
-    isNextUp: Boolean,
+    completed: Boolean,
+    isNext: Boolean,
     onClick: () -> Unit
 ) {
-    val success = successColor()
-    val accent = when {
-        done -> success
-        isNextUp -> MaterialTheme.colorScheme.primary
-        else -> null
+    val doneColor = successColor()
+    val stepColor = when {
+        completed -> doneColor
+        isNext -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outlineVariant
     }
+    val readMins = ((lesson.bodyMarkdown.length + lesson.codeSnippets.sumOf { it.code.length }) / 950).coerceAtLeast(4)
+
     KadiCard(
         onClick = onClick,
-        accent = accent
+        accent = when {
+            completed -> doneColor
+            isNext -> MaterialTheme.colorScheme.primary
+            else -> null
+        }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            StepBadge(index = index, done = done)
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = lesson.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                lesson.targetFile?.let { file ->
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        when {
+                            completed -> doneColor
+                            isNext -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+                        }
+                    )
+                    .border(1.dp, stepColor, RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (completed) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                } else {
                     Text(
-                        text = file,
-                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                        color = MaterialTheme.colorScheme.primary
+                        text = lesson.order.toString().padStart(2, '0'),
+                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = CodeFontFamily),
+                        color = if (isNext) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold
                     )
                 }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    if (done) {
-                        Pill(text = "Completed", color = success, icon = Icons.Filled.Check)
-                    } else if (isNextUp) {
-                        Pill(text = "Up Next", color = MaterialTheme.colorScheme.primary, icon = Icons.Outlined.PlayArrow)
+                    Text(
+                        text = lesson.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (isNext) {
+                        Pill(text = "Up Next", color = MaterialTheme.colorScheme.primary)
                     }
+                }
+
+                lesson.targetFile?.let { path ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Description,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = path,
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Pill(
+                        text = "~$readMins min",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        icon = Icons.Outlined.Schedule,
+                        filled = false
+                    )
                     if (lesson.editorSteps.isNotEmpty()) {
                         Pill(
                             text = "${lesson.editorSteps.size} steps",
@@ -372,14 +371,15 @@ private fun LessonRow(
                     if (lesson.quizQuestions.isNotEmpty()) {
                         Pill(
                             text = "${lesson.quizQuestions.size} Qs",
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.tertiary,
                             icon = Icons.Outlined.Quiz
                         )
                     }
                 }
             }
+
             Icon(
-                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -388,44 +388,43 @@ private fun LessonRow(
 }
 
 @Composable
-private fun StepBadge(index: Int, done: Boolean) {
-    val success = successColor()
-    val bg = if (done) success else MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-    val fg = if (done) Color.White else MaterialTheme.colorScheme.primary
-    Box(
-        modifier = Modifier.size(38.dp).clip(CircleShape).background(bg),
-        contentAlignment = Alignment.Center
+private fun DebugLabCard(bugSummary: String, onClick: () -> Unit) {
+    KadiCard(
+        onClick = onClick,
+        accent = MaterialTheme.colorScheme.tertiary
     ) {
-        if (done) {
-            Icon(Icons.Filled.Check, contentDescription = "Done", tint = fg, modifier = Modifier.size(20.dp))
-        } else {
-            Text("$index", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = fg)
-        }
-    }
-}
-
-@Composable
-private fun DebugChallengeRow(onClick: () -> Unit) {
-    KadiCard(onClick = onClick, accent = MaterialTheme.colorScheme.tertiary) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            IconBubble(icon = Icons.Outlined.BugReport, tint = MaterialTheme.colorScheme.tertiary)
+            IconBubble(
+                icon = Icons.Outlined.BugReport,
+                tint = MaterialTheme.colorScheme.tertiary,
+                size = 40.dp
+            )
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "Interactive Debug Challenge",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "INTERACTIVE DEBUG CHALLENGE",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+                Text(
+                    text = "Spot & Fix the Broken GDScript Line",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Tap the buggy line in the broken GDScript snippet and squash the bug!",
+                    text = bugSummary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            Pill(text = "Bug Hunt", color = MaterialTheme.colorScheme.tertiary, icon = Icons.Outlined.BugReport)
+            Pill(text = "Launch", color = MaterialTheme.colorScheme.tertiary)
         }
     }
 }

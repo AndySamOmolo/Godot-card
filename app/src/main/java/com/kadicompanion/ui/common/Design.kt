@@ -1,27 +1,28 @@
 package com.kadicompanion.ui.common
 
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,9 +30,11 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -39,46 +42,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kadicompanion.ui.theme.appBackgroundBrush
+import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.brandGradient
-import com.kadicompanion.ui.theme.cardSheenBrush
-import com.kadicompanion.ui.theme.heroTextPrimary
-import com.kadicompanion.ui.theme.heroTextSecondary
-import com.kadicompanion.ui.theme.heroTextTertiary
 import com.kadicompanion.ui.theme.isDarkScheme
-
-/*
- * The Kadi design kit.
- *
- * Every screen is built from these primitives: ambient background, clean top bar,
- * elevated action cards, quiet section headers, soft cards, and loading skeletons.
- */
 
 const val SPADE = "\u2660"
 const val HEART = "\u2665"
 const val CLUB = "\u2663"
 const val DIAMOND = "\u2666"
 
-/** Fills the window with the ambient brand wash. Wrap screen content in this. */
+/** Clean studio background container. */
 @Composable
 fun KadiBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    Box(modifier = modifier.fillMaxSize().background(appBackgroundBrush()), content = content)
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        content = content
+    )
 }
 
-/** Transparent, tightly-set top bar with an optional eyebrow subtitle. */
+/** Crisp studio top app bar with a clean bottom hairline divider and monospace eyebrow. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KadiTopBar(
@@ -87,133 +80,85 @@ fun KadiTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable () -> Unit = {}
 ) {
-    TopAppBar(
-        title = {
-            Column {
-                if (subtitle != null) {
+    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
+        TopAppBar(
+            title = {
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    if (subtitle != null) {
+                        Text(
+                            text = subtitle.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Text(
-                        text = subtitle.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = title,
+                        style = if (subtitle == null) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-                Text(
-                    text = title,
-                    style = if (subtitle == null) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
-            }
-        },
-        navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+            },
+            navigationIcon = {
+                if (onBack != null) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
-            }
-        },
-        actions = { actions() },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            scrolledContainerColor = Color.Transparent,
-            titleContentColor = MaterialTheme.colorScheme.onBackground,
-            navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
-            actionIconContentColor = MaterialTheme.colorScheme.onBackground
+            },
+            actions = { actions() },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.background,
+                scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onBackground,
+                navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                actionIconContentColor = MaterialTheme.colorScheme.onBackground
+            )
         )
-    )
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+        )
+    }
 }
 
 /**
- * An elevated, sleek focus card. Redesigned from a loud banner to a refined,
- * premium card with rich subtle depth, gentle lighting sheen, and crisp typography.
+ * Clean, modern dark-sapphire studio hero card with crisp border and zero suit clutter.
  */
 @Composable
 fun HeroPanel(
     modifier: Modifier = Modifier,
     gradient: Brush = brandGradient(),
-    shape: RoundedCornerShape = RoundedCornerShape(24.dp),
+    shape: RoundedCornerShape = RoundedCornerShape(16.dp),
     onClick: (() -> Unit)? = null,
-    contentPadding: androidx.compose.foundation.layout.PaddingValues = androidx.compose.foundation.layout.PaddingValues(20.dp),
+    contentPadding: PaddingValues = PaddingValues(20.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val dark = isDarkScheme()
     val base = modifier
         .fillMaxWidth()
-        .shadow(
-            elevation = if (dark) 8.dp else 4.dp,
-            shape = shape,
-            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
-            spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-        )
         .clip(shape)
         .background(gradient)
+        .border(1.dp, Color.White.copy(alpha = 0.14f), shape)
     Box(modifier = if (onClick != null) base.clickable(onClick = onClick) else base) {
-        // Subtle top glass highlight
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(36.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = if (dark) 0.15f else 0.22f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-        SuitWatermarks()
         Column(
             modifier = Modifier.fillMaxWidth().padding(contentPadding),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             content = content
         )
     }
 }
 
-/** Decorative card suits used inside [HeroPanel]. */
-@Composable
-private fun BoxScope.SuitWatermarks() {
-    val heroWhite = heroTextPrimary()
-    Text(
-        text = SPADE,
-        fontSize = 52.sp,
-        fontWeight = FontWeight.Black,
-        color = heroWhite,
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .offset(x = 4.dp, y = (-12).dp)
-            .rotate(16f)
-            .alpha(0.09f)
-    )
-    Text(
-        text = HEART,
-        fontSize = 42.sp,
-        fontWeight = FontWeight.Black,
-        color = heroWhite,
-        modifier = Modifier
-            .align(Alignment.BottomEnd)
-            .offset(x = (-16).dp, y = 8.dp)
-            .rotate(-12f)
-            .alpha(0.08f)
-    )
-    Text(
-        text = DIAMOND,
-        fontSize = 34.sp,
-        fontWeight = FontWeight.Black,
-        color = heroWhite,
-        modifier = Modifier
-            .align(Alignment.CenterEnd)
-            .offset(x = 2.dp)
-            .rotate(8f)
-            .alpha(0.06f)
-    )
-}
-
-/** Small uppercase eyebrow + title, with a clean decorative accent bar. */
+/** Clean studio section header with optional monospace eyebrow and trailing slot. */
 @Composable
 fun SectionHeader(
     title: String,
@@ -221,52 +166,37 @@ fun SectionHeader(
     eyebrow: String? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                if (eyebrow != null) {
-                    Text(
-                        text = eyebrow.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.6.sp
-                    )
-                }
+    Row(
+        modifier = modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            if (eyebrow != null) {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Bold
+                    text = eyebrow.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.7.sp
                 )
             }
-            trailing?.invoke()
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
         }
-        Spacer(Modifier.height(6.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            primaryColor.copy(alpha = 0.30f),
-                            primaryColor.copy(alpha = 0.05f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
+        trailing?.invoke()
     }
 }
 
 /**
- * The default content card: a soft container with a hairline outline and an
- * optional accent color.
+ * Clean, flat architectural Studio Card:
+ * - Crisp 1dp hairline border (`outlineVariant` or tinted `accent`)
+ * - Zero background suit watermarks or muddy orange gradients
+ * - Optional subtle top accent bar when `accent != null`
  */
 @Composable
 fun KadiCard(
@@ -277,37 +207,19 @@ fun KadiCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val dark = isDarkScheme()
-    val orangeSeed = accent ?: MaterialTheme.colorScheme.primary
-    val container = if (accent != null) {
-        orangeSeed.copy(alpha = if (dark) 0.12f else 0.08f)
+    val containerColor = MaterialTheme.colorScheme.surfaceContainer
+    val borderColor = if (accent != null) {
+        accent.copy(alpha = if (dark) 0.45f else 0.38f)
     } else {
-        MaterialTheme.colorScheme.surfaceContainer
+        MaterialTheme.colorScheme.outlineVariant
     }
-    val bodyBrush = if (accent != null) {
-        Brush.linearGradient(
-            colors = listOf(
-                orangeSeed.copy(alpha = if (dark) 0.30f else 0.24f),
-                MaterialTheme.colorScheme.surfaceContainer.copy(alpha = if (dark) 0.96f else 1f),
-                orangeSeed.copy(alpha = if (dark) 0.14f else 0.10f)
-            )
-        )
-    } else {
-        Brush.linearGradient(
-            colors = listOf(
-                MaterialTheme.colorScheme.surfaceContainer,
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            )
-        )
-    }
-    val border = BorderStroke(
-        if (accent != null) 1.dp else 0.5.dp,
-        (accent ?: MaterialTheme.colorScheme.outlineVariant).copy(alpha = if (accent != null) 0.34f else 0.6f)
+    val border = BorderStroke(1.dp, borderColor)
+    val colors = CardDefaults.cardColors(
+        containerColor = containerColor,
+        disabledContainerColor = containerColor.copy(alpha = 0.6f)
     )
-    val colors = CardDefaults.cardColors(containerColor = container)
-    val elevation = CardDefaults.cardElevation(
-        defaultElevation = if (dark) 4.dp else 2.dp,
-        pressedElevation = if (dark) 8.dp else 4.dp
-    )
+    val elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 0.dp)
+
     if (onClick != null) {
         Card(
             modifier = modifier.fillMaxWidth(),
@@ -317,7 +229,9 @@ fun KadiCard(
             border = border,
             shape = MaterialTheme.shapes.medium,
             elevation = elevation
-        ) { CardBody(content, bodyBrush) }
+        ) {
+            StudioCardBody(accent = accent, content = content)
+        }
     } else {
         Card(
             modifier = modifier.fillMaxWidth(),
@@ -325,60 +239,34 @@ fun KadiCard(
             border = border,
             shape = MaterialTheme.shapes.medium,
             elevation = elevation
-        ) { CardBody(content, bodyBrush) }
+        ) {
+            StudioCardBody(accent = accent, content = content)
+        }
     }
 }
 
 @Composable
-private fun CardBody(content: @Composable ColumnScope.() -> Unit, bodyBrush: Brush) {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        SuitBackdrop(modifier = Modifier.fillMaxSize())
+private fun StudioCardBody(accent: Color?, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (accent != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(accent)
+            )
+        }
         Column(
-            modifier = Modifier.fillMaxWidth().background(bodyBrush).padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             content = content
         )
     }
 }
 
-@Composable
-private fun SuitBackdrop(modifier: Modifier = Modifier) {
-    val tint = MaterialTheme.colorScheme.primary.copy(alpha = if (isDarkScheme()) 0.06f else 0.08f)
-    Box(modifier = modifier) {
-        Text(
-            text = SPADE,
-            fontSize = 44.sp,
-            fontWeight = FontWeight.Black,
-            color = tint,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 6.dp, y = (-10).dp)
-                .rotate(14f)
-        )
-        Text(
-            text = HEART,
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Black,
-            color = tint,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .offset(x = 4.dp)
-                .rotate(-10f)
-        )
-        Text(
-            text = CLUB,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Black,
-            color = tint,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .offset(x = (-2).dp, y = 6.dp)
-                .rotate(-14f)
-        )
-    }
-}
-
-/** Compact metric tile with a gradient-tinted background. */
+/** Bento metric card with clean border, top icon badge, and bold value. */
 @Composable
 fun StatTile(
     value: String,
@@ -387,40 +275,52 @@ fun StatTile(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null
 ) {
-    val dark = isDarkScheme()
-    Box(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.small)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        accent.copy(alpha = if (dark) 0.16f else 0.12f),
-                        accent.copy(alpha = if (dark) 0.06f else 0.04f)
-                    )
-                )
-            )
-            .padding(vertical = 14.dp, horizontal = 10.dp)
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            if (icon != null) {
-                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (icon != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(accent.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(13.dp))
+                    }
+                }
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            Text(value, style = MaterialTheme.typography.headlineSmall, color = accent, fontWeight = FontWeight.ExtraBold)
             Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.ExtraBold
             )
         }
     }
 }
 
-/** Rounded tag pill with an optional leading icon. */
+/** Clean studio badge pill with subtle border. */
 @Composable
 fun Pill(
     text: String,
@@ -429,64 +329,60 @@ fun Pill(
     icon: ImageVector? = null,
     filled: Boolean = true
 ) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(
-                if (filled) Brush.horizontalGradient(
-                    colors = listOf(
-                        color.copy(alpha = 0.20f),
-                        color.copy(alpha = 0.12f)
-                    )
-                ) else Brush.horizontalGradient(
-                    colors = listOf(Color.Transparent, Color.Transparent)
-                )
-            )
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = if (filled) color.copy(alpha = 0.13f) else Color.Transparent,
+        border = BorderStroke(1.dp, color.copy(alpha = 0.30f))
     ) {
-        if (icon != null) Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
-        Text(text, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
+        }
     }
 }
 
-/** Circular icon chip used in list rows. */
+/** Rounded-square studio icon container (replaces circular glowing bubbles). */
 @Composable
 fun IconBubble(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     tint: Color = MaterialTheme.colorScheme.primary,
-    size: Dp = 40.dp
+    size: Dp = 38.dp
 ) {
-    val glowAlpha = if (isDarkScheme()) 0.08f else 0.05f
     Box(
         modifier = modifier
             .size(size)
-            .drawBehind {
-                drawCircle(
-                    color = tint.copy(alpha = glowAlpha),
-                    radius = this.size.minDimension / 2 + 3.dp.toPx(),
-                    center = Offset(this.size.width / 2, this.size.height / 2)
-                )
-            }
-            .clip(CircleShape)
-            .background(tint.copy(alpha = 0.14f)),
+            .clip(RoundedCornerShape(10.dp))
+            .background(tint.copy(alpha = 0.13f))
+            .border(1.dp, tint.copy(alpha = 0.25f), RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))
     }
 }
 
-/** Shimmer loading skeleton used when data is being fetched. */
+/** Shimmer loading skeleton. */
 @Composable
 fun LoadingSkeleton(lines: Int = 5, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val alpha by transition.animateFloat(
-        initialValue = 0.15f,
-        targetValue = 0.45f,
+        initialValue = 0.08f,
+        targetValue = 0.22f,
         animationSpec = infiniteRepeatable(
-            animation = tween(800),
+            animation = tween(750),
             repeatMode = RepeatMode.Reverse
         ),
         label = "skeletonAlpha"
@@ -500,13 +396,13 @@ fun LoadingSkeleton(lines: Int = 5, modifier: Modifier = Modifier) {
         repeat(lines) { index ->
             val fraction = when (index % 3) {
                 0 -> 1f
-                1 -> 0.78f
-                else -> 0.55f
+                1 -> 0.80f
+                else -> 0.60f
             }
             Box(
                 modifier = Modifier
                     .fillMaxWidth(fraction)
-                    .height(if (index == 0) 24.dp else 16.dp)
+                    .height(if (index == 0) 28.dp else 18.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
             )

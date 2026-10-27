@@ -1,28 +1,31 @@
 package com.kadicompanion.ui.tutorial.phaselist
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.AccountTree
@@ -30,7 +33,6 @@ import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,25 +59,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.R
-import com.kadicompanion.domain.usecase.PhaseWithProgress
 import com.kadicompanion.ui.common.EmptyState
-import com.kadicompanion.ui.common.HeroPanel
-import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
-import com.kadicompanion.ui.theme.heroTextPrimary
-import com.kadicompanion.ui.theme.heroTextSecondary
-import com.kadicompanion.ui.theme.heroTextTertiary
+import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.successColor
 
+private val PHASE_FILTERS = listOf("All Phases", "In Progress", "To Do", "Completed")
+
 /**
- * The course map with live search & status filter chips (`All`, `In Progress`, `To Do`, `Completed`).
+ * Connected Vertical Curriculum Timeline:
+ * Shows overall course progress, live search + filter chips, a Project Blueprint shortcut,
+ * and a vertical connected roadmap of Phases 00 through 11.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,90 +90,236 @@ fun PhaseListScreen(
     val state by vm.uiState.collectAsStateWithLifecycle()
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
-    val filters = listOf("All Phases", "In Progress", "To Do", "Completed")
+
+    val totalLessons = state.phases.sumOf { it.total }
+    val completedLessons = state.phases.sumOf { it.completed }
+    val overallFraction = if (totalLessons > 0) completedLessons.toFloat() / totalLessons else 0f
+
+    val filteredPhases = state.phases.filter { item ->
+        val matchesSearch = searchQuery.isBlank() ||
+            item.phase.title.contains(searchQuery, ignoreCase = true) ||
+            item.phase.summary.contains(searchQuery, ignoreCase = true) ||
+            item.phase.lessons.any {
+                it.title.contains(searchQuery, ignoreCase = true) ||
+                    (it.targetFile?.contains(searchQuery, ignoreCase = true) == true)
+            }
+        val isDone = item.total > 0 && item.completed >= item.total
+        val isInProgress = item.completed in 1 until item.total
+        val isTodo = item.completed == 0
+        val matchesFilter = when (selectedFilter) {
+            1 -> isInProgress
+            2 -> isTodo
+            3 -> isDone
+            else -> true
+        }
+        matchesSearch && matchesFilter
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             KadiTopBar(
-                title = stringResource(R.string.nav_tutorials),
-                subtitle = "build kadi step by step",
+                title = "Course Curriculum",
+                subtitle = "12 PHASES · $totalLessons LESSONS",
                 actions = {
                     IconButton(onClick = onOpenBlueprint) {
-                        Icon(Icons.Outlined.AccountTree, contentDescription = "Project Blueprint")
+                        Icon(
+                            Icons.Outlined.AccountTree,
+                            contentDescription = "Project Blueprint",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                        Icon(
+                            Icons.Outlined.Settings,
+                            contentDescription = stringResource(R.string.action_settings),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.isLoading -> LoadingSkeleton(lines = 8)
+                state.isLoading -> LoadingSkeleton()
                 state.phases.isEmpty() -> EmptyState(
-                    title = "No tutorial phases yet",
-                    message = "Content will appear here once it's bundled."
+                    title = "No tutorial content",
+                    message = "Check that tutorial JSON assets are bundled."
                 )
-                else -> {
-                    val totalLessons = state.phases.sumOf { it.totalLessons }
-                    val doneLessons = state.phases.sumOf { it.completedLessons }
-                    val totalMinutes = state.phases.sumOf { it.phase.estimatedMinutes }
+                else -> LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 12.dp,
+                        bottom = 28.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    // Course Progress + Blueprint Banner
+                    item(key = "course_summary_header") {
+                        Column(
+                            modifier = Modifier.padding(bottom = 14.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "OVERALL CURRICULUM PROGRESS",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = "$completedLessons/$totalLessons lessons (${(overallFraction * 100).toInt()}%)",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = { overallFraction },
+                                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
+                                        color = if (overallFraction >= 1f) successColor() else MaterialTheme.colorScheme.primary,
+                                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                                        strokeCap = StrokeCap.Round
+                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f))
+                                            .clickable(onClick = onOpenBlueprint)
+                                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.AccountTree,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.secondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Text(
+                                            text = "Open Godot 4.3 `res://` Blueprint & Kadi Rule Simulator",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.secondary,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Icon(
+                                            Icons.AutoMirrored.Outlined.ArrowForward,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.secondary,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
+                            }
 
-                    val filteredPhases = state.phases.filter { p ->
-                        val matchesFilter = when (selectedFilter) {
-                            1 -> p.completedLessons in 1 until p.totalLessons
-                            2 -> p.completedLessons == 0
-                            3 -> p.totalLessons > 0 && p.completedLessons >= p.totalLessons
-                            else -> true
-                        }
-                        val q = searchQuery.trim()
-                        val matchesQuery = q.isEmpty() ||
-                            p.phase.title.contains(q, ignoreCase = true) ||
-                            p.phase.summary.contains(q, ignoreCase = true) ||
-                            p.phase.concepts.any { it.contains(q, ignoreCase = true) } ||
-                            p.phase.projectFiles.any { it.contains(q, ignoreCase = true) } ||
-                            p.phase.lessons.any { it.title.contains(q, ignoreCase = true) }
-                        matchesFilter && matchesQuery
-                    }
-
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        item {
-                            CourseHero(
-                                phaseCount = state.phases.size,
-                                doneLessons = doneLessons,
-                                totalLessons = totalLessons,
-                                totalMinutes = totalMinutes
-                            )
-                        }
-                        item {
-                            BlueprintBannerCard(onClick = onOpenBlueprint)
-                        }
-                        item {
-                            PhaseSearchAndFilterBar(
-                                query = searchQuery,
-                                onQueryChange = { searchQuery = it },
-                                filters = filters,
-                                selectedFilter = selectedFilter,
-                                onSelectFilter = { selectedFilter = it }
-                            )
-                        }
-                        if (filteredPhases.isEmpty()) {
-                            item {
-                                EmptyState(
-                                    title = "No matching phases",
-                                    message = "Try clearing your search or switching the filter chip above."
+                            // Search Bar
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                            ) {
+                                TextField(
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = {
+                                        Text(
+                                            "Filter phases, lessons, or res:// files…",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Outlined.Search,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        if (searchQuery.isNotEmpty()) {
+                                            IconButton(onClick = { searchQuery = "" }) {
+                                                Icon(Icons.Outlined.Close, contentDescription = "Clear")
+                                            }
+                                        }
+                                    },
+                                    singleLine = true,
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        disabledContainerColor = Color.Transparent,
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent
+                                    )
                                 )
                             }
-                        } else {
-                            items(filteredPhases, key = { it.phase.id }) { phase ->
-                                PhaseCard(phase = phase, onClick = { if (!phase.isLocked) onPhaseClick(phase.phase.id) })
+
+                            // Status Filter Tabs
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                PHASE_FILTERS.forEachIndexed { idx, label ->
+                                    val selected = selectedFilter == idx
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                        else MaterialTheme.colorScheme.surfaceContainer,
+                                        border = BorderStroke(
+                                            width = 1.dp,
+                                            color = if (selected) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.outlineVariant
+                                        ),
+                                        modifier = Modifier.clickable { selectedFilter = idx }
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (selected) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                        )
+                                    }
+                                }
                             }
+                        }
+                    }
+
+                    if (filteredPhases.isEmpty()) {
+                        item(key = "no_matches") {
+                            EmptyState(
+                                title = "No matching phases",
+                                message = "Try clearing your search query or switching the status filter."
+                            )
+                        }
+                    } else {
+                        itemsIndexed(filteredPhases, key = { _, item -> item.phase.id }) { index, item ->
+                            TimelinePhaseRow(
+                                item = item,
+                                isLast = index == filteredPhases.lastIndex,
+                                onClick = { if (!item.isLocked) onPhaseClick(item.phase.id) }
+                            )
                         }
                     }
                 }
@@ -180,293 +328,175 @@ fun PhaseListScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PhaseSearchAndFilterBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    filters: List<String>,
-    selectedFilter: Int,
-    onSelectFilter: (Int) -> Unit
+private fun TimelinePhaseRow(
+    item: PhaseWithProgress,
+    isLast: Boolean,
+    onClick: () -> Unit
 ) {
-    val container = MaterialTheme.colorScheme.surfaceContainerHigh
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {
-                Text(
-                    text = "Search phases, lessons, or res:// files…",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
-            },
-            leadingIcon = {
-                Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            },
-            trailingIcon = {
-                AnimatedVisibility(visible = query.isNotEmpty()) {
-                    IconButton(onClick = { onQueryChange("") }) {
-                        Icon(
-                            Icons.Outlined.Close,
-                            contentDescription = "Clear search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(50),
-            textStyle = MaterialTheme.typography.bodyMedium,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = container,
-                unfocusedContainerColor = container,
-                disabledContainerColor = container,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                cursorColor = MaterialTheme.colorScheme.primary
-            )
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val fraction = if (item.total == 0) 0f else item.completed.toFloat() / item.total
+    val isDone = item.total > 0 && item.completed >= item.total
+    val isInProgress = item.completed in 1 until item.total
+    val nodeColor = when {
+        item.isLocked -> MaterialTheme.colorScheme.outline
+        isDone -> successColor()
+        isInProgress -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outlineVariant
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .alpha(if (item.isLocked) 0.6f else 1f),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Left Timeline Rail
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(34.dp).fillMaxHeight()
         ) {
-            filters.forEachIndexed { idx, label ->
-                val active = selectedFilter == idx
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
-                    else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    border = BorderStroke(
-                        width = if (active) 1.5.dp else 0.5.dp,
-                        color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(9.dp))
+                    .background(
+                        when {
+                            isDone -> successColor()
+                            isInProgress -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+                        }
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = nodeColor,
+                        shape = RoundedCornerShape(9.dp)
                     ),
-                    modifier = Modifier.clickable { onSelectFilter(idx) }
-                ) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                        color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+                contentAlignment = Alignment.Center
+            ) {
+                when {
+                    item.isLocked -> Icon(
+                        Icons.Outlined.Lock,
+                        contentDescription = "Locked",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    isDone -> Icon(
+                        Icons.Filled.Check,
+                        contentDescription = "Completed",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    else -> Text(
+                        text = item.phase.order.toString().padStart(2, '0'),
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = if (isInProgress) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun BlueprintBannerCard(onClick: () -> Unit) {
-    val accent = MaterialTheme.colorScheme.secondary
-    KadiCard(onClick = onClick, accent = accent) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            IconBubble(icon = Icons.Outlined.AccountTree, tint = accent, size = 44.dp)
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    text = "BIG PICTURE & INTERACTIVE SANDBOX",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = accent
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .weight(1f)
+                        .background(
+                            if (isDone) successColor().copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.outlineVariant
+                        )
                 )
+            }
+        }
+
+        // Right Studio Module Card
+        Box(modifier = Modifier.weight(1f).padding(bottom = 12.dp)) {
+            val targetFilesCount = item.phase.lessons.mapNotNull { it.targetFile }.distinct().size
+            KadiCard(
+                onClick = if (item.isLocked) null else onClick,
+                accent = when {
+                    isDone -> successColor()
+                    isInProgress -> MaterialTheme.colorScheme.primary
+                    else -> null
+                },
+                enabled = !item.isLocked
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "MODULE ${item.phase.order.toString().padStart(2, '0')}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDone) successColor() else MaterialTheme.colorScheme.primary
+                    )
+                    Pill(
+                        text = when {
+                            item.isLocked -> "Locked"
+                            isDone -> "Completed"
+                            isInProgress -> "${item.completed}/${item.total} Done"
+                            else -> "${item.total} Lessons"
+                        },
+                        color = when {
+                            item.isLocked -> MaterialTheme.colorScheme.outline
+                            isDone -> successColor()
+                            isInProgress -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+
                 Text(
-                    text = "Godot Project Map & Kadi Rule Simulator",
+                    text = item.phase.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+
                 Text(
-                    text = "See how every script, scene, and signal connects — and test Kadi card rules interactively.",
+                    text = item.phase.summary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-            }
-            Icon(
-                Icons.AutoMirrored.Outlined.ArrowForward,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-    }
-}
 
-@Composable
-private fun CourseHero(phaseCount: Int, doneLessons: Int, totalLessons: Int, totalMinutes: Int) {
-    val fraction = if (totalLessons == 0) 0f else doneLessons.toFloat() / totalLessons
-    val heroText = heroTextPrimary()
-    val heroTextSub = heroTextSecondary()
-    val heroTextMuted = heroTextTertiary()
-    HeroPanel {
-        Text(
-            text = "THE COMPLETE KADI CURRICULUM",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = heroTextMuted
-        )
-        Text(
-            text = "$phaseCount phases · $totalLessons guided lessons",
-            style = MaterialTheme.typography.headlineMedium,
-            color = heroText
-        )
-        Text(
-            text = "Every lesson shows the exact Godot 4.3 file path, node tree, editor steps, line-by-line code walkthrough, and verification steps (~$totalMinutes min total).",
-            style = MaterialTheme.typography.bodyMedium,
-            color = heroTextSub
-        )
-        LinearProgressIndicator(
-            progress = { fraction },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .padding(top = 4.dp),
-            color = heroText,
-            trackColor = heroText.copy(alpha = 0.25f),
-            strokeCap = StrokeCap.Round
-        )
-        Text(
-            text = "$doneLessons of $totalLessons lessons complete",
-            style = MaterialTheme.typography.labelSmall,
-            color = heroTextSub
-        )
-    }
-}
-
-@Composable
-private fun PhaseCard(phase: PhaseWithProgress, onClick: () -> Unit) {
-    val isComplete = phase.totalLessons > 0 && phase.completedLessons >= phase.totalLessons
-    val inProgress = !phase.isLocked && !isComplete && phase.completedLessons > 0
-    val accent = when {
-        phase.isLocked -> null
-        isComplete -> successColor()
-        inProgress -> MaterialTheme.colorScheme.primary
-        else -> null
-    }
-    KadiCard(
-        modifier = if (phase.isLocked) Modifier.alpha(0.6f) else Modifier,
-        onClick = onClick,
-        enabled = !phase.isLocked,
-        accent = accent
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            PhaseBadge(order = phase.phase.order, isLocked = phase.isLocked, isComplete = isComplete)
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = "PHASE ${phase.phase.order}",
-                        style = MaterialTheme.typography.labelSmall,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Pill(
+                        text = "${item.total} lessons",
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        icon = Icons.AutoMirrored.Outlined.MenuBook
                     )
-                    if (phase.isOptionalForTrack) {
+                    if (targetFilesCount > 0) {
                         Pill(
-                            text = stringResource(R.string.phase_optional),
-                            color = MaterialTheme.colorScheme.secondary
+                            text = "$targetFilesCount files",
+                            color = MaterialTheme.colorScheme.secondary,
+                            icon = Icons.Outlined.Description
                         )
                     }
-                    if (isComplete) Pill(text = "Done", color = successColor(), icon = Icons.Filled.Check)
-                    else if (inProgress) Pill(text = "In progress", color = MaterialTheme.colorScheme.primary)
+                    if (item.phase.debugChallenge != null) {
+                        Pill(
+                            text = "Bug Lab",
+                            color = MaterialTheme.colorScheme.tertiary,
+                            icon = Icons.Outlined.BugReport
+                        )
+                    }
                 }
-                Text(
-                    text = phase.phase.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    modifier = Modifier.fillMaxWidth().height(5.dp).clip(CircleShape),
+                    color = if (isDone) successColor() else MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                    strokeCap = StrokeCap.Round
                 )
             }
-            if (phase.isLocked) {
-                Icon(Icons.Outlined.Lock, contentDescription = "Locked", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                Icon(
-                    Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        Text(
-            text = phase.phase.summary,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            MetaChip(icon = Icons.Outlined.Schedule, text = "~${phase.phase.estimatedMinutes} min")
-            MetaChip(icon = Icons.AutoMirrored.Outlined.MenuBook, text = "${phase.totalLessons} lessons")
-            if (phase.phase.projectFiles.isNotEmpty()) {
-                MetaChip(icon = Icons.Outlined.Description, text = "${phase.phase.projectFiles.size} files")
-            }
-            if (phase.phase.debugChallenge != null) {
-                MetaChip(icon = Icons.Outlined.BugReport, text = "Bug hunt")
-            }
-        }
-        if (phase.totalLessons > 0) {
-            LinearProgressIndicator(
-                progress = { phase.completedLessons.toFloat() / phase.totalLessons },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(7.dp)
-                    .clip(RoundedCornerShape(50)),
-                color = if (isComplete) successColor() else MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
-                strokeCap = StrokeCap.Round
-            )
-            Text(
-                text = "${phase.completedLessons}/${phase.totalLessons} lessons complete",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        if (phase.isLocked) {
-            Text(
-                text = stringResource(R.string.phase_locked),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-    }
-}
-
-@Composable
-private fun MetaChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-        Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun PhaseBadge(order: Int, isLocked: Boolean, isComplete: Boolean) {
-    val success = successColor()
-    val bg = when {
-        isLocked -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-        isComplete -> success
-        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-    }
-    val fg = when {
-        isLocked -> MaterialTheme.colorScheme.onSurfaceVariant
-        isComplete -> Color.White
-        else -> MaterialTheme.colorScheme.primary
-    }
-    Box(
-        modifier = Modifier.size(46.dp).clip(CircleShape).background(bg),
-        contentAlignment = Alignment.Center
-    ) {
-        if (isComplete) {
-            Icon(Icons.Filled.Check, contentDescription = "Complete", tint = fg, modifier = Modifier.size(24.dp))
-        } else {
-            Text("$order", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = fg)
         }
     }
 }

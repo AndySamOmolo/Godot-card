@@ -2,6 +2,7 @@ package com.kadicompanion.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bolt
@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kadicompanion.ui.theme.CalloutColors
+import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.isDarkScheme
 
 enum class CalloutType { WHY, MISTAKE, GODOT, KADI, TIP }
@@ -46,12 +47,7 @@ private data class CalloutStyle(
 )
 
 /**
- * Inline teaching callout. Supports 5 distinct pedagogical callouts:
- * - WHY: architectural & design rationale
- * - MISTAKE: common beginner pitfalls & how to avoid them
- * - GODOT: exact step-by-step instructions inside the Godot 4.3 Editor
- * - KADI: Kenyan Kadi table rule being modeled
- * - TIP: debugging & workflow shortcuts
+ * Crisp developer-docs callout banner with a 4dp left stripe and clean header badge.
  */
 @Composable
 fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
@@ -63,7 +59,7 @@ fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
             border = if (dark) CalloutColors.whyBorderDark else CalloutColors.whyBorderLight,
             accent = if (dark) CalloutColors.whyIconDark else CalloutColors.whyIconLight,
             body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
-            title = "Why this matters",
+            title = "ARCHITECTURAL WHY",
             icon = Icons.Outlined.Lightbulb
         )
         CalloutType.MISTAKE -> CalloutStyle(
@@ -71,68 +67,65 @@ fun Callout(type: CalloutType, body: String, modifier: Modifier = Modifier) {
             border = if (dark) CalloutColors.mistakeBorderDark else CalloutColors.mistakeBorderLight,
             accent = if (dark) CalloutColors.mistakeIconDark else CalloutColors.mistakeIconLight,
             body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
-            title = "Common mistake to avoid",
+            title = "COMMON PITFALL",
             icon = Icons.Outlined.WarningAmber
         )
         CalloutType.GODOT -> CalloutStyle(
-            background = scheme.primary.copy(alpha = if (dark) 0.13f else 0.09f),
-            border = scheme.primary.copy(alpha = 0.50f),
+            background = scheme.primary.copy(alpha = if (dark) 0.10f else 0.07f),
+            border = scheme.primary.copy(alpha = 0.40f),
             accent = scheme.primary,
             body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
-            title = "In the Godot 4.3 Editor",
+            title = "GODOT 4.3 EDITOR",
             icon = Icons.Outlined.Build
         )
         CalloutType.KADI -> CalloutStyle(
-            background = scheme.secondary.copy(alpha = if (dark) 0.13f else 0.09f),
-            border = scheme.secondary.copy(alpha = 0.50f),
+            background = scheme.secondary.copy(alpha = if (dark) 0.10f else 0.07f),
+            border = scheme.secondary.copy(alpha = 0.40f),
             accent = scheme.secondary,
             body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
-            title = "Kadi Table Rule",
+            title = "KADI TABLE RULE",
             icon = Icons.Outlined.Style
         )
         CalloutType.TIP -> CalloutStyle(
-            background = scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f),
-            border = scheme.tertiary.copy(alpha = 0.45f),
+            background = scheme.tertiary.copy(alpha = if (dark) 0.10f else 0.07f),
+            border = scheme.tertiary.copy(alpha = 0.40f),
             accent = scheme.tertiary,
             body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
-            title = "Pro Tip",
+            title = "PRO WORKFLOW TIP",
             icon = Icons.Outlined.Bolt
         )
     }
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(12.dp)
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .clip(shape)
             .background(style.background)
-            .border(1.dp, style.border.copy(alpha = 0.55f), shape)
+            .border(1.dp, style.border.copy(alpha = 0.45f), shape)
     ) {
         Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(style.accent))
-        Row(modifier = Modifier.padding(14.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .background(style.accent.copy(alpha = 0.20f)),
-                contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(style.icon, contentDescription = null, tint = style.accent, modifier = Modifier.size(17.dp))
-            }
-            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Icon(style.icon, contentDescription = null, tint = style.accent, modifier = Modifier.size(16.dp))
                 Text(
-                    text = style.title.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
+                    text = style.title,
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
                     color = style.accent
                 )
-                Text(
-                    text = body,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = style.body,
-                    modifier = Modifier.padding(top = 3.dp)
-                )
             }
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyMedium,
+                color = style.body
+            )
         }
     }
 }

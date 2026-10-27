@@ -3,7 +3,6 @@ package com.kadicompanion.ui.tutorial.lessondetail
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,12 +23,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -40,8 +39,6 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Quiz
@@ -52,32 +49,37 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.R
+import com.kadicompanion.domain.model.Lesson
 import com.kadicompanion.ui.common.CodeBlock
 import com.kadicompanion.ui.common.EmptyState
 import com.kadicompanion.ui.common.IconBubble
@@ -89,23 +91,17 @@ import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.SyntaxColors
-import com.kadicompanion.ui.theme.glassBorderColor
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * The complete reading and building surface. Shows:
- * 1. Lesson progress & header pills (including estimated reading time)
- * 2. Target Godot File (`res://...`) banner with one-tap copy & animated "Copied!" confirmation
- * 3. Collapsible Godot Scene Tree Blueprint diagram (`lesson.sceneTree`)
- * 4. Interactive "Do This in Godot (Step-by-Step)" checklist (`lesson.editorSteps`)
- * 5. Deeply explained Lesson Markdown Prose (`MarkdownText` with tables, callouts & syntax-highlighted code)
- * 6. Complete reference code snippets (`lesson.codeSnippets`)
- * 7. Collapsible "Verify It Works in Godot Right Now (Press F5/F6)" (`lesson.verificationSteps`)
- * 8. Collapsible "Stuck? Common Errors & Instant Fixes" (`lesson.troubleshootingTips`)
- * 9. Key Takeaways summary (`lesson.keyTakeaways`)
- * 10. Practice Prompt card + pinned footer with Prev / Next / Practice / Quiz / Debug
+ * 3-Tab Interactive Learning Studio:
+ * Instead of dumping 10 stacked cards into an endless vertical scroll,
+ * the Lesson Studio organizes learning into 3 focused workspace tabs:
+ *   - Tab 0: Guide & Code (Concept walkthrough, architecture tables, callouts, copyable GDScript)
+ *   - Tab 1: Godot Steps  (Scene Tree hierarchy, interactive step-by-step Editor Checklist, F5/F6 verification, troubleshooting)
+ *   - Tab 2: Lab & Quiz   (Key Takeaways summary + direct launch cards for Practice Workbench, Quiz, and Debug Lab)
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -120,15 +116,33 @@ fun LessonDetailScreen(
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val lesson = state.lesson
-    val scrollState = rememberScrollState()
     val context = LocalContext.current
+
+    var activeTab by rememberSaveable(lesson?.id) { mutableIntStateOf(0) }
+    val guideScroll = rememberScrollState()
+    val stepsScroll = rememberScrollState()
+    val labScroll = rememberScrollState()
+
+    val checkedSteps = remember(lesson?.id, lesson?.editorSteps?.size) {
+        mutableStateListOf<Boolean>().apply {
+            repeat(lesson?.editorSteps?.size ?: 0) { add(false) }
+        }
+    }
+    val completedStepsCount = checkedSteps.count { it }
 
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             KadiTopBar(
                 title = lesson?.title ?: "Lesson",
-                subtitle = state.phaseTitle,
+                subtitle = state.phaseTitle?.let {
+                    val step = if (state.totalLessonsInPhase > 0) {
+                        "LESSON ${lesson?.order ?: 1}/${state.totalLessonsInPhase}"
+                    } else {
+                        "LESSON ${lesson?.order ?: 1}"
+                    }
+                    "$step · $it"
+                },
                 onBack = onBack,
                 actions = {
                     IconButton(onClick = vm::toggleBookmark) {
@@ -143,16 +157,11 @@ fun LessonDetailScreen(
         },
         bottomBar = {
             if (lesson != null) {
-                LessonFooter(
-                    hasPractice = lesson.practicePrompt != null,
-                    hasQuiz = lesson.quizQuestions.isNotEmpty(),
-                    hasDebugChallenge = state.hasDebugChallenge && state.phaseId != null,
+                StudioLessonBottomBar(
                     previousLessonId = state.previousLessonId,
                     nextLessonId = state.nextLessonId,
                     isCompleted = state.isCompleted,
-                    onPractice = onPractice,
-                    onQuiz = onQuiz,
-                    onDebugChallenge = { state.phaseId?.let(onDebugChallenge) },
+                    hasQuiz = lesson.quizQuestions.isNotEmpty(),
                     onNavigateLesson = onNextLesson,
                     onMarkComplete = {
                         vm.markComplete()
@@ -170,177 +179,97 @@ fun LessonDetailScreen(
                     message = "This lesson may have been moved or removed."
                 )
                 else -> {
-                    val readFraction = if (scrollState.maxValue > 0) {
-                        scrollState.value.toFloat() / scrollState.maxValue
+                    val activeScroll = when (activeTab) {
+                        0 -> guideScroll
+                        1 -> stepsScroll
+                        else -> labScroll
+                    }
+                    val readFraction = if (activeScroll.maxValue > 0) {
+                        activeScroll.value.toFloat() / activeScroll.maxValue
                     } else {
                         0f
                     }
-                    // Gradient reading progress bar
-                    Box(modifier = Modifier.fillMaxWidth().height(3.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(3.dp)
-                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(readFraction.coerceIn(0f, 1f))
-                                .height(3.dp)
-                                .clip(RoundedCornerShape(topEnd = 2.dp, bottomEnd = 2.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.secondary
-                                        )
-                                    )
-                                )
-                        )
-                    }
+
+                    // Thin reading progress bar
+                    LinearProgressIndicator(
+                        progress = { readFraction.coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().height(2.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                    )
+
+                    // Compact Studio Header + 3-Tab Segmented Switcher
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                            val stepBadge = if (state.totalLessonsInPhase > 0) {
-                                "LESSON ${lesson.order} OF ${state.totalLessonsInPhase}"
-                            } else {
-                                "LESSON ${lesson.order}"
+                        val readingMinutes = remember(lesson.id) {
+                            ((lesson.bodyMarkdown.length + lesson.codeSnippets.sumOf { it.code.length }) / 950)
+                                .coerceAtLeast(4)
+                        }
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            if (state.isCompleted) {
+                                Pill(text = "Completed", color = successColor(), icon = Icons.Outlined.CheckCircle)
                             }
-                            Text(
-                                text = stepBadge,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                            Pill(
+                                text = "~$readingMinutes min read",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                icon = Icons.Outlined.Schedule
                             )
-                            Text(
-                                text = lesson.title,
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            val readingMinutes = remember(lesson.id) {
-                                ((lesson.bodyMarkdown.length + lesson.codeSnippets.sumOf { it.code.length }) / 950)
-                                    .coerceAtLeast(4)
-                            }
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                if (state.isCompleted) {
-                                    Pill(text = "Completed", color = successColor(), icon = Icons.Outlined.CheckCircle)
-                                }
-                                Pill(
-                                    text = "~$readingMinutes min read",
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    icon = Icons.Outlined.Schedule
-                                )
-                                if (lesson.editorSteps.isNotEmpty()) {
-                                    Pill(
-                                        text = "${lesson.editorSteps.size} editor steps",
-                                        color = MaterialTheme.colorScheme.primary,
-                                        icon = Icons.Outlined.Checklist
-                                    )
-                                }
-                                if (lesson.quizQuestions.isNotEmpty()) {
-                                    Pill(
-                                        text = "${lesson.quizQuestions.size} quiz Qs",
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        icon = Icons.Outlined.Quiz
-                                    )
-                                }
-                            }
-                        }
-
-                        // Target Godot File banner
-                        lesson.targetFile?.let { filePath ->
-                            TargetFileBanner(
-                                filePath = filePath,
-                                onCopy = {
-                                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    cm.setPrimaryClip(ClipData.newPlainText("Godot file path", filePath))
-                                }
-                            )
-                        }
-
-                        // Visual Scene Tree Blueprint
-                        lesson.sceneTree?.let { tree ->
-                            SceneTreeCard(sceneTree = tree)
-                        }
-
-                        // Interactive Step-by-Step Godot Editor Checklist
-                        if (lesson.editorSteps.isNotEmpty()) {
-                            EditorChecklistCard(lessonId = lesson.id, steps = lesson.editorSteps)
-                        }
-
-                        // Main Deeply Explained Lesson Markdown Prose
-                        MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
-
-                        // Complete Code Snippets
-                        if (lesson.codeSnippets.isNotEmpty()) {
-                            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                                SectionHeader(title = "Complete script & snippets", eyebrow = "Copy-ready GDScript")
-                                for (snippet in lesson.codeSnippets) {
-                                    CodeBlock(snippet = snippet)
-                                }
-                            }
-                        }
-
-                        // Verification Steps ("How to Test It Right Now in Godot")
-                        if (lesson.verificationSteps.isNotEmpty()) {
-                            VerificationCard(steps = lesson.verificationSteps)
-                        }
-
-                        // Troubleshooting & Common Errors Card
-                        if (lesson.troubleshootingTips.isNotEmpty()) {
-                            TroubleshootingCard(tips = lesson.troubleshootingTips)
-                        }
-
-                        // Key Takeaways
-                        if (lesson.keyTakeaways.isNotEmpty()) {
-                            KeyTakeawaysCard(takeaways = lesson.keyTakeaways)
-                        }
-
-                        // Practice Prompt Card
-                        lesson.practicePrompt?.let { prompt ->
-                            KadiCard(onClick = onPractice, accent = MaterialTheme.colorScheme.secondary) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                                ) {
-                                    IconBubble(
-                                        icon = Icons.Outlined.Lightbulb,
-                                        tint = MaterialTheme.colorScheme.secondary,
-                                        size = 44.dp
-                                    )
-                                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                        Text(
-                                            text = "HANDS-ON PRACTICE WORKBENCH",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.secondary
-                                        )
-                                        Text(
-                                            text = prompt.instructions,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 3
-                                        )
+                            lesson.targetFile?.let { filePath ->
+                                CopyableFileChip(
+                                    filePath = filePath,
+                                    onCopy = {
+                                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        cm.setPrimaryClip(ClipData.newPlainText("Godot file path", filePath))
                                     }
-                                    Icon(
-                                        Icons.AutoMirrored.Outlined.ArrowForward,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.secondary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                                )
                             }
                         }
-                        Spacer(Modifier.height(12.dp))
+
+                        // Segmented 3-Tab Studio Switcher
+                        StudioSegmentedTabs(
+                            activeTab = activeTab,
+                            stepsCount = lesson.editorSteps.size,
+                            completedSteps = completedStepsCount,
+                            quizCount = lesson.quizQuestions.size,
+                            onSelectTab = { activeTab = it }
+                        )
+                    }
+
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+                    )
+
+                    // Tab Content Area
+                    when (activeTab) {
+                        0 -> GuideAndCodeTab(
+                            lesson = lesson,
+                            scrollState = guideScroll,
+                            onTermClick = onTermClick,
+                            onSwitchToSteps = { activeTab = 1 }
+                        )
+                        1 -> GodotStepsTab(
+                            lesson = lesson,
+                            checkedSteps = checkedSteps,
+                            scrollState = stepsScroll,
+                            onSwitchToLab = { activeTab = 2 }
+                        )
+                        else -> LabAndQuizTab(
+                            lesson = lesson,
+                            hasDebugChallenge = state.hasDebugChallenge && state.phaseId != null,
+                            scrollState = labScroll,
+                            onPractice = onPractice,
+                            onQuiz = onQuiz,
+                            onDebugChallenge = { state.phaseId?.let(onDebugChallenge) }
+                        )
                     }
                 }
             }
@@ -349,82 +278,381 @@ fun LessonDetailScreen(
 }
 
 @Composable
-private fun TargetFileBanner(filePath: String, onCopy: () -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    val success = successColor()
+private fun CopyableFileChip(filePath: String, onCopy: () -> Unit) {
     var copied by remember { mutableStateOf(false) }
+    val tint = if (copied) successColor() else MaterialTheme.colorScheme.primary
 
     LaunchedEffect(copied) {
         if (copied) {
-            delay(1800)
+            delay(1600)
             copied = false
         }
     }
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                onCopy()
-                copied = true
-            },
-        shape = RoundedCornerShape(16.dp),
-        color = scheme.primary.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, if (copied) success.copy(alpha = 0.55f) else scheme.primary.copy(alpha = 0.35f))
+        shape = RoundedCornerShape(8.dp),
+        color = tint.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, tint.copy(alpha = 0.35f)),
+        modifier = Modifier.clickable {
+            onCopy()
+            copied = true
+        }
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Icon(
-                imageVector = Icons.Outlined.Description,
-                contentDescription = null,
-                tint = if (copied) success else scheme.primary,
-                modifier = Modifier.size(20.dp)
+                imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.Description,
+                contentDescription = "Copy file path",
+                tint = tint,
+                modifier = Modifier.size(12.dp)
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (copied) "COPIED TO CLIPBOARD!" else "WHERE THIS LIVES IN YOUR GODOT PROJECT",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (copied) success else scheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = filePath,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFontFamily),
-                    fontWeight = FontWeight.SemiBold,
-                    color = scheme.onSurface
-                )
-            }
-            IconButton(
-                onClick = {
-                    onCopy()
-                    copied = true
-                },
-                modifier = Modifier.size(34.dp)
-            ) {
-                Icon(
-                    imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
-                    contentDescription = "Copy file path",
-                    tint = if (copied) success else scheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
+            Text(
+                text = if (copied) "Copied $filePath" else filePath,
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                fontWeight = FontWeight.Bold,
+                color = tint,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Icon(
+                imageVector = Icons.Outlined.ContentCopy,
+                contentDescription = null,
+                tint = tint.copy(alpha = 0.75f),
+                modifier = Modifier.size(11.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun StudioSegmentedTabs(
+    activeTab: Int,
+    stepsCount: Int,
+    completedSteps: Int,
+    quizCount: Int,
+    onSelectTab: (Int) -> Unit
+) {
+    val stepsLabel = if (stepsCount > 0) "Godot Steps ($completedSteps/$stepsCount)" else "Godot Steps"
+    val labLabel = if (quizCount > 0) "Lab & Quiz ($quizCount)" else "Lab & Quiz"
+    val tabs = listOf(
+        Triple(0, "Guide & Code", Icons.AutoMirrored.Outlined.MenuBook),
+        Triple(1, stepsLabel, Icons.Outlined.Checklist),
+        Triple(2, labLabel, Icons.Outlined.Lightbulb)
+    )
+
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            tabs.forEach { (idx, title, icon) ->
+                val selected = activeTab == idx
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onSelectTab(idx) },
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SceneTreeCard(sceneTree: String) {
+private fun GuideAndCodeTab(
+    lesson: Lesson,
+    scrollState: androidx.compose.foundation.ScrollState,
+    onTermClick: (String) -> Unit,
+    onSwitchToSteps: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Main Deeply Explained Lesson Markdown Prose
+        MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
+
+        // Complete Reference Code Snippets
+        if (lesson.codeSnippets.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionHeader(
+                    title = "Complete Reference Script",
+                    eyebrow = "COPY-READY GDSCRIPT"
+                )
+                for (snippet in lesson.codeSnippets) {
+                    CodeBlock(snippet = snippet)
+                }
+            }
+        }
+
+        // Prompt to jump to the Godot Steps tab
+        if (lesson.editorSteps.isNotEmpty() || lesson.sceneTree != null) {
+            KadiCard(
+                onClick = onSwitchToSteps,
+                accent = MaterialTheme.colorScheme.secondary
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    IconBubble(
+                        icon = Icons.Outlined.Checklist,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        size = 38.dp
+                    )
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "NEXT: BUILD IT IN GODOT 4.3",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Text(
+                            text = "Open the Godot Steps tab for the Scene Tree & ${lesson.editorSteps.size}-step checklist",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Outlined.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun GodotStepsTab(
+    lesson: Lesson,
+    checkedSteps: MutableList<Boolean>,
+    scrollState: androidx.compose.foundation.ScrollState,
+    onSwitchToLab: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        lesson.sceneTree?.let { tree ->
+            SceneTreeBlueprintCard(sceneTree = tree)
+        }
+
+        if (lesson.editorSteps.isNotEmpty()) {
+            EditorChecklistStudioCard(
+                steps = lesson.editorSteps,
+                checkedStates = checkedSteps
+            )
+        }
+
+        if (lesson.verificationSteps.isNotEmpty()) {
+            VerificationStudioCard(steps = lesson.verificationSteps)
+        }
+
+        if (lesson.troubleshootingTips.isNotEmpty()) {
+            TroubleshootingStudioCard(tips = lesson.troubleshootingTips)
+        }
+
+        KadiCard(
+            onClick = onSwitchToLab,
+            accent = MaterialTheme.colorScheme.primary
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                IconBubble(
+                    icon = Icons.Outlined.Lightbulb,
+                    tint = MaterialTheme.colorScheme.primary,
+                    size = 38.dp
+                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "READY TO TEST YOUR MASTERY?",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Open Lab & Quiz to practice GDScript and take the lesson quiz",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Icon(
+                    Icons.AutoMirrored.Outlined.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun LabAndQuizTab(
+    lesson: Lesson,
+    hasDebugChallenge: Boolean,
+    scrollState: androidx.compose.foundation.ScrollState,
+    onPractice: () -> Unit,
+    onQuiz: () -> Unit,
+    onDebugChallenge: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        if (lesson.keyTakeaways.isNotEmpty()) {
+            KeyTakeawaysStudioCard(takeaways = lesson.keyTakeaways)
+        }
+
+        SectionHeader(
+            title = "Interactive Exercises",
+            eyebrow = "HANDS-ON LABS"
+        )
+
+        lesson.practicePrompt?.let { prompt ->
+            LabLaunchCard(
+                eyebrow = "GDSCRIPT WORKBENCH",
+                title = "Interactive Code Practice",
+                description = prompt.instructions,
+                buttonLabel = "Open Code Workbench",
+                icon = Icons.Outlined.Lightbulb,
+                accent = MaterialTheme.colorScheme.secondary,
+                onClick = onPractice
+            )
+        }
+
+        if (lesson.quizQuestions.isNotEmpty()) {
+            LabLaunchCard(
+                eyebrow = "${lesson.quizQuestions.size} QUESTIONS",
+                title = "Lesson Knowledge Quiz",
+                description = "Check your understanding of ${lesson.title} with instant explanations.",
+                buttonLabel = "Start Quiz",
+                icon = Icons.Outlined.Quiz,
+                accent = MaterialTheme.colorScheme.primary,
+                onClick = onQuiz
+            )
+        }
+
+        if (hasDebugChallenge) {
+            LabLaunchCard(
+                eyebrow = "PHASE BUG HUNT",
+                title = "Interactive Debug Challenge",
+                description = "Inspect a broken GDScript snippet from this module and tap the exact line causing the bug.",
+                buttonLabel = "Launch Bug Hunt",
+                icon = Icons.Outlined.BugReport,
+                accent = MaterialTheme.colorScheme.tertiary,
+                onClick = onDebugChallenge
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun LabLaunchCard(
+    eyebrow: String,
+    title: String,
+    description: String,
+    buttonLabel: String,
+    icon: ImageVector,
+    accent: Color,
+    onClick: () -> Unit
+) {
+    KadiCard(onClick = onClick, accent = accent) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconBubble(icon = icon, tint = accent, size = 40.dp)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = eyebrow,
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = accent
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Pill(text = buttonLabel, color = accent)
+        }
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun SceneTreeBlueprintCard(sceneTree: String) {
     val isDark = isDarkScheme()
     val bg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
     val accent = MaterialTheme.colorScheme.secondary
-    var expanded by remember { mutableStateOf(true) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(12.dp),
         color = bg,
         border = BorderStroke(1.dp, accent.copy(alpha = 0.40f))
     ) {
@@ -433,8 +661,7 @@ private fun SceneTreeCard(sceneTree: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(accent.copy(alpha = 0.12f))
-                    .clickable { expanded = !expanded }
-                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -445,50 +672,41 @@ private fun SceneTreeCard(sceneTree: String) {
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "GODOT SCENE TREE HIERARCHY",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontFamily = CodeFontFamily,
+                    text = "GODOT 4.3 SCENE TREE HIERARCHY",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
-                    color = accent,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = accent,
-                    modifier = Modifier.size(18.dp)
+                    color = accent
                 )
             }
-            AnimatedVisibility(visible = expanded) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(14.dp)
-                ) {
-                    Text(
-                        text = sceneTree,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = CodeFontFamily,
-                            fontSize = 13.sp,
-                            lineHeight = 20.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(14.dp)
+            ) {
+                Text(
+                    text = sceneTree,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = CodeFontFamily,
+                        fontSize = 13.sp,
+                        lineHeight = 20.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
 }
 
 @Composable
-private fun EditorChecklistCard(lessonId: String, steps: List<String>) {
-    val checkedStates = remember(lessonId, steps.size) {
-        mutableStateListOf<Boolean>().apply { repeat(steps.size) { add(false) } }
-    }
+private fun EditorChecklistStudioCard(
+    steps: List<String>,
+    checkedStates: MutableList<Boolean>
+) {
     val doneCount = checkedStates.count { it }
     val success = successColor()
-    val accent = if (doneCount == steps.size) success else MaterialTheme.colorScheme.primary
+    val accent = if (doneCount == steps.size && steps.isNotEmpty()) success else MaterialTheme.colorScheme.primary
+    val fraction = if (steps.isEmpty()) 0f else doneCount.toFloat() / steps.size
 
     KadiCard(accent = accent) {
         Row(
@@ -499,35 +717,44 @@ private fun EditorChecklistCard(lessonId: String, steps: List<String>) {
             IconBubble(icon = Icons.Outlined.Checklist, tint = accent, size = 36.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "DO THIS IN GODOT (STEP-BY-STEP)",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "STEP-BY-STEP IN THE GODOT EDITOR",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
                     color = accent
                 )
                 Text(
-                    text = "Tap each step as you complete it in the Godot 4.3 editor",
+                    text = "Tap each step as you complete it in Godot 4.3",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Pill(text = "$doneCount/${steps.size}", color = accent)
         }
+
+        LinearProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(50)),
+            color = accent,
+            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+            strokeCap = StrokeCap.Round
+        )
+
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             steps.forEachIndexed { idx, stepText ->
                 val isChecked = checkedStates.getOrElse(idx) { false }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(
                             if (isChecked) success.copy(alpha = 0.10f)
-                            else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.surfaceContainerLow
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isChecked) success.copy(alpha = 0.35f)
-                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(12.dp)
+                            color = if (isChecked) success.copy(alpha = 0.40f)
+                            else MaterialTheme.colorScheme.outlineVariant,
+                            shape = RoundedCornerShape(10.dp)
                         )
                         .clickable {
                             if (idx < checkedStates.size) {
@@ -540,17 +767,25 @@ private fun EditorChecklistCard(lessonId: String, steps: List<String>) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .background(if (isChecked) success else MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                if (isChecked) success
+                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         if (isChecked) {
-                            Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                            Icon(
+                                Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
                         } else {
                             Text(
                                 text = "${idx + 1}",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -570,56 +805,45 @@ private fun EditorChecklistCard(lessonId: String, steps: List<String>) {
 }
 
 @Composable
-private fun VerificationCard(steps: List<String>) {
+private fun VerificationStudioCard(steps: List<String>) {
     val accent = successColor()
-    var expanded by remember { mutableStateOf(true) }
     KadiCard(accent = accent) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             IconBubble(icon = Icons.Outlined.PlayArrow, tint = accent, size = 34.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "VERIFY IT WORKS RIGHT NOW (PRESS F5 / F6)",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "VERIFY IN GODOT (PRESS F5 / F6)",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
                     color = accent
                 )
                 Text(
-                    text = "Confirm your setup before moving to the next lesson",
+                    text = "Confirm your scene and script behave as expected",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                contentDescription = if (expanded) "Collapse" else "Expand",
-                tint = accent
-            )
         }
-        AnimatedVisibility(visible = expanded) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                steps.forEachIndexed { i, item ->
-                    Row(
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "${i + 1}.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = accent
-                        )
-                        Text(
-                            text = item,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            steps.forEachIndexed { i, item ->
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${i + 1}.",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = accent
+                    )
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -627,56 +851,45 @@ private fun VerificationCard(steps: List<String>) {
 }
 
 @Composable
-private fun TroubleshootingCard(tips: List<String>) {
+private fun TroubleshootingStudioCard(tips: List<String>) {
     val accent = MaterialTheme.colorScheme.tertiary
-    var expanded by remember { mutableStateOf(true) }
     KadiCard(accent = accent) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             IconBubble(icon = Icons.Outlined.Build, tint = accent, size = 34.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "STUCK? COMMON ERRORS & INSTANT FIXES",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "COMMON ERRORS & INSTANT FIXES",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
                     color = accent
                 )
                 Text(
-                    text = "If Godot shows a red error in the Debugger tab, check these first",
+                    text = "If Godot reports an error in the Debugger tab, check these first",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                contentDescription = if (expanded) "Collapse" else "Expand",
-                tint = accent
-            )
         }
-        AnimatedVisibility(visible = expanded) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                tips.forEach { item ->
-                    Row(
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "\u26A0",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = accent
-                        )
-                        Text(
-                            text = item,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            tips.forEach { item ->
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "\u26A0",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = accent
+                    )
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -684,7 +897,7 @@ private fun TroubleshootingCard(tips: List<String>) {
 }
 
 @Composable
-private fun KeyTakeawaysCard(takeaways: List<String>) {
+private fun KeyTakeawaysStudioCard(takeaways: List<String>) {
     val accent = MaterialTheme.colorScheme.primary
     KadiCard(accent = accent) {
         Row(
@@ -694,7 +907,7 @@ private fun KeyTakeawaysCard(takeaways: List<String>) {
             IconBubble(icon = Icons.Outlined.StarBorder, tint = accent, size = 34.dp)
             Text(
                 text = "KEY TAKEAWAYS",
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                 fontWeight = FontWeight.Bold,
                 color = accent
             )
@@ -723,86 +936,78 @@ private fun KeyTakeawaysCard(takeaways: List<String>) {
 }
 
 @Composable
-private fun LessonFooter(
-    hasPractice: Boolean,
-    hasQuiz: Boolean,
-    hasDebugChallenge: Boolean,
+private fun StudioLessonBottomBar(
     previousLessonId: String?,
     nextLessonId: String?,
     isCompleted: Boolean,
-    onPractice: () -> Unit,
-    onQuiz: () -> Unit,
-    onDebugChallenge: () -> Unit,
+    hasQuiz: Boolean,
     onNavigateLesson: (String) -> Unit,
     onMarkComplete: () -> Unit
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        border = BorderStroke(0.5.dp, glassBorderColor())
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Column(
+        Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
+            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (hasPractice || hasQuiz || hasDebugChallenge) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (hasPractice) {
-                            OutlinedButton(onClick = onPractice, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Practice")
-                            }
-                        }
-                        if (hasQuiz) {
-                            OutlinedButton(onClick = onQuiz, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Outlined.Quiz, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Quiz")
-                            }
-                        }
-                        if (hasDebugChallenge) {
-                            OutlinedButton(onClick = onDebugChallenge, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Outlined.BugReport, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Debug")
-                            }
-                        }
+                if (previousLessonId != null) {
+                    FilledTonalButton(
+                        onClick = { onNavigateLesson(previousLessonId) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(0.85f).height(44.dp)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("Prev", fontWeight = FontWeight.SemiBold)
                     }
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (previousLessonId != null) {
-                        FilledTonalButton(
-                            onClick = { onNavigateLesson(previousLessonId) },
-                            modifier = Modifier.weight(0.9f)
-                        ) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Prev")
-                        }
-                    }
-                    Button(
-                        onClick = onMarkComplete,
-                        modifier = Modifier.weight(1.3f)
+                Button(
+                    onClick = onMarkComplete,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1.4f).height(44.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = when {
+                            isCompleted && hasQuiz -> "Retake Quiz"
+                            isCompleted -> "Completed"
+                            hasQuiz -> "Complete & Quiz"
+                            else -> stringResource(R.string.action_mark_complete)
+                        },
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                }
+                if (nextLessonId != null) {
+                    FilledTonalButton(
+                        onClick = { onNavigateLesson(nextLessonId) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(0.85f).height(44.dp)
                     ) {
-                        Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (isCompleted) "Done (Quiz)" else stringResource(R.string.action_mark_complete))
-                    }
-                    if (nextLessonId != null) {
-                        FilledTonalButton(
-                            onClick = { onNavigateLesson(nextLessonId) },
-                            modifier = Modifier.weight(0.9f)
-                        ) {
-                            Text("Next")
-                            Spacer(Modifier.width(6.dp))
-                            Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-                        }
+                        Text("Next", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.width(4.dp))
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
             }
