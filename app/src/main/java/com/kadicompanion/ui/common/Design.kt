@@ -441,17 +441,25 @@ fun StatTile(
     }
 }
 
-/** Clean studio badge pill with subtle border. */
+/** Clean studio badge pill with subtle border and optional click handler. */
 @Composable
 fun Pill(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.primary,
     icon: ImageVector? = null,
-    filled: Boolean = true
+    filled: Boolean = true,
+    onClick: (() -> Unit)? = null
 ) {
+    val clickableModifier = if (onClick != null) {
+        modifier
+            .clip(MaterialTheme.shapes.extraSmall)
+            .clickable(onClick = onClick)
+    } else {
+        modifier
+    }
     Surface(
-        modifier = modifier,
+        modifier = clickableModifier,
         shape = MaterialTheme.shapes.extraSmall,
         color = if (filled) color.copy(alpha = 0.13f) else Color.Transparent,
         border = BorderStroke(1.dp, color.copy(alpha = 0.30f))
