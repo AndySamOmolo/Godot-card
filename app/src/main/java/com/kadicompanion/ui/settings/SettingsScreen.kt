@@ -7,11 +7,14 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +26,7 @@ import androidx.compose.material.icons.automirrored.outlined.WrapText
 import androidx.compose.material.icons.outlined.Animation
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BorderStyle
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.Contrast
@@ -40,15 +44,21 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.RoundedCorner
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SpaceDashboard
 import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.TextFields
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.outlined.ViewCompact
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -56,6 +66,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -85,7 +96,6 @@ import com.kadicompanion.data.local.datastore.TableDisplayMode
 import com.kadicompanion.data.local.datastore.ThemePref
 import com.kadicompanion.data.local.datastore.UiDensity
 import com.kadicompanion.domain.model.LearnerTrack
-import com.kadicompanion.ui.common.HeroPanel
 import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
@@ -95,8 +105,7 @@ import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
-import com.kadicompanion.ui.theme.heroTextPrimary
-import com.kadicompanion.ui.theme.heroTextSecondary
+import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.successColor
 import kotlin.math.roundToInt
 
@@ -111,7 +120,6 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    val p = state.uiPrefs
     var activeSection by rememberSaveable { mutableIntStateOf(0) }
     val sections = listOf("Theme & Color", "Text & Code", "Layout & Cards", "Home & Course")
 
@@ -195,6 +203,356 @@ fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) 
             }
         }
     }
+}
+
+/**
+ * Live Quick UI Customizer Sheet that can be opened from the `Tune` button on any screen
+ * so the user can tweak themes, colors, text size, inline code style, card geometry, density,
+ * lesson layout, and table display in real time while looking at the active screen.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun QuickUiCustomizerSheet(
+    onDismiss: () -> Unit,
+    onOpenFullSettings: () -> Unit,
+    vm: SettingsViewModel = hiltViewModel()
+) {
+    val state by vm.uiState.collectAsStateWithLifecycle()
+    val p = state.uiPrefs
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Sheet Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    IconBubble(icon = Icons.Outlined.Tune, size = 36.dp)
+                    Column {
+                        Text(
+                            text = "LIVE UI STUDIO",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Customize Anything Live",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Outlined.Close, contentDescription = "Close")
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // 1. Theme Mode
+            QuickGroupTitle("Theme Mode")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(
+                    ThemePref.DARK to "Dark",
+                    ThemePref.AMOLED to "AMOLED Black",
+                    ThemePref.LIGHT to "Light",
+                    ThemePref.SYSTEM to "System"
+                ).forEach { (mode, label) ->
+                    QuickOptionChip(
+                        label = label,
+                        selected = p.theme == mode,
+                        onClick = { vm.setTheme(mode) }
+                    )
+                }
+            }
+
+            // 2. Color Palette Swatches
+            QuickGroupTitle("Accent Color Palette")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AccentPreset.entries.forEach { preset ->
+                    val swatch = presetSwatchColor(preset)
+                    val selected = p.accentPreset == preset
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = if (selected) swatch.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainer,
+                        border = BorderStroke(if (selected) 1.5.dp else 1.dp, if (selected) swatch else MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.clickable { vm.setAccentPreset(preset) }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(swatch)
+                            )
+                            Text(
+                                text = preset.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) swatch else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 3. Text & Code Scale Sliders
+            QuickGroupTitle("Text Size (${(p.fontScale * 100).roundToInt()}%) & Code Size (${(p.codeFontScale * 100).roundToInt()}%)")
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("UI Text", style = MaterialTheme.typography.labelMedium, modifier = Modifier.width(64.dp))
+                    Slider(
+                        value = p.fontScale,
+                        onValueChange = { vm.setFontScale((it * 20).roundToInt() / 20f) },
+                        valueRange = 0.85f..1.25f,
+                        steps = 7,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Pill(text = "${(p.fontScale * 100).roundToInt()}%")
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("GDScript", style = MaterialTheme.typography.labelMedium, modifier = Modifier.width(64.dp))
+                    Slider(
+                        value = p.codeFontScale,
+                        onValueChange = { vm.setCodeFontScale((it * 20).roundToInt() / 20f) },
+                        valueRange = 0.85f..1.25f,
+                        steps = 7,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Pill(text = "${(p.codeFontScale * 100).roundToInt()}%")
+                }
+            }
+
+            // 4. Inline Code & Term Style + Font Family
+            QuickGroupTitle("Inline Code & Term Highlighting")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                InlineCodeStyle.entries.forEach { style ->
+                    QuickOptionChip(
+                        label = style.label,
+                        selected = p.inlineCodeStyle == style,
+                        onClick = { vm.setInlineCodeStyle(style) }
+                    )
+                }
+            }
+
+            QuickGroupTitle("Font Family")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FontFamilyPreset.entries.forEach { ff ->
+                    QuickOptionChip(
+                        label = ff.label,
+                        selected = p.fontFamilyPreset == ff,
+                        onClick = { vm.setFontFamilyPreset(ff) }
+                    )
+                }
+            }
+
+            // 5. Phone Density, Corner Radius & Card Style
+            QuickGroupTitle("Phone Layout Density")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                UiDensity.entries.forEach { density ->
+                    QuickOptionChip(
+                        label = density.label,
+                        selected = p.uiDensity == density,
+                        onClick = { vm.setUiDensity(density) }
+                    )
+                }
+            }
+
+            QuickGroupTitle("Card Style & Corner Roundness (${p.cornerRadiusDp}dp)")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CardStyle.entries.forEach { cs ->
+                    QuickOptionChip(
+                        label = cs.label,
+                        selected = p.cardStyle == cs,
+                        onClick = { vm.setCardStyle(cs) }
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(0 to "Sharp 0dp", 8 to "Crisp 8dp", 14 to "Studio 14dp", 20 to "Round 20dp", 28 to "Soft 28dp").forEach { (dpVal, lbl) ->
+                    QuickOptionChip(
+                        label = lbl,
+                        selected = p.cornerRadiusDp == dpVal,
+                        onClick = { vm.setCornerRadiusDp(dpVal) }
+                    )
+                }
+            }
+
+            // 6. Lesson Layout, Table Display & Bottom Bar
+            QuickGroupTitle("Lesson Reader & Table Mode on Phone")
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LessonLayoutMode.entries.forEach { mode ->
+                    QuickOptionChip(
+                        label = mode.label,
+                        selected = p.lessonLayoutMode == mode,
+                        onClick = { vm.setLessonLayoutMode(mode) }
+                    )
+                }
+                TableDisplayMode.entries.forEach { tMode ->
+                    QuickOptionChip(
+                        label = tMode.label,
+                        selected = p.tableDisplayMode == tMode,
+                        onClick = { vm.setTableDisplayMode(tMode) }
+                    )
+                }
+            }
+
+            QuickGroupTitle("Bottom Navigation Bar")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                BottomBarStyle.entries.forEach { bStyle ->
+                    QuickOptionChip(
+                        label = bStyle.label,
+                        selected = p.bottomBarStyle == bStyle,
+                        onClick = { vm.setBottomBarStyle(bStyle) }
+                    )
+                }
+            }
+
+            // 7. Quick Toggles
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Wrap Long GDScript Code Lines", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                Switch(checked = p.codeWordWrap, onCheckedChange = vm::setCodeWordWrap)
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // Bottom Actions: Reset & Open Full Settings
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FilledTonalButton(
+                    onClick = vm::resetAllUiToDefault,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.weight(1f).height(46.dp)
+                ) {
+                    Icon(Icons.Outlined.RestartAlt, contentDescription = null, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Reset Defaults", fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = {
+                        onDismiss()
+                        onOpenFullSettings()
+                    },
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.weight(1.15f).height(46.dp)
+                ) {
+                    Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("All UI Options", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun QuickGroupTitle(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+@Composable
+internal fun QuickOptionChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.small,
+        color = if (selected) primary.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = if (selected) primary else MaterialTheme.colorScheme.outlineVariant
+        )
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) primary else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        )
+    }
+}
+
+internal fun presetSwatchColor(preset: AccentPreset): Color = when (preset) {
+    AccentPreset.GODOT_SAPPHIRE -> Color(0xFF38BDF8)
+    AccentPreset.NAIROBI_GOLD -> Color(0xFFFBBF24)
+    AccentPreset.EMERALD_FELT -> Color(0xFF34D399)
+    AccentPreset.CYBER_VIOLET -> Color(0xFFC084FC)
+    AccentPreset.CRIMSON_ACE -> Color(0xFFFB7185)
+    AccentPreset.SUNSET_ORANGE -> Color(0xFFFB923C)
+    AccentPreset.MONOCHROME_SLATE -> Color(0xFF94A3B8)
 }
 
 @Composable
