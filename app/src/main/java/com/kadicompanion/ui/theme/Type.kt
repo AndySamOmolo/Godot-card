@@ -7,6 +7,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 import com.kadicompanion.data.local.datastore.FontFamilyPreset
+import com.kadicompanion.data.local.datastore.HeadingWeightPreset
 import com.kadicompanion.data.local.datastore.LineSpacingPreset
 
 val CodeFontFamily = FontFamily.Monospace
@@ -44,41 +45,73 @@ val AppTypography = Typography(
 fun buildCustomizableTypography(
     fontScale: Float = 1.0f,
     fontFamilyPreset: FontFamilyPreset = FontFamilyPreset.SANS_SERIF,
+    headingWeightPreset: HeadingWeightPreset = HeadingWeightPreset.BOLD,
     lineSpacingPreset: LineSpacingPreset = LineSpacingPreset.COMFORTABLE,
     dyslexiaFont: Boolean = false
 ): Typography {
     val s = fontScale.coerceIn(0.80f, 1.35f)
     val lh = lineSpacingPreset.multiplier
-    val extraTracking = if (dyslexiaFont) 0.45.sp else 0.sp
     val family = when (fontFamilyPreset) {
-        FontFamilyPreset.SANS_SERIF -> FontFamily.SansSerif
-        FontFamilyPreset.SERIF -> FontFamily.Serif
-        FontFamilyPreset.MONOSPACE -> FontFamily.Monospace
+        FontFamilyPreset.SANS_SERIF,
+        FontFamilyPreset.SANS_MEDIUM,
+        FontFamilyPreset.SANS_COMPACT,
+        FontFamilyPreset.SANS_WIDE -> FontFamily.SansSerif
+        FontFamilyPreset.SERIF,
+        FontFamilyPreset.SERIF_CRISP -> FontFamily.Serif
+        FontFamilyPreset.MONOSPACE,
+        FontFamilyPreset.MONO_COMPACT -> FontFamily.Monospace
+        FontFamilyPreset.CURSIVE -> FontFamily.Cursive
         FontFamilyPreset.ROUNDED -> FontFamily.Default
     }
 
-    fun TextStyle.scaleStyle(isBody: Boolean = false): TextStyle {
+    val bodyWeightOverride: FontWeight? = when (fontFamilyPreset) {
+        FontFamilyPreset.SANS_MEDIUM, FontFamilyPreset.SERIF_CRISP -> FontWeight.Medium
+        else -> null
+    }
+
+    val presetTrackingDeltaSp: Float = when (fontFamilyPreset) {
+        FontFamilyPreset.SANS_COMPACT, FontFamilyPreset.MONO_COMPACT -> -0.3f
+        FontFamilyPreset.SANS_WIDE -> 0.35f
+        FontFamilyPreset.ROUNDED -> 0.12f
+        else -> 0f
+    }
+
+    val headingWeight = when (headingWeightPreset) {
+        HeadingWeightPreset.MEDIUM -> FontWeight.Medium
+        HeadingWeightPreset.SEMI_BOLD -> FontWeight.SemiBold
+        HeadingWeightPreset.BOLD -> FontWeight.Bold
+        HeadingWeightPreset.EXTRA_BOLD -> FontWeight.ExtraBold
+        HeadingWeightPreset.BLACK -> FontWeight.Black
+    }
+
+    fun TextStyle.scaleStyle(isBody: Boolean = false, isHeading: Boolean = false): TextStyle {
         val scaledSize = (fontSize.value * s).sp
         val baseLh = lineHeight.value * s * (if (isBody) lh else 1.0f)
-        val tracking = if (dyslexiaFont && isBody) extraTracking else letterSpacing
+        val baseTrack = if (letterSpacing.isSp) letterSpacing.value else 0f
+        val dysTrack = if (dyslexiaFont && isBody) 0.45f else 0f
         return copy(
             fontFamily = family,
+            fontWeight = when {
+                isHeading -> headingWeight
+                isBody && bodyWeightOverride != null -> bodyWeightOverride
+                else -> fontWeight
+            },
             fontSize = scaledSize,
             lineHeight = baseLh.sp,
-            letterSpacing = tracking
+            letterSpacing = (baseTrack + presetTrackingDeltaSp + dysTrack).sp
         )
     }
 
     return Typography(
-        displayLarge = AppTypography.displayLarge.scaleStyle(),
-        displayMedium = AppTypography.displayMedium.scaleStyle(),
-        displaySmall = AppTypography.displaySmall.scaleStyle(),
-        headlineLarge = AppTypography.headlineLarge.scaleStyle(),
-        headlineMedium = AppTypography.headlineMedium.scaleStyle(),
-        headlineSmall = AppTypography.headlineSmall.scaleStyle(),
-        titleLarge = AppTypography.titleLarge.scaleStyle(),
-        titleMedium = AppTypography.titleMedium.scaleStyle(),
-        titleSmall = AppTypography.titleSmall.scaleStyle(),
+        displayLarge = AppTypography.displayLarge.scaleStyle(isHeading = true),
+        displayMedium = AppTypography.displayMedium.scaleStyle(isHeading = true),
+        displaySmall = AppTypography.displaySmall.scaleStyle(isHeading = true),
+        headlineLarge = AppTypography.headlineLarge.scaleStyle(isHeading = true),
+        headlineMedium = AppTypography.headlineMedium.scaleStyle(isHeading = true),
+        headlineSmall = AppTypography.headlineSmall.scaleStyle(isHeading = true),
+        titleLarge = AppTypography.titleLarge.scaleStyle(isHeading = true),
+        titleMedium = AppTypography.titleMedium.scaleStyle(isHeading = true),
+        titleSmall = AppTypography.titleSmall.scaleStyle(isHeading = true),
         bodyLarge = AppTypography.bodyLarge.scaleStyle(isBody = true),
         bodyMedium = AppTypography.bodyMedium.scaleStyle(isBody = true),
         bodySmall = AppTypography.bodySmall.scaleStyle(isBody = true),

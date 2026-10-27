@@ -33,3 +33,16 @@ short: A button drawn entirely from textures for its normal, hover, pressed, and
 Because it inherits from `BaseButton`, all the interaction logic — `pressed`, toggling, disabling, and grouping — is shared with [[Button]] and [[CheckButton]]. `TextureButton` simply changes how that button looks.
 
 In the Kadi app `TextureButton` renders the fully-illustrated action controls: the "Draw" pile button uses a card-back texture that darkens on `texture_pressed`, and the "Niko Kadi" call is a golden badge with a distinct hover texture. Their pixel-accurate `texture_click_mask` means taps only register on the visible artwork, not the transparent corners.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`TextureButton`)**: When configuring `TextureButton` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `TextureButton` offline. If your `TextureButton` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using TextureButton in Godot 4.3 Kadi
+func configure_texturebutton_example(target: TextureButton) -> void:
+    assert(target != null, "TextureButton reference must be valid")
+    print("Configured TextureButton for Kadi table runtime")
+```
+

@@ -52,3 +52,16 @@ short: A static class for reading from and writing to files on disk.
 For text, `get_as_text`, `get_line`, and `store_string` cover the common cases; for binary, `get_buffer`/`store_buffer` and the typed `get_16/32/64` and `get_float/double` accessors read fixed-width primitives; `get_var`/`store_var` round-trip any [[Variant]]. Convenience helpers like `get_file_as_string` and `get_file_as_bytes` collapse the open/read/close dance into one call, and `file_exists`, `rename`, and `remove` are the file-management primitives.
 
 In the Kadi app `FileAccess` reads the tutorial phase JSON from `res://assets/tutorial/` (shipped with the app, read-only) and writes the learner's progress and high scores to `user://progress.json` and `user://scores.json` (writable). `open_encrypted_with_pass` is used if the developer wants to obscure progress data, and `get_md5` lets the app detect if the shipped glossary or docs have changed between versions so it can refresh caches. `store_csv_line` could export a match log for sharing.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`FileAccess`)**: When configuring `FileAccess` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `FileAccess` offline. If your `FileAccess` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using FileAccess in Godot 4.3 Kadi
+func configure_fileaccess_example(target: FileAccess) -> void:
+    assert(target != null, "FileAccess reference must be valid")
+    print("Configured FileAccess for Kadi table runtime")
+```
+

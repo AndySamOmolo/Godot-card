@@ -76,6 +76,7 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             KadiTopBar(
                 title = "Knowledge Check",

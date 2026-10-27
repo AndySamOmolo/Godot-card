@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -87,15 +88,22 @@ import com.kadicompanion.R
 import com.kadicompanion.data.local.datastore.AccentPreset
 import com.kadicompanion.data.local.datastore.BottomBarStyle
 import com.kadicompanion.data.local.datastore.CardStyle
+import com.kadicompanion.data.local.datastore.CodeThemePreset
 import com.kadicompanion.data.local.datastore.FontFamilyPreset
+import com.kadicompanion.data.local.datastore.HeadingWeightPreset
 import com.kadicompanion.data.local.datastore.HeroStyle
+import com.kadicompanion.data.local.datastore.HomeHeroLayout
+import com.kadicompanion.data.local.datastore.HomeHeroPalette
 import com.kadicompanion.data.local.datastore.InlineCodeStyle
 import com.kadicompanion.data.local.datastore.LessonLayoutMode
 import com.kadicompanion.data.local.datastore.LineSpacingPreset
 import com.kadicompanion.data.local.datastore.TableDisplayMode
 import com.kadicompanion.data.local.datastore.ThemePref
+import com.kadicompanion.data.local.datastore.TopBarStyle
 import com.kadicompanion.data.local.datastore.UiDensity
+import com.kadicompanion.domain.model.CodeSnippet
 import com.kadicompanion.domain.model.LearnerTrack
+import com.kadicompanion.ui.common.CodeBlock
 import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
@@ -104,27 +112,21 @@ import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
+import com.kadicompanion.ui.home.heroPaletteSwatch
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.successColor
 import kotlin.math.roundToInt
 
-/**
- * Full UI Studio & Settings Center:
- * Gives the user granular control over every aspect of the phone UI across 4 categories:
- *   0 - Theme & Colors (Theme Mode, 7 Accent Palettes, Material You Dynamic Color, Motion)
- *   1 - Text & Code (UI Font Scale, GDScript Code Scale, Font Family, Line Spacing, Inline Code Style, Word Wrap, Line Numbers, Window Dots)
- *   2 - Layout & Cards (Phone Density, Corner Radius, Card Surface Style, Top Accent Stripe, Hero Style, Bottom Bar Style, Lesson Layout, Table Display Mode)
- *   3 - Home & Course (Custom Home Greeting & Subtitle, Home Widget Visibility Toggles, Learning Track, Phase Gating, Reset All)
- */
 @Composable
 fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     var activeSection by rememberSaveable { mutableIntStateOf(0) }
-    val sections = listOf("Theme & Color", "Text & Code", "Layout & Cards", "Home & Course")
+    val sections = listOf("Theme & Color", "Fonts & Code", "Home Top Card", "Layout & Bars", "Course & About")
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             KadiTopBar(
                 title = "UI Studio & Settings",
@@ -135,9 +137,9 @@ fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) 
                     FilledTonalButton(
                         onClick = vm::resetAllUiToDefault,
                         shape = MaterialTheme.shapes.extraSmall,
-                        modifier = Modifier.padding(end = 12.dp).height(34.dp)
+                        modifier = Modifier.padding(end = 8.dp).height(30.dp)
                     ) {
-                        Icon(Icons.Outlined.RestartAlt, contentDescription = "Reset UI", modifier = Modifier.size(15.dp))
+                        Icon(Icons.Outlined.RestartAlt, contentDescription = "Reset UI", modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
                         Text("Reset", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                     }
@@ -152,14 +154,13 @@ fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) 
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Category Switcher Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface)
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = hPad, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = hPad, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 sections.forEachIndexed { idx, label ->
                     val selected = activeSection == idx
@@ -177,7 +178,7 @@ fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) 
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                             color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
                 }
@@ -188,28 +189,23 @@ fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) 
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(start = hPad, end = hPad, top = 12.dp, bottom = 32.dp),
+                    .padding(start = hPad, end = hPad, top = 10.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(vGap)
             ) {
-                // Live Interactive Preview Card at the top of Settings
                 LiveUiPreviewCard()
 
                 when (activeSection) {
                     0 -> ThemeAndColorSection(state = state, vm = vm)
                     1 -> TextAndCodeSection(state = state, vm = vm)
-                    2 -> LayoutAndCardsSection(state = state, vm = vm)
-                    else -> HomeAndCourseSection(state = state, vm = vm)
+                    2 -> HomeTopCardSection(state = state, vm = vm)
+                    3 -> LayoutAndCardsSection(state = state, vm = vm)
+                    else -> CourseAndAboutSection(state = state, vm = vm)
                 }
             }
         }
     }
 }
 
-/**
- * Live Quick UI Customizer Sheet that can be opened from the `Tune` button on any screen
- * so the user can tweak themes, colors, text size, inline code style, card geometry, density,
- * lesson layout, and table display in real time while looking at the active screen.
- */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun QuickUiCustomizerSheet(
@@ -232,10 +228,9 @@ fun QuickUiCustomizerSheet(
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Sheet Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -245,7 +240,7 @@ fun QuickUiCustomizerSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    IconBubble(icon = Icons.Outlined.Tune, size = 36.dp)
+                    IconBubble(icon = Icons.Outlined.Tune, size = 34.dp)
                     Column {
                         Text(
                             text = "LIVE UI STUDIO",
@@ -267,8 +262,67 @@ fun QuickUiCustomizerSheet(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // 1. Theme Mode
-            QuickGroupTitle("Theme Mode")
+            // 1. Top Navbar Size
+            QuickGroupTitle("Top Navbar Size")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TopBarStyle.entries.forEach { tStyle ->
+                    QuickOptionChip(
+                        label = tStyle.label,
+                        selected = p.topBarStyle == tStyle,
+                        onClick = { vm.setTopBarStyle(tStyle) }
+                    )
+                }
+            }
+
+            // 2. Home Top Hero Card Layout & Palette
+            QuickGroupTitle("Home Top Hero Card Layout & Palette")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HomeHeroLayout.entries.forEach { hLayout ->
+                    QuickOptionChip(
+                        label = hLayout.label,
+                        selected = p.homeHeroLayout == hLayout,
+                        onClick = { vm.setHomeHeroLayout(hLayout) }
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HomeHeroPalette.entries.forEach { hPal ->
+                    val swatch = heroPaletteSwatch(hPal)
+                    val selected = p.homeHeroPalette == hPal
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = if (selected) swatch.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainer,
+                        border = BorderStroke(if (selected) 1.5.dp else 1.dp, if (selected) swatch else MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.clickable { vm.setHomeHeroPalette(hPal) }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(modifier = Modifier.size(11.dp).clip(CircleShape).background(swatch))
+                            Text(
+                                text = hPal.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) swatch else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 3. Theme Mode & Accent Palette
+            QuickGroupTitle("Theme Mode & Accent Palette")
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -286,9 +340,6 @@ fun QuickUiCustomizerSheet(
                     )
                 }
             }
-
-            // 2. Color Palette Swatches
-            QuickGroupTitle("Accent Color Palette")
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -324,9 +375,36 @@ fun QuickUiCustomizerSheet(
                 }
             }
 
-            // 3. Text & Code Scale Sliders
+            // 4. 10 Font Families & 5 Heading Weights
+            QuickGroupTitle("Font Family (10 Typefaces) & Heading Weight")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FontFamilyPreset.entries.forEach { ff ->
+                    QuickOptionChip(
+                        label = ff.label,
+                        selected = p.fontFamilyPreset == ff,
+                        onClick = { vm.setFontFamilyPreset(ff) }
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HeadingWeightPreset.entries.forEach { hw ->
+                    QuickOptionChip(
+                        label = hw.label,
+                        selected = p.headingWeightPreset == hw,
+                        onClick = { vm.setHeadingWeightPreset(hw) }
+                    )
+                }
+            }
+
+            // 5. Text & Code Scale Sliders
             QuickGroupTitle("Text Size (${(p.fontScale * 100).roundToInt()}%) & Code Size (${(p.codeFontScale * 100).roundToInt()}%)")
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -359,8 +437,20 @@ fun QuickUiCustomizerSheet(
                 }
             }
 
-            // 4. Inline Code & Term Style + Font Family
-            QuickGroupTitle("Inline Code & Term Highlighting")
+            // 6. Code Syntax Theme & Inline Code Style
+            QuickGroupTitle("GDScript Syntax Theme & Inline Code Style")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CodeThemePreset.entries.forEach { cTheme ->
+                    QuickOptionChip(
+                        label = cTheme.label,
+                        selected = p.codeThemePreset == cTheme,
+                        onClick = { vm.setCodeThemePreset(cTheme) }
+                    )
+                }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -374,22 +464,8 @@ fun QuickUiCustomizerSheet(
                 }
             }
 
-            QuickGroupTitle("Font Family")
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FontFamilyPreset.entries.forEach { ff ->
-                    QuickOptionChip(
-                        label = ff.label,
-                        selected = p.fontFamilyPreset == ff,
-                        onClick = { vm.setFontFamilyPreset(ff) }
-                    )
-                }
-            }
-
-            // 5. Phone Density, Corner Radius & Card Style
-            QuickGroupTitle("Phone Layout Density")
+            // 7. Phone Density, Corner Radius, Card Style & Border Width
+            QuickGroupTitle("Phone Layout Density & Card Geometry")
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -402,8 +478,6 @@ fun QuickUiCustomizerSheet(
                     )
                 }
             }
-
-            QuickGroupTitle("Card Style & Corner Roundness (${p.cornerRadiusDp}dp)")
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -429,7 +503,7 @@ fun QuickUiCustomizerSheet(
                 }
             }
 
-            // 6. Lesson Layout, Table Display & Bottom Bar
+            // 8. Lesson Layout, Table Display & Bottom Bar
             QuickGroupTitle("Lesson Reader & Table Mode on Phone")
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -465,19 +539,8 @@ fun QuickUiCustomizerSheet(
                 }
             }
 
-            // 7. Quick Toggles
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Wrap Long GDScript Code Lines", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                Switch(checked = p.codeWordWrap, onCheckedChange = vm::setCodeWordWrap)
-            }
-
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // Bottom Actions: Reset & Open Full Settings
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -485,9 +548,9 @@ fun QuickUiCustomizerSheet(
                 FilledTonalButton(
                     onClick = vm::resetAllUiToDefault,
                     shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.weight(1f).height(46.dp)
+                    modifier = Modifier.weight(1f).height(44.dp)
                 ) {
-                    Icon(Icons.Outlined.RestartAlt, contentDescription = null, modifier = Modifier.size(17.dp))
+                    Icon(Icons.Outlined.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("Reset Defaults", fontWeight = FontWeight.SemiBold)
                 }
@@ -497,9 +560,9 @@ fun QuickUiCustomizerSheet(
                         onOpenFullSettings()
                     },
                     shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.weight(1.15f).height(46.dp)
+                    modifier = Modifier.weight(1.15f).height(44.dp)
                 ) {
-                    Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(17.dp))
+                    Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("All UI Options", fontWeight = FontWeight.Bold)
                 }
@@ -540,7 +603,7 @@ internal fun QuickOptionChip(
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             color = if (selected) primary else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 11.dp, vertical = 7.dp)
         )
     }
 }
@@ -568,7 +631,7 @@ private fun LiveUiPreviewCard() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                IconBubble(icon = Icons.Outlined.AutoAwesome, tint = MaterialTheme.colorScheme.primary, size = 34.dp)
+                IconBubble(icon = Icons.Outlined.AutoAwesome, tint = MaterialTheme.colorScheme.primary, size = 32.dp)
                 Column {
                     Text(
                         text = "LIVE UI PREVIEW",
@@ -577,7 +640,7 @@ private fun LiveUiPreviewCard() {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${p.accentPreset.label} · ${p.cardStyle.label}",
+                        text = "${p.fontFamilyPreset.label} · ${p.codeThemePreset.label}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -667,6 +730,62 @@ private fun ThemeAndColorSection(state: SettingsUiState, vm: SettingsViewModel) 
 private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
     val p = state.uiPrefs
 
+    SectionHeader(title = "10 Font Families & Heading Weight", eyebrow = "TYPOGRAPHY STUDIO")
+    KadiCard {
+        Text(
+            text = "Choose from 10 distinct system & editorial font families",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        FontFamilyPreset.entries.forEach { preset ->
+            ChoiceRow(
+                icon = Icons.Outlined.TextFields,
+                title = preset.label,
+                description = preset.description,
+                selected = p.fontFamilyPreset == preset,
+                onClick = { vm.setFontFamilyPreset(preset) }
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Text("Heading Font Weight", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            HeadingWeightPreset.entries.forEach { hw ->
+                QuickOptionChip(
+                    label = hw.label,
+                    selected = p.headingWeightPreset == hw,
+                    onClick = { vm.setHeadingWeightPreset(hw) }
+                )
+            }
+        }
+
+        Text("Paragraph Line Spacing", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            LineSpacingPreset.entries.forEach { preset ->
+                QuickOptionChip(
+                    label = preset.label,
+                    selected = p.lineSpacingPreset == preset,
+                    onClick = { vm.setLineSpacingPreset(preset) }
+                )
+            }
+        }
+
+        ToggleRow(
+            icon = Icons.Outlined.TextFields,
+            title = stringResource(R.string.settings_dyslexia_font),
+            description = "Wider letter tracking across all lesson paragraphs.",
+            checked = p.dyslexiaFont,
+            onCheckedChange = vm::setDyslexiaFont
+        )
+    }
+
     SectionHeader(title = "Text & Code Sizing", eyebrow = "LIVE TYPOGRAPHY SCALE")
     KadiCard {
         Row(
@@ -726,6 +845,26 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
         )
     }
 
+    SectionHeader(title = "GDScript Code Syntax Theme", eyebrow = "6 IDE PALETTES")
+    KadiCard {
+        CodeBlock(
+            snippet = CodeSnippet(
+                id = "theme-preview",
+                code = "@onready var card_art: TextureRect = \$CardArt\nfunc apply_downloaded_png(path: String) -> void:\n    if ResourceLoader.exists(path):\n        card_art.texture = load(path) # Crisp PNG deck",
+                caption = "Live Syntax Preview (${p.codeThemePreset.label})"
+            )
+        )
+        CodeThemePreset.entries.forEach { cTheme ->
+            ChoiceRow(
+                icon = Icons.Outlined.Code,
+                title = cTheme.label,
+                description = cTheme.description,
+                selected = p.codeThemePreset == cTheme,
+                onClick = { vm.setCodeThemePreset(cTheme) }
+            )
+        }
+    }
+
     SectionHeader(title = "Inline Code & Term Appearance", eyebrow = "TEXT FORMATTING STYLE")
     KadiCard {
         InlineCodeStyle.entries.forEach { style ->
@@ -737,45 +876,6 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
                 onClick = { vm.setInlineCodeStyle(style) }
             )
         }
-    }
-
-    SectionHeader(title = "Font Family & Line Spacing", eyebrow = "READING COMFORT")
-    KadiCard {
-        Text("Font Family", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FontFamilyPreset.entries.forEach { preset ->
-                QuickOptionChip(
-                    label = preset.label,
-                    selected = p.fontFamilyPreset == preset,
-                    onClick = { vm.setFontFamilyPreset(preset) }
-                )
-            }
-        }
-
-        Text("Paragraph Line Spacing", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            LineSpacingPreset.entries.forEach { preset ->
-                QuickOptionChip(
-                    label = preset.label,
-                    selected = p.lineSpacingPreset == preset,
-                    onClick = { vm.setLineSpacingPreset(preset) }
-                )
-            }
-        }
-
-        ToggleRow(
-            icon = Icons.Outlined.TextFields,
-            title = stringResource(R.string.settings_dyslexia_font),
-            description = "Wider letter tracking across all lesson paragraphs.",
-            checked = p.dyslexiaFont,
-            onCheckedChange = vm::setDyslexiaFont
-        )
     }
 
     SectionHeader(title = "Code Block Preferences", eyebrow = "MOBILE IDE OPTIONS")
@@ -805,144 +905,124 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
 }
 
 @Composable
-private fun LayoutAndCardsSection(state: SettingsUiState, vm: SettingsViewModel) {
+private fun HomeTopCardSection(state: SettingsUiState, vm: SettingsViewModel) {
     val p = state.uiPrefs
 
-    SectionHeader(title = "Phone Screen Density", eyebrow = "ERGONOMICS & PADDING")
+    SectionHeader(title = "Top Hero Card Layout & Visibility", eyebrow = "HOMEPAGE TOP CARD")
     KadiCard {
-        UiDensity.entries.forEach { density ->
+        ToggleRow(
+            icon = Icons.Outlined.Home,
+            title = "Show Top Hero Card on Homepage",
+            description = "Display the main active mission & progress card at the top of Home.",
+            checked = p.showHomeHeroCard,
+            onCheckedChange = vm::setShowHomeHeroCard
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Text("Top Card Layout Mode", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        HomeHeroLayout.entries.forEach { layout ->
             ChoiceRow(
-                icon = Icons.Outlined.ViewCompact,
-                title = density.label,
-                description = density.description,
-                selected = p.uiDensity == density,
-                onClick = { vm.setUiDensity(density) }
+                icon = Icons.Outlined.SpaceDashboard,
+                title = layout.label,
+                description = layout.description,
+                selected = p.homeHeroLayout == layout,
+                onClick = { vm.setHomeHeroLayout(layout) }
             )
         }
     }
 
-    SectionHeader(title = "Card Surface & Geometry", eyebrow = "CONTAINERS & CORNERS")
+    SectionHeader(title = "Top Hero Card Color Palette", eyebrow = "8 CARD PALETTES")
     KadiCard {
+        HomeHeroPalette.entries.forEach { palette ->
+            val swatch = heroPaletteSwatch(palette)
+            ChoiceRow(
+                icon = Icons.Outlined.Palette,
+                iconTint = swatch,
+                title = palette.label,
+                description = palette.description,
+                selected = p.homeHeroPalette == palette,
+                onClick = { vm.setHomeHeroPalette(palette) }
+            )
+        }
+    }
+
+    SectionHeader(title = "Top Hero Card Elements & Custom Text", eyebrow = "CUSTOMIZE EVERY ELEMENT")
+    KadiCard {
+        ToggleRow(
+            icon = Icons.Outlined.AutoAwesome,
+            title = "Show Top Status Badge",
+            description = "Display the 'UP NEXT · LESSON X' pill badge inside the top card.",
+            checked = p.showHeroBadge,
+            onCheckedChange = vm::setShowHeroBadge
+        )
+        ToggleRow(
+            icon = Icons.Outlined.AutoAwesome,
+            title = "Show Circular Progress Ring",
+            description = "Display the animated percentage ring on the right side of the top card.",
+            checked = p.showHeroProgressRing,
+            onCheckedChange = vm::setShowHeroProgressRing
+        )
+        ToggleRow(
+            icon = Icons.Outlined.SpaceDashboard,
+            title = "Show Secondary Action Button",
+            description = "Display the secondary 'Curriculum' button next to the primary button.",
+            checked = p.showHeroSecondaryBtn,
+            onCheckedChange = vm::setShowHeroSecondaryBtn
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Text(
+            text = "Custom Top Card Text Overrides (leave blank for automatic lesson progress text)",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        OutlinedTextField(
+            value = p.customHeroBadge,
+            onValueChange = vm::setCustomHeroBadge,
+            label = { Text("Custom Top Card Badge (default: UP NEXT · LESSON X)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = p.customHeroTitle,
+            onValueChange = vm::setCustomHeroTitle,
+            label = { Text("Custom Top Card Title (default: current lesson title)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = p.customHeroSubtitle,
+            onValueChange = vm::setCustomHeroSubtitle,
+            label = { Text("Custom Top Card Subtitle (default: current phase title)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                IconBubble(icon = Icons.Outlined.RoundedCorner, size = 34.dp)
-                Column {
-                    Text("Corner Roundness", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text("Adjust card, button, and banner corner radius", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            Pill(text = "${p.cornerRadiusDp}dp")
-        }
-        Slider(
-            value = p.cornerRadiusDp.toFloat(),
-            onValueChange = { vm.setCornerRadiusDp(it.roundToInt()) },
-            valueRange = 0f..28f,
-            steps = 6
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf(0 to "Sharp (0dp)", 8 to "Compact (8dp)", 14 to "Studio (14dp)", 20 to "Rounded (20dp)", 28 to "Pill (28dp)").forEach { (r, label) ->
-                QuickOptionChip(
-                    label = label,
-                    selected = p.cornerRadiusDp == r,
-                    onClick = { vm.setCornerRadiusDp(r) }
-                )
-            }
-        }
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-        CardStyle.entries.forEach { cs ->
-            ChoiceRow(
-                icon = Icons.Outlined.BorderStyle,
-                title = cs.label,
-                description = cs.description,
-                selected = p.cardStyle == cs,
-                onClick = { vm.setCardStyle(cs) }
+            OutlinedTextField(
+                value = p.customHeroPrimaryBtn,
+                onValueChange = vm::setCustomHeroPrimaryBtn,
+                label = { Text("Primary Button Label") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
             )
-        }
-
-        ToggleRow(
-            icon = Icons.Outlined.BorderStyle,
-            title = "Show Colored Card Top Accent Bar",
-            description = "Display the 3dp colored top highlight bar on accented cards.",
-            checked = p.showCardAccentBar,
-            onCheckedChange = vm::setShowCardAccentBar
-        )
-    }
-
-    SectionHeader(title = "Lesson Reader & Table Layout", eyebrow = "MOBILE READING FLOW")
-    KadiCard {
-        LessonLayoutMode.entries.forEach { mode ->
-            ChoiceRow(
-                icon = Icons.Outlined.SpaceDashboard,
-                title = mode.label,
-                description = mode.description,
-                selected = p.lessonLayoutMode == mode,
-                onClick = { vm.setLessonLayoutMode(mode) }
-            )
-        }
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-        TableDisplayMode.entries.forEach { tMode ->
-            ChoiceRow(
-                icon = Icons.Outlined.TableChart,
-                title = tMode.label,
-                description = tMode.description,
-                selected = p.tableDisplayMode == tMode,
-                onClick = { vm.setTableDisplayMode(tMode) }
+            OutlinedTextField(
+                value = p.customHeroSecondaryBtn,
+                onValueChange = vm::setCustomHeroSecondaryBtn,
+                label = { Text("Secondary Button Label") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
             )
         }
     }
 
-    SectionHeader(title = "Navigation & Hero Banners", eyebrow = "CHROME & BARS")
+    SectionHeader(title = "Home Top Bar & Widgets", eyebrow = "HOME SCREEN SECTIONS")
     KadiCard {
-        Text("Bottom Navigation Bar Style", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        BottomBarStyle.entries.forEach { bStyle ->
-            ChoiceRow(
-                icon = Icons.Outlined.SpaceDashboard,
-                title = bStyle.label,
-                description = bStyle.description,
-                selected = p.bottomBarStyle == bStyle,
-                onClick = { vm.setBottomBarStyle(bStyle) }
-            )
-        }
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-        Text("Hero Banner Style", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        HeroStyle.entries.forEach { hStyle ->
-            ChoiceRow(
-                icon = Icons.Outlined.AutoAwesome,
-                title = hStyle.label,
-                description = hStyle.description,
-                selected = p.heroStyle == hStyle,
-                onClick = { vm.setHeroStyle(hStyle) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeAndCourseSection(state: SettingsUiState, vm: SettingsViewModel) {
-    val p = state.uiPrefs
-
-    SectionHeader(title = "Custom Home Text & Labels", eyebrow = "PERSONALIZE HEADER")
-    KadiCard {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            IconBubble(icon = Icons.Outlined.Edit, size = 34.dp)
-            Column {
-                Text("Custom Greeting & Studio Badge", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Personalize the title and eyebrow shown on the Home screen", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
         OutlinedTextField(
             value = p.customGreeting,
             onValueChange = vm::setCustomGreeting,
@@ -957,10 +1037,9 @@ private fun HomeAndCourseSection(state: SettingsUiState, vm: SettingsViewModel) 
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-    }
 
-    SectionHeader(title = "Home Screen Widgets", eyebrow = "SHOW OR HIDE SECTIONS")
-    KadiCard {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
         ToggleRow(
             icon = Icons.Outlined.Home,
             title = "Show 3-Tile Progress Metrics Strip",
@@ -997,6 +1076,173 @@ private fun HomeAndCourseSection(state: SettingsUiState, vm: SettingsViewModel) 
             onCheckedChange = vm::setShowReviewQueue
         )
     }
+}
+
+@Composable
+private fun LayoutAndCardsSection(state: SettingsUiState, vm: SettingsViewModel) {
+    val p = state.uiPrefs
+
+    SectionHeader(title = "Top Navbar & Bottom Bar", eyebrow = "NAVIGATION CHROME")
+    KadiCard {
+        Text("Top Navbar Size", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        TopBarStyle.entries.forEach { tStyle ->
+            ChoiceRow(
+                icon = Icons.Outlined.SpaceDashboard,
+                title = tStyle.label,
+                description = tStyle.description,
+                selected = p.topBarStyle == tStyle,
+                onClick = { vm.setTopBarStyle(tStyle) }
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Text("Bottom Navigation Bar Style", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        BottomBarStyle.entries.forEach { bStyle ->
+            ChoiceRow(
+                icon = Icons.Outlined.SpaceDashboard,
+                title = bStyle.label,
+                description = bStyle.description,
+                selected = p.bottomBarStyle == bStyle,
+                onClick = { vm.setBottomBarStyle(bStyle) }
+            )
+        }
+    }
+
+    SectionHeader(title = "Phone Screen Density", eyebrow = "ERGONOMICS & PADDING")
+    KadiCard {
+        UiDensity.entries.forEach { density ->
+            ChoiceRow(
+                icon = Icons.Outlined.ViewCompact,
+                title = density.label,
+                description = density.description,
+                selected = p.uiDensity == density,
+                onClick = { vm.setUiDensity(density) }
+            )
+        }
+    }
+
+    SectionHeader(title = "Card Surface, Borders & Corners", eyebrow = "CONTAINERS & GEOMETRY")
+    KadiCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                IconBubble(icon = Icons.Outlined.RoundedCorner, size = 34.dp)
+                Column {
+                    Text("Corner Roundness", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("Adjust card, button, and banner corner radius", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Pill(text = "${p.cornerRadiusDp}dp")
+        }
+        Slider(
+            value = p.cornerRadiusDp.toFloat(),
+            onValueChange = { vm.setCornerRadiusDp(it.roundToInt()) },
+            valueRange = 0f..28f,
+            steps = 6
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf(0 to "Sharp (0dp)", 8 to "Compact (8dp)", 14 to "Studio (14dp)", 20 to "Rounded (20dp)", 28 to "Pill (28dp)").forEach { (r, label) ->
+                QuickOptionChip(
+                    label = label,
+                    selected = p.cornerRadiusDp == r,
+                    onClick = { vm.setCornerRadiusDp(r) }
+                )
+            }
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                IconBubble(icon = Icons.Outlined.BorderStyle, tint = MaterialTheme.colorScheme.secondary, size = 34.dp)
+                Column {
+                    Text("Card Border Thickness", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("0dp borderless up to 2.5dp bold studio outlines", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Pill(text = "${p.cardBorderWidthDp}dp", color = MaterialTheme.colorScheme.secondary)
+        }
+        Slider(
+            value = p.cardBorderWidthDp,
+            onValueChange = { vm.setCardBorderWidthDp((it * 2).roundToInt() / 2f) },
+            valueRange = 0f..2.5f,
+            steps = 4
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        CardStyle.entries.forEach { cs ->
+            ChoiceRow(
+                icon = Icons.Outlined.BorderStyle,
+                title = cs.label,
+                description = cs.description,
+                selected = p.cardStyle == cs,
+                onClick = { vm.setCardStyle(cs) }
+            )
+        }
+
+        ToggleRow(
+            icon = Icons.Outlined.BorderStyle,
+            title = "Show Colored Card Top Accent Bar",
+            description = "Display the 3dp colored top highlight bar on accented cards.",
+            checked = p.showCardAccentBar,
+            onCheckedChange = vm::setShowCardAccentBar
+        )
+    }
+
+    SectionHeader(title = "Lesson Reader, Tables & Hero", eyebrow = "MOBILE READING FLOW")
+    KadiCard {
+        LessonLayoutMode.entries.forEach { mode ->
+            ChoiceRow(
+                icon = Icons.Outlined.SpaceDashboard,
+                title = mode.label,
+                description = mode.description,
+                selected = p.lessonLayoutMode == mode,
+                onClick = { vm.setLessonLayoutMode(mode) }
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        TableDisplayMode.entries.forEach { tMode ->
+            ChoiceRow(
+                icon = Icons.Outlined.TableChart,
+                title = tMode.label,
+                description = tMode.description,
+                selected = p.tableDisplayMode == tMode,
+                onClick = { vm.setTableDisplayMode(tMode) }
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Text("Other Screen Hero Banner Style", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        HeroStyle.entries.forEach { hStyle ->
+            ChoiceRow(
+                icon = Icons.Outlined.AutoAwesome,
+                title = hStyle.label,
+                description = hStyle.description,
+                selected = p.heroStyle == hStyle,
+                onClick = { vm.setHeroStyle(hStyle) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CourseAndAboutSection(state: SettingsUiState, vm: SettingsViewModel) {
+    val p = state.uiPrefs
 
     SectionHeader(title = stringResource(R.string.settings_track), eyebrow = "LEARNING PATH")
     KadiCard {
@@ -1033,7 +1279,7 @@ private fun HomeAndCourseSection(state: SettingsUiState, vm: SettingsViewModel) 
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Bundled offline curriculum & Godot 4.3 docs",
+                    text = "Bundled offline curriculum, downloaded asset workflows & Godot 4.3 docs",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1073,7 +1319,7 @@ private fun ToggleRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        IconBubble(icon = icon, tint = accent, size = 36.dp)
+        IconBubble(icon = icon, tint = accent, size = 34.dp)
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = title,
@@ -1112,11 +1358,11 @@ private fun ChoiceRow(
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(11.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            IconBubble(icon = icon, tint = accent, size = 34.dp)
+            IconBubble(icon = icon, tint = accent, size = 32.dp)
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = title,

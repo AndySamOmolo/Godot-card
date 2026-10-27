@@ -55,6 +55,7 @@ import com.kadicompanion.domain.model.GlossaryEntry
 import com.kadicompanion.ui.common.EmptyState
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.LoadingSkeleton
+import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
@@ -62,28 +63,40 @@ import com.kadicompanion.ui.theme.LocalReduceMotion
 
 private val KADI_TERMS = setOf(
     "Kadi", "Penalty Cards", "Jump Cards", "Kickback Cards", "Question Cards",
-    "Answer Cards", "Niko Kadi", "Draw Pile", "Discard Pile", "Suit", "Rank"
+    "Answer Cards", "Niko Kadi", "Draw Pile", "Discard Pile", "Suit", "Rank",
+    "Cardless", "Cardless Status", "Joker", "A-Cards", "Starting Card",
+    "Opening Discard", "Turn Order", "Turn Direction", "Penalty Stack",
+    "Penalty Stacking", "Multi-Card Combo", "Question-Answer Combo", "Suit Lock", "Requested Rank"
+)
+
+private val ASSET_TERMS = setOf(
+    "TextureRect", "Texture2D", "AtlasTexture", "Sprite Sheet", "Import Dock",
+    "Mouse Filter", "TextureFilter", "StyleBoxTexture", "AudioStreamOggVorbis",
+    "ResourceLoader", "res://"
 )
 
 private val GODOT_NODE_TERMS = setOf(
     "Node", "Control", "Resource", "Autoloads", "Scenes", "_ready()", "Signals",
     "State Machines", "Tweens", "PackedScene", "Object", "Button", "Label",
-    "Timer", "@onready", "@export", "HBoxContainer", "CanvasLayer", "OptionButton"
-)
+    "Timer", "@onready", "@export", "HBoxContainer", "CanvasLayer", "OptionButton",
+    "Scene Tree", "Inspector", "FileSystem Dock", "Project Settings", "Main Scene",
+    "Instantiation", "Freeing Nodes", "queue_free()"
+) + ASSET_TERMS
 
 @Composable
 fun GlossaryListScreen(onTermClick: (String) -> Unit, vm: GlossaryListViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     var selectedCategory by rememberSaveable { mutableIntStateOf(0) }
-    val categories = listOf("All Terms", "Kadi Rules", "Godot Engine", "GDScript")
+    val categories = listOf("All Terms", "Kadi Rules", "Downloaded Assets", "Godot Engine", "GDScript")
     val hPad = studioScreenPadding()
     val vGap = studioCardSpacing()
 
     val categoryFiltered = state.filtered.filter { entry ->
         when (selectedCategory) {
             1 -> entry.term in KADI_TERMS
-            2 -> entry.term in GODOT_NODE_TERMS || entry.relatedDocClassNames.isNotEmpty()
-            3 -> entry.term !in KADI_TERMS && entry.term !in GODOT_NODE_TERMS && entry.relatedDocClassNames.isEmpty()
+            2 -> entry.term in ASSET_TERMS || entry.shortDefinition.contains("res://assets/", ignoreCase = true)
+            3 -> entry.term in GODOT_NODE_TERMS || entry.relatedDocClassNames.isNotEmpty()
+            4 -> entry.term !in KADI_TERMS && entry.term !in GODOT_NODE_TERMS && entry.relatedDocClassNames.isEmpty()
             else -> true
         }
     }
@@ -173,6 +186,8 @@ private fun LetterRule(letter: Char) {
 
 @Composable
 private fun TermCard(entry: GlossaryEntry, onClick: () -> Unit) {
+    val firstLine = entry.shortDefinition.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty()
+    val hasCodeExample = entry.shortDefinition.contains("```")
     KadiCard(onClick = onClick) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -180,16 +195,26 @@ private fun TermCard(entry: GlossaryEntry, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             LetterBadge(letter = entry.term.firstOrNull()?.uppercaseChar() ?: '?')
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = entry.term,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = entry.term,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (hasCodeExample) {
+                        Pill(text = "Code", color = MaterialTheme.colorScheme.secondary)
+                    }
+                }
                 RichInlineText(
-                    text = entry.shortDefinition,
+                    text = firstLine,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

@@ -33,3 +33,16 @@ short: A 2D particle emitter simulated on the CPU, configurable entirely from pr
 It is the safer choice on lower-end hardware or platforms with limited GPU particle support, and because the work happens on the CPU it stays predictable across devices. Use `one_shot` with the `finished` signal for one-off bursts and `explosiveness` to control whether particles trickle out or explode all at once.
 
 In the Kadi app `CPUParticles2D` handles the subtle, always-on flourishes that must look identical on every Android device: a gentle shimmer beneath the active player's cards and a small tap-spark when a card is legally played. Because it runs on the CPU, it behaves consistently even on budget phones where GPU particles might be throttled.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`CPUParticles2D`)**: When configuring `CPUParticles2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CPUParticles2D` offline. If your `CPUParticles2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using CPUParticles2D in Godot 4.3 Kadi
+func configure_cpuparticles2d_example(target: CPUParticles2D) -> void:
+    assert(target != null, "CPUParticles2D reference must be valid")
+    print("Configured CPUParticles2D for Kadi table runtime")
+```
+

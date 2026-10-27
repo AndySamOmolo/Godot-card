@@ -28,3 +28,16 @@ short: A toggle button that displays a checkmark and a text label, like a checkb
 For an on/off switch that looks like a sliding toggle, set the theme variation to use the `CheckBox` look, or just use `CheckBox` — both share the same `BaseButton` API. Because state is held in `button_pressed`, you can read or force the value at any time and the visual updates automatically.
 
 In the Kadi app `CheckButton`s populate the settings panel: "Auto-call Niko Kadi", "Highlight playable cards", "Confirm before quitting", and "Sound on" from `l_11_01_tweens`. Each `toggled` signal writes straight to the autoloaded settings resource, so changes apply immediately. A `CheckButton` also gates the "Show card suggestions" hint that dims unplayable cards in the hand — flipping it instantly retints every card widget without restarting the match.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`CheckButton`)**: When configuring `CheckButton` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CheckButton` offline. If your `CheckButton` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using CheckButton in Godot 4.3 Kadi
+func configure_checkbutton_example(target: CheckButton) -> void:
+    assert(target != null, "CheckButton reference must be valid")
+    print("Configured CheckButton for Kadi table runtime")
+```
+

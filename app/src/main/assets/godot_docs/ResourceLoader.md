@@ -32,3 +32,16 @@ short: A singleton for loading resources at runtime, optionally in the backgroun
 `load_threaded_request` / `load_threaded_get_status` / `load_threaded_get` is the background-loading trio: request a load, poll its progress (a 0..1 float), and finally fetch the result on the main thread. This keeps loading large assets off the main loop so the UI stays responsive — essential on mobile. `has` and `get_dependencies` let you check or inspect a resource without committing to a full load.
 
 In the Kadi app `ResourceLoader.load` fetches each card's [[Texture2D]] from `res://art/cards/<suit>_<rank>.png` lazily the first time that card is dealt, and the card-back `Texture2D` is `preload`d because it is always needed. The declaration popup's `PackedScene` and the four suit icon [[Resource]]s are background-loaded with `load_threaded_request` on the title screen, so by the time the learner reaches a declaration the assets are ready and the popup opens instantly.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`ResourceLoader`)**: When configuring `ResourceLoader` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ResourceLoader` offline. If your `ResourceLoader` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using ResourceLoader in Godot 4.3 Kadi
+func configure_resourceloader_example(target: ResourceLoader) -> void:
+    assert(target != null, "ResourceLoader reference must be valid")
+    print("Configured ResourceLoader for Kadi table runtime")
+```
+

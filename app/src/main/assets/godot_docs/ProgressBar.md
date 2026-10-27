@@ -31,3 +31,16 @@ short: A control that visualises progress from min to max as a filled bar.
 `indeterminate = true` turns the bar into a pulsing "busy" indicator with no known completion — the right choice when you are loading assets and do not know how long it will take. The fill, background, and text colours are themeable via `add_theme_color_override`, so a single bar can be retinted red for danger or green for healthy progress.
 
 In the Kadi app `ProgressBar` shows each player's hand size relative to their starting hand — a quick visual of who is close to winning ("Niko Kadi"). The penalty accumulator's running total is mirrored on a red-tinted bar so opponents can see the pressure build. A long shuffle of the deck displays an `indeterminate` bar while the [[Array]] is being randomised, and the learning-app section progress uses one too, advancing as the learner completes each phase.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`ProgressBar`)**: When configuring `ProgressBar` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ProgressBar` offline. If your `ProgressBar` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using ProgressBar in Godot 4.3 Kadi
+func configure_progressbar_example(target: ProgressBar) -> void:
+    assert(target != null, "ProgressBar reference must be valid")
+    print("Configured ProgressBar for Kadi table runtime")
+```
+

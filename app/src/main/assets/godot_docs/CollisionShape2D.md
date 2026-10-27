@@ -26,3 +26,16 @@ short: A node that gives a collision object its 2D shape via a Shape2D resource.
 You can toggle it at runtime with `disabled` to switch a hitbox off without freeing it, and `one_way_collision` makes platforms you can jump up through. Enabling collision debug draws the shape in `debug_color` so you can see it in a running game.
 
 In the Kadi app each card scene carries a `CollisionShape2D` with a `RectangleShape2D` sized to the card art, parented under the card's [[Area2D]]. That is what lets the discard pile detect a dropped card. Disabled cards in a locked hand simply set `disabled = true` so they cannot be picked up until it is the player's turn.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`CollisionShape2D`)**: When configuring `CollisionShape2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CollisionShape2D` offline. If your `CollisionShape2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using CollisionShape2D in Godot 4.3 Kadi
+func configure_collisionshape2d_example(target: CollisionShape2D) -> void:
+    assert(target != null, "CollisionShape2D reference must be valid")
+    print("Configured CollisionShape2D for Kadi table runtime")
+```
+

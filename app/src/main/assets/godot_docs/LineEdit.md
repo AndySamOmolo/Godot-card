@@ -47,3 +47,16 @@ short: A single-line text input field the user can type into.
 On mobile, `virtual_keyboard_enabled` brings up the on-screen keyboard automatically, which is essential for an Android learning app. `max_length` enforces a hard cap, and `select_all_on_focus` makes re-entering a value faster. For multi-line or rich text, use [[TextEdit]] instead.
 
 The Kadi app uses `LineEdit` for naming players before a match, and in the learning side for the in-app code-exercise prompts where the learner types a short expression (such as `"if hand.size() == 1:"`) and submits it with Enter. `text_submitted` triggers the answer check, and the field's `placeholder_text` shows a faded hint like `type your condition here`. The clear button lets learners wipe an attempt and try again without fiddling with selection.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`LineEdit`)**: When configuring `LineEdit` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `LineEdit` offline. If your `LineEdit` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using LineEdit in Godot 4.3 Kadi
+func configure_lineedit_example(target: LineEdit) -> void:
+    assert(target != null, "LineEdit reference must be valid")
+    print("Configured LineEdit for Kadi table runtime")
+```
+

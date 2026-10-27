@@ -2,6 +2,9 @@ package com.kadicompanion.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kadicompanion.data.local.datastore.HomeHeroLayout
+import com.kadicompanion.data.local.datastore.HomeHeroPalette
+import com.kadicompanion.data.local.datastore.PreferencesRepository
 import com.kadicompanion.domain.model.LearnerTrack
 import com.kadicompanion.domain.model.ReviewItem
 import com.kadicompanion.domain.repository.LearnerProfileRepository
@@ -14,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomePhaseMini(
@@ -45,6 +49,7 @@ class HomeViewModel @Inject constructor(
     private val progress: ProgressRepository,
     private val tutorial: TutorialRepository,
     private val learnerProfile: LearnerProfileRepository,
+    private val prefs: PreferencesRepository,
     private val getOverallProgress: GetOverallProgressUseCase,
     private val getReviewQueue: GetReviewQueueUseCase
 ) : ViewModel() {
@@ -59,9 +64,6 @@ class HomeViewModel @Inject constructor(
         val sortedPhases = phases.sortedBy { it.order }
         val completedIds = allProgress.filter { it.isCompleted }.map { it.lessonId }.toHashSet()
 
-        // 1. Prefer the most recently opened incomplete lesson;
-        // 2. Otherwise pick the first uncompleted lesson across the course;
-        // 3. Otherwise fall back to the very first lesson.
         val lastOpenedIncomplete = allProgress
             .filter { !it.isCompleted && (it.lastOpenedAt ?: 0L) > 0L }
             .maxByOrNull { it.lastOpenedAt ?: 0L }
@@ -102,4 +104,17 @@ class HomeViewModel @Inject constructor(
             track = track
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+
+    // Direct setters so the user can customize the Home Top Hero Card right from the Home screen
+    fun setShowHomeHeroCard(show: Boolean) = viewModelScope.launch { prefs.setShowHomeHeroCard(show) }
+    fun setHomeHeroLayout(layout: HomeHeroLayout) = viewModelScope.launch { prefs.setHomeHeroLayout(layout) }
+    fun setHomeHeroPalette(palette: HomeHeroPalette) = viewModelScope.launch { prefs.setHomeHeroPalette(palette) }
+    fun setShowHeroBadge(show: Boolean) = viewModelScope.launch { prefs.setShowHeroBadge(show) }
+    fun setShowHeroProgressRing(show: Boolean) = viewModelScope.launch { prefs.setShowHeroProgressRing(show) }
+    fun setShowHeroSecondaryBtn(show: Boolean) = viewModelScope.launch { prefs.setShowHeroSecondaryBtn(show) }
+    fun setCustomHeroBadge(badge: String) = viewModelScope.launch { prefs.setCustomHeroBadge(badge) }
+    fun setCustomHeroTitle(title: String) = viewModelScope.launch { prefs.setCustomHeroTitle(title) }
+    fun setCustomHeroSubtitle(subtitle: String) = viewModelScope.launch { prefs.setCustomHeroSubtitle(subtitle) }
+    fun setCustomHeroPrimaryBtn(label: String) = viewModelScope.launch { prefs.setCustomHeroPrimaryBtn(label) }
+    fun setCustomHeroSecondaryBtn(label: String) = viewModelScope.launch { prefs.setCustomHeroSecondaryBtn(label) }
 }

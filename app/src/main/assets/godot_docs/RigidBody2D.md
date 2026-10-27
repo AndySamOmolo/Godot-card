@@ -36,3 +36,16 @@ short: A 2D physics body simulated by the engine, driven by forces, impulses, an
 It pairs with a [[CollisionShape2D]] that defines its solid extent and reacts to [[StaticBody2D]] and [[CharacterBody2D]] obstacles. Enabling `contact_monitor` lets it emit `body_entered`/`body_exited`, while `freeze` temporarily removes it from the simulation.
 
 In the Kadi app `RigidBody2D` is not used for normal card handling — that is done with tweened [[Node2D]]s — but it powers the celebratory "scatter" when a round is won: the winner's cards briefly become rigid bodies, an `apply_impulse` tosses them into the air, and they tumble under gravity before the next hand resets the table.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`RigidBody2D`)**: When configuring `RigidBody2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `RigidBody2D` offline. If your `RigidBody2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using RigidBody2D in Godot 4.3 Kadi
+func configure_rigidbody2d_example(target: RigidBody2D) -> void:
+    assert(target != null, "RigidBody2D reference must be valid")
+    print("Configured RigidBody2D for Kadi table runtime")
+```
+

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -102,11 +103,9 @@ import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * Interactive Lesson Studio supporting both:
- * - 3-Tab Studio Mode (Guide & Code · Godot Steps · Lab & Quiz)
- * - Continuous Single-Scroll Mode (All sections on one vertical page)
- * Uses RichInlineText across every checklist step, verification item, troubleshooting tip,
- * takeaway, and lab description so zero raw `''` or `[]` characters ever appear.
+ * Ultra-clean Lesson Studio:
+ * - Slim top bar (`KadiTopBar`) + single-row 34dp tab switcher so ~85% of the phone screen is dedicated to reading.
+ * - Metadata chips (`Completed`, `~4 min`, copyable `res://...` file path) live at the top of the scroll area so they scroll out of the way as you read!
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -143,24 +142,41 @@ fun LessonDetailScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             KadiTopBar(
                 title = lesson?.title ?: "Lesson",
                 subtitle = state.phaseTitle?.let {
                     val step = if (state.totalLessonsInPhase > 0) {
-                        "LESSON ${lesson?.order ?: 1}/${state.totalLessonsInPhase}"
+                        "L${lesson?.order ?: 1}/${state.totalLessonsInPhase}"
                     } else {
-                        "LESSON ${lesson?.order ?: 1}"
+                        "L${lesson?.order ?: 1}"
                     }
                     "$step · $it"
                 },
                 onBack = onBack,
                 actions = {
-                    IconButton(onClick = vm::toggleBookmark) {
+                    // Toggle 1-Page vs 3-Tab right in the top bar actions to save vertical space!
+                    IconButton(
+                        onClick = { singleScrollOverride = !singleScrollOverride },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ViewStream,
+                            contentDescription = "Toggle 1-Page / 3-Tab view",
+                            tint = if (singleScrollOverride) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = vm::toggleBookmark,
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
                             imageVector = if (state.isBookmarked) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
                             contentDescription = stringResource(R.string.action_bookmark),
-                            tint = if (state.isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = if (state.isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -202,77 +218,22 @@ fun LessonDetailScreen(
                         0f
                     }
 
-                    // Thin reading progress bar
+                    // 2dp reading progress line
                     LinearProgressIndicator(
                         progress = { readFraction.coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth().height(2.dp),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                        trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                     )
 
                     val hPad = studioScreenPadding()
-                    // Compact Studio Header + Mode/Tab Switcher
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(horizontal = hPad, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val readingMinutes = remember(lesson.id) {
-                            ((lesson.bodyMarkdown.length + lesson.codeSnippets.sumOf { it.code.length }) / 950)
-                                .coerceAtLeast(4)
-                        }
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                    if (!singleScrollOverride) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(horizontal = hPad, vertical = 5.dp)
                         ) {
-                            if (state.isCompleted) {
-                                Pill(text = "Completed", color = successColor(), icon = Icons.Outlined.CheckCircle)
-                            }
-                            Pill(
-                                text = "~$readingMinutes min",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                icon = Icons.Outlined.Schedule
-                            )
-                            lesson.targetFile?.let { filePath ->
-                                CopyableFileChip(
-                                    filePath = filePath,
-                                    onCopy = {
-                                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                        cm.setPrimaryClip(ClipData.newPlainText("Godot file path", filePath))
-                                    }
-                                )
-                            }
-                            // Quick 1-Tap Switch between 3-Tab Studio & Single Scroll
-                            Surface(
-                                shape = MaterialTheme.shapes.extraSmall,
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.32f)),
-                                modifier = Modifier.clickable { singleScrollOverride = !singleScrollOverride }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.ViewStream,
-                                        contentDescription = "Toggle layout mode",
-                                        tint = MaterialTheme.colorScheme.secondary,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Text(
-                                        text = if (singleScrollOverride) "1-Page View" else "3-Tab View",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.secondary
-                                    )
-                                }
-                            }
-                        }
-
-                        if (!singleScrollOverride) {
                             StudioSegmentedTabs(
                                 activeTab = activeTab,
                                 stepsCount = lesson.editorSteps.size,
@@ -281,19 +242,20 @@ fun LessonDetailScreen(
                                 onSelectTab = { activeTab = it }
                             )
                         }
+                        HorizontalDivider(
+                            thickness = 0.75.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                        )
                     }
-
-                    HorizontalDivider(
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
-                    )
 
                     if (singleScrollOverride) {
                         SingleScrollLessonContent(
                             lesson = lesson,
+                            isCompleted = state.isCompleted,
                             checkedSteps = checkedSteps,
                             hasDebugChallenge = state.hasDebugChallenge && state.phaseId != null,
                             scrollState = singlePageScroll,
+                            context = context,
                             onTermClick = onTermClick,
                             onPractice = onPractice,
                             onQuiz = onQuiz,
@@ -303,7 +265,9 @@ fun LessonDetailScreen(
                         when (activeTab) {
                             0 -> GuideAndCodeTab(
                                 lesson = lesson,
+                                isCompleted = state.isCompleted,
                                 scrollState = guideScroll,
+                                context = context,
                                 onTermClick = onTermClick,
                                 onSwitchToSteps = { activeTab = 1 }
                             )
@@ -331,6 +295,41 @@ fun LessonDetailScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LessonMetadataPillsRow(
+    lesson: Lesson,
+    isCompleted: Boolean,
+    context: Context
+) {
+    val readingMinutes = remember(lesson.id) {
+        ((lesson.bodyMarkdown.length + lesson.codeSnippets.sumOf { it.code.length }) / 950)
+            .coerceAtLeast(4)
+    }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (isCompleted) {
+            Pill(text = "Completed", color = successColor(), icon = Icons.Outlined.CheckCircle)
+        }
+        Pill(
+            text = "~$readingMinutes min",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            icon = Icons.Outlined.Schedule
+        )
+        lesson.targetFile?.let { filePath ->
+            CopyableFileChip(
+                filePath = filePath,
+                onCopy = {
+                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    cm.setPrimaryClip(ClipData.newPlainText("Godot file path", filePath))
+                }
+            )
+        }
+    }
+}
+
 @Composable
 private fun CopyableFileChip(filePath: String, onCopy: () -> Unit) {
     var copied by remember { mutableStateOf(false) }
@@ -353,15 +352,15 @@ private fun CopyableFileChip(filePath: String, onCopy: () -> Unit) {
         }
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Icon(
                 imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.Description,
                 contentDescription = "Copy file path",
                 tint = tint,
-                modifier = Modifier.size(12.dp)
+                modifier = Modifier.size(11.dp)
             )
             Text(
                 text = if (copied) "Copied $filePath" else filePath,
@@ -375,15 +374,12 @@ private fun CopyableFileChip(filePath: String, onCopy: () -> Unit) {
                 imageVector = Icons.Outlined.ContentCopy,
                 contentDescription = null,
                 tint = tint.copy(alpha = 0.75f),
-                modifier = Modifier.size(11.dp)
+                modifier = Modifier.size(10.dp)
             )
         }
     }
 }
 
-/**
- * Phone-optimized 3-Tab Segmented Switcher with short, crisp labels that never truncate on narrow screens.
- */
 @Composable
 private fun StudioSegmentedTabs(
     activeTab: Int,
@@ -393,7 +389,7 @@ private fun StudioSegmentedTabs(
     onSelectTab: (Int) -> Unit
 ) {
     val stepsLabel = if (stepsCount > 0) "Steps ($completedSteps/$stepsCount)" else "Steps"
-    val labLabel = if (quizCount > 0) "Lab & Quiz ($quizCount)" else "Lab & Quiz"
+    val labLabel = if (quizCount > 0) "Lab ($quizCount)" else "Lab"
     val tabs = listOf(
         Triple(0, "Guide", Icons.AutoMirrored.Outlined.MenuBook),
         Triple(1, stepsLabel, Icons.Outlined.Checklist),
@@ -408,8 +404,8 @@ private fun StudioSegmentedTabs(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(3.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             tabs.forEach { (idx, title, icon) ->
                 val selected = activeTab == idx
@@ -422,7 +418,7 @@ private fun StudioSegmentedTabs(
                     color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 7.dp),
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -430,7 +426,7 @@ private fun StudioSegmentedTabs(
                             imageVector = icon,
                             contentDescription = null,
                             tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(13.dp)
+                            modifier = Modifier.size(12.dp)
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
@@ -451,9 +447,11 @@ private fun StudioSegmentedTabs(
 @Composable
 private fun SingleScrollLessonContent(
     lesson: Lesson,
+    isCompleted: Boolean,
     checkedSteps: MutableList<Boolean>,
     hasDebugChallenge: Boolean,
     scrollState: androidx.compose.foundation.ScrollState,
+    context: Context,
     onTermClick: (String) -> Unit,
     onPractice: () -> Unit,
     onQuiz: () -> Unit,
@@ -465,9 +463,11 @@ private fun SingleScrollLessonContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = hPad, vertical = 14.dp),
+            .padding(horizontal = hPad, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
+        LessonMetadataPillsRow(lesson = lesson, isCompleted = isCompleted, context = context)
+
         MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
 
         if (lesson.codeSnippets.isNotEmpty()) {
@@ -541,14 +541,16 @@ private fun SingleScrollLessonContent(
                 onTermClick = onTermClick
             )
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
     }
 }
 
 @Composable
 private fun GuideAndCodeTab(
     lesson: Lesson,
+    isCompleted: Boolean,
     scrollState: androidx.compose.foundation.ScrollState,
+    context: Context,
     onTermClick: (String) -> Unit,
     onSwitchToSteps: () -> Unit
 ) {
@@ -558,13 +560,15 @@ private fun GuideAndCodeTab(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = hPad, vertical = 14.dp),
+            .padding(horizontal = hPad, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
+        LessonMetadataPillsRow(lesson = lesson, isCompleted = isCompleted, context = context)
+
         MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
 
         if (lesson.codeSnippets.isNotEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SectionHeader(
                     title = "Complete Reference Script",
                     eyebrow = "COPY-READY GDSCRIPT"
@@ -588,7 +592,7 @@ private fun GuideAndCodeTab(
                     IconBubble(
                         icon = Icons.Outlined.Checklist,
                         tint = MaterialTheme.colorScheme.secondary,
-                        size = 38.dp
+                        size = 36.dp
                     )
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
@@ -613,7 +617,7 @@ private fun GuideAndCodeTab(
                 }
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
     }
 }
 
@@ -631,7 +635,7 @@ private fun GodotStepsTab(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = hPad, vertical = 14.dp),
+            .padding(horizontal = hPad, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
         lesson.sceneTree?.let { tree ->
@@ -666,7 +670,7 @@ private fun GodotStepsTab(
                 IconBubble(
                     icon = Icons.Outlined.Lightbulb,
                     tint = MaterialTheme.colorScheme.primary,
-                    size = 38.dp
+                    size = 36.dp
                 )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
@@ -676,7 +680,7 @@ private fun GodotStepsTab(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Open Lab & Quiz to practice GDScript and take the lesson quiz",
+                        text = "Open Lab to practice GDScript and take the lesson quiz",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -690,7 +694,7 @@ private fun GodotStepsTab(
                 )
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
     }
 }
 
@@ -710,7 +714,7 @@ private fun LabAndQuizTab(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = hPad, vertical = 14.dp),
+            .padding(horizontal = hPad, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
         if (lesson.keyTakeaways.isNotEmpty()) {
@@ -760,7 +764,7 @@ private fun LabAndQuizTab(
                 onTermClick = onTermClick
             )
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
     }
 }
 
@@ -781,7 +785,7 @@ private fun LabLaunchCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            IconBubble(icon = icon, tint = accent, size = 40.dp)
+            IconBubble(icon = icon, tint = accent, size = 38.dp)
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = eyebrow,
@@ -827,7 +831,7 @@ private fun SceneTreeBlueprintCard(sceneTree: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(accent.copy(alpha = 0.12f))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -835,7 +839,7 @@ private fun SceneTreeBlueprintCard(sceneTree: String) {
                     imageVector = Icons.Outlined.AccountTree,
                     contentDescription = null,
                     tint = accent,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(15.dp)
                 )
                 Text(
                     text = "GODOT 4.3 SCENE TREE HIERARCHY",
@@ -848,7 +852,7 @@ private fun SceneTreeBlueprintCard(sceneTree: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(14.dp)
+                    .padding(12.dp)
             ) {
                 Text(
                     text = sceneTree,
@@ -881,7 +885,7 @@ private fun EditorChecklistStudioCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            IconBubble(icon = Icons.Outlined.Checklist, tint = accent, size = 36.dp)
+            IconBubble(icon = Icons.Outlined.Checklist, tint = accent, size = 34.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "STEP-BY-STEP IN THE GODOT EDITOR",
@@ -928,7 +932,7 @@ private fun EditorChecklistStudioCard(
                                 checkedStates[idx] = !checkedStates[idx]
                             }
                         }
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                        .padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -1125,11 +1129,11 @@ private fun StudioLessonBottomBar(
         shadowElevation = 0.dp
     ) {
         Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
-            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(thickness = 0.75.dp, color = MaterialTheme.colorScheme.outlineVariant)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = hPad, vertical = 10.dp),
+                    .padding(horizontal = hPad, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1137,28 +1141,28 @@ private fun StudioLessonBottomBar(
                     FilledTonalButton(
                         onClick = { onNavigateLesson(previousLessonId) },
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.weight(0.85f).height(44.dp)
+                        modifier = Modifier.weight(0.85f).height(38.dp)
                     ) {
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Prev", fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text("Prev", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
                     }
                 }
                 Button(
                     onClick = onMarkComplete,
                     shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.weight(1.4f).height(44.dp)
+                    modifier = Modifier.weight(1.4f).height(38.dp)
                 ) {
                     Icon(
                         Icons.Outlined.CheckCircle,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(15.dp)
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(5.dp))
                     Text(
                         text = when {
                             isCompleted && hasQuiz -> "Retake Quiz"
@@ -1166,6 +1170,7 @@ private fun StudioLessonBottomBar(
                             hasQuiz -> "Complete & Quiz"
                             else -> stringResource(R.string.action_mark_complete)
                         },
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1175,14 +1180,14 @@ private fun StudioLessonBottomBar(
                     FilledTonalButton(
                         onClick = { onNavigateLesson(nextLessonId) },
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.weight(0.85f).height(44.dp)
+                        modifier = Modifier.weight(0.85f).height(38.dp)
                     ) {
-                        Text("Next", fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text("Next", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
                         Spacer(Modifier.width(4.dp))
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowForward,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                     }
                 }

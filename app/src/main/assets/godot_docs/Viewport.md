@@ -35,3 +35,16 @@ short: A node that renders its child scene, handling its own drawing, input, and
 Each viewport owns a [[World2D]], a canvas transform, and its own input handling, so it decides which [[Camera2D]] is active and how coordinates map to the screen. `physics_object_picking` connects pointer events to physics objects, which underpins clickable 2D scenes.
 
 In the Kadi app the root `Viewport` handles all card input and hosts the table's [[Camera2D]]; `get_mouse_position` converts a touch into table space so the correct card is picked up. A `SubViewport` also renders a live preview of the top discard card into the rules-help panel using `get_texture`.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Viewport`)**: When configuring `Viewport` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Viewport` offline. If your `Viewport` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Viewport in Godot 4.3 Kadi
+func configure_viewport_example(target: Viewport) -> void:
+    assert(target != null, "Viewport reference must be valid")
+    print("Configured Viewport for Kadi table runtime")
+```
+

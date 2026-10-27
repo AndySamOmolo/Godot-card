@@ -37,3 +37,16 @@ short: A 2D-positioned node with position, rotation, scale, and a transform.
 Because transforms compose hierarchically, moving a parent `Node2D` moves all of its children for free. This is exactly how a card fan works: a `Hand` node holds `Card` children whose local positions are simple offsets; rotating or sliding the hand repositions every card automatically. `to_local` and `to_global` convert coordinates between spaces, which is essential when handling pointer input that arrives in screen space.
 
 In the Kadi project the playing field is a `Node2D`. Each card sprite is a [[Sprite2D]] parented under a `PlayerHand` `Node2D`; dealing animations simply tween the hand children's `position`. The active card lifts by raising its `z_index` and slightly increasing `scale`. When a player "Niko Kadi"s, the camera briefly zooms via [[Camera2D]] `zoom` while a `Node2D` pointer bobs over their hand — all driven by composing transforms.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Node2D`)**: When configuring `Node2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Node2D` offline. If your `Node2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Node2D in Godot 4.3 Kadi
+func configure_node2d_example(target: Node2D) -> void:
+    assert(target != null, "Node2D reference must be valid")
+    print("Configured Node2D for Kadi table runtime")
+```
+

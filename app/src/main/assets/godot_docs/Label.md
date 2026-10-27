@@ -38,3 +38,19 @@ short: A control that displays non-editable, optionally wrapped text.
 Two properties are especially useful for game feedback: `visible_characters` and `visible_ratio` reveal the text progressively, which combined with a [[Timer]] produces a typewriter effect for status messages. `autowrap_mode` keeps long messages inside their panel, and `uppercase` is a quick way to shout "NIKO KADI" headers without editing the source string.
 
 In the Kadi app `Label` is everywhere: the turn indicator ("Player 2's turn"), the penalty total ("Penalty: 6"), each player's name and hand count, and the log of recent plays. The "Niko Kadi!" warning uses a themed `Label` with `uppercase = true` whose `visible_characters` is tweened up by a [[Tween]] for a punchy reveal. [[Suit]] icons sit next to labels using a small [[HBoxContainer]] so a glyph and its text stay aligned.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Label`)**: When configuring `Label` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Label` offline. If your `Label` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+@onready var top_rank_label: Label = $TopRankLabel
+@onready var status_label: Label = $RootVBox/TopBar/StatusLabel
+
+func update_card_labels(data: CardData) -> void:
+    top_rank_label.text = "%s\n%s" % [data.rank_label(), data.suit_symbol()]
+    var col: Color = Color("#FF5A67") if data.is_red_suit() else Color("#ECF2F8")
+    top_rank_label.add_theme_color_override("font_color", col)
+```
+

@@ -27,3 +27,16 @@ short: A built-in 2D vector of two integers used for grid coordinates, sizes, an
 It provides a focused math toolkit — `abs`, `sign`, `clamp`, and componentwise `min`/`max` — and converts cleanly to and from `Vector2` when floating-point math is needed. Constants like `Vector2i.ZERO` and `Vector2i.ONE` cover common values.
 
 In the Kadi app `Vector2i` addresses the logical card grid: each hand slot and the draw/discard piles have integer `(column, row)` coordinates, and `clamp` keeps a highlighted selection index inside the valid range as the player scrolls left and right through a large hand.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Vector2i`)**: When configuring `Vector2i` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Vector2i` offline. If your `Vector2i` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Vector2i in Godot 4.3 Kadi
+func configure_vector2i_example(target: Vector2i) -> void:
+    assert(target != null, "Vector2i reference must be valid")
+    print("Configured Vector2i for Kadi table runtime")
+```
+

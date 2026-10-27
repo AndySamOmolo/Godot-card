@@ -41,3 +41,16 @@ short: A singleton providing global, polled access to the current input state an
 `is_action_just_pressed` / `is_action_just_released` are the polled equivalents of the event-based `_input` for one-frame reactions. `get_axis` and `get_vector` cleanly combine opposing actions into signed values, ideal for movement. `mouse_mode` controls pointer visibility and capture (captured is great for first-person look), and the `emulate_*` flags smooth cross-platform input by synthesising mouse↔touch.
 
 In the Kadi app `Input` is used for continuous checks rather than per-event handling: a held "draw" keyboard key, an analog drag for rearranging the hand, and gamepad rumble (`start_joy_vibration`) when a heavy penalty lands. `get_action_strength` lets a learner set the AI think-delay via the keyboard's up/down arrows, and `is_action_just_pressed("ui_cancel")` provides the back button on Android hardware. Actions are defined in [[ProjectSettings]] input map.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Input`)**: When configuring `Input` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Input` offline. If your `Input` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Input in Godot 4.3 Kadi
+func configure_input_example(target: Input) -> void:
+    assert(target != null, "Input reference must be valid")
+    print("Configured Input for Kadi table runtime")
+```
+

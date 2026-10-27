@@ -32,3 +32,16 @@ short: A physics body specialized for player- or code-controlled movement with b
 Unlike a [[StaticBody2D]] it moves, and unlike a `RigidBody2D` it is not tossed around by forces — its motion is entirely up to you. Choose `MOTION_MODE_FLOATING` for top-down games where there is no gravity direction, or `MOTION_MODE_GROUNDED` for side-view platforming.
 
 In the Kadi app most cards are laid out by tweens, but `CharacterBody2D` powers the free-moving table cursor and the celebratory tokens that scatter when someone wins: each token sets a `velocity`, calls `move_and_slide`, and bounces off the table edges built from [[StaticBody2D]] walls.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`CharacterBody2D`)**: When configuring `CharacterBody2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CharacterBody2D` offline. If your `CharacterBody2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using CharacterBody2D in Godot 4.3 Kadi
+func configure_characterbody2d_example(target: CharacterBody2D) -> void:
+    assert(target != null, "CharacterBody2D reference must be valid")
+    print("Configured CharacterBody2D for Kadi table runtime")
+```
+

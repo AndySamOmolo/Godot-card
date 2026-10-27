@@ -41,3 +41,16 @@ short: A code-created interpolator that animates properties of objects over time
 Unlike [[AnimationPlayer]], a `Tween` is built in code for ad-hoc, one-shot animations — flying a card from the hand to the discard pile, flashing a panel red, popping a score. Because `Tween` is a [[RefCounted]], the `SceneTree` owns it and frees it when it finishes, so you rarely manage its lifetime. Kill it early with `kill()` if you need to cancel (for example, when a new animation supersedes an old one).
 
 In the Kadi app `Tween` is the backbone of `l_11_01_tweens`. Playing a card tweens its `position` from the hand slot to the discard pile with `set_trans(TRANS_CUBIC)` and `set_ease(EASE_OUT)`, runs a brief scale-up in parallel, and calls `tween_callback` at the end to register the play in the log. A penalty reveal tweens the [[Label]]'s `modulate` from white to red and back. `set_ignore_time_scale(true)` is set on the "Niko Kadi" banner so it animates even while the game is paused for the declaration.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Tween`)**: When configuring `Tween` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Tween` offline. If your `Tween` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+func animate_selection(card_node: Control, is_selected: bool) -> void:
+    var target_y: float = -16.0 if is_selected else 0.0
+    var tween: Tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+    tween.tween_property(card_node, "position:y", target_y, 0.14)
+```
+

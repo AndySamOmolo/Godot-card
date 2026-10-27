@@ -61,6 +61,7 @@ fun BookmarksScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             KadiTopBar(
                 title = stringResource(R.string.nav_bookmarks),

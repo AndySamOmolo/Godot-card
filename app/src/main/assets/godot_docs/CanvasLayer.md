@@ -32,3 +32,16 @@ short: A node that draws its children on an independent 2D rendering layer with 
 Because layers are drawn strictly by `layer` number, `CanvasLayer` is the standard way to build heads-up displays, pause menus, and backgrounds that must ignore the [[Camera2D]]. A layer with `follow_viewport_enabled` can also scroll at its own rate to create simple parallax.
 
 In the Kadi app a `CanvasLayer` at a high `layer` holds the persistent HUD — the score, the current-color indicator, and the "your turn" banner — so it stays fixed on screen while cards below pan and zoom with the table camera. A separate low-`layer` `CanvasLayer` renders the felt-table background art.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`CanvasLayer`)**: When configuring `CanvasLayer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CanvasLayer` offline. If your `CanvasLayer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using CanvasLayer in Godot 4.3 Kadi
+func configure_canvaslayer_example(target: CanvasLayer) -> void:
+    assert(target != null, "CanvasLayer reference must be valid")
+    print("Configured CanvasLayer for Kadi table runtime")
+```
+

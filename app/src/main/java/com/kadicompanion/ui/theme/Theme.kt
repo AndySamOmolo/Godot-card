@@ -364,6 +364,7 @@ fun KadiTheme(
     val typography = buildCustomizableTypography(
         fontScale = uiPrefs.fontScale,
         fontFamilyPreset = uiPrefs.fontFamilyPreset,
+        headingWeightPreset = uiPrefs.headingWeightPreset,
         lineSpacingPreset = uiPrefs.lineSpacingPreset,
         dyslexiaFont = uiPrefs.dyslexiaFont
     )

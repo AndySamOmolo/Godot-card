@@ -40,3 +40,16 @@ short: Base class for anything 2D that can be drawn to the screen, such as Node2
 The `draw_*` family lets you render procedural shapes and text by overriding `_draw()` and calling the helpers, then calling `queue_redraw()` whenever the picture should change. Z-indexing controls overlap: cards drawn later or with a higher `z_index` appear on top of others, which matters when fans of cards overlap.
 
 In the Kadi app the playing area is a `CanvasItem` subtree. Each card node's `modulate` is tinted red briefly when a penalty lands, and `self_modulate` is used to dim a card that isn't currently playable. `z_index` rises on the card under the cursor so it lifts out of the fan. The discard pile's top card calls `queue_redraw` after each play so the `draw_texture` of the new top card is repainted, and a `draw_string` shows the active penalty total floating above it.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`CanvasItem`)**: When configuring `CanvasItem` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CanvasItem` offline. If your `CanvasItem` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using CanvasItem in Godot 4.3 Kadi
+func configure_canvasitem_example(target: CanvasItem) -> void:
+    assert(target != null, "CanvasItem reference must be valid")
+    print("Configured CanvasItem for Kadi table runtime")
+```
+

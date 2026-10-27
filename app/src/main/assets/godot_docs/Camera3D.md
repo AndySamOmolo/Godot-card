@@ -42,3 +42,16 @@ short: A 3D camera that defines the perspective, field of view, and clip planes 
 The `project_*` / `unproject_position` family converts between screen pixels and world space, which is the backbone of 3D picking — clicking a card on a 3D table means unprojecting the mouse position into a ray and testing it against the card meshes. `cull_mask` lets you render a separate "UI in 3D" layer (the score popups, for instance) only on specific cameras.
 
 The Kadi app is built in 2D, so `Camera3D` is shown here for completeness. Learners who extend the project into a 3D table — tilting cards in real space, dealing with depth — will swap the [[Camera2D]] for a `Camera3D` mounted above the table and use `project_ray_origin` + `project_ray_normal` to translate taps into card picks. The same animation concepts apply: tween `fov` for a dramatic zoom on a penalty, or tween `transform` to orbit the table between turns.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Camera3D`)**: When configuring `Camera3D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Camera3D` offline. If your `Camera3D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Camera3D in Godot 4.3 Kadi
+func configure_camera3d_example(target: Camera3D) -> void:
+    assert(target != null, "Camera3D reference must be valid")
+    print("Configured Camera3D for Kadi table runtime")
+```
+

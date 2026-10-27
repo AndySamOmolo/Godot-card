@@ -50,3 +50,16 @@ short: An ordered, dynamic, mutable list of values accessed by index.
 Beyond add/remove, `Array` carries a rich functional toolkit: `map`, `filter`, `reduce`, `any`, `all`, plus `sort`/`sort_custom`, `shuffle`, `min`/`max`, `find`/`rfind`, `slice`, and `duplicate`. These let you express common operations in one line — perfect for shuffling a deck, finding the next player, or summing penalty values.
 
 In the Kadi app `Array` is the universal container for ordered game data: the draw pile, the discard pile, and each player's hand are `Array[CardData]`. Building the deck in `l_01_03_deck_builder` uses nested loops and `append`; shuffling calls `shuffle()`; drawing is `pop_back()`; placing a card on the discard pile is `append`. The penalty accumulator from `l_05_01_accumulator` reduces the pile of pending penalties with `reduce`. The reshuffle in `l_10_01_reshuffle` slices off the top discard, `clear()`s the rest into the draw pile, and `shuffle()`s — all in a handful of lines.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Array`)**: When configuring `Array` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Array` offline. If your `Array` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Array in Godot 4.3 Kadi
+func configure_array_example(target: Array) -> void:
+    assert(target != null, "Array reference must be valid")
+    print("Configured Array for Kadi table runtime")
+```
+

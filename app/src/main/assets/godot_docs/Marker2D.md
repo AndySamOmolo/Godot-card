@@ -18,3 +18,16 @@ short: A simple 2D point node used to mark positions in a scene.
 Because it is a `Node2D`, it carries a full transform, so scripts can read its `global_position` to know where something should go. This keeps hard-coded coordinates out of code: designers move the marker in the editor and the game follows.
 
 In the Kadi app `Marker2D` nodes define every meaningful spot on the table: the draw-pile origin, the discard-pile center, and each player's hand anchor are all markers. Dealing animations tween a card from the draw marker's `global_position` to a hand marker, and the reshuffle uses the discard marker as the pivot — so tweaking the table layout never requires touching a script.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Marker2D`)**: When configuring `Marker2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Marker2D` offline. If your `Marker2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Marker2D in Godot 4.3 Kadi
+func configure_marker2d_example(target: Marker2D) -> void:
+    assert(target != null, "Marker2D reference must be valid")
+    print("Configured Marker2D for Kadi table runtime")
+```
+

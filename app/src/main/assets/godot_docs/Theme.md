@@ -28,3 +28,16 @@ short: A resource that stores reusable styling — colors, fonts, sizes, and sty
 Themes cascade: a control uses the nearest theme found up the tree, and per-control theme overrides can still tweak individual items. Because it is a resource, a theme can be saved to disk, shared across scenes, and swapped at runtime to reskin the whole app.
 
 In the Kadi app a single `Theme` defines the card-table aesthetic — the felt-green panel styleboxes, the gold accent color on the active player, and the rounded [[Button]] look of the "Draw", "Play", and "Kadi!" actions — so every menu and dialog stays visually consistent, and a "high-contrast" theme can be merged in for accessibility.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Theme`)**: When configuring `Theme` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Theme` offline. If your `Theme` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Theme in Godot 4.3 Kadi
+func configure_theme_example(target: Theme) -> void:
+    assert(target != null, "Theme reference must be valid")
+    print("Configured Theme for Kadi table runtime")
+```
+

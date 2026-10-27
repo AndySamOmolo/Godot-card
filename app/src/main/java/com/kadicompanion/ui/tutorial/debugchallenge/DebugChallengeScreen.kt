@@ -39,6 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,7 +70,6 @@ import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.LocalUiPreferences
-import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
 import com.kadicompanion.ui.theme.heroTextTertiary
@@ -87,6 +87,7 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = { KadiTopBar(title = "Fix the Bug", subtitle = "INTERACTIVE DEBUG CHALLENGE", onBack = onBack) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -248,7 +249,10 @@ private fun TappableBrokenCodePanel(
 ) {
     val isDark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
-    val bg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
+    val palette = remember(uiPrefs.codeThemePreset, isDark) {
+        GDScriptHighlighter.paletteFor(uiPrefs.codeThemePreset, isDark)
+    }
+    val bg = palette.background
     val lines = brokenCode.lines()
     val success = successColor()
     val codeFontSize = (13f * uiPrefs.codeFontScale).sp
@@ -289,12 +293,12 @@ private fun TappableBrokenCodePanel(
                             fontSize = (12f * uiPrefs.codeFontScale).sp,
                             lineHeight = codeLineHeight
                         ),
-                        color = if (fixShown && isBuggy) success else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        color = if (fixShown && isBuggy) success else palette.plain.copy(alpha = 0.5f),
                         fontWeight = if (isSelected || (fixShown && isBuggy)) FontWeight.Bold else FontWeight.Normal,
                         modifier = Modifier.width(28.dp)
                     )
                     Text(
-                        text = GDScriptHighlighter.highlight(lineText, isDark),
+                        text = GDScriptHighlighter.highlight(lineText, isDark, uiPrefs.codeThemePreset),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontFamily = CodeFontFamily,
                             fontSize = codeFontSize,

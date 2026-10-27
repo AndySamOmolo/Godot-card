@@ -24,3 +24,16 @@ short: An autoload singleton exposing the operating system, device, and process 
 `has_feature` is the standard way to branch on platform or build type — for example checking for `"mobile"`, `"android"`, or `"debug"` — so the same project can adapt its behaviour per device. Note that many methods return limited or empty data on sandboxed platforms for privacy reasons.
 
 In the Kadi app `OS.has_feature("mobile")` switches the layout to touch-friendly card sizes and enlarges the "Kadi!" button, while `get_name` tailors the back-button behaviour for Android. The "Rate this game" and "Report a bug" menu entries use `shell_open` to launch the store page and an email link in the system browser.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`OS`)**: When configuring `OS` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `OS` offline. If your `OS` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using OS in Godot 4.3 Kadi
+func configure_os_example(target: OS) -> void:
+    assert(target != null, "OS reference must be valid")
+    print("Configured OS for Kadi table runtime")
+```
+

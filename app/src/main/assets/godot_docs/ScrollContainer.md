@@ -32,3 +32,16 @@ short: A container that scrolls a single child control that is larger than the v
 `follow_focus = true` is invaluable on touch and keyboard UIs: when a child gains focus (a [[Button]] is tabbed to, say), the container scrolls it into view automatically. For programmatic control, `ensure_control_visible(child)` does the same on demand, and `set_v_scroll` jumps to an exact offset — useful for "scroll to top" buttons.
 
 In the Kadi learning app a `ScrollContainer` wraps the long-form tutorial text for each phase so it reads comfortably on a phone, and another scrolls the play log during a match (newest entry revealed via `ensure_control_visible`). The in-app docs viewer (the one that renders these very pages) uses a `ScrollContainer` over a [[VBoxContainer]] of heading [[Label]]s and code [[TextEdit]]s, so the same documentation scales from a phone to a tablet without rewriting layout.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`ScrollContainer`)**: When configuring `ScrollContainer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ScrollContainer` offline. If your `ScrollContainer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using ScrollContainer in Godot 4.3 Kadi
+func configure_scrollcontainer_example(target: ScrollContainer) -> void:
+    assert(target != null, "ScrollContainer reference must be valid")
+    print("Configured ScrollContainer for Kadi table runtime")
+```
+

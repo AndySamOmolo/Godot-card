@@ -42,3 +42,16 @@ short: A 3D-positioned audio player with distance attenuation, panning, and dopp
 `emission_angle_*` makes a sound directional so it's quieter behind the emitter, useful for things like a directional speaker or a card-flip that should be heard only when the camera faces it. For non-positional sounds (music, UI), use [[AudioStreamPlayer]]; for 2D spatial, use [[AudioStreamPlayer2D]].
 
 The Kadi app is 2D, so `AudioStreamPlayer3D` is documented here for learners who extend the project to a 3D table view. In that variant, each card node carries a small `AudioStreamPlayer3D` for its flip and place sounds; the [[Camera3D]]'s motion produces natural panning as it orbits, and `doppler_tracking` would pitch up the dealing swoosh as a card flies toward the camera. The same `bus` and `volume_db` patterns carry over from the 2D player unchanged.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`AudioStreamPlayer3D`)**: When configuring `AudioStreamPlayer3D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AudioStreamPlayer3D` offline. If your `AudioStreamPlayer3D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using AudioStreamPlayer3D in Godot 4.3 Kadi
+func configure_audiostreamplayer3d_example(target: AudioStreamPlayer3D) -> void:
+    assert(target != null, "AudioStreamPlayer3D reference must be valid")
+    print("Configured AudioStreamPlayer3D for Kadi table runtime")
+```
+

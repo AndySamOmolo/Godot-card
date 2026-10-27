@@ -29,3 +29,16 @@ short: A built-in 2D affine transform holding rotation, scale, skew, and transla
 Being a value type, it is copied on assignment. Compose transforms by multiplying them, and reverse one with `inverse` or `affine_inverse`. Helpers like `rotated`, `scaled`, and `interpolate_with` build or blend transforms without touching the raw basis by hand.
 
 In the Kadi app `Transform2D` drives card placement math: converting a touch from screen space into a card's local space uses a card's `affine_inverse`, and `interpolate_with` smoothly blends a card between its fanned hand pose and a highlighted "selected" pose as the player considers which card to play.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Transform2D`)**: When configuring `Transform2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Transform2D` offline. If your `Transform2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Transform2D in Godot 4.3 Kadi
+func configure_transform2d_example(target: Transform2D) -> void:
+    assert(target != null, "Transform2D reference must be valid")
+    print("Configured Transform2D for Kadi table runtime")
+```
+

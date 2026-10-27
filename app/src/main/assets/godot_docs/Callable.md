@@ -41,3 +41,16 @@ short: A first-class reference to a method or function, callable later with its 
 `bind` returns a new Callable with arguments pre-filled on the left, so a generic handler can be specialised for one button without writing a separate function. This is the cleanest way to wire many buttons to one method: `button.pressed.connect(play_card.bind(card_data))`. `unbind` is the reverse — useful when an emitter passes args you want to ignore. Callables are reference-counted and survive even if you store them, but `is_valid()` lets you check that a bound [[Object]] still exists before calling.
 
 In the Kadi app `Callable` is the connective tissue for [[Signals]]. The declaration popup's four [[Button]]s each `connect` their `pressed` signal to `declare_suit.bind(suit)` so one method handles all four. The AI's move function is passed as a [[Callable]] to a [[Timer]]'s `timeout`, letting the same timer schedule different actions. The `Array` functional helpers (`map`, `filter`, `sort_custom`, `reduce`) take `Callable`s, so `hand.filter(func(c): return is_playable(c))` reads almost like English.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Callable`)**: When configuring `Callable` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Callable` offline. If your `Callable` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Callable in Godot 4.3 Kadi
+func configure_callable_example(target: Callable) -> void:
+    assert(target != null, "Callable reference must be valid")
+    print("Configured Callable for Kadi table runtime")
+```
+

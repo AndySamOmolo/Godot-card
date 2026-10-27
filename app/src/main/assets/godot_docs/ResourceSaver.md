@@ -26,3 +26,16 @@ short: A singleton for saving resources to disk as .tres or .res files.
 Because resources are reference-counted and shared, saving one writes its own data plus the data of any unique sub-resources it owns; resources shared with others are written by reference path rather than duplicated. This keeps `.tres` files compact and consistent. Custom [[Resource]] scripts (like the Kadi card data) are saved with `class_name` intact, so the file round-trips through the editor with full type information.
 
 In the Kadi app `ResourceSaver` is mostly a development-time tool: the 52-card deck is built once by a script and `save`d to `res://data/cards/<suit>_<rank>.tres`, so artists and designers can tweak individual cards as text files without rerunning the deck-builder. The match-replay format (a custom `MatchRecord` resource) is saved to `user://matches/match_<timestamp>.res` with `FLAG_COMPRESS` for compact storage, then loaded back with [[ResourceLoader]] `load` to replay a finished game step by step.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`ResourceSaver`)**: When configuring `ResourceSaver` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ResourceSaver` offline. If your `ResourceSaver` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using ResourceSaver in Godot 4.3 Kadi
+func configure_resourcesaver_example(target: ResourceSaver) -> void:
+    assert(target != null, "ResourceSaver reference must be valid")
+    print("Configured ResourceSaver for Kadi table runtime")
+```
+

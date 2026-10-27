@@ -24,3 +24,16 @@ short: An immovable 2D physics body used for floors, walls, and other fixed coll
 Although it stays put, it is not entirely passive: `constant_linear_velocity` and `constant_angular_velocity` let it act like a conveyor belt or rotating surface, imparting motion to bodies that touch it, and a `physics_material_override` tunes how bouncy or slippery it feels.
 
 In the Kadi app `StaticBody2D` forms the invisible boundary of the play table. The scattering victory tokens (which are [[CharacterBody2D]] nodes) bounce off these static walls instead of flying off-screen, keeping the celebration contained within the felt.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`StaticBody2D`)**: When configuring `StaticBody2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `StaticBody2D` offline. If your `StaticBody2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using StaticBody2D in Godot 4.3 Kadi
+func configure_staticbody2d_example(target: StaticBody2D) -> void:
+    assert(target != null, "StaticBody2D reference must be valid")
+    print("Configured StaticBody2D for Kadi table runtime")
+```
+

@@ -36,3 +36,16 @@ short: A 2D region that detects overlapping bodies and areas and can override ph
 Detection is gated by physics layers and masks and by the `monitoring` / `monitorable` flags. For polling instead of signals, `get_overlapping_bodies` and `overlaps_area` report the current state. Because it derives from `CollisionObject2D`, it shares the same collision-layer machinery as bodies.
 
 In the Kadi app `Area2D` marks the interactive zones of the table: the central discard pile is an `Area2D`, and when a dragged card's own area overlaps it, `area_entered` highlights the pile as a valid drop target. Each player's hand slot is an `Area2D` too, so releasing a card over the wrong zone triggers `area_exited` and snaps the card back.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Area2D`)**: When configuring `Area2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Area2D` offline. If your `Area2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Area2D in Godot 4.3 Kadi
+func configure_area2d_example(target: Area2D) -> void:
+    assert(target != null, "Area2D reference must be valid")
+    print("Configured Area2D for Kadi table runtime")
+```
+

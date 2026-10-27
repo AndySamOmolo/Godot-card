@@ -91,6 +91,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = { KadiTopBar(title = "Practice Workbench", subtitle = "INTERACTIVE EXERCISE", onBack = onBack) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {

@@ -33,3 +33,19 @@ short: A pressable UI control that shows text and/or an icon and emits pressed w
 A `Button` is fully themable: every colour, font, and style for each state (normal, hover, pressed, disabled, focused) lives in the theme, and you can override any of them with the inherited `add_theme_*_override` methods. `flat` buttons are useful for toolbar-style controls that should blend into a [[Panel]], while the default styled button is the right choice for primary actions like "Confirm".
 
 In the Kadi app `Button` drives every confirmation. The declaration popup from `l_08_01_declaration_popup` has four buttons labelled "Clubs", "Diamonds", "Hearts", "Spades"; each is connected via its `pressed` signal to a function that records the chosen [[Suit]]. A "Draw" button lets the active player pull from the draw pile, and an "End Turn" button appears when a play is validated. Disabled buttons (via the inherited `disabled` property) grey out automatically when the player cannot perform that action, giving clear visual feedback without extra code.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Button`)**: When configuring `Button` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Button` offline. If your `Button` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+@onready var draw_button: Button = $RootVBox/ActionRow/DrawButton
+@onready var click_button: Button = $ClickButton
+
+func _ready() -> void:
+    click_button.flat = true
+    click_button.pressed.connect(_on_card_clicked)
+    draw_button.pressed.connect(_on_draw_pressed)
+```
+

@@ -38,3 +38,16 @@ short: The root class of almost every Godot type; provides properties, methods, 
 Because `Object` itself does **not** use reference counting, instances created with `MyClass.new()` will leak unless you call `free()` on them. Reference-counted subclasses such as [[RefCounted]] and [[Resource]] free themselves automatically when their last reference goes away; [[Node]] is usually managed by the scene tree and freed with `queue_free()`.
 
 In the Kadi project you rarely subclass `Object` directly. Instead you extend [[Node]] for things that live in the tree (the game table, the discard pile node) and [[Resource]] for pure data (a card's suit, rank, and effect). The `meta` API is occasionally handy for attaching debug info — for example tagging each card node with `set_meta("original_index", i)` so a reshuffle can restore order. The `connect`/`emit_signal` machinery underpins every [[Signals]]-based turn event the game broadcasts.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Object`)**: When configuring `Object` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Object` offline. If your `Object` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Object in Godot 4.3 Kadi
+func configure_object_example(target: Object) -> void:
+    assert(target != null, "Object reference must be valid")
+    print("Configured Object for Kadi table runtime")
+```
+

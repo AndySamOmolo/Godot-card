@@ -27,3 +27,18 @@ short: A reference-counted, shareable data object that can be saved to disk as a
 Because resources are shared by default, assigning the same card data to several nodes costs nothing extra — they all point at one object. Set `resource_local_to_scene` to `true` when each instance needs its own mutable copy, and override `_setup_local_to_scene` to per-instance customisation.
 
 In the Kadi app, every card is a custom resource — a `CardData` script extending `Resource` with `suit: Suit`, `rank: Rank`, and an `effect` enum. You build the 52-card deck once in `l_01_03_deck_builder`, store each card as a resource, and reference them from [[Array]]s that represent the draw pile and each player's hand. When the deck is reshuffled in `l_10_01_reshuffle` the same resource instances are simply reordered, never duplicated. Because [[Resource]] is reference-counted you can pass cards around freely without leaking memory.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Resource`)**: When configuring `Resource` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Resource` offline. If your `Resource` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+class_name CardData
+extends Resource
+
+@export var suit: int = 0
+@export var rank: int = 4
+@export var front_texture: Texture2D
+```
+

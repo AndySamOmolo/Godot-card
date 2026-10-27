@@ -33,3 +33,16 @@ short: A label that renders multi-styled text with BBCode, links, and inline for
 It also drives text reveal effects through `visible_characters` and `visible_ratio`, and can scroll long content when `scroll_active` is set. Clickable `[url]` regions emit `meta_clicked`, which is handy for interactive help.
 
 In the Kadi app `RichTextLabel` powers the rules and tutorial panels: special-card explanations use `[color]` to highlight the suit that a Jack skips or an Ace declares, and a typewriter effect driven by `visible_ratio` reveals hints one line at a time. The end-of-turn log appends colored entries with `append_text` so penalties stand out in red.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`RichTextLabel`)**: When configuring `RichTextLabel` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `RichTextLabel` offline. If your `RichTextLabel` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using RichTextLabel in Godot 4.3 Kadi
+func configure_richtextlabel_example(target: RichTextLabel) -> void:
+    assert(target != null, "RichTextLabel reference must be valid")
+    print("Configured RichTextLabel for Kadi table runtime")
+```
+

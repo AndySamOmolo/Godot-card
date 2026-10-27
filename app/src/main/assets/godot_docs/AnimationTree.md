@@ -34,3 +34,16 @@ short: A node that blends and transitions between animations via a state-machine
 This is the right tool when you need reactive, continuous animation — a character whose idle, walk, and run blend by speed, or whose attack animation cancels into a hit-reaction based on a parameter. `AnimationPlayer` alone can't blend; `AnimationTree` can. For a one-shot, code-driven interpolation, [[Tween]] is simpler still.
 
 The Kadi app is mostly UI, so `AnimationTree` is used sparingly — a 3D card-flip variant could blend a card's "face-up idle", "flipping", and "face-down idle" states via a `AnimationNodeStateMachine`, transitioning on a `is_flipping` bool parameter. Root motion isn't relevant here, but the same `set("speed", x)` pattern that drives a walking character could drive a "deal speed" blend so a learner can scrub from slow-mo to normal dealing.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`AnimationTree`)**: When configuring `AnimationTree` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AnimationTree` offline. If your `AnimationTree` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using AnimationTree in Godot 4.3 Kadi
+func configure_animationtree_example(target: AnimationTree) -> void:
+    assert(target != null, "AnimationTree reference must be valid")
+    print("Configured AnimationTree for Kadi table runtime")
+```
+

@@ -35,3 +35,16 @@ short: An associative container mapping hashable keys to values, like a hash map
 `merge` combines two dictionaries, `has_all` checks a batch of keys, `find_key` does a reverse lookup, and `duplicate(true)` gives a deep copy. `make_read_only` freezes a dictionary so you can hand it around knowing it won't be mutated — useful for configuration tables loaded once at startup.
 
 In the Kadi app `Dictionary` holds lookup tables and per-match state that isn't ordered. A `{Suit: Color}` mapping tells whether a card is red or black without a `match` statement; a `{player_id: Array}` holds transient per-player data; the settings JSON is a `Dictionary` serialised via [[JSON]]. The win-detection conditions in `l_09_01_win_detection` can be expressed as a `Dictionary` of bool flags checked with `has_all`. Because insertion order is preserved, the play-log `Dictionary` of turn-number-to-description renders deterministically.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Dictionary`)**: When configuring `Dictionary` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Dictionary` offline. If your `Dictionary` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Dictionary in Godot 4.3 Kadi
+func configure_dictionary_example(target: Dictionary) -> void:
+    assert(target != null, "Dictionary reference must be valid")
+    print("Configured Dictionary for Kadi table runtime")
+```
+

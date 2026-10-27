@@ -15,6 +15,15 @@ layout_mode = 0
 offset_right = 84.0
 offset_bottom = 120.0
 
+[node name="CardArt" type="TextureRect" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 84.0
+offset_bottom = 120.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
 [node name="TopRankLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 8.0

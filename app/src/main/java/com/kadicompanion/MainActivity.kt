@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -103,7 +104,8 @@ private fun AppContent(
     val showBottomBar = currentRoute in TopLevelDestination.entries.map { it.route }.toSet()
     Scaffold(
         bottomBar = { if (showBottomBar) KadiBottomBar(navController = navController) },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         NavHost(
             navController = navController,
@@ -206,7 +208,8 @@ private fun AppContent(
                 DocDetailScreen(
                     className = className,
                     onBack = { navController.popBackStack() },
-                    onGlossaryTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) }
+                    onGlossaryTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) },
+                    onClassClick = { parentClass -> navController.navigate(Routes.docDetail(parentClass)) }
                 )
             }
             composable(Routes.GLOSSARY) {
@@ -221,7 +224,8 @@ private fun AppContent(
                     term = term,
                     onBack = { navController.popBackStack() },
                     onLessonClick = { lessonId -> navController.navigate(Routes.lesson(lessonId)) },
-                    onDocClick = { className -> navController.navigate(Routes.docDetail(className)) }
+                    onDocClick = { className -> navController.navigate(Routes.docDetail(className)) },
+                    onTermClick = { linkedTerm -> navController.navigate(Routes.glossaryDetail(linkedTerm)) }
                 )
             }
             composable(Routes.BOOKMARKS) {

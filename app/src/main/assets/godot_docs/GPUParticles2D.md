@@ -33,3 +33,16 @@ short: A 2D particle emitter simulated on the GPU for large, cheap bursts and co
 Because the simulation runs on the GPU, per-particle logic cannot be read back on the CPU; for that you would use [[CPUParticles2D]] instead. Use `explosiveness` for bursts, `one_shot` with the `finished` signal for fire-and-forget effects, and `preprocess` to start mid-effect.
 
 In the Kadi app `GPUParticles2D` provides the flashy feedback: a golden sparkle burst when a player shouts "Kadi!", a puff of dust as the deck is shuffled, and a cascade of confetti on victory. Each is a `one_shot` emitter whose `finished` signal frees the effect node once the animation completes.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`GPUParticles2D`)**: When configuring `GPUParticles2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `GPUParticles2D` offline. If your `GPUParticles2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using GPUParticles2D in Godot 4.3 Kadi
+func configure_gpuparticles2d_example(target: GPUParticles2D) -> void:
+    assert(target != null, "GPUParticles2D reference must be valid")
+    print("Configured GPUParticles2D for Kadi table runtime")
+```
+

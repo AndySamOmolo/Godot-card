@@ -35,3 +35,16 @@ short: A 2D camera that scrolls, zooms, and limits the visible region of the sce
 The `limit_*` properties clamp the camera inside the playfield so the player never sees the empty void beyond the table edge. `offset` nudges the framing (useful to push the camera slightly ahead of the active player), and `zoom` above 1 is a clean way to do a "Niko Kadi" close-up or a penalty reveal. Because a `Camera2D` is just a node, you can also tween its properties directly with [[Tween]].
 
 In the Kadi app the camera stays mostly static — the table fits on screen — but a `Camera2D` zooms in briefly when a player calls [[Niko Kadi]] or when a big penalty card is played, to draw the eye. `position_smoothing_enabled` keeps these zooms gentle, and `limit_*` values match the table rect so the camera never drifts off the felt. At low player counts the same camera can pan between seats on each turn, easing with `position_smoothing_speed` tuned to feel cinematic.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Camera2D`)**: When configuring `Camera2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Camera2D` offline. If your `Camera2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Camera2D in Godot 4.3 Kadi
+func configure_camera2d_example(target: Camera2D) -> void:
+    assert(target != null, "Camera2D reference must be valid")
+    print("Configured Camera2D for Kadi table runtime")
+```
+

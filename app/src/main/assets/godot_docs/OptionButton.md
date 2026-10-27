@@ -41,3 +41,16 @@ short: A button that opens a dropdown list of selectable items.
 Because it inherits [[Button]], `OptionButton` gets all the button theming, focus, and signal machinery. `fit_to_longest_item` keeps the whole dropdown readable by sizing the button to its widest entry. For a multi-select or richer list, a `PopupMenu` or a custom [[GridContainer]] may suit better.
 
 In the Kadi app an `OptionButton` selects the number of players (2–6), the AI difficulty, and the card-back theme from `l_11_01_tweens`. The items' metadata hold structured config (e.g. `{"players": 4, "ai_skill": 0.7}`) read back with `get_item_metadata(selected)`. `item_selected` triggers a settings change and disables the "Start" [[Button]] until a valid configuration is chosen. The same control surfaces a "jump to lesson" dropdown in the Learn tab.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`OptionButton`)**: When configuring `OptionButton` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `OptionButton` offline. If your `OptionButton` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using OptionButton in Godot 4.3 Kadi
+func configure_optionbutton_example(target: OptionButton) -> void:
+    assert(target != null, "OptionButton reference must be valid")
+    print("Configured OptionButton for Kadi table runtime")
+```
+

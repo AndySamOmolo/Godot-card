@@ -21,21 +21,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -52,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kadicompanion.data.local.datastore.CardStyle
 import com.kadicompanion.data.local.datastore.HeroStyle
+import com.kadicompanion.data.local.datastore.TopBarStyle
 import com.kadicompanion.data.local.datastore.UiDensity
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalOpenQuickCustomizer
@@ -68,16 +67,16 @@ const val DIAMOND = "\u2666"
 @Composable
 fun studioScreenPadding(): Dp = when (LocalUiPreferences.current.uiDensity) {
     UiDensity.COMPACT -> 12.dp
-    UiDensity.COMFORTABLE -> 16.dp
+    UiDensity.COMFORTABLE -> 15.dp
     UiDensity.SPACIOUS -> 20.dp
 }
 
 /** Returns vertical spacing between cards scaled by user's selected UI density. */
 @Composable
 fun studioCardSpacing(): Dp = when (LocalUiPreferences.current.uiDensity) {
-    UiDensity.COMPACT -> 9.dp
-    UiDensity.COMFORTABLE -> 13.dp
-    UiDensity.SPACIOUS -> 18.dp
+    UiDensity.COMPACT -> 8.dp
+    UiDensity.COMFORTABLE -> 12.dp
+    UiDensity.SPACIOUS -> 16.dp
 }
 
 /** Clean studio background container. */
@@ -92,10 +91,9 @@ fun KadiBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.
 }
 
 /**
- * Crisp studio top app bar with clean title sanitization, monospace eyebrow,
- * and a quick-access UI Studio Customizer (`Tune`) button on every screen.
+ * Sleek, compact phone Top Bar (36dp–50dp height instead of Material 3's bulky 64dp TopAppBar).
+ * Responds live to `LocalUiPreferences.current.topBarStyle` (`ULTRA_SLIM`, `COMPACT`, `STANDARD`).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KadiTopBar(
     title: String,
@@ -104,69 +102,112 @@ fun KadiTopBar(
     showCustomizerButton: Boolean = true,
     actions: @Composable () -> Unit = {}
 ) {
+    val uiPrefs = LocalUiPreferences.current
     val openCustomizer = LocalOpenQuickCustomizer.current
     val cleanTitle = cleanPlainText(title)
     val cleanSub = subtitle?.let(::cleanPlainText)
+    val topStyle = uiPrefs.topBarStyle
 
-    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
-        TopAppBar(
-            title = {
-                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                    if (cleanSub != null) {
-                        Text(
-                            text = cleanSub.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+    val barHeight = when (topStyle) {
+        TopBarStyle.ULTRA_SLIM -> 36.dp
+        TopBarStyle.COMPACT -> 42.dp
+        TopBarStyle.STANDARD -> 50.dp
+    }
+    val btnSize = when (topStyle) {
+        TopBarStyle.ULTRA_SLIM -> 30.dp
+        TopBarStyle.COMPACT -> 34.dp
+        TopBarStyle.STANDARD -> 38.dp
+    }
+    val iconSize = when (topStyle) {
+        TopBarStyle.ULTRA_SLIM -> 17.dp
+        TopBarStyle.COMPACT -> 18.dp
+        TopBarStyle.STANDARD -> 20.dp
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(barHeight)
+                .padding(horizontal = if (onBack != null) 6.dp else 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            if (onBack != null) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.size(btnSize)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(iconSize)
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (cleanSub != null && topStyle != TopBarStyle.ULTRA_SLIM) {
                     Text(
-                        text = cleanTitle,
-                        style = if (cleanSub == null) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        text = cleanSub.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = CodeFontFamily,
+                            fontSize = 9.5.sp,
+                            lineHeight = 11.sp
+                        ),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.6.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-            },
-            navigationIcon = {
-                if (onBack != null) {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-            },
-            actions = {
+                Text(
+                    text = cleanTitle,
+                    style = when (topStyle) {
+                        TopBarStyle.ULTRA_SLIM -> MaterialTheme.typography.titleSmall
+                        TopBarStyle.COMPACT -> MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp)
+                        TopBarStyle.STANDARD -> MaterialTheme.typography.titleMedium
+                    },
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 actions()
                 if (showCustomizerButton && openCustomizer != null) {
-                    IconButton(onClick = openCustomizer) {
+                    IconButton(
+                        onClick = openCustomizer,
+                        modifier = Modifier.size(btnSize)
+                    ) {
                         Icon(
                             imageVector = Icons.Outlined.Tune,
                             contentDescription = "Customize UI",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(iconSize)
                         )
                     }
                 }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background,
-                scrolledContainerColor = MaterialTheme.colorScheme.surface,
-                titleContentColor = MaterialTheme.colorScheme.onBackground,
-                navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
-                actionIconContentColor = MaterialTheme.colorScheme.onBackground
-            )
-        )
+            }
+        }
         HorizontalDivider(
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+            thickness = 0.75.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
         )
     }
 }
@@ -186,8 +227,8 @@ fun HeroPanel(
     val uiPrefs = LocalUiPreferences.current
     val effectivePadding = contentPadding ?: when {
         uiPrefs.heroStyle == HeroStyle.COMPACT_CARD || uiPrefs.uiDensity == UiDensity.COMPACT -> PaddingValues(14.dp)
-        uiPrefs.uiDensity == UiDensity.SPACIOUS -> PaddingValues(22.dp)
-        else -> PaddingValues(18.dp)
+        uiPrefs.uiDensity == UiDensity.SPACIOUS -> PaddingValues(20.dp)
+        else -> PaddingValues(16.dp)
     }
     val effectiveBrush = when (uiPrefs.heroStyle) {
         HeroStyle.SURFACE_FLAT -> Brush.linearGradient(
@@ -211,7 +252,7 @@ fun HeroPanel(
     Box(modifier = if (onClick != null) base.clickable(onClick = onClick) else base) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(effectivePadding),
-            verticalArrangement = Arrangement.spacedBy(if (uiPrefs.heroStyle == HeroStyle.COMPACT_CARD) 6.dp else 10.dp),
+            verticalArrangement = Arrangement.spacedBy(if (uiPrefs.heroStyle == HeroStyle.COMPACT_CARD) 6.dp else 8.dp),
             content = content
         )
     }
@@ -226,15 +267,15 @@ fun SectionHeader(
     trailing: @Composable (() -> Unit)? = null
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+        modifier = modifier.fillMaxWidth().padding(top = 2.dp, bottom = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             if (eyebrow != null) {
                 Text(
                     text = cleanPlainText(eyebrow).uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 10.sp),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.7.sp
@@ -252,7 +293,7 @@ fun SectionHeader(
 }
 
 /**
- * Customizable Studio Card reacting to `cardStyle`, `cornerRadiusDp`, `showCardAccentBar`, and `uiDensity`.
+ * Customizable Studio Card reacting to `cardStyle`, `cornerRadiusDp`, `cardBorderWidthDp`, `showCardAccentBar`, and `uiDensity`.
  */
 @Composable
 fun KadiCard(
@@ -271,13 +312,13 @@ fun KadiCard(
         CardStyle.OUTLINED_MINIMAL -> Color.Transparent
     }
     val borderColor = when {
-        accent != null -> accent.copy(alpha = if (dark) 0.50f else 0.42f)
-        uiPrefs.cardStyle == CardStyle.SUBTLE_GLASS -> MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+        accent != null -> accent.copy(alpha = if (dark) 0.55f else 0.45f)
+        uiPrefs.cardStyle == CardStyle.SUBTLE_GLASS -> MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
         uiPrefs.cardStyle == CardStyle.OUTLINED_MINIMAL -> MaterialTheme.colorScheme.outline
         else -> MaterialTheme.colorScheme.outlineVariant
     }
-    val borderWidth = if (uiPrefs.cardStyle == CardStyle.OUTLINED_MINIMAL) 1.25.dp else 1.dp
-    val border = BorderStroke(borderWidth, borderColor)
+    val borderWidth = uiPrefs.cardBorderWidthDp.dp
+    val border = if (uiPrefs.cardBorderWidthDp > 0.05f) BorderStroke(borderWidth, borderColor) else null
     val colors = CardDefaults.cardColors(
         containerColor = containerColor,
         disabledContainerColor = containerColor.copy(alpha = 0.6f)
@@ -287,8 +328,8 @@ fun KadiCard(
 
     val pad = when (uiPrefs.uiDensity) {
         UiDensity.COMPACT -> 12.dp
-        UiDensity.COMFORTABLE -> 16.dp
-        UiDensity.SPACIOUS -> 20.dp
+        UiDensity.COMFORTABLE -> 14.dp
+        UiDensity.SPACIOUS -> 18.dp
     }
     val showAccentBar = accent != null && uiPrefs.showCardAccentBar
 
@@ -332,7 +373,7 @@ private fun StudioCardBody(accent: Color?, padding: Dp, content: @Composable Col
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             content = content
         )
     }
@@ -347,18 +388,23 @@ fun StatTile(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null
 ) {
-    val compact = LocalUiPreferences.current.uiDensity == UiDensity.COMPACT
+    val uiPrefs = LocalUiPreferences.current
+    val compact = uiPrefs.uiDensity == UiDensity.COMPACT
+    val border = if (uiPrefs.cardBorderWidthDp > 0.05f) {
+        BorderStroke(uiPrefs.cardBorderWidthDp.dp, MaterialTheme.colorScheme.outlineVariant)
+    } else null
+
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainer,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = border
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = if (compact) 10.dp else 12.dp, vertical = if (compact) 9.dp else 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(horizontal = if (compact) 10.dp else 12.dp, vertical = if (compact) 8.dp else 10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -367,12 +413,12 @@ fun StatTile(
                 if (icon != null) {
                     Box(
                         modifier = Modifier
-                            .size(20.dp)
-                            .clip(RoundedCornerShape(6.dp))
+                            .size(18.dp)
+                            .clip(RoundedCornerShape(5.dp))
                             .background(accent.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(12.dp))
+                        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(11.dp))
                     }
                 }
                 Text(
@@ -385,7 +431,7 @@ fun StatTile(
             }
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.ExtraBold,
                 maxLines = 1,
@@ -411,12 +457,12 @@ fun Pill(
         border = BorderStroke(1.dp, color.copy(alpha = 0.30f))
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             if (icon != null) {
-                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
+                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(11.dp))
             }
             Text(
                 text = cleanPlainText(text),
@@ -436,7 +482,7 @@ fun IconBubble(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     tint: Color = MaterialTheme.colorScheme.primary,
-    size: Dp = 38.dp
+    size: Dp = 36.dp
 ) {
     val shape = MaterialTheme.shapes.small
     Box(

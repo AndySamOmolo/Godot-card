@@ -26,3 +26,19 @@ short: The in-memory representation of a saved scene; instantiate() spawns a fre
 The `pack(node)` method goes the other way: it captures an existing subtree into a `PackedScene` (and you can then `ResourceSaver.save()` it to disk). This is the foundation of Godot's scene-based composition — a card scene, a player-area scene, a popup scene, each saved once and instanced many times.
 
 In the Kadi app `PackedScene` is the engine behind dealing. The `card.tscn` scene is loaded once (its `PackedScene` resource is held by the game autoload), and for every card the dealer calls `card_scene.instantiate()`, configures the resulting node's suit/rank from the card's [[Resource]], and `add_child`s it to the active player's hand. The declaration popup from `l_08_01_declaration_popup` is likewise a `PackedScene` instanced on demand and freed after a suit is chosen. This pattern keeps memory predictable and code small.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`PackedScene`)**: When configuring `PackedScene` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `PackedScene` offline. If your `PackedScene` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+const CardScene: PackedScene = preload("res://scenes/card/card_scene.tscn")
+
+func spawn_card_into_hand(data: CardData, hand_box: HBoxContainer) -> Control:
+    var card_node: Control = CardScene.instantiate()
+    hand_box.add_child(card_node)
+    card_node.setup(data)
+    return card_node
+```
+

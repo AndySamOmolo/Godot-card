@@ -31,3 +31,16 @@ short: A built-in 2D vector of two floats used for positions, sizes, and directi
 The type carries a large math toolkit: `length`, `normalized`, and `dot` for geometry; `distance_to` and `direction_to` for aiming and movement; `lerp` and `move_toward` for smooth animation; and `rotated`/`angle` for orientation. Constants like `Vector2.ZERO`, `Vector2.ONE`, `Vector2.UP`, and `Vector2.RIGHT` provide common values without allocation.
 
 In the Kadi app `Vector2` describes where every card sits: dealing tweens a card's `position` from the draw pile to a slot in the player's hand, and `lerp` smooths the motion. Fan layouts compute each card's offset with `rotated`, and drag-and-drop uses `direction_to` and `distance_to` to snap a released card onto the nearest [[Area2D]] drop zone.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Vector2`)**: When configuring `Vector2` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Vector2` offline. If your `Vector2` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Vector2 in Godot 4.3 Kadi
+func configure_vector2_example(target: Vector2) -> void:
+    assert(target != null, "Vector2 reference must be valid")
+    print("Configured Vector2 for Kadi table runtime")
+```
+

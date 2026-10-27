@@ -1,6 +1,7 @@
 package com.kadicompanion.ui.tutorial.blueprint
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,20 +20,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Style
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kadicompanion.domain.model.CodeSnippet
 import com.kadicompanion.ui.common.CLUB
+import com.kadicompanion.ui.common.Callout
+import com.kadicompanion.ui.common.CalloutType
 import com.kadicompanion.ui.common.CodeBlock
 import com.kadicompanion.ui.common.DIAMOND
 import com.kadicompanion.ui.common.HEART
@@ -63,22 +68,30 @@ import com.kadicompanion.ui.theme.heroTextTertiary
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
+/**
+ * 4-Tab Blueprint, Downloaded Assets Studio & Kadi Rule Simulator:
+ * - Tab 0: Downloaded Assets (Interactive Asset Pack Naming & GDScript Loader Generator + Import Dock Guide)
+ * - Tab 1: Project Map       (Complete res:// folder structure including res://assets/ & file breakdown)
+ * - Tab 2: Scene & Signals   (Exact Node Hierarchy with TextureRect / TextureButton for downloaded sprites)
+ * - Tab 3: Rule Simulator    (Interactive Kenyan Kadi rule sandbox)
+ */
 @Composable
 fun ProjectBlueprintScreen(
     onBack: () -> Unit,
     onNavigateToPhase: (String) -> Unit
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Project Map", "Scene & Signals", "Rule Simulator")
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val tabs = listOf("Downloaded Assets", "Project Map", "Scene & Signals", "Rule Simulator")
     val hPad = studioScreenPadding()
     val vGap = studioCardSpacing()
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             KadiTopBar(
-                title = "Kadi Game Blueprint",
-                subtitle = "ARCHITECTURE & SANDBOX",
+                title = "Blueprint & Assets Studio",
+                subtitle = "DOWNLOADED ASSETS · ARCHITECTURE",
                 onBack = onBack
             )
         }
@@ -88,43 +101,276 @@ fun ProjectBlueprintScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = hPad)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = hPad, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 tabs.forEachIndexed { idx, title ->
-                    Tab(
-                        selected = selectedTab == idx,
-                        onClick = { selectedTab = idx },
-                        text = {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = if (selectedTab == idx) FontWeight.Bold else FontWeight.Medium
-                            )
-                        }
-                    )
+                    val selected = selectedTab == idx
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
+                        border = BorderStroke(
+                            1.dp,
+                            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                        ),
+                        modifier = Modifier.clickable { selectedTab = idx }
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
                 }
             }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = hPad, vertical = 14.dp),
+                    .padding(horizontal = hPad, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(vGap)
             ) {
                 when (selectedTab) {
-                    0 -> ProjectMapTab(onNavigateToPhase = onNavigateToPhase)
-                    1 -> SceneAndSignalsTab()
-                    2 -> RuleSimulatorTab()
+                    0 -> DownloadedAssetsTab()
+                    1 -> ProjectMapTab(onNavigateToPhase = onNavigateToPhase)
+                    2 -> SceneAndSignalsTab()
+                    3 -> RuleSimulatorTab()
                 }
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(20.dp))
             }
         }
     }
+}
+
+@Composable
+private fun DownloadedAssetsTab() {
+    var selectedConvention by rememberSaveable { mutableIntStateOf(0) }
+    val conventions = listOf(
+        0 to "suit_rank.png (hearts_7.png)",
+        1 to "rank_of_suit.png (7_of_hearts.png)",
+        2 to "Kenney Pack (cardHearts7.png)",
+        3 to "Sprite Sheet Grid (AtlasTexture)"
+    )
+
+    HeroPanel {
+        Text(
+            text = "USING YOUR DOWNLOADED ASSETS IN GODOT 4.3",
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+            fontWeight = FontWeight.Bold,
+            color = heroTextTertiary()
+        )
+        Text(
+            text = "Plug In Any Downloaded Card Pack, Table Felt & Audio",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = heroTextPrimary()
+        )
+        Text(
+            text = "Downloaded a 2D playing card pack, UI buttons, or sound effects from itch.io, Kenney.nl, or OpenGameArt? Select your asset pack format below to get the exact Godot 4.3 folder setup, Inspector settings, and copy-ready GDScript loader.",
+            style = MaterialTheme.typography.bodySmall,
+            color = heroTextSecondary()
+        )
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.secondary) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconBubble(icon = Icons.Outlined.Collections, tint = MaterialTheme.colorScheme.secondary, size = 34.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "STEP 1 · WHERE TO DROP DOWNLOADED FILES",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Recommended res://assets/ Folder Layout",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        RichInlineText(
+            text = "Drag and drop your unzipped files straight from your computer's file explorer into Godot's **FileSystem dock** under `res://assets/`. Godot 4.3 automatically generates `.import` files for every `.png`, `.svg`, `.ttf`, `.wav`, and `.ogg` file.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        CodeBlock(
+            snippet = CodeSnippet(
+                id = "asset_folders",
+                language = "text",
+                code = """
+                res://assets/
+                ├── cards/
+                │   ├── card_back.png           # Draw pile & AI opponent card backs
+                │   ├── joker_red.png           # Red Joker (+5 Penalty)
+                │   ├── joker_black.png         # Black Joker (+5 Penalty)
+                │   └── ... (52 suit/rank PNGs OR 1 deck_sheet.png sprite sheet)
+                ├── table/
+                │   └── table_bg.png            # Downloaded green felt / wood tabletop texture
+                ├── ui/
+                │   ├── button_normal.png       # Optional 9-patch / StyleBoxTexture button skin
+                │   └── suit_icons.png          # Hearts, Diamonds, Clubs, Spades icons for Ace popup
+                ├── fonts/
+                │   └── game_font.ttf           # Custom downloaded .ttf or .otf font
+                └── audio/
+                    ├── card_slap.ogg           # Played when a card hits the discard pile
+                    ├── card_shuffle.ogg        # Played on deal & draw-pile reshuffle
+                    └── niko_kadi.ogg           # Played when announcing "Niko Kadi!"
+                """.trimIndent(),
+                caption = "Drop your downloaded files into these folders inside res://assets/."
+            )
+        )
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.primary) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconBubble(icon = Icons.Outlined.Style, tint = MaterialTheme.colorScheme.primary, size = 34.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "STEP 2 · PICK YOUR DOWNLOADED CARD PACK FORMAT",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Interactive GDScript Asset Loader Generator",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Text(
+            text = "Tap the filename style that matches the card pack you downloaded:",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        ChipSelectorRow(
+            items = conventions,
+            selected = selectedConvention,
+            onSelect = { selectedConvention = it }
+        )
+
+        val generatedCode = remember(selectedConvention) {
+            when (selectedConvention) {
+                0 -> """
+                # Format 1: suit_rank.png (e.g. res://assets/cards/hearts_7.png, spades_14.png)
+                # Add this helper inside res://scripts/card_data.gd:
+                func get_texture_path() -> String:
+                    if rank == CardTypes.Ranks.JOKER:
+                        return "res://assets/cards/joker_red.png" if is_red_suit() else "res://assets/cards/joker_black.png"
+                    var suit_folder_name: String = SUIT_NAMES.get(suit, "Hearts").to_lower()
+                    return "res://assets/cards/%s_%d.png" % [suit_folder_name, rank]
+
+                # Inside res://scenes/card/card_scene.gd (_refresh_visuals):
+                @onready var card_art: TextureRect = ${'$'}CardArt
+
+                func _refresh_visuals() -> void:
+                    if data == null:
+                        return
+                    var path: String = data.get_texture_path()
+                    if ResourceLoader.exists(path):
+                        card_art.texture = load(path)
+                        card_art.visible = true
+                        top_rank_label.visible = false
+                        center_suit_label.visible = false
+                """.trimIndent()
+                1 -> """
+                # Format 2: rank_of_suit.png (e.g. res://assets/cards/7_of_hearts.png, ace_of_spades.png)
+                # Standard naming used by SVG/PNG playing-card packs on itch.io & OpenGameArt:
+                const ASSET_RANKS: Dictionary = {
+                    11: "jack", 12: "queen", 13: "king", 14: "ace"
+                }
+
+                func get_texture_path() -> String:
+                    if rank == CardTypes.Ranks.JOKER:
+                        return "res://assets/cards/red_joker.png" if is_red_suit() else "res://assets/cards/black_joker.png"
+                    var r_str: String = ASSET_RANKS.get(rank, str(rank))
+                    var s_str: String = SUIT_NAMES.get(suit, "hearts").to_lower()
+                    return "res://assets/cards/%s_of_%s.png" % [r_str, s_str]
+
+                # Inside res://scenes/card/card_scene.gd:
+                @onready var card_art: TextureRect = ${'$'}CardArt
+
+                func _refresh_visuals() -> void:
+                    var path: String = data.get_texture_path()
+                    if ResourceLoader.exists(path):
+                        card_art.texture = load(path)
+                        card_art.show()
+                """.trimIndent()
+                2 -> """
+                # Format 3: Kenney.nl Playing Cards Pack (e.g. res://assets/cards/cardHearts7.png, cardSpadesA.png)
+                const KENNEY_RANKS: Dictionary = {
+                    11: "J", 12: "Q", 13: "K", 14: "A"
+                }
+
+                func get_texture_path() -> String:
+                    if rank == CardTypes.Ranks.JOKER:
+                        return "res://assets/cards/cardJoker.png"
+                    var suit_cap: String = SUIT_NAMES.get(suit, "Hearts") # "Hearts", "Diamonds", "Clubs", "Spades"
+                    var rank_cap: String = KENNEY_RANKS.get(rank, str(rank))
+                    return "res://assets/cards/card%s%s.png" % [suit_cap, rank_cap]
+
+                # Inside res://scenes/card/card_scene.gd:
+                @onready var card_art: TextureRect = ${'$'}CardArt
+
+                func _refresh_visuals() -> void:
+                    var path: String = data.get_texture_path()
+                    if ResourceLoader.exists(path):
+                        card_art.texture = load(path)
+                        card_art.show()
+                """.trimIndent()
+                else -> """
+                # Format 4: Single Sprite Sheet Image (res://assets/cards/deck_sheet.png)
+                # Slices 1 card out of a 13-column x 4-row sprite sheet using AtlasTexture!
+                const SHEET_TEX: Texture2D = preload("res://assets/cards/deck_sheet.png")
+                const CARD_W: int = 140 # Width of 1 card in pixels on your sprite sheet
+                const CARD_H: int = 190 # Height of 1 card in pixels on your sprite sheet
+
+                func make_atlas_texture(card: CardData) -> AtlasTexture:
+                    var atlas := AtlasTexture.new()
+                    atlas.atlas = SHEET_TEX
+                    # Column 0 = Ace (or 2), Row 0..3 = Hearts, Diamonds, Clubs, Spades
+                    var col: int = 0 if card.rank == 14 else (card.rank - 1)
+                    var row: int = int(card.suit)
+                    atlas.region = Rect2(col * CARD_W, row * CARD_H, CARD_W, CARD_H)
+                    return atlas
+                """.trimIndent()
+            }
+        }
+
+        CodeBlock(
+            snippet = CodeSnippet(
+                id = "asset_loader_gen",
+                language = "gdscript",
+                code = generatedCode,
+                caption = "Copy this into card_data.gd and card_scene.gd to load your downloaded card sprites!"
+            )
+        )
+    }
+
+    Callout(
+        type = CalloutType.GODOT,
+        body = "**Crucial Godot 4.3 Inspector Settings for `CardArt (TextureRect)`**:\n" +
+            "1. Set **Expand Mode** to `Ignore Size` (so a high-res `500×726` downloaded card PNG shrinks cleanly into your `84×120` card node instead of blowing up the `HBoxContainer`!).\n" +
+            "2. Set **Stretch Mode** to `Keep Aspect Centered`.\n" +
+            "3. Set **Mouse -> Filter** to `Ignore` (or place `ClickButton` last in the Scene Tree) so `CardArt` never blocks finger taps on `ClickButton`!"
+    )
+
+    Callout(
+        type = CalloutType.TIP,
+        body = "**Pixel Art vs. HD Vector Card Packs**:\n" +
+            "- If you downloaded a **Pixel Art** card pack, go to **Project -> Project Settings -> Rendering -> Textures -> Canvas Textures** and set **Default Texture Filter** to `Nearest` so pixels stay razor-sharp.\n" +
+            "- If you downloaded an **HD PNG or SVG** card pack, keep **Default Texture Filter** on `Linear` (or select the PNGs in the FileSystem dock -> **Import tab** -> check **Mipmaps -> Generate** and click **Reimport**) so scaled-down cards look silky smooth on phones!"
+    )
 }
 
 private data class BlueprintFileEntry(
@@ -147,8 +393,8 @@ private val PROJECT_FILES = listOf(
         path = "res://scripts/card_data.gd",
         phaseId = "phase_01_project_deck",
         phaseLabel = "Phase 1",
-        role = "Custom Resource (`class_name CardData`) storing a single card's suit, rank, display title, and rule helpers.",
-        keyContents = "func is_penalty() -> bool\nfunc is_question() -> bool\nfunc is_answer() -> bool\nfunc penalty_value() -> int"
+        role = "Custom Resource (`class_name CardData`) storing a single card's suit, rank, downloaded texture path (`get_texture_path()`), and rule helpers.",
+        keyContents = "func get_texture_path() -> String\nfunc is_penalty() -> bool\nfunc is_question() -> bool\nfunc is_answer() -> bool"
     ),
     BlueprintFileEntry(
         path = "res://scripts/game_state.gd",
@@ -161,8 +407,8 @@ private val PROJECT_FILES = listOf(
         path = "res://scenes/card/card_scene.tscn + card_scene.gd",
         phaseId = "phase_02_dealing_scenes",
         phaseLabel = "Phases 2 & 4",
-        role = "Reusable visual playing card scene (`Control` / `Button`) that displays rank/suit and emits `card_clicked(card_node)` when tapped.",
-        keyContents = "signal card_clicked(card_node: Node)\nfunc setup(data: CardData) -> void\nfunc set_selected(selected: bool) -> void"
+        role = "Reusable visual playing card scene (`Control` + `CardArt: TextureRect` + fallback `Label`s + `ClickButton`) that displays your downloaded card PNG and emits `card_clicked(card_node)`.",
+        keyContents = "signal card_clicked(card_node: Control)\n@onready var card_art: TextureRect = \$CardArt\nfunc setup(data: CardData) -> void\nfunc set_selected(selected: bool) -> void"
     ),
     BlueprintFileEntry(
         path = "res://scripts/turn_manager.gd",
@@ -176,7 +422,7 @@ private val PROJECT_FILES = listOf(
         phaseId = "phase_04_play_validation",
         phaseLabel = "Phases 4, 5, 6, 8, 9",
         role = "Pure rule engine (`class_name RuleValidator`) that checks single-card and multi-card moves (Q+A chains, penalty counters, Ace declarations, and 4-clause win checks).",
-        keyContents = "static func is_playable(card: CardData, top: CardData, penalty_stack: int, declared_suit: int) -> bool\nstatic func validate_move(cards: Array[CardData], ...) -> bool"
+        keyContents = "static func is_single_card_playable(card: CardData, top: CardData, ...) -> bool\nstatic func validate_move(cards: Array, ...) -> bool"
     ),
     BlueprintFileEntry(
         path = "res://scenes/ui/declare_suit_dialog.tscn + .gd",
@@ -189,8 +435,8 @@ private val PROJECT_FILES = listOf(
         path = "res://scenes/table/table.tscn + table.gd",
         phaseId = "phase_02_dealing_scenes",
         phaseLabel = "Phases 2–11",
-        role = "Main gameplay scene combining the Draw/Discard piles, Player Hand HBoxContainer, AI Turn Timer, Play Selected / Draw / Niko Kadi buttons, Tweens, and Audio.",
-        keyContents = "func _ready() -> void\nfunc _on_play_selected_pressed() -> void\nfunc _on_draw_pressed() -> void\nfunc _on_niko_kadi_pressed() -> void\nfunc _run_ai_turn(player: int) -> void"
+        role = "Main gameplay scene combining the Draw/Discard piles, Player Hand HBoxContainer, AI Turn Timer, Play Selected / Draw / Niko Kadi buttons, Tweens, and downloaded Audio.",
+        keyContents = "func _ready() -> void\nfunc _on_play_selected_pressed() -> void\nfunc _on_draw_pressed() -> void\nfunc _on_niko_pressed() -> void\nfunc _execute_ai_turn(ai_seat: int) -> void"
     )
 )
 
@@ -213,7 +459,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
             color = heroTextPrimary()
         )
         Text(
-            text = "When building Kadi in Godot, you only need 2 Autoload scripts, 2 helper classes, and 3 scenes. Tap any file card below to jump straight to the phase that builds it.",
+            text = "Your project combines 2 Autoload scripts, 3 helper classes, 3 scenes, and your `res://assets/` folder for downloaded sprites, fonts, and audio. Tap any file card below to open its phase.",
             style = MaterialTheme.typography.bodyMedium,
             color = heroTextSecondary()
         )
@@ -235,23 +481,28 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
                 text = """
                 res:// (Your Godot 4.3 Kadi Project Root)
                 ├── project.godot                 # Registers GameState & TurnManager Autoloads
+                ├── assets/                       # Drop your downloaded assets here!
+                │   ├── cards/                    # 52 card PNGs + joker PNGs + card_back.png
+                │   ├── table/                    # table_bg.png (felt or wood background)
+                │   ├── ui/                       # Button & badge textures
+                │   ├── fonts/                    # Custom .ttf / .otf fonts
+                │   └── audio/                    # card_slap.ogg, card_shuffle.ogg, niko_kadi.ogg
                 ├── scripts/
                 │   ├── card_types.gd             # Phase 1: Suits & Ranks enums (class_name CardTypes)
-                │   ├── card_data.gd              # Phase 1: CardData Resource (class_name CardData)
+                │   ├── card_data.gd              # Phase 1: CardData Resource + get_texture_path()
                 │   ├── game_state.gd             # Phase 1+: Autoload singleton holding deck, hands, piles
                 │   ├── turn_manager.gd           # Phase 3+: Autoload singleton for turn order & direction
                 │   └── rule_validator.gd         # Phases 4-9: Pure Kadi rule & move validation helpers
-                ├── scenes/
-                │   ├── card/
-                │   │   ├── card_scene.tscn       # Phase 2: Visual card template (Control + Labels + Button)
-                │   │   └── card_scene.gd         # Phase 2: Displays CardData & emits card_clicked
-                │   ├── ui/
-                │   │   ├── declare_suit_dialog.tscn  # Phase 8: Ace suit-picker popup
-                │   │   └── declare_suit_dialog.gd    # Phase 8: Emits suit_declared(suit)
-                │   └── table/
-                │       ├── table.tscn            # Phases 2-11: Main game board, HUD, AI timer, sounds
-                │       └── table.gd              # Phases 2-11: Orchestrates dealing, human/AI turns, wins
-                └── audio/                        # Phase 11: slap.wav, shuffle.wav, niko.wav
+                └── scenes/
+                    ├── card/
+                    │   ├── card_scene.tscn       # Phase 2: Card Control + CardArt (TextureRect) + Button
+                    │   └── card_scene.gd         # Phase 2: Loads downloaded PNG (or fallback labels)
+                    ├── ui/
+                    │   ├── declare_suit_dialog.tscn  # Phase 8: Ace suit-picker popup
+                    │   └── declare_suit_dialog.gd    # Phase 8: Emits suit_declared(suit)
+                    └── table/
+                        ├── table.tscn            # Phases 2-11: Main game board, HUD, AI timer, sounds
+                        └── table.gd              # Phases 2-11: Orchestrates dealing, human/AI turns, wins
                 """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontFamily = CodeFontFamily,
@@ -272,7 +523,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                IconBubble(icon = Icons.Outlined.Description, tint = MaterialTheme.colorScheme.primary, size = 36.dp)
+                IconBubble(icon = Icons.Outlined.Description, tint = MaterialTheme.colorScheme.primary, size = 34.dp)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = entry.path,
@@ -308,16 +559,16 @@ private fun SceneAndSignalsTab() {
 
     KadiCard(accent = MaterialTheme.colorScheme.primary) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            IconBubble(icon = Icons.Outlined.AccountTree, tint = MaterialTheme.colorScheme.primary, size = 36.dp)
+            IconBubble(icon = Icons.Outlined.AccountTree, tint = MaterialTheme.colorScheme.primary, size = 34.dp)
             Column {
                 Text(
-                    text = "MAIN TABLE SCENE · res://scenes/table/table.tscn",
+                    text = "CARD & TABLE SCENES WITH DOWNLOADED ASSETS",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "Exact Node Hierarchy to Create in Godot",
+                    text = "Exact Node Hierarchies in Godot 4.3",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -337,29 +588,33 @@ private fun SceneAndSignalsTab() {
             ) {
                 Text(
                     text = """
+                    1. CARD SCENE (res://scenes/card/card_scene.tscn)
+                    Card (Control)  [custom_minimum_size = Vector2(84, 120), script: card_scene.gd]
+                    ├── CardBg (Panel)                     # Fallback card body & border
+                    ├── CardArt (TextureRect)              # Displays downloaded PNG (Expand: Ignore Size, Mouse: Ignore)
+                    ├── TopRankLabel (Label)               # Fallback rank label (hidden automatically when CardArt loads)
+                    ├── CenterSuitLabel (Label)            # Fallback suit label (hidden automatically when CardArt loads)
+                    └── ClickButton (Button)               # Flat = true, Full Rect (captures taps on the card)
+
+                    2. MAIN TABLE SCENE (res://scenes/table/table.tscn)
                     Table (Node2D)  [script: res://scenes/table/table.gd]
-                    ├── Background (ColorRect)             # Deep green/felt table backdrop (1152x648)
-                    ├── CenterArea (Control)
-                    │   ├── DrawPileButton (Button)        # Clicking draws 1 card (or penalty stack)
-                    │   └── DiscardSlot (Control)          # Holds the top face-up CardScene instance
-                    ├── PlayerHandContainer (HBoxContainer)# Automatically fans Player 0's CardScene nodes
+                    ├── Background (ColorRect)             # Fallback felt color
+                    ├── TableArt (TextureRect)             # Displays res://assets/table/table_bg.png if present
+                    ├── DiscardSlot (Control)              # Holds the top face-up CardScene instance
+                    ├── PlayerHandContainer (HBoxContainer)# Fans Player 0's CardScene nodes automatically
                     ├── HUD (CanvasLayer)
-                    │   ├── TopBar (HBoxContainer)
-                    │   │   ├── TurnLabel (Label)          # "Player 1's Turn (Clockwise)"
-                    │   │   ├── PenaltyBadge (Label)       # "Penalty Stack: +0"
-                    │   │   └── SuitDemandBadge (Label)    # "Demanded Suit: Any"
-                    │   ├── OpponentSummary (HBoxContainer)# Shows P1, P2, P3 card counts & Niko flags
-                    │   ├── ActionBar (HBoxContainer)
-                    │   │   ├── PlaySelectedButton (Button)# Plays staged card(s) (single or Q+A chain)
-                    │   │   ├── DrawButton (Button)        # Draws card / accepts penalty
-                    │   │   └── NikoKadiButton (Button)    # Announces "Niko Kadi!" for next round
-                    │   ├── FeedbackLabel (Label)          # Shows rule messages ("Invalid play! Pick 1")
+                    │   ├── StatusLabel (Label)            # Turn, Deck count, Penalty stack, Demanded suit
+                    │   ├── FeedbackLabel (Label)          # Rule feedback ("Player 1 played: J♥")
+                    │   ├── NikoKadiLabel (Label)          # "📢 You announced: NIKO KADI!"
+                    │   ├── PlaySelectedButton (Button)    # Plays staged card(s)
+                    │   ├── DrawButton (Button)            # Draws card / accepts penalty (can show card_back.png icon)
+                    │   ├── NikoKadiButton (Button)        # Announces "Niko Kadi!" for next round
                     │   └── DeclareSuitDialog (Control)    # Instance of declare_suit_dialog.tscn (hidden)
-                    ├── AITurnTimer (Timer)                # 0.8s one-shot pause so AI turns feel natural
+                    ├── AITurnTimer (Timer)                # 0.75s one-shot pause so AI turns feel natural
                     └── Sounds (Node)
-                        ├── SlapSound (AudioStreamPlayer)
-                        ├── ShuffleSound (AudioStreamPlayer)
-                        └── NikoSound (AudioStreamPlayer)
+                        ├── SlapSound (AudioStreamPlayer)    # Plays res://assets/audio/card_slap.ogg
+                        ├── ShuffleSound (AudioStreamPlayer) # Plays res://assets/audio/card_shuffle.ogg
+                        └── NikoSound (AudioStreamPlayer)    # Plays res://assets/audio/niko_kadi.ogg
                     """.trimIndent(),
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontFamily = CodeFontFamily,
@@ -374,7 +629,7 @@ private fun SceneAndSignalsTab() {
 
     KadiCard(accent = MaterialTheme.colorScheme.secondary) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            IconBubble(icon = Icons.Outlined.Hub, tint = MaterialTheme.colorScheme.secondary, size = 36.dp)
+            IconBubble(icon = Icons.Outlined.Hub, tint = MaterialTheme.colorScheme.secondary, size = 34.dp)
             Column {
                 Text(
                     text = "SIGNAL FLOW CHEAT SHEET",
@@ -397,17 +652,17 @@ private fun SceneAndSignalsTab() {
                 1. Human clicks a card in PlayerHandContainer:
                    CardScene.ClickButton.pressed -> emits CardScene.card_clicked(self)
                 
-                2. Table._on_card_clicked(card_node) toggles card selection:
-                   Allows staging 1 card, OR a Question+Answer pair, OR multi-card combo!
+                2. Table._on_hand_card_clicked(card_node) toggles card selection:
+                   Lifts the card up by 14px (position.y = -14.0) and stages it in staged_cards!
                 
                 3. Human clicks PlaySelectedButton:
                    Table validates staged cards via RuleValidator.validate_move(...)
-                   - Legal: moves cards to GameState.discard_pile, applies effects
+                   - Legal: moves cards to GameState.discard_pile, plays SlapSound, applies effects
                             (Penalty +2/+3/+5, Jump skip, Kickback reverse, or opens DeclareSuitDialog)
                    - Illegal: draws 1 penalty card and advances turn
                 
                 4. TurnManager.advance_turn() emits turn_changed(next_player):
-                   - If next_player != 0 (AI Opponent): Table starts AITurnTimer (0.8s),
+                   - If next_player != 0 (AI Opponent): Table starts AITurnTimer (0.75s),
                      then AI picks a legal move or draws automatically!
                    - If next_player == 0 (Human): HUD enables buttons for your turn!
                 """.trimIndent(),
@@ -461,7 +716,7 @@ private fun RuleSimulatorTab() {
 
     KadiCard(accent = MaterialTheme.colorScheme.primary) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            IconBubble(icon = Icons.Outlined.Style, tint = MaterialTheme.colorScheme.primary, size = 36.dp)
+            IconBubble(icon = Icons.Outlined.Style, tint = MaterialTheme.colorScheme.primary, size = 34.dp)
             Column {
                 Text(
                     text = "INTERACTIVE KADI RULE TESTER",
@@ -512,7 +767,7 @@ private fun RuleSimulatorTab() {
             IconBubble(
                 icon = if (eval.isLegal) Icons.Outlined.CheckCircle else Icons.Outlined.Cancel,
                 tint = resultAccent,
-                size = 38.dp
+                size = 36.dp
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(

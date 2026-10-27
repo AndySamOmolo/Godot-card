@@ -32,3 +32,16 @@ short: Abstract base for draggable value selectors like HSlider and VSlider.
 `tick_count` plus `ticks_on_borders` draws reference marks; `step` snaps the value to clean increments. For precise numeric entry pair a slider with a [[LineEdit]] or [[SpinBox]]: drag for fast approximate changes, type for exact ones.
 
 In the Kadi app `Slider` is rarely a gameplay element — cards are discrete, not continuous — but the learning side uses an `HSlider` for the animation-speed scrubber that lets a learner step through the dealing animation frame by frame, and another sets the AI think-delay. `drag_ended` is the signal used to commit a new value (re-running the deal preview) so the app doesn't rebuild the layout sixty times a second while the learner drags. `step` snaps to 0.05 for a controlled feel.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Slider`)**: When configuring `Slider` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Slider` offline. If your `Slider` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Slider in Godot 4.3 Kadi
+func configure_slider_example(target: Slider) -> void:
+    assert(target != null, "Slider reference must be valid")
+    print("Configured Slider for Kadi table runtime")
+```
+

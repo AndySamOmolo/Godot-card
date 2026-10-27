@@ -38,3 +38,16 @@ short: The singleton holding all project-wide settings: rendering, physics, inpu
 Autoloads are registered here: each entry pairs a name (the global variable name, e.g. `GameState`) with a script or scene path, and the engine instantiates it on launch and keeps it alive for the whole run. This is how the Kadi app's game-state singleton from `l_01_04_autoloads` is created. `globalize_path`/`localize_path` convert between `res://` paths and absolute filesystem paths, essential when working with external files via [[FileAccess]].
 
 In the Kadi app `ProjectSettings` carries the app's display name ("Kadi Tutor"), icon, default window size, and the autoload list — `GameState`, `Settings`, `AudioBus` — that the rest of the code reaches as globals. The input map's `"play_card"` and `"draw"` actions live here too. `globalize_path` is used when the learning app writes a learner-progress JSON to the user data directory: it builds the absolute path for [[FileAccess]] from a `user://` path.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`ProjectSettings`)**: When configuring `ProjectSettings` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ProjectSettings` offline. If your `ProjectSettings` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using ProjectSettings in Godot 4.3 Kadi
+func configure_projectsettings_example(target: ProjectSettings) -> void:
+    assert(target != null, "ProjectSettings reference must be valid")
+    print("Configured ProjectSettings for Kadi table runtime")
+```
+

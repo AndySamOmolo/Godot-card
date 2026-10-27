@@ -33,3 +33,16 @@ short: A first-class reference to a signal of an Object, connectable to Callable
 Signals decouple the emitter from the listener: a [[Button]] emits `pressed` knowing nothing about what happens next, and a receiver reacts without polling. This is the cleanest way to broadcast game events — a turn changed, a card played, a penalty applied — to any number of interested nodes. `emit` lets code trigger a signal just like the engine would, which is useful for testing and for reusing signal-driven logic.
 
 In the Kadi app [[Signals]] are the spine of the turn structure from `l_03_01_signals`. The `GameState` autoload declares `signal turn_changed(player_id)`, `signal card_played(card)`, `signal penalty_resolved(total)`, and `signal niko_kadi(player_id)`. The UI connects to `turn_changed` to refresh the highlighted player, to `penalty_resolved` to update the red penalty [[Label]], and to `niko_kadi` to trigger the celebratory animation. `CONNECT_ONE_SHOT` is used on a "deal complete" signal so the dealer initialisation runs exactly once, then un-wires itself.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Signal`)**: When configuring `Signal` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Signal` offline. If your `Signal` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Signal in Godot 4.3 Kadi
+func configure_signal_example(target: Signal) -> void:
+    assert(target != null, "Signal reference must be valid")
+    print("Configured Signal for Kadi table runtime")
+```
+

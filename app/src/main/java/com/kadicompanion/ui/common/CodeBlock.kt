@@ -46,24 +46,26 @@ import com.kadicompanion.R
 import com.kadicompanion.domain.model.CodeSnippet
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalUiPreferences
-import com.kadicompanion.ui.theme.SyntaxColors
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * Studio IDE Code Block with customizable window header dots, word-wrap toggle for phones,
- * adjustable code font scale, optional line-number gutter, and one-tap copy confirmation.
+ * Studio IDE Code Block with 6 customizable syntax palettes (including Godot 4.3 Script Editor),
+ * word-wrap toggle for phones, adjustable code font scale, optional line-number gutter, and one-tap copy.
  */
 @Composable
 fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val uiPrefs = LocalUiPreferences.current
     val isDark = isDarkScheme()
-    val panelColor = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
-    val headerBg = if (isDark) Color(0xFF131B2B) else Color(0xFFE2E8F0)
-    val gutterColor = if (isDark) SyntaxColors.darkComment.copy(alpha = 0.55f) else SyntaxColors.lightComment.copy(alpha = 0.65f)
-    val borderColor = if (isDark) Color(0xFF24324B) else Color(0xFFCBD5E1)
+    val codePalette = remember(uiPrefs.codeThemePreset, isDark) {
+        GDScriptHighlighter.paletteFor(uiPrefs.codeThemePreset, isDark)
+    }
+    val panelColor = codePalette.background
+    val headerBg = codePalette.headerBg
+    val gutterColor = codePalette.comment.copy(alpha = 0.65f)
+    val borderColor = codePalette.borderColor
     val lines = remember(snippet.code) { snippet.code.lines() }
     var copied by remember { mutableStateOf(false) }
     var wrapLines by remember(uiPrefs.codeWordWrap) { mutableStateOf(uiPrefs.codeWordWrap) }
@@ -91,7 +93,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(headerBg)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -111,7 +113,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                         style = MaterialTheme.typography.labelSmall,
                         fontFamily = CodeFontFamily,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                        color = codePalette.comment
                     )
                 }
 
@@ -119,7 +121,6 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Mobile Word-Wrap toggle chip
                     val wrapTint = if (wrapLines) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                     Surface(
                         shape = MaterialTheme.shapes.extraSmall,
@@ -128,7 +129,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                         modifier = Modifier.clickable { wrapLines = !wrapLines }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
@@ -147,7 +148,6 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                         }
                     }
 
-                    // One-tap Copy button
                     val copyTint = if (copied) successColor() else MaterialTheme.colorScheme.primary
                     Surface(
                         shape = MaterialTheme.shapes.extraSmall,
@@ -160,7 +160,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                         }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
@@ -183,7 +183,6 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
 
             HorizontalDivider(thickness = 1.dp, color = borderColor.copy(alpha = 0.6f))
 
-            // Code body
             if (wrapLines) {
                 Column(
                     modifier = Modifier
@@ -210,7 +209,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                                 )
                             }
                             Text(
-                                text = GDScriptHighlighter.highlight(lineText, isDark),
+                                text = GDScriptHighlighter.highlight(lineText, isDark, uiPrefs.codeThemePreset),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontFamily = CodeFontFamily,
                                     fontSize = codeFontSize,
@@ -251,7 +250,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                     Column {
                         lines.forEach { lineText ->
                             Text(
-                                text = GDScriptHighlighter.highlight(lineText, isDark),
+                                text = GDScriptHighlighter.highlight(lineText, isDark, uiPrefs.codeThemePreset),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontFamily = CodeFontFamily,
                                     fontSize = codeFontSize,
@@ -269,7 +268,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(headerBg.copy(alpha = 0.5f))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .padding(horizontal = 12.dp, vertical = 7.dp)
                 ) {
                     RichInlineText(
                         text = it,

@@ -343,7 +343,7 @@
     },
     {
       "term": "Kadi",
-      "shortDefinition": "A fast-paced Kenyan shedding card game played by 2–5 players with a 54-card deck (52 suited cards + 2 Jokers). Players race to play all their winning Answer cards in a single move after announcing 'Niko Kadi' in the previous round.",
+      "shortDefinition": "A fast-paced Kenyan shedding card game played by 2–5 players with a 54-card deck (52 suited cards + 2 Jokers). Players race to play all their winning Answer cards in a single move after announcing 'Niko Kadi' in the previous round.\n\n### Core Kadi Card Groups\n- **Answer Cards (`4, 5, 6, 7, 9, 10`)**: Standard scoring/matching cards and the only legal opening cards.\n- **Penalty Cards (`2` = +2, `3` = +3, `Joker` = +5)**: Stackable draw penalties.\n- **Question Cards (`8`, `Q`)**: Must be accompanied by a matching-suit Answer card in the same turn.\n- **Jump (`J`) & Kickback (`K`)**: Skip the next player (`J`) or reverse turn direction (`K`).\n- **Wild Ace (`A`)**: Overrides the active suit (`declared_suit`) or cancels an active penalty stack.",
       "relatedLessonIds": [
         "l_01_01_enums",
         "l_09_01_win_detection"
@@ -352,7 +352,7 @@
     },
     {
       "term": "Penalty Cards",
-      "shortDefinition": "In Kadi, 2, 3, and Joker (JOK) are Penalty Cards that force the next player to draw 2, 3, or 5 cards respectively unless they counter with a same-rank Penalty Card (which forwards the stack) or an Ace (which cancels the stack).",
+      "shortDefinition": "In Kadi, 2, 3, and Joker (JOK) are Penalty Cards that force the next player to draw 2, 3, or 5 cards respectively unless they counter with a same-rank Penalty Card (which forwards the stack) or an Ace (which cancels the stack).\n\n```gdscript\nfunc penalty_value() -> int:\n    match rank:\n        CardTypes.Ranks.TWO: return 2\n        CardTypes.Ranks.THREE: return 3\n        CardTypes.Ranks.JOKER: return 5\n        _: return 0\n```",
       "relatedLessonIds": [
         "l_05_01_accumulator"
       ],
@@ -376,7 +376,7 @@
     },
     {
       "term": "Question Cards",
-      "shortDefinition": "In Kadi, Queen (Q) and 8 are Question Cards. A player who plays a Question Card must accompany it in the same move with a matching-suit Answer Card (or chain of Questions ending in an Answer Card), otherwise they must draw from the pile.",
+      "shortDefinition": "In Kadi, Queen (Q) and 8 are Question Cards. A player who plays a Question Card must accompany it in the same move with a matching-suit Answer Card (or chain of Questions ending in an Answer Card), otherwise they must draw from the pile.\n\n```gdscript\nfunc is_question() -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n```",
       "relatedLessonIds": [
         "l_06_01_qa_composition"
       ],
@@ -384,7 +384,7 @@
     },
     {
       "term": "Answer Cards",
-      "shortDefinition": "In Kadi, 4, 5, 6, 7, 9, 10, and Ace (A) are Answer Cards. They can open the discard pile (except Ace), accompany Question Cards, and are the only cards on which a player can legally win the game.",
+      "shortDefinition": "In Kadi, 4, 5, 6, 7, 9, 10, and Ace (A) are Answer Cards. They can open the discard pile (except Ace), accompany Question Cards, and are the only cards on which a player can legally win the game.\n\n```gdscript\nfunc is_answer() -> bool:\n    return rank in [4, 5, 6, 7, 9, 10]\n```",
       "relatedLessonIds": [
         "l_06_01_qa_composition"
       ],
@@ -392,7 +392,7 @@
     },
     {
       "term": "Niko Kadi",
-      "shortDefinition": "The mandatory declaration a player must make when they realize they can win on the NEXT round of play by playing all their remaining winning cards in a single move. Drawing a card revokes the declaration.",
+      "shortDefinition": "The mandatory declaration a player must make when they realize they can win on the NEXT round of play by playing all their remaining winning cards in a single move. Drawing a card revokes the declaration.\n\n```gdscript\nfunc can_win_this_turn(player_idx: int) -> bool:\n    return announced_kadi[player_idx] and hands[player_idx].is_empty() and penalty_stack == 0\n```",
       "relatedLessonIds": [
         "l_09_01_win_detection"
       ],
@@ -976,12 +976,14 @@
     },
     {
       "term": "ResourceLoader",
-      "shortDefinition": "A singleton for loading resources at runtime, optionally in the background thread.",
+      "shortDefinition": "Godot's singleton for checking and loading files from `res://` at runtime. Calling `ResourceLoader.exists(path)` before `load(path)` lets Kadi gracefully use downloaded card PNGs when present in `res://assets/cards/` and fall back to text labels if a file is missing.\n\n```gdscript\nif ResourceLoader.exists(path):\n    return load(path) as Texture2D\n```",
       "relatedLessonIds": [
-        "l_01_00c_first_script"
+        "l_01_02_resources",
+        "l_02_02_ready_dealing"
       ],
       "relatedDocClassNames": [
-        "ResourceLoader"
+        "Resource",
+        "Texture2D"
       ]
     },
     {
@@ -1069,12 +1071,16 @@
     },
     {
       "term": "TextureRect",
-      "shortDefinition": "A Control that draws a Texture2D, with stretching and flipping options.",
+      "shortDefinition": "A Godot 4.3 `[[Control]]` node (`CardArt`) that renders a `[[Texture2D]]` (such as a downloaded card PNG from `res://assets/cards/` or `card_back.png`) inside UI containers.\n\n> [!GODOT]\n> Always set `expand_mode = Ignore Size`, `stretch_mode = Keep Aspect Centered`, and `mouse_filter = Ignore` on `CardArt` so high-res downloaded card packs fit your `84×120` card slot without blocking `ClickButton`!\n\n```gdscript\n@onready var card_art: TextureRect = $CardArt\nfunc show_downloaded_art(tex: Texture2D) -> void:\n    card_art.texture = tex\n    card_art.visible = (tex != null)\n```",
       "relatedLessonIds": [
-        "l_01_00c_first_script"
+        "l_02_01_scenes_instancing",
+        "l_02_02_ready_dealing",
+        "l_11_01_tweens"
       ],
       "relatedDocClassNames": [
-        "TextureRect"
+        "TextureRect",
+        "Texture2D",
+        "Control"
       ]
     },
     {
@@ -1148,6 +1154,94 @@
       "relatedDocClassNames": [
         "Viewport",
         "Node2D"
+      ]
+    },
+    {
+      "term": "AtlasTexture",
+      "shortDefinition": "A `[[Texture2D]]` resource that crops a single rectangular `region` (`Rect2`) out of a larger downloaded **Sprite Sheet** (`res://assets/cards/deck_sheet.png`).\n\nInstead of 54 separate image files, many itch.io and Kenney asset packs distribute one combined grid image. `AtlasTexture` lets each `CardData` slice its exact `[suit_row, rank_col]` rectangle at runtime:\n\n```gdscript\nconst SHEET := preload(\"res://assets/cards/deck_sheet.png\")\nfunc slice_card(col: int, row: int, w: int = 140, h: int = 190) -> AtlasTexture:\n    var atlas := AtlasTexture.new()\n    atlas.atlas = SHEET\n    atlas.region = Rect2(col * w, row * h, w, h)\n    return atlas\n```",
+      "relatedLessonIds": [
+        "l_01_02_resources",
+        "l_02_02_ready_dealing"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D",
+        "TextureRect",
+        "Resource"
+      ]
+    },
+    {
+      "term": "Sprite Sheet",
+      "shortDefinition": "A single image file (e.g., `res://assets/cards/deck_sheet.png`) containing all 52 playing cards and 2 Jokers arranged in a uniform grid of rows (suits) and columns (ranks).\n\nIn Godot 4.3, you slice individual cards from a downloaded sprite sheet using an `[[AtlasTexture]]` whose `region` is set to `Rect2(col * card_width, row * card_height, card_width, card_height)`.",
+      "relatedLessonIds": [
+        "l_01_02_resources",
+        "l_02_02_ready_dealing"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D",
+        "TextureRect",
+        "Sprite2D"
+      ]
+    },
+    {
+      "term": "Import Dock",
+      "shortDefinition": "The dock next to the **Scene** tab in the Godot 4.3 Editor that controls how downloaded `.png`, `.svg`, `.ogg`, and `.wav` files in `res://assets/` are compressed and filtered.\n\n> [!TIP]\n> For downloaded `.ogg` sound effects (`card_slide.ogg`, `shuffle.ogg`), select the file in the **FileSystem** dock, open the **Import** tab, uncheck **Loop**, and click **Reimport** so one-shot SFX don't repeat endlessly.",
+      "relatedLessonIds": [
+        "l_01_00b_project_tour",
+        "l_02_02_ready_dealing",
+        "l_11_02_particles_sfx"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D",
+        "AudioStreamPlayer"
+      ]
+    },
+    {
+      "term": "Mouse Filter",
+      "shortDefinition": "A `[[Control]]` property (`mouse_filter`) that decides whether a UI node consumes mouse clicks/touch taps (`Stop`), lets them pass to parent controls (`Pass`), or ignores them completely (`Ignore`).\n\nIn `card_scene.tscn`, decorative child nodes like `CardArt` (`[[TextureRect]]`), `TopRankLabel`, and `CenterSuitLabel` must use `MOUSE_FILTER_IGNORE` so they never steal taps from `ClickButton`!",
+      "relatedLessonIds": [
+        "l_02_01_scenes_instancing",
+        "l_03_01_gui_Signals"
+      ],
+      "relatedDocClassNames": [
+        "Control",
+        "Button",
+        "TextureRect"
+      ]
+    },
+    {
+      "term": "TextureFilter",
+      "shortDefinition": "Controls how Godot 4.3 interpolates pixels when scaling a downloaded `[[Texture2D]]` up or down.\n\n- **Linear (`TEXTURE_FILTER_LINEAR`)**: Smooth bilinear filtering — ideal for high-resolution vector or HD playing card PNGs.\n- **Nearest (`TEXTURE_FILTER_NEAREST`)**: Crisp nearest-neighbor scaling with zero blur — mandatory for retro pixel-art card packs! Set globally in **Project -> Project Settings -> Rendering -> Textures -> Canvas Textures -> Default Texture Filter**.",
+      "relatedLessonIds": [
+        "l_02_02_ready_dealing",
+        "l_11_01_tweens"
+      ],
+      "relatedDocClassNames": [
+        "CanvasItem",
+        "TextureRect",
+        "Sprite2D"
+      ]
+    },
+    {
+      "term": "StyleBoxTexture",
+      "shortDefinition": "A theme `StyleBox` that skins a `[[Panel]]` or `[[Button]]` using a downloaded nine-patch image texture (`res://assets/ui/button_frame.png`) instead of a flat color (`StyleBoxFlat`).",
+      "relatedLessonIds": [
+        "l_02_02_ready_dealing",
+        "l_08_01_declaration_popup"
+      ],
+      "relatedDocClassNames": [
+        "Panel",
+        "Button",
+        "Theme"
+      ]
+    },
+    {
+      "term": "AudioStreamOggVorbis",
+      "shortDefinition": "Godot 4.3's audio stream resource for `.ogg` files placed in `res://assets/audio/` (such as `card_slide.ogg`, `penalty_slam.ogg`, and `niko_kadi.ogg`), played via `[[AudioStreamPlayer]]`.",
+      "relatedLessonIds": [
+        "l_11_02_particles_sfx"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer"
       ]
     }
   ]

@@ -34,3 +34,16 @@ short: A built-in RGBA color with floating-point channels in the 0–1 range.
 Colors expose both linear (`r`, `g`, `b`, `a`), 8-bit (`r8`…), and HSV (`h`, `s`, `v`) views of the same value, plus helpers like `lightened`, `darkened`, `inverted`, and `lerp` for tinting and fades. They are consumed all over the engine — [[CanvasItem]] `modulate`, [[ColorRect]] `color`, and theme overrides on [[Control]] all take a `Color`.
 
 In the Kadi app `Color` drives visual feedback: a legal card is tinted white while an illegal one is `darkened` grey, and the active suit shows as a [[ColorRect]] whose `color` matches the declared suit. When a player calls "Niko Kadi" their name label pulses by `lerp`ing its `modulate` between `Color.WHITE` and a warm gold.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Color`)**: When configuring `Color` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Color` offline. If your `Color` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Color in Godot 4.3 Kadi
+func configure_color_example(target: Color) -> void:
+    assert(target != null, "Color reference must be valid")
+    print("Configured Color for Kadi table runtime")
+```
+

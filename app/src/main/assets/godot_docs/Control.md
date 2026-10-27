@@ -60,3 +60,17 @@ short: Base class for all UI nodes; provides anchors, offsets, sizing, theming, 
 `Control` also owns theming and focus. Override theme properties with `add_theme_*_override` to restyle one node, or assign a `Theme` resource to restyle a whole subtree. `grab_focus` / `release_focus` drive keyboard navigation, and the `gui_input` signal gives you raw [[InputEvent]]s scoped to the control — the cleanest way to handle clicks on a card widget.
 
 In the Kadi app every on-screen element is a `Control`. The player's hand is a [[HBoxContainer]] of `Control`-based card widgets; the penalty total and turn indicator are [[Label]]s anchored to the top; the suit-declaration popup from `l_08_01_declaration_popup` is a [[Panel]] with four [[Button]]s laid out in a [[GridContainer]]. The cards use `mouse_filter = STOP` and listen for `gui_input` so a click is detected even when the card is rotated by `rotation`. Theming overrides tint the focused card gold and the disabled ones grey.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Control`)**: When configuring `Control` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Control` offline. If your `Control` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+extends Control
+
+func _ready() -> void:
+    custom_minimum_size = Vector2(84, 120)
+    pivot_offset = custom_minimum_size * 0.5
+```
+

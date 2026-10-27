@@ -23,3 +23,16 @@ short: A container that arranges its children in a vertical column, top to botto
 Like all [[Container]]s it relays out automatically when children change, so adding or hiding elements requires no manual positioning. Use a `Control` with `SIZE_EXPAND_FILL` as a flexible spacer to push other elements apart — a handy trick for top-and-bottom anchored UIs inside a single column.
 
 In the Kadi app a `VBoxContainer` stacks the player areas on the side of the screen: a [[Label]] name, an [[HBoxContainer]] of card widgets, then a small status row. The whole status overlay (turn label, penalty total, last-play label) is itself a `VBoxContainer`, so the labels stack neatly and reflow when a longer message wraps. The declaration popup's body is a `VBoxContainer` holding the title [[Label]] followed by a [[GridContainer]] of suit buttons, centred with `alignment = ALIGNMENT_CENTER`.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`VBoxContainer`)**: When configuring `VBoxContainer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `VBoxContainer` offline. If your `VBoxContainer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using VBoxContainer in Godot 4.3 Kadi
+func configure_vboxcontainer_example(target: VBoxContainer) -> void:
+    assert(target != null, "VBoxContainer reference must be valid")
+    print("Configured VBoxContainer for Kadi table runtime")
+```
+

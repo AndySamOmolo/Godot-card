@@ -61,3 +61,16 @@ short: A multi-line text editor with syntax highlighting, selection, and clipboa
 A `SyntaxHighlighter` resource drives code colouring; ship a `CodeHighlighter` configured for [[GDScript]] keywords and the editor instantly looks familiar. `wrap_mode`, `tab_size`, and `indent_size` let you match the learner's expected formatting, and `show_line_numbers` plus `highlight_current_line` make it easy to point at a specific line in a tutorial step.
 
 In the Kadi learning app `TextEdit` is the surface for showing and editing small [[GDScript]] snippets the learner can read or tweak — for example the `func deal_cards():` body in `l_02_02_ready_dealing`. The highlighter colours `var`, `func`, and `signal` keywords so the example matches the docs. `text_changed` lets the app validate the snippet live, and `caret_changed` powers a small "you are here" gutter that maps the caret to a phase-step explanation. It is read-only (`editable = false`) when the app just wants to display code.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`TextEdit`)**: When configuring `TextEdit` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `TextEdit` offline. If your `TextEdit` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using TextEdit in Godot 4.3 Kadi
+func configure_textedit_example(target: TextEdit) -> void:
+    assert(target != null, "TextEdit reference must be valid")
+    print("Configured TextEdit for Kadi table runtime")
+```
+

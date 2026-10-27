@@ -47,3 +47,16 @@ short: A node that stores and plays named animations authored in the animation e
 Unlike [[Tween]] (which is built in code for one-shot interpolations), `AnimationPlayer` shines for reusable, authored sequences: a card flip, a dealing sweep, a victory dance. `seek` lets you scrub to an exact time, useful for previews, and `speed_scale` can slow a replay for cinematic moments. Method-call tracks let an animation trigger gameplay code at precise frames — for example, playing a "snap" sound when a card lands.
 
 In the Kadi app an `AnimationPlayer` on the table node drives the dealing montage (cards fly out one by one from the deck) and the win-celebration sequence. A `deal` animation's method track calls `Deck.pop_card()` exactly when each card visually leaves the pile, so audio, logic, and visuals stay in sync. The "Niko Kadi" reveal is another authored animation with a `tween`-like scale-up plus a `Label.visible_characters` track for the typewriter text.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`AnimationPlayer`)**: When configuring `AnimationPlayer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AnimationPlayer` offline. If your `AnimationPlayer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using AnimationPlayer in Godot 4.3 Kadi
+func configure_animationplayer_example(target: AnimationPlayer) -> void:
+    assert(target != null, "AnimationPlayer reference must be valid")
+    print("Configured AnimationPlayer for Kadi table runtime")
+```
+

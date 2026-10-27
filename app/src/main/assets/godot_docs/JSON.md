@@ -31,3 +31,16 @@ short: A utility class for parsing JSON text into native Variant data and back.
 The parser handles the standard JSON types: null, bool, int, float, String, Array, and object (Dictionary). Godot-specific types like [[Vector2]] or [[Node]] are not valid JSON, so use `from_native`/`to_native` if you need to round-trip them with custom encoding. Floating point is preserved with `full_precision = true` to avoid precision loss.
 
 In the Kadi app `JSON` persists the learner's progress and settings: a `Dictionary` of completed phase ids is `stringify`d and written to `user://progress.json` via [[FileAccess]], then `parse_string`d back on launch. The tutorial phase files themselves (these very `phase_XX.json` documents) are loaded with `JSON.parse_string` and turned into `Dictionary`/`Array` objects the UI renders. On parse failure, `get_error_line()` points the author at the typo, which is why strict, well-formed JSON — no trailing commas, double-quoted strings — matters so much here.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`JSON`)**: When configuring `JSON` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `JSON` offline. If your `JSON` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using JSON in Godot 4.3 Kadi
+func configure_json_example(target: JSON) -> void:
+    assert(target != null, "JSON reference must be valid")
+    print("Configured JSON for Kadi table runtime")
+```
+

@@ -46,3 +46,16 @@ short: A container that arranges its children as tabbed pages, with a tab bar on
 The tab bar supports icons, per-tab disable and hide, metadata, and an optional close button governed by `tab_close_display_policy`. The `tab_changed` / `tab_selected` signals let other UI react when the page switches — useful to update a contextual toolbar or save the outgoing tab's state.
 
 In the Kadi learning app a `TabContainer` organises the main screens: "Play", "Learn", "Docs", "Glossary". Each tab holds a different [[Control]] subtree, and `tab_changed` triggers lazy-loading of heavier content (such as these doc pages) only when first viewed. The "Learn" tab itself nests another `TabContainer` for the phases, with disabled tabs ahead of the learner's progress so they can see the road ahead but not skip ahead. `tabs_position` is bottom on phones for thumb reachability.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`TabContainer`)**: When configuring `TabContainer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `TabContainer` offline. If your `TabContainer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using TabContainer in Godot 4.3 Kadi
+func configure_tabcontainer_example(target: TabContainer) -> void:
+    assert(target != null, "TabContainer reference must be valid")
+    print("Configured TabContainer for Kadi table runtime")
+```
+

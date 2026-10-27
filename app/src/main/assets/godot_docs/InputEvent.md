@@ -29,3 +29,16 @@ short: The base class for all input events such as key presses, mouse clicks, an
 The `is_action*` family is the high-level way to handle input: you define actions like `"play_card"` or `"draw"` in the [[InputMap]] (via [[ProjectSettings]] or [[Input]]) and then ask an event `is_action_pressed("play_card")`. This decouples the physical input (a tap, a key, a gamepad button) from the gameplay response, so the same code works on touch and keyboard.
 
 In the Kadi app every tap on a card arrives as an `InputEventScreenTouch` (on Android) or `InputEventMouseButton` (in the editor), wrapped into the card widget's `gui_input` signal. The handler checks `event.is_pressed()` to fire only on the initial touch (not the release), then dispatches the play. Action-based input (`"ui_accept"`, `"ui_cancel"`) drives keyboard navigation of menus so the app is usable with a Bluetooth keyboard, mirroring the accessibility the docs viewer itself aims for.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`InputEvent`)**: When configuring `InputEvent` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `InputEvent` offline. If your `InputEvent` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using InputEvent in Godot 4.3 Kadi
+func configure_inputevent_example(target: InputEvent) -> void:
+    assert(target != null, "InputEvent reference must be valid")
+    print("Configured InputEvent for Kadi table runtime")
+```
+

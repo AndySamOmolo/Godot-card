@@ -33,3 +33,20 @@ short: A node that plays an AudioStream at a non-positional, screen-wide volume.
 For audio that should seem to come from a place in the world, use [[AudioStreamPlayer2D]] or [[AudioStreamPlayer3D]] instead; this non-positional player is for anything that fills the screen uniformly. The `finished` signal is the standard way to know when a one-shot clip ends, useful for chaining sounds or advancing a sequence.
 
 In the Kadi app an `AudioStreamPlayer` handles background music and global UI sounds: the soft "click" of a button, the "deal" whoosh, and the distinctive "Niko Kadi!" call sample. Each card-play routes its sound through the `SFX` bus so a master volume slider can mute effects without touching music. The `finished` signal on the win fanfare chains into the victory music track, so the celebration never has an awkward silent gap.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`AudioStreamPlayer`)**: When configuring `AudioStreamPlayer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AudioStreamPlayer` offline. If your `AudioStreamPlayer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+@onready var sfx_player: AudioStreamPlayer = $SfxPlayer
+
+func play_downloaded_sfx(file_name: String) -> void:
+    var path: String = "res://assets/audio/" + file_name
+    if ResourceLoader.exists(path):
+        sfx_player.stream = load(path)
+        sfx_player.pitch_scale = randf_range(0.96, 1.04)
+        sfx_player.play()
+```
+

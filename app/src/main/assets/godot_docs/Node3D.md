@@ -38,3 +38,16 @@ short: A 3D-positioned node with transform, rotation, scale, and a basis; base f
 Rotation can be set as Euler angles (`rotation_degrees`), a [[Quaternion]] (for smooth interpolation without gimbal lock), or directly via the `basis`. Use `look_at` to aim a node at a target, common for cameras and turrets. Setting `top_level = true` detaches a node from its parent's transform while keeping it as a child in the tree — handy for cameras that should follow a target's position without inheriting its rotation.
 
 The Kadi app is primarily 2D, so `Node3D` is rarely used directly. It is documented here because some learners graduate to a 3D table view or a 3D card-flip effect. When you do model cards in 3D, each card is a `Node3D` with a `MeshInstance3D`; the same `position`/`rotation` tweening patterns you learned for [[Node2D]] carry over, and a [[Camera3D]] replaces the [[Camera2D]].
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Node3D`)**: When configuring `Node3D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Node3D` offline. If your `Node3D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Node3D in Godot 4.3 Kadi
+func configure_node3d_example(target: Node3D) -> void:
+    assert(target != null, "Node3D reference must be valid")
+    print("Configured Node3D for Kadi table runtime")
+```
+

@@ -35,3 +35,16 @@ short: The main loop that owns the scene, groups, and the root window.
 Beyond bookkeeping it offers convenient services: `create_timer` for quick one-shot delays without a [[Timer]] node, `create_tween` for animations, group calls via `call_group` and `get_nodes_in_group`, and scene switching with `change_scene_to_file` / `change_scene_to_packed`. The `process_frame` and `physics_frame` signals let systems hook the frame loop without overriding node callbacks.
 
 In the Kadi app `SceneTree` ties the flow together: the main menu calls `change_scene_to_file` to enter a match, `create_timer` gives the AI its short "thinking" pause, and every card belongs to a `"cards"` group so a rules refresh can `call_group("cards", "update_playable")` in one line. When the match ends, a results screen is reached with `change_scene_to_packed`.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`SceneTree`)**: When configuring `SceneTree` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `SceneTree` offline. If your `SceneTree` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using SceneTree in Godot 4.3 Kadi
+func configure_scenetree_example(target: SceneTree) -> void:
+    assert(target != null, "SceneTree reference must be valid")
+    print("Configured SceneTree for Kadi table runtime")
+```
+

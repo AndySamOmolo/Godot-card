@@ -31,3 +31,16 @@ short: A node that counts down and emits timeout at a set interval.
 Because `Timer` is a [[Node]], it lives in the scene tree and is paused with it. Connect `timeout` to a [[Callable]] that performs whatever the delay was for: an AI move, a reveal, a cleanup. `time_left` lets you read progress for a countdown UI, and `stop()` cancels a pending tick cleanly. For sub-frame precision or many simultaneous timers, you might roll your own accumulator, but for the common case `Timer` is exactly right.
 
 In the Kadi app a `Timer` paces the AI: when it becomes a CPU player's turn the game `start`s a `one_shot` timer of, say, 0.8s, and on `timeout` the AI's choose-and-play function runs — giving the human time to see what's happening instead of an instant response. Another timer enforces a hard turn limit, flashing a [[ProgressBar]] as `time_left` drains. During the reshuffle of `l_10_01_reshuffle`, a short `Timer` hides the table behind a "Shuffling…" overlay, then reveals the recycled draw pile.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Timer`)**: When configuring `Timer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Timer` offline. If your `Timer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Timer in Godot 4.3 Kadi
+func configure_timer_example(target: Timer) -> void:
+    assert(target != null, "Timer reference must be valid")
+    print("Configured Timer for Kadi table runtime")
+```
+

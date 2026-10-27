@@ -43,3 +43,16 @@ short: A singleton exposing engine version, frames, time scale, and run-mode inf
 `time_scale` multiplies the `delta` passed to `_process` and `_physics_process`, so the whole simulation (and any [[Tween]] not marked `set_ignore_time_scale`) slows or speeds up. `max_fps` caps rendering, helpful on laptops to save power; `physics_ticks_per_second` controls simulation granularity.
 
 In the Kadi app `Engine.is_editor_hint()` guards the dealer so cards aren't actually dealt while editing the scene (which would corrupt the tree). `time_scale` powers a "slow-mo" learning mode that halves the dealing animation so learners can study it, and a "fast-forward" replay for skipping ahead. `frames_per_second` is shown in a debug overlay, and `physics_ticks_per_second` is left at 60 — the Kadi UI is driven by `_process`, not physics, so it stays smooth regardless.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Engine`)**: When configuring `Engine` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Engine` offline. If your `Engine` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Engine in Godot 4.3 Kadi
+func configure_engine_example(target: Engine) -> void:
+    assert(target != null, "Engine reference must be valid")
+    print("Configured Engine for Kadi table runtime")
+```
+

@@ -40,3 +40,16 @@ short: A static class for listing, creating, copying, and removing directories.
 `get_next` returns both files and directories (including the special `.` and `..` entries, which you usually skip), and `current_is_dir()` tells you which. `make_dir_recursive` is the safest way to create a nested path; `get_user_data_dir()` resolves the writable `user://` location to an OS-absolute path, which varies per platform — essential for an Android app where the path is buried in the sandbox.
 
 In the Kadi app `DirAccess` is used to ensure `user://` subdirectories exist before writing — `make_dir_recursive("user://matches")` before saving a replay, `make_dir_recursive("user://exports")` before writing a CSV log. Listing `res://assets/godot_docs/` with `list_dir_begin`/`get_next` is exactly how the in-app docs viewer discovers these class files at runtime: it enumerates `*.md`, sorts them, and builds the docs index dynamically so adding a new doc requires no code change.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`DirAccess`)**: When configuring `DirAccess` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `DirAccess` offline. If your `DirAccess` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using DirAccess in Godot 4.3 Kadi
+func configure_diraccess_example(target: DirAccess) -> void:
+    assert(target != null, "DirAccess reference must be valid")
+    print("Configured DirAccess for Kadi table runtime")
+```
+

@@ -30,3 +30,16 @@ short: A reference-counted random number generator with an optional seed for rep
 Setting `seed` (or constructing two generators with the same seed) produces identical sequences, which is invaluable for debugging "how did that bug happen?" replays: store the seed alongside the match log and you can rerun the exact shuffle. `randi_range(1, 6)` simulates a die, `randf_range(0.0, 1.0)` a coin flip, and `rand_weighted` picks an index from an [[Array]] of weights (handy for AI move selection). The global `randi()`/`randf()` functions are backed by a shared generator; for per-instance control prefer a dedicated `RandomNumberGenerator`.
 
 In the Kadi app the deck shuffle in `l_01_03_deck_builder` uses a `RandomNumberGenerator` whose seed is stored in the match log so a hand can be replayed identically. The AI's "pick a card to play" uses `rand_weighted` over candidate cards (an [[Array]] of [[Resource]] card data) weighted by heuristic score, giving believable but non-deterministic moves. A tiny per-card pitch jitter on the deal sound (`randf_range(0.95, 1.05)` into an [[AudioStreamPlayer]]'s `pitch_scale`) makes repeated whooshes feel organic instead of mechanical.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`RandomNumberGenerator`)**: When configuring `RandomNumberGenerator` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `RandomNumberGenerator` offline. If your `RandomNumberGenerator` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using RandomNumberGenerator in Godot 4.3 Kadi
+func configure_randomnumbergenerator_example(target: RandomNumberGenerator) -> void:
+    assert(target != null, "RandomNumberGenerator reference must be valid")
+    print("Configured RandomNumberGenerator for Kadi table runtime")
+```
+

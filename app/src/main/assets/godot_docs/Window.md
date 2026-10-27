@@ -37,3 +37,16 @@ short: A viewport that is also an operating-system window or embedded sub-window
 `Window` is the base of dialogs like `AcceptDialog` and `FileDialog`, and its `popup*` methods make it easy to present modal panels. Signals such as `close_requested` let you intercept the user closing a window — handy for confirmation prompts.
 
 In the Kadi app the game runs inside the main `Window`, and on desktop builds `title` shows "Kadi". The tutorial's "Are you sure you want to quit?" prompt is a child `Window` shown with `popup_centered`, and its `close_requested` signal is trapped so a mid-hand quit asks for confirmation first.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Window`)**: When configuring `Window` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Window` offline. If your `Window` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Window in Godot 4.3 Kadi
+func configure_window_example(target: Window) -> void:
+    assert(target != null, "Window reference must be valid")
+    print("Configured Window for Kadi table runtime")
+```
+

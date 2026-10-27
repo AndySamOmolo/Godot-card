@@ -34,3 +34,16 @@ short: A 2D node that draws a Texture2D, optionally split into frames or a regio
 For more complex needs, `region_enabled` plus `region_rect` lets you crop a sub-image on the fly, and `flip_h`/`flip_v` mirror it. Because `Sprite2D` is a [[CanvasItem]], it participates fully in z-ordering, modulation, and the `draw_*` pipeline of its parent. For UI that needs to receive clicks and lay out responsively, prefer a `TextureRect` (a [[Control]] subclass); for free-floating game art, `Sprite2D` is the lighter choice.
 
 In the Kadi app a card can be drawn either as a `Sprite2D` (in a free-roaming table view) or a `TextureRect` (in the strict UI layout). With `Sprite2D`, the deck's artwork atlas is split with `hframes = 13` and `vframes = 5` (one row per suit plus a back), and each card node picks its face by setting `frame_coords = Vector2i(rank, suit)`. Flipping a card over is just `texture = card_back`. The penalty animation tweens `scale` and `modulate` for a satisfying pop when a draw-two lands.
+
+### Kadi & Downloaded Assets Example
+
+> [!GODOT]
+> **Godot 4.3 Inspector & Downloaded Assets Tip (`Sprite2D`)**: When configuring `Sprite2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Sprite2D` offline. If your `Sprite2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
+
+```gdscript
+# Using Sprite2D in Godot 4.3 Kadi
+func configure_sprite2d_example(target: Sprite2D) -> void:
+    assert(target != null, "Sprite2D reference must be valid")
+    print("Configured Sprite2D for Kadi table runtime")
+```
+
