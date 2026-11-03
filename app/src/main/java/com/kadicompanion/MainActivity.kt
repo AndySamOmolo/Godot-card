@@ -173,20 +173,36 @@ private fun AppContent(
                         }
                     },
                     onDebugChallenge = { phaseId -> navController.navigate(Routes.debugChallenge(phaseId)) },
-                    onTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) }
+                    onTermClick = { term -> navController.navigate(Routes.glossaryDetail(term)) },
+                    onOpenBlueprint = { navController.navigate(Routes.BLUEPRINT) }
                 )
             }
             composable(
                 Routes.QUIZ,
                 arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })
             ) {
-                QuizScreen(onBack = { navController.popBackStack() }, onComplete = { navController.popBackStack() })
+                QuizScreen(
+                    onBack = { navController.popBackStack() },
+                    onComplete = { navController.popBackStack() },
+                    onNextLesson = { nextId ->
+                        navController.navigate(Routes.lesson(nextId)) {
+                            popUpTo(Routes.LESSON_DETAIL) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(
                 Routes.PRACTICE,
                 arguments = listOf(navArgument(Routes.ARG_LESSON_ID) { type = NavType.StringType })
             ) {
-                PracticeScreen(onBack = { navController.popBackStack() })
+                PracticeScreen(
+                    onBack = { navController.popBackStack() },
+                    onNextLesson = { nextId ->
+                        navController.navigate(Routes.lesson(nextId)) {
+                            popUpTo(Routes.LESSON_DETAIL) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(
                 Routes.DEBUG_CHALLENGE,

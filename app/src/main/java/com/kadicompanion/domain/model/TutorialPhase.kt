@@ -14,5 +14,6 @@ data class TutorialPhase(
     val verifiedAgainstGodotVersion: String,
     val projectFiles: List<String> = emptyList(),
     val sceneTreeBlueprint: String? = null,
-    val learningObjectives: List<String> = emptyList()
+    val learningObjectives: List<String> = emptyList(),
+    val tangibleGoal: String? = null
 )

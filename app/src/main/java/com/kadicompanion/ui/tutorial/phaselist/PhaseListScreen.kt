@@ -28,12 +28,14 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -98,6 +100,7 @@ fun PhaseListScreen(
         val matchesSearch = searchQuery.isBlank() ||
             item.phase.title.contains(searchQuery, ignoreCase = true) ||
             item.phase.summary.contains(searchQuery, ignoreCase = true) ||
+            (item.phase.tangibleGoal?.contains(searchQuery, ignoreCase = true) == true) ||
             item.phase.lessons.any {
                 it.title.contains(searchQuery, ignoreCase = true) ||
                     (it.targetFile?.contains(searchQuery, ignoreCase = true) == true)
@@ -120,12 +123,12 @@ fun PhaseListScreen(
         topBar = {
             KadiTopBar(
                 title = "Course Curriculum",
-                subtitle = "12 PHASES · $totalLessons LESSONS",
+                subtitle = "TANGIBLE-FIRST · 12 PHASES · $totalLessons LESSONS",
                 actions = {
                     IconButton(onClick = onOpenBlueprint) {
                         Icon(
-                            Icons.Outlined.AccountTree,
-                            contentDescription = "Project Blueprint",
+                            Icons.Outlined.SportsEsports,
+                            contentDescription = "Play Kadi Live & Blueprint",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -177,7 +180,7 @@ fun PhaseListScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "OVERALL CURRICULUM PROGRESS",
+                                            text = "TANGIBLE-FIRST CURRICULUM PROGRESS",
                                             style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -200,20 +203,20 @@ fun PhaseListScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(MaterialTheme.shapes.small)
-                                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f))
+                                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
                                             .clickable(onClick = onOpenBlueprint)
                                             .padding(horizontal = 10.dp, vertical = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Icon(
-                                            Icons.Outlined.AccountTree,
+                                            Icons.Outlined.SportsEsports,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.secondary,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Text(
-                                            text = "Open Godot 4.3 res:// Blueprint & Kadi Rule Simulator",
+                                            text = "Play Live Kadi Table, Downloaded Assets & Rule Simulator",
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.secondary,
@@ -349,7 +352,7 @@ private fun TimelinePhaseRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterVertizontally,
             modifier = Modifier.width(34.dp).fillMaxHeight()
         ) {
             Box(
@@ -457,6 +460,38 @@ private fun TimelinePhaseRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                item.phase.tangibleGoal?.let { tangible ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f))
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.30f),
+                                MaterialTheme.shapes.extraSmall
+                            )
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AutoAwesome,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(14.dp).padding(top = 2.dp)
+                        )
+                        RichInlineText(
+                            text = "**You'll See:** $tangible",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

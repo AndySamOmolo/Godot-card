@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kadicompanion.domain.model.QuizQuestion
 import com.kadicompanion.domain.repository.AssessmentRepository
+import com.kadicompanion.domain.repository.ProgressRepository
 import com.kadicompanion.domain.repository.TutorialRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +15,7 @@ import javax.inject.Inject
 
 data class QuizUiState(
     val questions: List<QuizQuestion> = emptyList(),
+    val nextLessonId: String? = null,
     val currentIndex: Int = 0,
     val selectedChoice: Int? = null,
     val wasCorrect: Boolean? = null,
@@ -32,6 +34,7 @@ data class QuizUiState(
 class QuizViewModel @Inject constructor(
     private val tutorialRepository: TutorialRepository,
     private val assessmentRepository: AssessmentRepository,
+    private val progressRepository: ProgressRepository,
     savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
@@ -43,7 +46,13 @@ class QuizViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val lesson = tutorialRepository.getLesson(lessonId)
-            _ui.value = QuizUiState(questions = lesson?.quizQuestions ?: emptyList(), isLoading = false)
+            val next = tutorialRepository.getNextLesson(lessonId)
+                ?: lesson?.let { tutorialRepository.getFirstLessonOfNextPhase(it.phaseId) }
+            _ui.value = QuizUiState(
+                questions = lesson?.quizQuestions ?: emptyList(),
+                nextLessonId = next?.id,
+                isLoading = false
+            )
         }
     }
 
@@ -72,19 +81,24 @@ class QuizViewModel @Inject constructor(
 
     fun next() {
         val s = _ui.value
+        val nextIndex = s.currentIndex + 1
         _ui.value = s.copy(
-            currentIndex = s.currentIndex + 1,
+            currentIndex = nextIndex,
             selectedChoice = null,
             wasCorrect = null,
             canRetry = true,
             attemptedOnCurrentQuestion = false
         )
+        if (s.questions.isNotEmpty() && nextIndex >= s.questions.size) {
+            viewModelScope.launch { progressRepository.markLessonComplete(lessonId) }
+        }
     }
 
     fun restartQuiz() {
         val s = _ui.value
         _ui.value = QuizUiState(
             questions = s.questions,
+            nextLessonId = s.nextLessonId,
             isLoading = false
         )
     }

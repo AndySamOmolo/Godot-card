@@ -1,46 +1,45 @@
 {
   "id": "phase_01_project_deck",
   "order": 1,
-  "title": "Project Setup & Deck Model",
-  "summary": "Install Godot 4.3, set up the Kadi project folder structure (`res://scripts/`, `res://scenes/`), and build the complete 54-card data layer: `CardTypes`, `CardData`, and the `GameState` Autoload singleton.",
+  "title": "Tangible Quickstart: Visual Card Scene & Playable Table",
+  "summary": "Get a playable visual Kadi tabletop running in Godot 4.3 right away! Build the `84×120` `CardScene.tscn`, make cards pop up `-14px` when clicked, lay out the green felt `Table.tscn`, and play cards from your hand onto the center discard pile.",
   "estimatedMinutes": 95,
   "concepts": [
     "Godot Editor",
-    "Nodes",
-    "Scenes",
-    "Scripts",
-    "Enums",
-    "Resources",
-    "Autoloads"
+    "Nodes & Scenes",
+    "Visual CardScene",
+    "Click Signals",
+    "Table Layout",
+    "Card Staging"
   ],
   "programmingConcepts": [
-    "Development environment",
-    "Functions",
-    "Enums",
-    "Classes",
-    "Nested loops",
-    "Singletons"
+    "Scene Tree",
+    "@onready nodes",
+    "Signals",
+    "Selection state",
+    "Event handlers"
   ],
   "isSkippableForTrack": [],
   "verifiedAgainstGodotVersion": "4.3",
   "projectFiles": [
     "res://project.godot",
-    "res://scripts/card_types.gd",
-    "res://scripts/card_data.gd",
-    "res://scripts/game_state.gd"
+    "res://scenes/card/card_scene.tscn",
+    "res://scenes/card/card_scene.gd",
+    "res://scenes/table/table.tscn",
+    "res://scenes/table/table.gd"
   ],
-  "sceneTreeBlueprint": "root (Viewport)  [Godot Runtime SceneTree]\n├── GameState (Node)        [Autoload Singleton: res://scripts/game_state.gd]\n└── Main (Node2D)           [Boot Scene: res://scenes/table/table.tscn]",
+  "sceneTreeBlueprint": "Table (Node2D)  [res://scenes/table/table.tscn | script: table.gd]\n├── Background (ColorRect)              [1152×648 Emerald Felt #0E231C]\n├── DiscardSlot (Control)               [Center (534, 220) — Holds top played CardScene]\n├── PlayerHandContainer (HBoxContainer) [Bottom (120, 480) — Fans your clickable CardScenes]\n│   ├── Card (Control)                  [Instance of res://scenes/card/card_scene.tscn]\n│   └── Card2 (Control)                 [Click to lift -14px!]\n└── HUD (CanvasLayer)\n    ├── StatusLabel (Label)             [\"Karibu Kadi! Click a card to stage it\"]\n    ├── PlaySelectedButton (Button)     [\"Play Selected (0)\" — Moves card to DiscardSlot!]\n    ├── DrawButton (Button)             [\"Draw Card\"]\n    └── NikoKadiButton (Button)         [\"Niko Kadi!\"]",
   "learningObjectives": [
-    "Create a clean Godot 4.3 project with Compatibility rendering and organized `res://scripts/` and `res://scenes/` folders.",
-    "Write `res://scripts/card_types.gd` (`CardTypes`) with Suits and Ranks enums anchored to card face values (`2..15`).",
-    "Write `res://scripts/card_data.gd` (`CardData`) as a custom `Resource` with display helpers and Kadi rule classifications.",
-    "Build and register `res://scripts/game_state.gd` (`GameState`) as a global Autoload singleton that generates and shuffles the 54-card Kadi deck."
+    "Install Godot 4.3 Standard and create the `Kadi` project with organized `res://scenes/`, `res://scripts/`, and `res://assets/` folders.",
+    "Visually build `res://scenes/card/card_scene.tscn` (`84×120` `Control` with `CardBg`, `CardArt` `TextureRect` for downloaded packs, `TopRankLabel`, `CenterSuitLabel`, and `ClickButton`) and run it with **F6**.",
+    "Write `res://scenes/card/card_scene.gd` so clicking any card lifts it `-14px` upward and emits `card_clicked(self)`.",
+    "Lay out `res://scenes/table/table.tscn` (`Background`, `DiscardSlot`, `PlayerHandContainer`, `HUD`) and stage/play cards from your hand to the center of the table!"
   ],
   "lessons": [
     {
       "id": "l_01_00a_install_godot",
       "order": 1,
-      "title": "Installing Godot 4.3 Standard",
+      "title": "Install Godot 4.3 & Launch the Project Manager",
       "targetFile": "Godot_v4.3-stable (Portable Executable)",
       "sceneTree": null,
       "editorSteps": [
@@ -118,21 +117,20 @@
         }
       ],
       "verificationSteps": [
-        "Save `Godot_v4.3-stable (Portable Executable)` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Installing Godot 4.3 Standard**."
+        "Double-click the extracted Godot 4.3 executable and confirm the **Godot Engine Project Manager** window opens on your desktop.",
+        "Verify the version label in the bottom-left corner of the Project Manager says `v4.3.stable.official` (Standard GDScript edition)."
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `Godot_v4.3-stable (Portable Executable)` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Godot 4.3 Standard opens cleanly on your screen in under 2 minutes with zero installation wizards or admin prompts."
     },
     {
       "id": "l_01_00b_project_tour",
       "order": 2,
-      "title": "Creating the Kadi Project & Folder Structure",
+      "title": "Create the Kadi Project & `res://` Folder Structure",
       "targetFile": "res://project.godot",
       "sceneTree": "res:// (FileSystem Dock — Create these folders now!)\n├── scripts/\n├── scenes/\n│   ├── card/\n│   ├── table/\n│   └── ui/\n└── audio/",
       "editorSteps": [
@@ -217,43 +215,231 @@
         }
       ],
       "verificationSteps": [
-        "Save `res://project.godot` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Creating the Kadi Project & Folder Structure**."
+        "Look at the **FileSystem dock** (bottom-left of Godot) and confirm you see `res://scenes/card/`, `res://scenes/table/`, `res://scenes/ui/`, `res://scripts/`, and `res://assets/cards/`.",
+        "Click the **2D** workspace button at the top-center of the Godot editor so you see the blue/purple `1152×648` game viewport rectangle."
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://project.godot` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Your `Kadi` project opens in the Godot 2D Viewport with a clean `res://scenes/`, `res://scripts/`, and `res://assets/` folder hierarchy ready for visual cards and downloaded sprites."
+    },
+    {
+      "id": "l_02_01_scenes_instancing",
+      "order": 3,
+      "title": "Build Your First Visual Playing Card (`card_scene.tscn`)",
+      "targetFile": "res://scenes/card/card_scene.tscn",
+      "sceneTree": "Card (Control)  [custom_minimum_size = Vector2(84, 120)]\n├── CardBg (Panel)          [Anchors: Full Rect]\n├── TopRankLabel (Label)    [Position: (8, 6) | Text: \"7♥\"]\n├── CenterSuitLabel (Label) [Anchors: Center | Font Size: 32 | Text: \"♥\"]\n└── ClickButton (Button)    [Anchors: Full Rect | Flat: true]",
+      "editorSteps": [
+        "In the top menu, click **Scene -> New Scene**.",
+        "In the Scene dock, click **User Interface (Control)** as the root node, and rename `Control` to `Card`.",
+        "With `Card` selected, go to the **Inspector** (right) -> **Layout -> Transform -> Custom Minimum Size** and set `x = 84`, `y = 120`.",
+        "Right-click `Card` in the Scene dock -> **Add Child Node** and add four children directly under `Card`: a `Panel` named `CardBg`, a `Label` named `TopRankLabel`, a `Label` named `CenterSuitLabel`, and a `Button` named `ClickButton`.",
+        "Select `ClickButton`, check **Flat = On** in the Inspector (so it is invisible), and set its Anchor Preset to **Full Rect** so it covers the whole card.",
+        "Press **Ctrl+S** and save the scene at `res://scenes/card/card_scene.tscn`.",
+        "(For Downloaded Card Packs) Add a `TextureRect` child named `CardArt` under `Card`, set **Expand Mode = Ignore Size**, **Stretch Mode = Keep Aspect Centered**, and **Mouse -> Filter = Ignore**."
+      ],
+      "keyTakeaways": [
+        "Making `Card` extend `Control` with `custom_minimum_size = Vector2(84, 120)` lets Godot's `HBoxContainer` automatically space and fan out the player's hand!",
+        "An invisible `ClickButton` (`flat = true`) covering the card gives us instant mouse, touch, and keyboard focus support via `ClickButton.pressed`.",
+        "We build `card_scene.tscn` ONCE in the editor and stamp out copies at runtime using `preload(...).instantiate()`."
+      ],
+      "bodyMarkdown": "# Building `res://scenes/card/card_scene.tscn`\n\nIn Godot, you never create 54 card nodes by hand. Instead, you design **one** reusable card template scene — `res://scenes/card/card_scene.tscn` — and stamp out copies from code using `[[PackedScene]].instantiate()`.\n\n> [!GODOT]\n> Why make the root node of `card_scene.tscn` a `[[Control]]` instead of a `Node2D`? Because in Godot 4, `Control` nodes can be dropped directly into an `HBoxContainer` (Horizontal Box Container), which automatically spaces, centers, and reflows the player's hand whenever cards are drawn or played! Simply set `Card`'s **Layout → Custom Minimum Size** to `84 × 120` pixels.\n\nHere is how we spawn a card from `card_scene.tscn` in GDScript:\n\n```gdscript\nconst CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")\n\nfunc spawn_card(card_data: CardData, parent_node: Node) -> Control:\n    var card_node: Control = CardScene.instantiate()\n    parent_node.add_child(card_node)  # 1. Add to SceneTree FIRST\n    card_node.setup(card_data)        # 2. Populate labels SECOND\n    return card_node\n```\n\n> [!MISTAKE]\n> Always call `parent_node.add_child(card_node)` **BEFORE** calling `card_node.setup(card_data)`! Why? Because `@onready` variables inside `card_scene.gd` (`$TopRankLabel`, `$CenterSuitLabel`) are only initialized when `card_node` enters the SceneTree via `add_child()`.\n\n> [!WHY]\n> Making `Card` extend `Control` with `custom_minimum_size = Vector2(84, 120)` lets Godot's `HBoxContainer` automatically space and fan out the player's hand!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 2 (Card Scene, Table Layout & Dealing) — Lesson 1: *Building the Visual `CardScene.tscn` Template* |\n| **Which File Do I Edit?** | `res://scenes/card/card_scene.tscn` |\n| **Scene / Node Context** | `Card (Control)  (custom_minimum_size = Vector2(84, 120))` |\n| **What Problem Does It Solve?** | Making `Card` extend `Control` with `custom_minimum_size = Vector2(84, 120)` lets Godot's `HBoxContainer` automatically space and fan out the player's hand! |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. In the top menu, click **Scene -> New Scene**. — Creates an empty scene workspace in Godot 4.3 so you can assemble a self-contained `.tscn` node hierarchy.\n2. In the Scene dock, click **User Interface (Control)** as the root node, and rename `Control` to `Card`. — Uses a `Control` root node so this UI element participates in Godot's container layout, anchor presets, and touch/mouse routing.\n3. With `Card` selected, go to the **Inspector** (right) -> **Layout -> Transform -> Custom Minimum Size** and set `x = 84`, `y = 120`. — Reserves a fixed minimum bounding box (`Vector2`) so parent `HBoxContainer` or `VBoxContainer` nodes never collapse this control to `0×0` pixels.\n4. Right-click `Card` in the Scene dock -> **Add Child Node** and add four children directly under `Card`: a `Panel` named `CardBg`, a `Label` named `TopRankLabel`, a `Label` named `CenterSuitLabel`, and a `Button` named `ClickButton`. — Builds the layered card hierarchy (`CardBg` backdrop, optional `CardArt: TextureRect` for downloaded PNGs, rank/suit labels, and `ClickButton` overlay).\n5. Select `ClickButton`, check **Flat = On** in the Inspector (so it is invisible), and set its Anchor Preset to **Full Rect** so it covers the whole card. — Makes `ClickButton` an invisible full-card hit target that captures mouse clicks and phone taps via its `pressed` signal.\n6. Press **Ctrl+S** and save the scene at `res://scenes/card/card_scene.tscn`. — Serializes your node tree or script to `res://scenes/card/card_scene.tscn` inside `res://` so `preload()` and `load()` can reference it.\n\n\n## Deep-Dive Walkthrough: How Building the Visual CardScene.tscn Template Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/card/card_scene.tscn` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: Making `Card` extend `Control` with `custom_minimum_size = Vector2(84, 120)` lets Godot's `HBoxContainer` automatically space and fan out the player's hand!\n- **Core Principle 2**: An invisible `ClickButton` (`flat = true`) covering the card gives us instant mouse, touch, and keyboard focus support via `ClickButton.pressed`.\n- **Core Principle 3**: We build `card_scene.tscn` ONCE in the editor and stamp out copies at runtime using `preload(...).instantiate()`.\n\n### Answering the \"Why?\" Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why did we choose `Control` (with `custom_minimum_size = Vector2(84, 120)`) as the root node of `card_scene.tscn`?** | **So `CardScene` instances automatically lay out and reflow inside an `HBoxContainer` hand** — Godot's `Container` nodes (like `HBoxContainer`) automatically position and space `Control` children based on their `custom_minimum_size`. |\n| **What does `CardScene.instantiate()` return?** | **A brand-new Node tree cloned from `card_scene.tscn` ready to be added with `add_child()`** — `instantiate()` clones the `PackedScene` template into a live Node hierarchy. |\n| **Why do we add a flat `ClickButton` child covering `CardScene`?** | **To detect mouse clicks and screen taps cleanly via `ClickButton.pressed` without writing manual bounding-box math** — A flat `Button` covering the card gives reliable click and touch events out of the box via its `pressed` signal. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `spawn_n(count: int) -> Array` that loops `count` times with `for _i in range(count):`, calls `CardScene.instantiate()`, appends each instance to `var cards: Array = []`, and returns `cards`.\n- **How Godot Evaluates It**: When your script runs `func spawn_n(count: int) -> Array:`, Godot executes each line top-to-bottom on the active scene or resource instance, validating types and updating the live Kadi state.\n- **Expected Runtime Behavior**: Returns an Array containing `count` fresh CardScene instances.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `const CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")` | Preloads `preload(\"res://scenes/card/card_scene.tscn\")` at compile time into constant `CardScene` (`PackedScene`) for instant zero-lag instantiation. |\n| **Line 3** | `func spawn_card(card_data: CardData, parent_node: Node) -> Control:` | Defines function `spawn_card()` returning `Control`. |\n| **Line 4** | `var card_node: Control = CardScene.instantiate()` | Instantiates a fresh node hierarchy from `CardScene.instantiate()` and stores it in `card_node` (`Control`). |\n| **Line 5** | `parent_node.add_child(card_node)` | Attaches the node instance into the live SceneTree (which triggers its `@onready` variables and `_ready()`). |\n| **Line 6** | `card_node.setup(card_data)` | Calls `card_node.setup(card_data)` to bind the `CardData` resource and refresh the card's downloaded texture (`CardArt`) and rank/suit labels. |\n| **Line 7** | `return card_node` | Immediately exits the current function and sends `card_node` back to the caller. |\n\n> [!GODOT]\n> **Using Downloaded Card Sprites (`CardArt: TextureRect`)**: If you are using downloaded card PNGs, add a `TextureRect` child named `CardArt` right above `TopRankLabel`. In the Inspector, set **Expand Mode** to `Ignore Size` (so high-resolution downloaded PNGs scale cleanly into your `84×120` card), **Stretch Mode** to `Keep Aspect Centered`, and **Mouse -> Filter** to `Ignore` so `CardArt` never blocks clicks on `ClickButton`!\n\n### Wiring Downloaded Card Art & Table Textures in Phase 2\n\n> [!GODOT]\n> **Adding `CardArt: TextureRect` to `card_scene.tscn`**: Under `Card (Control)`, add a `TextureRect` child named `CardArt` right above `TopRankLabel`. Set **Expand Mode = Ignore Size**, **Stretch Mode = Keep Aspect Centered**, and **Mouse -> Filter = Ignore**. In `card_scene.gd`, set `card_art.texture = data.resolve_downloaded_texture()` and hide the fallback text labels whenever `card_art.texture != null`! For the draw pile in `table.tscn`, assign `res://assets/cards/card_back.png` to your deck icon.\n",
+      "codeSnippets": [
+        {
+          "id": "cs_02_01_a",
+          "language": "gdscript",
+          "code": "const CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")\n\nfunc spawn_card(card_data: CardData, parent_node: Node) -> Control:\n    var card_node: Control = CardScene.instantiate()\n    parent_node.add_child(card_node)\n    card_node.setup(card_data)\n    return card_node",
+          "caption": "Preloading card_scene.tscn, instantiating a copy, adding it as a child, and calling setup()."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `spawn_n(count: int) -> Array` that loops `count` times with `for _i in range(count):`, calls `CardScene.instantiate()`, appends each instance to `var cards: Array = []`, and returns `cards`.",
+        "hint": "Use `for _i in range(count):` and `cards.append(CardScene.instantiate())`.",
+        "starterCode": "func spawn_n(count: int) -> Array:\n    var cards: Array = []\n    # Loop count times and append CardScene.instantiate():\n",
+        "requiredTokens": [
+          "func",
+          "spawn_n",
+          "for",
+          "range(count)",
+          "cards.append",
+          "CardScene.instantiate()",
+          "return"
+        ],
+        "expectedOutput": "Returns an Array containing `count` fresh CardScene instances.",
+        "solutionCode": "func spawn_n(count: int) -> Array:\n    var cards: Array = []\n    for _i in range(count):\n        cards.append(CardScene.instantiate())\n    return cards"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_02_01_a",
+          "prompt": "Why did we choose `Control` (with `custom_minimum_size = Vector2(84, 120)`) as the root node of `card_scene.tscn`?",
+          "choices": [
+            "Because `Node2D` cannot display text",
+            "So `CardScene` instances automatically lay out and reflow inside an `HBoxContainer` hand",
+            "Because `Control` uses 3D physics",
+            "Because `Control` is the only node that allows scripts"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Godot's `Container` nodes (like `HBoxContainer`) automatically position and space `Control` children based on their `custom_minimum_size`.",
+          "concept": "Scenes"
+        },
+        {
+          "id": "q_02_01_b",
+          "prompt": "What does `CardScene.instantiate()` return?",
+          "choices": [
+            "A String file path",
+            "A brand-new Node tree cloned from `card_scene.tscn` ready to be added with `add_child()`",
+            "A boolean",
+            "An integer count of cards"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "`instantiate()` clones the `PackedScene` template into a live Node hierarchy.",
+          "concept": "Instancing"
+        },
+        {
+          "id": "q_02_01_c",
+          "prompt": "Why do we add a flat `ClickButton` child covering `CardScene`?",
+          "choices": [
+            "To play audio",
+            "To detect mouse clicks and screen taps cleanly via `ClickButton.pressed` without writing manual bounding-box math",
+            "To shuffle the deck",
+            "To hide the card"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "A flat `Button` covering the card gives reliable click and touch events out of the box via its `pressed` signal.",
+          "concept": "Input Events"
+        }
+      ],
+      "verificationSteps": [
+        "Save `res://scenes/card/card_scene.tscn` with **Ctrl+S** and press **F6 (Run Current Scene)**.",
+        "Confirm the Godot game window pops up showing your `84×120` playing card in the top-left corner with `7♥` and a big centered `♥`!",
+        "If you dropped a downloaded card PNG into `res://assets/cards/` and assigned it to `CardArt (TextureRect)`, confirm it scales cleanly inside the `84×120` card frame."
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/card/card_scene.tscn` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ],
+      "tangibleOutcome": "Press F6 and see a crisp 84×120 Kadi playing card (`7♥`) rendered on your screen inside the Godot game window!"
+    },
+    {
+      "id": "l_02_02_ready_dealing",
+      "order": 4,
+      "title": "Make Your Card Interactive: Click-to-Lift & Signals (`card_scene.gd`)",
+      "targetFile": "res://scenes/card/card_scene.gd",
+      "sceneTree": "Card (Control)  [script: res://scenes/card/card_scene.gd]\n├── CardBg (Panel)\n├── TopRankLabel (Label)\n├── CenterSuitLabel (Label)\n└── ClickButton (Button)",
+      "editorSteps": [
+        "Open `res://scenes/card/card_scene.tscn` in the editor.",
+        "Select the root `Card` node in the Scene dock and click the **Attach Script** icon.",
+        "Confirm the path is `res://scenes/card/card_scene.gd` and click **Create**.",
+        "Paste the complete `card_scene.gd` script below and press **Ctrl+S** to save.",
+        "Press **F6** (Run Current Scene) to preview a single card in isolation!"
+      ],
+      "keyTakeaways": [
+        "`@onready` fetches `$TopRankLabel`, `$CenterSuitLabel`, `$CardBg`, and `$ClickButton` the moment the card enters the scene tree.",
+        "When the player clicks `ClickButton`, the card emits `card_clicked.emit(self)` so `table.gd` knows which card was tapped.",
+        "`set_selected(true)` visually lifts the card up (`card_bg.position.y = -14`) so the player clearly sees which cards are staged to play!"
+      ],
+      "bodyMarkdown": "# Making Your Card Come Alive When Clicked (`res://scenes/card/card_scene.gd`)\n\n> [!TIP]\n> **Tangible Milestone:** In the next 3 minutes, you will attach a script to `CardScene.tscn`, press **F6**, and **click your playing card in the game window to watch it physically pop up `-14px` and back down**!\n\nNow let's attach a script to our `Card` root node in `res://scenes/card/card_scene.tscn` so each card can:\n1. Work **immediately on its own** when you press **F6** (even before we build the 54-card deck in Phase 2!) AND automatically upgrade to display full `CardData` resources or downloaded PNG sprites from `res://assets/cards/`.\n2. Visually **lift up by 14 pixels** (`position.y = -14.0`) whenever it is selected in your hand.\n3. Emit a custom `card_clicked(card_node: Control)` [[Signals|signal]] whenever the player clicks or taps the card!\n\n## 1. Caching Child Nodes with `@onready`\n\nInstead of calling `get_node(\"TopRankLabel\")` every time a card updates, we use Godot 4's `@onready` annotation together with the `$NodePath` shorthand:\n\n```gdscript\n@onready var card_bg: Panel = $CardBg\n@onready var card_art: TextureRect = $CardArt\n@onready var top_rank_label: Label = $TopRankLabel\n@onready var center_suit_label: Label = $CenterSuitLabel\n@onready var click_button: Button = $ClickButton\n```\n\n> [!MISTAKE]\n> **Why `@onready` Matters:** If you write `var top_rank_label: Label = $TopRankLabel` *without* `@onready`, Godot runs that line the instant `.instantiate()` is called — *before* the child `Label` nodes have entered the Scene Tree — so `$TopRankLabel` evaluates to `null`! Adding `@onready` tells Godot: *\"Wait until `_ready()` when all child nodes exist.\"*\n\n## 2. Instant Click-to-Lift Testing with **F6**\n\nNotice in `_ready()` below that if `card_clicked` has no table connected yet (like when you test `card_scene.tscn` directly with **F6**), clicking the card automatically calls `set_selected(not is_selected)` so you can test the `-14px` lift animation immediately!",
+      "codeSnippets": [
+        {
+          "id": "cs_02_02_a",
+          "language": "gdscript",
+          "code": "# File: res://scenes/card/card_scene.gd\nextends Control\n\nsignal card_clicked(card_node: Control)\n\n@onready var card_bg: Panel = $CardBg\n@onready var card_art: TextureRect = get_node_or_null(\"CardArt\")\n@onready var top_rank_label: Label = $TopRankLabel\n@onready var center_suit_label: Label = $CenterSuitLabel\n@onready var click_button: Button = $ClickButton\n\n@export var preview_rank_text: String = \"7♥\"\n@export var preview_suit_text: String = \"♥\"\n@export var preview_is_red: bool = true\n\nvar data: Variant = null\nvar is_selected: bool = false\n\nfunc _ready() -> void:\n\tclick_button.pressed.connect(_on_click_button_pressed)\n\t_refresh_visuals()\n\nfunc setup(card_data: Variant) -> void:\n\tdata = card_data\n\tif is_node_ready():\n\t\t_refresh_visuals()\n\nfunc _refresh_visuals() -> void:\n\tif data == null:\n\t\t# Standalone preview mode (works immediately in Phase 1 before CardData exists!)\n\t\ttop_rank_label.text = preview_rank_text\n\t\tcenter_suit_label.text = preview_suit_text\n\t\tvar col: Color = Color(\"#FF5A67\") if preview_is_red else Color(\"#ECF2F8\")\n\t\ttop_rank_label.modulate = col\n\t\tcenter_suit_label.modulate = col\n\t\treturn\n\n\t# Full CardData mode (used from Phase 2 onward + downloaded sprite support!)\n\tvar downloaded_tex: Texture2D = data.resolve_downloaded_texture() if data.has_method(\"resolve_downloaded_texture\") else null\n\tif card_art != null and downloaded_tex != null:\n\t\tcard_art.texture = downloaded_tex\n\t\tcard_art.visible = true\n\t\ttop_rank_label.visible = false\n\t\tcenter_suit_label.visible = false\n\telse:\n\t\tif card_art != null:\n\t\t\tcard_art.visible = false\n\t\ttop_rank_label.visible = true\n\t\tcenter_suit_label.visible = true\n\t\ttop_rank_label.text = data.display_name\n\t\tcenter_suit_label.text = data.suit_symbol()\n\t\tvar suit_color: Color = Color(\"#FF5A67\") if data.is_red_suit() else Color(\"#ECF2F8\")\n\t\ttop_rank_label.modulate = suit_color\n\t\tcenter_suit_label.modulate = suit_color\n\nfunc set_selected(selected: bool) -> void:\n\tis_selected = selected\n\tvar lift: float = -14.0 if is_selected else 0.0\n\tcard_bg.position.y = lift\n\tif card_art != null:\n\t\tcard_art.position.y = lift\n\ttop_rank_label.position.y = -8.0 if is_selected else 6.0\n\tcenter_suit_label.position.y = 24.0 if is_selected else 38.0\n\nfunc _on_click_button_pressed() -> void:\n\t# If running CardScene standalone with F6, toggle lift directly so you can see it pop!\n\tif card_clicked.get_connections().is_empty():\n\t\tset_selected(not is_selected)\n\tcard_clicked.emit(self)",
+          "caption": "Save as res://scenes/card/card_scene.gd and press F6 — click the card to watch it lift -14px!"
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write the `_on_click_button_pressed() -> void` handler that emits `card_clicked` passing `self`.",
+        "hint": "Call `card_clicked.emit(self)` inside `func _on_click_button_pressed() -> void:`.",
+        "starterCode": "signal card_clicked(card_node: Control)\n\nfunc _on_click_button_pressed() -> void:\n    # Emit card_clicked with self:\n",
+        "requiredTokens": [
+          "func",
+          "_on_click_button_pressed()",
+          "card_clicked.emit(self)"
+        ],
+        "expectedOutput": "Emits the card_clicked signal carrying a reference to the clicked CardScene node.",
+        "solutionCode": "func _on_click_button_pressed() -> void:\n    card_clicked.emit(self)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_02_02_a",
+          "prompt": "Why does `setup(card_data)` check `if is_node_ready(): _refresh_visuals()`?",
+          "choices": [
+            "To make the card invisible",
+            "So `setup()` works safely even if someone calls it before `add_child()`, and `_ready()` then refreshes the labels once in the tree",
+            "Because `is_node_ready()` shuffles the deck",
+            "To delete old cards"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Checking `is_node_ready()` prevents null-reference crashes if `setup()` is ever called before the node enters the tree.",
+          "concept": "Lifecycle methods"
+        },
+        {
+          "id": "q_02_02_b",
+          "prompt": "What does `card_clicked.emit(self)` pass to listeners in `table.gd`?",
+          "choices": [
+            "Only the card's rank integer",
+            "A reference to the clicked `Card` scene instance itself (from which `card_node.data` can be read)",
+            "The entire 54-card deck",
+            "Nothing"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Passing `self` gives `table.gd` access to both `card_node.data` (the `CardData`) and `card_node.set_selected(...)` (the visual state).",
+          "concept": "Signals"
+        },
+        {
+          "id": "q_02_02_c",
+          "prompt": "How does `set_selected(true)` show the player that a card in their hand is staged to play?",
+          "choices": [
+            "It deletes the card",
+            "It shifts the card's visual elements upward by 14 pixels so selected cards stand out above the rest of the hand",
+            "It closes the window",
+            "It changes the card's rank to Ace"
+          ],
+          "correctChoiceIndex": 1,
+          "explanation": "Shifting `position.y` negative lifts the selected card upward in the hand, just like lifting a card with your thumb at a real table.",
+          "concept": "Control Layout"
+        }
+      ],
+      "verificationSteps": [
+        "Open `res://scenes/card/card_scene.tscn`, save `card_scene.gd` (**Ctrl+S**), and press **F6 (Run Current Scene)**.",
+        "Click directly on the `7♥` card in the game window — verify it **physically jumps up by 14 pixels** on the first click and drops back down on the second click!",
+        "Select `Card` in the Scene dock and tweak `Preview Rank Text` in the **Inspector** to `Q♠` and uncheck `Preview Is Red` — press **F6** and see your silver-black Queen of Spades!"
+      ],
+      "troubleshootingTips": [
+        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/card/card_scene.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
+      ],
+      "tangibleOutcome": "Click your playing card in the running game window (F6) and watch it physically pop upward by 14 pixels and toggle selection!"
     },
     {
       "id": "l_01_00c_first_script",
-      "order": 3,
-      "title": "Nodes, Scenes, and Your First Script",
+      "order": 5,
+      "title": "Build the Green Felt `Table.tscn` & Fan Cards on Screen (`table.gd`)",
       "targetFile": "res://scenes/table/table.tscn + res://scenes/table/table.gd",
-      "sceneTree": "Table (Node2D)  [script: res://scenes/table/table.gd]",
+      "sceneTree": "Table (Node2D)  [res://scenes/table/table.tscn | script: table.gd]\n├── Background (ColorRect)              [Size: 1152×648 | Color: #0E231C Emerald Felt]\n├── DiscardSlot (Control)               [Position: (534, 220)]\n├── PlayerHandContainer (HBoxContainer) [Position: (180, 480) | Separation: 10]\n└── HUD (CanvasLayer)\n    ├── StatusLabel (Label)             [Position: (24, 18) | Text: \"Karibu Kadi!\"]\n    ├── FeedbackLabel (Label)           [Position: (24, 52) | Text: \"Click a card below!\"]\n    ├── PlaySelectedButton (Button)     [Position: (340, 410) | Text: \"Play Selected (0)\"]\n    ├── DrawButton (Button)             [Position: (526, 410) | Text: \"Draw Card\"]\n    └── NikoKadiButton (Button)         [Position: (712, 410) | Text: \"Niko Kadi!\"]",
       "editorSteps": [
-        "In the **Scene dock** (top-left), click **2D Scene** to create a `Node2D` root node.",
-        "Double-click `Node2D` in the Scene dock and rename it to `Table`.",
-        "Press **Ctrl+S** (or **Cmd+S** on Mac), navigate into `res://scenes/table/`, and save the scene as `table.tscn`.",
-        "With `Table` selected in the Scene dock, click the **Attach Script** icon (the little scroll with a green `+` at the top-right of the Scene dock).",
-        "Confirm the path is `res://scenes/table/table.gd` and click **Create**.",
-        "Paste the `_ready()` script below, press **F5**, click **Select Current** when Godot asks for the Main Scene, and verify `Karibu Kadi!` appears in the **Output** panel!"
+        "Create a new **2D Scene**, rename the root `Node2D` to `Table`, and save it as `res://scenes/table/table.tscn`.",
+        "Add a child `ColorRect` named `Background` (Size `1152 × 648`, Color `#0E231C` dark green felt).",
+        "Add a child `Control` named `DiscardSlot` at Position `(534, 220)`, and a child `HBoxContainer` named `PlayerHandContainer` at Position `(180, 480)` (with **Theme Overrides -> Constants -> Separation = 10**).",
+        "Add a child `CanvasLayer` named `HUD`, and inside `HUD` add `StatusLabel` (`Label`), `FeedbackLabel` (`Label`), `PlaySelectedButton` (`Button`), `DrawButton` (`Button`), and `NikoKadiButton` (`Button`).",
+        "Attach `res://scenes/table/table.gd` to `Table`, paste the prototype script below, press **F5** (choose **Select Current** as Main Scene), and see your Kadi table and 4 fanned cards on screen!"
       ],
       "keyTakeaways": [
         "A **Node** is a single building block (`Node2D`, `Control`, `Label`, `Button`); a **Scene** (`.tscn`) is a saved tree of nodes.",
         "A **Script** (`.gd`) attaches GDScript behavior to a node and responds to lifecycle hooks like `_ready()`.",
         "Setting `res://scenes/table/table.tscn` as the Main Scene means pressing `F5` boots directly into our game table."
       ],
-      "bodyMarkdown": "# Nodes, Scenes, and Your First Script\n\nEverything you see or hear in Godot is a [[Node]]. Nodes are arranged in a parent-child hierarchy called a **tree**. When you save a tree of nodes to disk, Godot saves it as a [[Scenes|Scene]] file (`.tscn`). To make a node *do* something, you attach a [[GDScript|Script]] file (`.gd`) to it.\n\nLet's create the main scene of our Kadi game right now: `res://scenes/table/table.tscn`.\n\n> [!GODOT]\n> Follow the **Do This in Godot** checklist above: click **2D Scene** in the Scene dock, rename the root node to `Table`, save it at `res://scenes/table/table.tscn`, and click the **Attach Script** icon (scroll with a green `+`) to create `res://scenes/table/table.gd`.\n\nWhen the Script Editor opens, replace its contents with:\n\n```gdscript\nextends Node2D\n\nvar player_count: int = 4\n\nfunc _ready() -> void:\n    print(\"Karibu Kadi! Setting up table for %d players...\" % player_count)\n```\n\nNow press **F5**. Because this is your first time running the project, Godot pops up a dialog asking: *\"No main scene has ever been defined, select one?\"* Click **Select Current** (which selects `res://scenes/table/table.tscn`).\n\nA game window opens, and down in the **Output** panel at the bottom of the editor you will see:\n`Karibu Kadi! Setting up table for 4 players...`\n\n> [!WHY]\n> Why does `table.gd` start with `extends Node2D`? Because the script is attached to the `Table` node, which is a `Node2D`! `extends Node2D` means our script inherits every property (`position`, `visible`) and lifecycle method (`_ready()`) of a `Node2D`.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 3: *Nodes, Scenes, and Your First Script* |\n| **Which File Do I Edit?** | `res://scenes/table/table.tscn + res://scenes/table/table.gd` |\n| **Scene / Node Context** | `Table (Node2D)  (script: res://scenes/table/table.gd)` |\n| **What Problem Does It Solve?** | A **Node** is a single building block (`Node2D`, `Control`, `Label`, `Button`); a **Scene** (`.tscn`) is a saved tree of nodes. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. In the **Scene dock** (top-left), click **2D Scene** to create a `Node2D` root node. — Configures `res://scenes/table/table.tscn + res://scenes/table/table.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n2. **Double-click `Node2D` in the Scene dock and rename it to `Table`.** — Configures `res://scenes/table/table.tscn + res://scenes/table/table.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n3. Press **Ctrl+S** (or **Cmd+S** on Mac), navigate into `res://scenes/table/`, and save the scene as `table.tscn`. — Serializes your node tree or script to `res://scenes/table/table.tscn + res://scenes/table/table.gd` inside `res://` so `preload()` and `load()` can reference it.\n4. With `Table` selected in the Scene dock, click the **Attach Script** icon (the little scroll with a green `+` at the top-right of the Scene dock). — Creates and binds `res://scenes/table/table.tscn + res://scenes/table/table.gd` to the node so its `_ready()` lifecycle callback and `@onready` references run automatically.\n5. Confirm the path is `res://scenes/table/table.gd` and click **Create**. — Configures `res://scenes/table/table.tscn + res://scenes/table/table.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n6. Paste the `_ready()` script below, press **F5**, click **Select Current** when Godot asks for the Main Scene, and verify `Karibu Kadi!` appears in the **Output** panel! — Launches the Godot 4.3 runtime and streams `print()` diagnostics and debugger errors to the bottom **Output** panel.\n\n\n## Deep-Dive Walkthrough: How Nodes, Scenes, and Your First Script Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scenes/table/table.tscn + res://scenes/table/table.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: A **Node** is a single building block (`Node2D`, `Control`, `Label`, `Button`); a **Scene** (`.tscn`) is a saved tree of nodes.\n- **Core Principle 2**: A **Script** (`.gd`) attaches GDScript behavior to a node and responds to lifecycle hooks like `_ready()`.\n- **Core Principle 3**: Setting `res://scenes/table/table.tscn` as the Main Scene means pressing `F5` boots directly into our game table.\n\n### Answering the \"Why?\" Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What is the relationship between `.tscn` files and `.gd` files in Godot?** | **A `.tscn` file stores a saved tree of Nodes (scene structure); a `.gd` file stores GDScript behavior attached to a Node** — Scenes (`.tscn`) hold the node tree and Inspector properties; scripts (`.gd`) hold the GDScript code attached to nodes. |\n| **When does Godot automatically call `func _ready() -> void:` on your `Table` node?** | **Once, right after the `Table` node and all its children enter the running scene tree** — `_ready()` is the initialization lifecycle hook that runs once when the node enters the active scene tree. |\n| **How do you change the project's Main Scene later if you ever want a different scene to boot on `F5`?** | **Project -> Project Settings -> General -> Application -> Run -> Main Scene** — The Main Scene setting lives under `Project Settings -> Application -> Run -> Main Scene`. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write the `table.gd` script extending `Node2D` with `var player_count: int = 4` and a `_ready()` function that prints `player_count`.\n- **How Godot Evaluates It**: When your script runs `extends Node2D`, Godot executes each line top-to-bottom on the active scene or resource instance, validating types and updating the live Kadi state.\n- **Expected Runtime Behavior**: Prints the player count to the Output panel when the Table scene starts.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scenes/table/table.gd` | Inline comment documenting: *File: res://scenes/table/table.gd* (ignored by GDScript at runtime). |\n| **Line 2** | `extends Node2D` | Inherits all properties, signals, and lifecycle methods from Godot's `Node2D` class. |\n| **Line 4** | `var player_count: int = 4` | Initializes local/state variable `player_count` (`int`) to `4`. |\n| **Line 6** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 7** | `print(\"Karibu Kadi! Setting up table for %d players...\" % player_count)` | Logs the formatted message to Godot's bottom **Output** panel for inspection. |",
+      "bodyMarkdown": "# Building `Table.tscn` & Fanning Your First Hand on Screen!\n\n> [!TIP]\n> **Tangible Milestone:** Right now in Phase 1, you will assemble the main `Table.tscn` game board, press **F5**, and see a **green felt Kadi tabletop with a center discard card and 4 clickable cards fanned in your hand**!\n\nEverything you see in Godot is a [[Node]] arranged in a scene tree. By combining the `CardScene.tscn` template you just built with an [[HBoxContainer]] (`PlayerHandContainer`) on `Table.tscn`, Godot automatically spaces and centers your player's hand across the bottom of the screen!\n\n## 1. How `Table.gd` Spawns Cards into `PlayerHandContainer`\n\nWe preload `res://scenes/card/card_scene.tscn` as a `PackedScene` constant and call `CardScene.instantiate()` inside a `for` loop to stamp out 4 cards in your hand and 1 face-up starter card in `DiscardSlot`:\n\n```gdscript\nconst CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")\n```\n\n> [!GODOT]\n> **Always `add_child()` Before Configuring a Node:** Notice how we call `player_hand_container.add_child(card_node)` *before* setting its labels or calling `.setup()`. That guarantees all `@onready` child nodes inside `card_scene.gd` are ready!",
       "codeSnippets": [
         {
           "id": "cs_01_00c_a",
           "language": "gdscript",
-          "code": "# File: res://scenes/table/table.gd\nextends Node2D\n\nvar player_count: int = 4\n\nfunc _ready() -> void:\n    print(\"Karibu Kadi! Setting up table for %d players...\" % player_count)",
-          "caption": "Your first live scene script at res://scenes/table/table.gd."
+          "code": "# File: res://scenes/table/table.gd\nextends Node2D\n\nconst CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")\n\n@onready var discard_slot: Control = $DiscardSlot\n@onready var player_hand_container: HBoxContainer = $PlayerHandContainer\n@onready var status_label: Label = $HUD/StatusLabel\n@onready var feedback_label: Label = $HUD/FeedbackLabel\n@onready var play_button: Button = $HUD/PlaySelectedButton\n@onready var draw_button: Button = $HUD/DrawButton\n\nvar player_count: int = 4\n\nfunc _ready() -> void:\n\tprint(\"Karibu Kadi! Players at table: \", player_count)\n\tstatus_label.text = \"Karibu Kadi! 4-Player Table Ready\"\n\tfeedback_label.text = \"Click any card in your hand below to lift and stage it!\"\n\t_spawn_prototype_table()\n\nfunc _spawn_prototype_table() -> void:\n\t# 1. Spawn the face-up starter card (6♥) in the center DiscardSlot:\n\tvar starter: Control = CardScene.instantiate()\n\tdiscard_slot.add_child(starter)\n\tstarter.preview_rank_text = \"6♥\"\n\tstarter.preview_suit_text = \"♥\"\n\tstarter.preview_is_red = true\n\tstarter._refresh_visuals()\n\n\t# 2. Spawn 4 clickable cards fanned inside PlayerHandContainer:\n\tvar demo_hand: Array = [\n\t\t{\"rank\": \"7♥\", \"suit\": \"♥\", \"red\": true},\n\t\t{\"rank\": \"Q♥\", \"suit\": \"♥\", \"red\": true},\n\t\t{\"rank\": \"J♠\", \"suit\": \"♠\", \"red\": false},\n\t\t{\"rank\": \"A♦\", \"suit\": \"♦\", \"red\": true}\n\t]\n\tfor item in demo_hand:\n\t\tvar card_node: Control = CardScene.instantiate()\n\t\tplayer_hand_container.add_child(card_node)\n\t\tcard_node.preview_rank_text = item[\"rank\"]\n\t\tcard_node.preview_suit_text = item[\"suit\"]\n\t\tcard_node.preview_is_red = item[\"red\"]\n\t\tcard_node._refresh_visuals()",
+          "caption": "Paste into res://scenes/table/table.gd and press F5 — see your green felt table, starter 6♥, and 4 clickable hand cards!"
         }
       ],
       "practicePrompt": {
@@ -315,399 +501,107 @@
         }
       ],
       "verificationSteps": [
-        "Save `res://scenes/table/table.tscn + res://scenes/table/table.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Nodes, Scenes, and Your First Script**."
+        "Press **F5** (and choose **Select Current** so `table.tscn` becomes your Main Scene).",
+        "Confirm the `1152×648` game window opens with an emerald felt background, `6♥` in the center `DiscardSlot`, and **4 cards (`7♥`, `Q♥`, `J♠`, `A♦`) fanned across the bottom**!",
+        "Click any of the 4 cards in your hand — confirm each card pops `-14px` upward when clicked!"
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.tscn + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Press F5 and see your full 1152×648 Emerald Felt Kadi tabletop with a center Discard Card (`6♥`) and 4 clickable cards (`7♥`, `Q♥`, `J♠`, `A♦`) fanned across the bottom!"
     },
     {
-      "id": "l_01_01_enums",
-      "order": 4,
-      "title": "Enums for Suits, Ranks & Card Kinds (card_types.gd)",
-      "targetFile": "res://scripts/card_types.gd",
-      "sceneTree": "res://scripts/card_types.gd  (Pure class_name script — not attached to a node)",
-      "editorSteps": [
-        "In the **FileSystem dock** (bottom-left), right-click the `res://scripts` folder and choose **Create New -> Script**.",
-        "Name the script `card_types.gd` (so the path is `res://scripts/card_types.gd`) and click **Create**.",
-        "Double-click `card_types.gd` to open it in the Script Editor and paste the complete `CardTypes` script below.",
-        "Press **Ctrl+S** to save. Because line 1 is `class_name CardTypes`, every other script in the project can now access `CardTypes.Suits` and `CardTypes.Ranks`!"
-      ],
-      "keyTakeaways": [
-        "`res://scripts/card_types.gd` defines `class_name CardTypes`, making our enums globally available.",
-        "Anchoring `TWO = 2` through `ACE = 14` and `JOKER = 15` means every card's enum value matches its real card number.",
-        "Never use raw magic numbers like `11` or `15` in rule scripts — write `CardTypes.Ranks.JACK` and `CardTypes.Ranks.JOKER`."
-      ],
-      "bodyMarkdown": "# Creating `res://scripts/card_types.gd`\n\nNow we start building the real Kadi codebase! Our first script is `res://scripts/card_types.gd`. It defines the [[Enums]] (named integer constants) for all four suits, all 14 ranks (2 through Ace plus Joker), and the 6 functional categories of Kadi cards.\n\n> [!GODOT]\n> Right-click `res://scripts` in the FileSystem dock → **Create New → Script**, name it `card_types.gd`, and paste this exact code:\n\n```gdscript\n# File: res://scripts/card_types.gd\nclass_name CardTypes\nextends RefCounted\n\nenum Suits {\n    HEARTS = 0,\n    DIAMONDS = 1,\n    CLUBS = 2,\n    SPADES = 3\n}\n\nenum Ranks {\n    TWO = 2, THREE = 3, FOUR = 4, FIVE = 5, SIX = 6, SEVEN = 7,\n    EIGHT = 8, NINE = 9, TEN = 10,\n    JACK = 11, QUEEN = 12, KING = 13, ACE = 14, JOKER = 15\n}\n\nenum CardKind {\n    ANSWER,\n    QUESTION,\n    JUMP,\n    KICKBACK,\n    PENALTY,\n    WILD_ACE\n}\n```\n\n> [!KADI]\n> Look at how `CardKind` maps 1-to-1 to `KADI.md`:\n> - `PENALTY`: 2, 3, and Joker (`Ranks.TWO`, `Ranks.THREE`, `Ranks.JOKER`)\n> - `QUESTION`: Queen and 8 (`Ranks.QUEEN`, `Ranks.EIGHT`)\n> - `JUMP`: Jack (`Ranks.JACK`)\n> - `KICKBACK`: King (`Ranks.KING`)\n> - `ANSWER`: 4, 5, 6, 7, 9, 10, and Ace (`Ranks.ACE` also acts as `WILD_ACE` for suit declarations and penalty blocking).\n\n> [!WHY]\n> Why start `Ranks` at `TWO = 2` instead of the default `0`? Because when `TWO` is `2` and `SEVEN` is `7`, debugging in the Output console is effortless: seeing `rank = 7` means a 7, not a 9!\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 4: *Enums for Suits, Ranks & Card Kinds (`card_types.gd`)* |\n| **Which File Do I Edit?** | `res://scripts/card_types.gd` |\n| **Scene / Node Context** | `res://scripts/card_types.gd  (Pure class_name script — not attached to a node)` |\n| **What Problem Does It Solve?** | `res://scripts/card_types.gd` defines `class_name CardTypes`, making our enums globally available. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. In the **FileSystem dock** (bottom-left), right-click the `res://scripts` folder and choose **Create New -> Script**. — Organizes your `res://` project folders (`scripts/`, `scenes/`, `assets/cards/`, `assets/audio/`) so Godot tracks every resource UID.\n2. Name the script `card_types.gd` (so the path is `res://scripts/card_types.gd`) and click **Create**. — Configures `res://scripts/card_types.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n3. **Double-click `card_types.gd` to open it in the Script Editor and paste the complete `CardTypes` script below.** — Configures `res://scripts/card_types.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n4. Press **Ctrl+S** to save. Because line 1 is `class_name CardTypes`, every other script in the project can now access `CardTypes.Suits` and `CardTypes.Ranks`! — Serializes your node tree or script to `res://scripts/card_types.gd` inside `res://` so `preload()` and `load()` can reference it.\n\n\n## Deep-Dive Walkthrough: How Enums for Suits, Ranks & Card Kinds (card_types.gd) Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/card_types.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `res://scripts/card_types.gd` defines `class_name CardTypes`, making our enums globally available.\n- **Core Principle 2**: Anchoring `TWO = 2` through `ACE = 14` and `JOKER = 15` means every card's enum value matches its real card number.\n- **Core Principle 3**: Never use raw magic numbers like `11` or `15` in rule scripts — write `CardTypes.Ranks.JACK` and `CardTypes.Ranks.JOKER`.\n\n### Answering the \"Why?\" Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Why do we anchor `enum Ranks` with `TWO = 2` instead of letting it start at `0`?** | **So every rank's integer value matches its real card face value (2 is 2, 10 is 10)** — Anchoring `TWO = 2` keeps integer values aligned with the actual numbers printed on the playing cards. |\n| **How do you access the `JOKER` rank from another script like `table.gd`?** | **CardTypes.Ranks.JOKER** — Because `enum Ranks` is declared inside `class_name CardTypes`, you reference it as `CardTypes.Ranks.JOKER`. |\n| **Where should `card_types.gd` be saved in your Godot project?** | **res://scripts/card_types.gd** — All shared data and rule scripts live cleanly inside `res://scripts/`. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a helper function `is_special(kind: int) -> bool` that returns `true` for any `CardKind` that is NOT `CardKind.ANSWER`.\n- **How Godot Evaluates It**: When your script runs `enum CardKind { ANSWER, QUESTION, JUMP, KICKBACK, PENALTY, WILD_ACE }`, Godot executes each line top-to-bottom on the active scene or resource instance, validating types and updating the live Kadi state.\n- **Expected Runtime Behavior**: Returns true for Question, Jump, Kickback, Penalty, and Wild Ace cards.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/card_types.gd` | Inline comment documenting: *File: res://scripts/card_types.gd* (ignored by GDScript at runtime). |\n| **Line 2** | `class_name CardTypes` | Registers `CardTypes` as a global type across the entire Godot project so any script can reference `CardTypes` without `preload()`. |\n| **Line 3** | `extends RefCounted` | Inherits all properties, signals, and lifecycle methods from Godot's `RefCounted` class. |\n| **Line 5** | `enum Suits {` | Starts the `Suits` enumeration block, mapping readable names to integer constants (`0, 1, 2...`). |\n| **Line 6** | `HEARTS = 0,` | Assigns the computed right-hand value into `HEARTS`. |\n| **Line 7** | `DIAMONDS = 1,` | Assigns the computed right-hand value into `DIAMONDS`. |\n| **Line 8** | `CLUBS = 2,` | Assigns the computed right-hand value into `CLUBS`. |\n| **Line 9** | `SPADES = 3` | Assigns the computed right-hand value into `SPADES`. |\n| **Line 10** | `}` | Closes the current dictionary, enum, or array literal block. |\n| **Line 12** | `enum Ranks {` | Starts the `Ranks` enumeration block, mapping readable names to integer constants (`0, 1, 2...`). |\n| **Line 13** | `TWO = 2, THREE = 3, FOUR = 4, FIVE = 5, SIX = 6, SEVEN = 7,` | Assigns the computed right-hand value into `TWO`. |\n| **Line 14** | `EIGHT = 8, NINE = 9, TEN = 10,` | Assigns the computed right-hand value into `EIGHT`. |\n| **Line 15** | `JACK = 11, QUEEN = 12, KING = 13, ACE = 14, JOKER = 15` | Assigns the computed right-hand value into `JACK`. |\n| **Line 16** | `}` | Closes the current dictionary, enum, or array literal block. |\n| **Line 18** | `enum CardKind {` | Starts the `CardKind` enumeration block, mapping readable names to integer constants (`0, 1, 2...`). |\n| **Line 19** | `ANSWER,` | Defines enum constant `ANSWER` inside the current `enum` block. |\n| **Line 20** | `QUESTION,` | Defines enum constant `QUESTION` inside the current `enum` block. |\n| **Line 21** | `JUMP,` | Defines enum constant `JUMP` inside the current `enum` block. |\n| **Line 22** | `KICKBACK,` | Defines enum constant `KICKBACK` inside the current `enum` block. |\n| **Line 23** | `PENALTY,` | Defines enum constant `PENALTY` inside the current `enum` block. |\n| **Line 24** | `WILD_ACE` | Defines enum constant `WILD_ACE` inside the current `enum` block. |\n| **Line 25** | `}` | Closes the current dictionary, enum, or array literal block. |",
-      "codeSnippets": [
-        {
-          "id": "cs_01_01_a",
-          "language": "gdscript",
-          "code": "# File: res://scripts/card_types.gd\nclass_name CardTypes\nextends RefCounted\n\nenum Suits {\n    HEARTS = 0,\n    DIAMONDS = 1,\n    CLUBS = 2,\n    SPADES = 3\n}\n\nenum Ranks {\n    TWO = 2, THREE = 3, FOUR = 4, FIVE = 5, SIX = 6, SEVEN = 7,\n    EIGHT = 8, NINE = 9, TEN = 10,\n    JACK = 11, QUEEN = 12, KING = 13, ACE = 14, JOKER = 15\n}\n\nenum CardKind {\n    ANSWER,\n    QUESTION,\n    JUMP,\n    KICKBACK,\n    PENALTY,\n    WILD_ACE\n}",
-          "caption": "Save this complete script as res://scripts/card_types.gd."
-        }
-      ],
-      "practicePrompt": {
-        "instructions": "Write a helper function `is_special(kind: int) -> bool` that returns `true` for any `CardKind` that is NOT `CardKind.ANSWER`.",
-        "hint": "Use `return kind != CardKind.ANSWER`.",
-        "starterCode": "enum CardKind { ANSWER, QUESTION, JUMP, KICKBACK, PENALTY, WILD_ACE }\n\nfunc is_special(kind: int) -> bool:\n    # Return true if kind is not CardKind.ANSWER:\n",
-        "requiredTokens": [
-          "func",
-          "is_special",
-          "kind",
-          "return",
-          "!=",
-          "CardKind.ANSWER"
-        ],
-        "expectedOutput": "Returns true for Question, Jump, Kickback, Penalty, and Wild Ace cards.",
-        "solutionCode": "enum CardKind { ANSWER, QUESTION, JUMP, KICKBACK, PENALTY, WILD_ACE }\n\nfunc is_special(kind: int) -> bool:\n    return kind != CardKind.ANSWER"
-      },
-      "quizQuestions": [
-        {
-          "id": "q_01_01_a",
-          "prompt": "Why do we anchor `enum Ranks` with `TWO = 2` instead of letting it start at `0`?",
-          "choices": [
-            "Godot forbids 0 in enums",
-            "So every rank's integer value matches its real card face value (2 is 2, 10 is 10)",
-            "To make the APK smaller",
-            "Because Suits already uses 0"
-          ],
-          "correctChoiceIndex": 1,
-          "explanation": "Anchoring `TWO = 2` keeps integer values aligned with the actual numbers printed on the playing cards.",
-          "concept": "Enums"
-        },
-        {
-          "id": "q_01_01_b",
-          "prompt": "How do you access the `JOKER` rank from another script like `table.gd`?",
-          "choices": [
-            "JOKER",
-            "Ranks.JOKER",
-            "CardTypes.Ranks.JOKER",
-            "card_types.JOKER"
-          ],
-          "correctChoiceIndex": 2,
-          "explanation": "Because `enum Ranks` is declared inside `class_name CardTypes`, you reference it as `CardTypes.Ranks.JOKER`.",
-          "concept": "Enums"
-        },
-        {
-          "id": "q_01_01_c",
-          "prompt": "Where should `card_types.gd` be saved in your Godot project?",
-          "choices": [
-            "res://scripts/card_types.gd",
-            "res://audio/card_types.gd",
-            "Outside the project folder",
-            "Inside AndroidManifest.xml"
-          ],
-          "correctChoiceIndex": 0,
-          "explanation": "All shared data and rule scripts live cleanly inside `res://scripts/`.",
-          "concept": "Godot Editor"
-        }
-      ],
-      "verificationSteps": [
-        "Save `res://scripts/card_types.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Enums for Suits, Ranks & Card Kinds (card_types.gd)**."
-      ],
-      "troubleshootingTips": [
-        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
-        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/card_types.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
-        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
-    },
-    {
-      "id": "l_01_02_resources",
-      "order": 5,
-      "title": "Custom Resource for Card Data (card_data.gd)",
-      "targetFile": "res://scripts/card_data.gd",
-      "sceneTree": "res://scripts/card_data.gd  (class_name CardData extends Resource)",
-      "editorSteps": [
-        "In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**.",
-        "Name the file `card_data.gd` (`res://scripts/card_data.gd`) and click **Create**.",
-        "Paste the complete `CardData` script below and press **Ctrl+S**.",
-        "Notice how `CardData.make(suit, rank)` automatically sets `display_name`, `rank_label()`, `suit_symbol()`, and rule helpers (`is_penalty()`, `is_question()`, `is_answer()`, `can_start_discard()`)."
-      ],
-      "keyTakeaways": [
-        "`CardData` extends `Resource` and holds everything about one card: `suit`, `rank`, `display_name`, and rule methods.",
-        "`CardData.make(suit, rank)` is a static factory method that constructs a populated card in one call.",
-        "Putting `is_penalty()`, `penalty_value()`, `is_question()`, and `is_answer()` directly on `CardData` keeps rule checks readable across the whole project."
-      ],
-      "bodyMarkdown": "# Creating `res://scripts/card_data.gd` (`CardData`)\n\nNext, we create `res://scripts/card_data.gd`, a custom [[Resource]] class (`class_name CardData`) that represents a single Kadi card.\n\nWhy make `CardData` so thorough right now? Because if every `CardData` object already knows how to format its corner text (`\"7\"`, `\"Q\"`, `\"A\"`, `\"JOK\"`), its suit symbol (`\"♥\"`, `\"♦\"`, `\"♣\"`, `\"♠\"`), its color (red vs. black), and its Kadi rule role (`is_penalty()`, `penalty_value()`, `is_question()`, `is_answer()`), then building the visual card scene in Phase 2 and the rule validator in Phase 4 becomes 10× easier!\n\n```gdscript\n# File: res://scripts/card_data.gd\nclass_name CardData\nextends Resource\n\nconst SUIT_SYMBOLS: Dictionary = {\n    CardTypes.Suits.HEARTS: \"♥\",\n    CardTypes.Suits.DIAMONDS: \"♦\",\n    CardTypes.Suits.CLUBS: \"♣\",\n    CardTypes.Suits.SPADES: \"♠\"\n}\n\nconst RANK_LABELS: Dictionary = {\n    11: \"J\", 12: \"Q\", 13: \"K\", 14: \"A\", 15: \"JOK\"\n}\n\n@export var suit: CardTypes.Suits = CardTypes.Suits.HEARTS\n@export var rank: int = 2\n@export var display_name: String = \"\"\n\nstatic func make(s: CardTypes.Suits, r: int) -> CardData:\n    var c := CardData.new()\n    c.suit = s\n    c.rank = r\n    c.display_name = \"JOK\" if r == CardTypes.Ranks.JOKER else \"%s%s\" % [c.rank_label(), c.suit_symbol()]\n    return c\n```\n\n> [!WHY]\n> Using `@export` on `suit`, `rank`, and `display_name` exposes those properties in Godot's Inspector dock whenever you inspect a `CardData` resource. And adding `static func make(s, r) -> CardData` lets our deck builder create cards in one clean expression: `CardData.make(suit, rank)`.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 5: *Custom Resource for Card Data (`card_data.gd`)* |\n| **Which File Do I Edit?** | `res://scripts/card_data.gd` |\n| **Scene / Node Context** | `res://scripts/card_data.gd  (class_name CardData extends Resource)` |\n| **What Problem Does It Solve?** | `CardData` extends `Resource` and holds everything about one card: `suit`, `rank`, `display_name`, and rule methods. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**. — Organizes your `res://` project folders (`scripts/`, `scenes/`, `assets/cards/`, `assets/audio/`) so Godot tracks every resource UID.\n2. Name the file `card_data.gd` (`res://scripts/card_data.gd`) and click **Create**. — Configures `res://scripts/card_data.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n3. Paste the complete `CardData` script below and press **Ctrl+S**. — Serializes your node tree or script to `res://scripts/card_data.gd` inside `res://` so `preload()` and `load()` can reference it.\n4. **Notice how `CardData.make(suit, rank)` automatically sets `display_name`, `rank_label()`, `suit_symbol()`, and rule helpers (`is_penalty()`, `is_question()`, `is_answer()`, `can_start_discard()`).** — Configures `res://scripts/card_data.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n\n\n## Deep-Dive Walkthrough: How Custom Resource for Card Data (card_data.gd) Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/card_data.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `CardData` extends `Resource` and holds everything about one card: `suit`, `rank`, `display_name`, and rule methods.\n- **Core Principle 2**: `CardData.make(suit, rank)` is a static factory method that constructs a populated card in one call.\n- **Core Principle 3**: Putting `is_penalty()`, `penalty_value()`, `is_question()`, and `is_answer()` directly on `CardData` keeps rule checks readable across the whole project.\n\n### Answering the \"Why?\" Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What does the `@export` annotation do on `CardData` fields like `@export var rank: int`?** | **Exposes the variable in Godot's Inspector dock so it can be viewed and edited visually** — `@export` makes a script variable editable in the Godot Inspector dock and serializable in `.tres`/`.tscn` files. |\n| **Why does `CardData.can_start_discard()` return `true` only for `rank in [4, 5, 6, 7, 9, 10]`?** | **Per Kadi rules, 2, 3, Question (8/Q), Jump (J), Kickback (K), Ace, and Joker cannot start the discard pile** — KADI.md specifies that 2, 3, Question, Kickback, Jump, Joker, and Ace cards cannot start the discard pile — leaving 4, 5, 6, 7, 9, and 10. |\n| **What does `static func make(s, r) -> CardData` allow other scripts to do?** | **Call `CardData.make(suit, rank)` directly on the class without manually initializing fields every time** — A `static func` is called on the class itself (`CardData.make(...)`), acting as a clean factory constructor. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a method `is_special() -> bool` on `CardData` that returns `true` when `rank == 15` (Joker) or `rank == 14` (Ace).\n- **How Godot Evaluates It**: When your script runs `func is_special() -> bool:`, Godot executes each line top-to-bottom on the active scene or resource instance, validating types and updating the live Kadi state.\n- **Expected Runtime Behavior**: Returns true for Jokers and Aces.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/card_data.gd` | Inline comment documenting: *File: res://scripts/card_data.gd* (ignored by GDScript at runtime). |\n| **Line 2** | `class_name CardData` | Registers `CardData` as a global type across the entire Godot project so any script can reference `CardData` without `preload()`. |\n| **Line 3** | `extends Resource` | Inherits all properties, signals, and lifecycle methods from Godot's `Resource` class. |\n| **Line 5** | `const SUIT_SYMBOLS: Dictionary = {` | Defines compile-time constant `SUIT_SYMBOLS` (`Dictionary`) = `{` so magic values aren't scattered in code. |\n| **Line 6** | `CardTypes.Suits.HEARTS: \"♥\",` | Maps dictionary key `CardTypes.Suits.HEARTS` to value `\"♥\"`. |\n| **Line 7** | `CardTypes.Suits.DIAMONDS: \"♦\",` | Maps dictionary key `CardTypes.Suits.DIAMONDS` to value `\"♦\"`. |\n| **Line 8** | `CardTypes.Suits.CLUBS: \"♣\",` | Maps dictionary key `CardTypes.Suits.CLUBS` to value `\"♣\"`. |\n| **Line 9** | `CardTypes.Suits.SPADES: \"♠\"` | Maps dictionary key `CardTypes.Suits.SPADES` to value `\"♠\"`. |\n| **Line 10** | `}` | Closes the current dictionary, enum, or array literal block. |\n| **Line 12** | `const SUIT_NAMES: Dictionary = {` | Defines compile-time constant `SUIT_NAMES` (`Dictionary`) = `{` so magic values aren't scattered in code. |\n| **Line 13** | `CardTypes.Suits.HEARTS: \"Hearts\",` | Maps dictionary key `CardTypes.Suits.HEARTS` to value `\"Hearts\"`. |\n| **Line 14** | `CardTypes.Suits.DIAMONDS: \"Diamonds\",` | Maps dictionary key `CardTypes.Suits.DIAMONDS` to value `\"Diamonds\"`. |\n| **Line 15** | `CardTypes.Suits.CLUBS: \"Clubs\",` | Maps dictionary key `CardTypes.Suits.CLUBS` to value `\"Clubs\"`. |\n| **Line 16** | `CardTypes.Suits.SPADES: \"Spades\"` | Maps dictionary key `CardTypes.Suits.SPADES` to value `\"Spades\"`. |\n| **Line 17** | `}` | Closes the current dictionary, enum, or array literal block. |\n| **Line 19** | `const RANK_LABELS: Dictionary = {` | Defines compile-time constant `RANK_LABELS` (`Dictionary`) = `{` so magic values aren't scattered in code. |\n| **Line 20** | `11: \"J\", 12: \"Q\", 13: \"K\", 14: \"A\", 15: \"JOK\"` | Maps dictionary key `11` to value `\"J\", 12: \"Q\", 13: \"K\", 14: \"A\", 15: \"JOK\"`. |\n| **Line 21** | `}` | Closes the current dictionary, enum, or array literal block. |\n| **Line 23** | `@export var suit: CardTypes.Suits = CardTypes.Suits.HEARTS` | Exposes this property in the Godot Inspector dock so you can inspect or tweak it visually without editing code. |\n| **Line 24** | `@export var rank: int = 2` | Exposes this property in the Godot Inspector dock so you can inspect or tweak it visually without editing code. |\n| **Line 25** | `@export var display_name: String = \"\"` | Exposes this property in the Godot Inspector dock so you can inspect or tweak it visually without editing code. |\n| **Line 27** | `static func make(s: CardTypes.Suits, r: int) -> CardData:` | Defines static helper method `make()` callable directly on the class without instantiating an object. |\n| **Line 28** | `var c := CardData.new()` | Executes `var c := CardData.new()` to update the active Kadi game state and scene visuals. |\n| **Line 29** | `c.suit = s` | Assigns the computed right-hand value into `c.suit`. |\n| **Line 30** | `c.rank = r` | Assigns the computed right-hand value into `c.rank`. |\n| **Line 31** | `c.display_name = \"JOK\" if r == CardTypes.Ranks.JOKER else \"%s%s\" % [c.rank_label(), c.suit_symbol()]` | Assigns the computed right-hand value into `c.display_name`. |\n| **Line 32** | `return c` | Immediately exits the current function and sends `c` back to the caller. |\n| **Line 34** | `func rank_label() -> String:` | Defines function `rank_label()` returning `String`. |\n| **Line 35** | `return RANK_LABELS.get(rank, str(rank))` | Immediately exits the current function and sends `RANK_LABELS.get(rank, str(rank))` back to the caller. |\n| **Line 37** | `func suit_symbol() -> String:` | Defines function `suit_symbol()` returning `String`. |\n| **Line 38** | `return \"★\" if rank == CardTypes.Ranks.JOKER else SUIT_SYMBOLS.get(suit, \"?\")` | Immediately exits the current function and sends `\"★\" if rank == CardTypes.Ranks.JOKER else SUIT_SYMBOLS.get(suit, \"?\")` back to the caller. |\n| **Line 40** | `func is_red_suit() -> bool:` | Defines function `is_red_suit()` returning `bool`. |\n| **Line 41** | `return suit == CardTypes.Suits.HEARTS or suit == CardTypes.Suits.DIAMONDS` | Immediately exits the current function and sends `suit == CardTypes.Suits.HEARTS or suit == CardTypes.Suits.DIAMONDS` back to the caller. |\n| **Line 43** | `func is_penalty() -> bool:` | Defines function `is_penalty()` returning `bool`. |\n| **Line 44** | `return rank == CardTypes.Ranks.TWO or rank == CardTypes.Ranks.THREE or rank == CardTypes.Ranks.JOKER` | Immediately exits the current function and sends `rank == CardTypes.Ranks.TWO or rank == CardTypes.Ranks.THREE or rank == CardTypes.Ranks.JOKER` back to the caller. |\n| **Line 46** | `func penalty_value() -> int:` | Defines function `penalty_value()` returning `int`. |\n| **Line 47** | `match rank:` | Pattern-matches `rank` against the discrete cases indented below (no fall-through). |\n| **Line 48** | `CardTypes.Ranks.TWO: return 2` | Match branch: when value equals `CardTypes.Ranks.TWO`, executes `return 2`. |\n| **Line 49** | `CardTypes.Ranks.THREE: return 3` | Match branch: when value equals `CardTypes.Ranks.THREE`, executes `return 3`. |\n| **Line 50** | `CardTypes.Ranks.JOKER: return 5` | Match branch: when value equals `CardTypes.Ranks.JOKER`, executes `return 5`. |\n| **Line 51** | `_: return 0` | Match branch: when value equals `_`, executes `return 0`. |\n| **Line 53** | `func is_question() -> bool:` | Defines function `is_question()` returning `bool`. |\n| **Line 54** | `return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT` | Immediately exits the current function and sends `rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT` back to the caller. |\n| **Line 56** | `func is_answer() -> bool:` | Defines function `is_answer()` returning `bool`. |\n| **Line 57** | `return rank in [4, 5, 6, 7, 9, 10, CardTypes.Ranks.ACE]` | Immediately exits the current function and sends `rank in [4, 5, 6, 7, 9, 10, CardTypes.Ranks.ACE]` back to the caller. |\n| **Line 59** | `func is_jump() -> bool:` | Defines function `is_jump()` returning `bool`. |\n| **Line 60** | `return rank == CardTypes.Ranks.JACK` | Immediately exits the current function and sends `rank == CardTypes.Ranks.JACK` back to the caller. |\n| **Line 62** | `func is_kickback() -> bool:` | Defines function `is_kickback()` returning `bool`. |\n| **Line 63** | `return rank == CardTypes.Ranks.KING` | Immediately exits the current function and sends `rank == CardTypes.Ranks.KING` back to the caller. |\n| **Line 65** | `func can_start_discard() -> bool:` | Defines function `can_start_discard()` returning `bool`. |\n| **Line 66** | `return rank in [4, 5, 6, 7, 9, 10]` | Immediately exits the current function and sends `rank in [4, 5, 6, 7, 9, 10]` back to the caller. |\n\n> [!GODOT]\n> **Using Downloaded Card Assets**: When you download a 2D playing card pack (such as `hearts_7.png`, `7_of_hearts.png`, or Kenney's `cardHearts7.png`) and place the PNGs in `res://assets/cards/`, add a `get_texture_path() -> String` helper to `CardData` (or open the **Blueprint & Assets Studio** tab from the Home screen to generate the exact loader for your pack's naming format)!",
-      "codeSnippets": [
-        {
-          "id": "cs_01_02_a",
-          "language": "gdscript",
-          "code": "# File: res://scripts/card_data.gd\nclass_name CardData\nextends Resource\n\nconst SUIT_SYMBOLS: Dictionary = {\n    CardTypes.Suits.HEARTS: \"♥\",\n    CardTypes.Suits.DIAMONDS: \"♦\",\n    CardTypes.Suits.CLUBS: \"♣\",\n    CardTypes.Suits.SPADES: \"♠\"\n}\n\nconst SUIT_NAMES: Dictionary = {\n    CardTypes.Suits.HEARTS: \"Hearts\",\n    CardTypes.Suits.DIAMONDS: \"Diamonds\",\n    CardTypes.Suits.CLUBS: \"Clubs\",\n    CardTypes.Suits.SPADES: \"Spades\"\n}\n\nconst RANK_LABELS: Dictionary = {\n    11: \"J\", 12: \"Q\", 13: \"K\", 14: \"A\", 15: \"JOK\"\n}\n\n@export var suit: CardTypes.Suits = CardTypes.Suits.HEARTS\n@export var rank: int = 2\n@export var display_name: String = \"\"\n\nstatic func make(s: CardTypes.Suits, r: int) -> CardData:\n    var c := CardData.new()\n    c.suit = s\n    c.rank = r\n    c.display_name = \"JOK\" if r == CardTypes.Ranks.JOKER else \"%s%s\" % [c.rank_label(), c.suit_symbol()]\n    return c\n\nfunc rank_label() -> String:\n    return RANK_LABELS.get(rank, str(rank))\n\nfunc suit_symbol() -> String:\n    return \"★\" if rank == CardTypes.Ranks.JOKER else SUIT_SYMBOLS.get(suit, \"?\")\n\nfunc is_red_suit() -> bool:\n    return suit == CardTypes.Suits.HEARTS or suit == CardTypes.Suits.DIAMONDS\n\nfunc is_penalty() -> bool:\n    return rank == CardTypes.Ranks.TWO or rank == CardTypes.Ranks.THREE or rank == CardTypes.Ranks.JOKER\n\nfunc penalty_value() -> int:\n    match rank:\n        CardTypes.Ranks.TWO: return 2\n        CardTypes.Ranks.THREE: return 3\n        CardTypes.Ranks.JOKER: return 5\n        _: return 0\n\nfunc is_question() -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n\nfunc is_answer() -> bool:\n    return rank in [4, 5, 6, 7, 9, 10, CardTypes.Ranks.ACE]\n\nfunc is_jump() -> bool:\n    return rank == CardTypes.Ranks.JACK\n\nfunc is_kickback() -> bool:\n    return rank == CardTypes.Ranks.KING\n\nfunc can_start_discard() -> bool:\n    return rank in [4, 5, 6, 7, 9, 10]",
-          "caption": "The complete res://scripts/card_data.gd script — copy and save this file now!"
-        }
-      ],
-      "practicePrompt": {
-        "instructions": "Write a method `is_special() -> bool` on `CardData` that returns `true` when `rank == 15` (Joker) or `rank == 14` (Ace).",
-        "hint": "Use `func is_special() -> bool:` and `return rank == 15 or rank == 14`.",
-        "starterCode": "func is_special() -> bool:\n    # Return true for Joker (15) or Ace (14):\n",
-        "requiredTokens": [
-          "func",
-          "is_special",
-          "bool",
-          "return",
-          "rank",
-          "15",
-          "or",
-          "14"
-        ],
-        "expectedOutput": "Returns true for Jokers and Aces.",
-        "solutionCode": "func is_special() -> bool:\n    return rank == 15 or rank == 14"
-      },
-      "quizQuestions": [
-        {
-          "id": "q_01_02_a",
-          "prompt": "What does the `@export` annotation do on `CardData` fields like `@export var rank: int`?",
-          "choices": [
-            "Exports the game to Android",
-            "Exposes the variable in Godot's Inspector dock so it can be viewed and edited visually",
-            "Makes the variable constant",
-            "Hides the variable from other scripts"
-          ],
-          "correctChoiceIndex": 1,
-          "explanation": "`@export` makes a script variable editable in the Godot Inspector dock and serializable in `.tres`/`.tscn` files.",
-          "concept": "Resources"
-        },
-        {
-          "id": "q_01_02_b",
-          "prompt": "Why does `CardData.can_start_discard()` return `true` only for `rank in [4, 5, 6, 7, 9, 10]`?",
-          "choices": [
-            "Other ranks don't exist in Kadi",
-            "Per Kadi rules, 2, 3, Question (8/Q), Jump (J), Kickback (K), Ace, and Joker cannot start the discard pile",
-            "Because 4..10 are red cards",
-            "To save memory"
-          ],
-          "correctChoiceIndex": 1,
-          "explanation": "KADI.md specifies that 2, 3, Question, Kickback, Jump, Joker, and Ace cards cannot start the discard pile — leaving 4, 5, 6, 7, 9, and 10.",
-          "concept": "Resources"
-        },
-        {
-          "id": "q_01_02_c",
-          "prompt": "What does `static func make(s, r) -> CardData` allow other scripts to do?",
-          "choices": [
-            "Call `CardData.make(suit, rank)` directly on the class without manually initializing fields every time",
-            "Modify constants at runtime",
-            "Delete the deck",
-            "Bypass type checking"
-          ],
-          "correctChoiceIndex": 0,
-          "explanation": "A `static func` is called on the class itself (`CardData.make(...)`), acting as a clean factory constructor.",
-          "concept": "Resources"
-        }
-      ],
-      "verificationSteps": [
-        "Save `res://scripts/card_data.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Custom Resource for Card Data (card_data.gd)**."
-      ],
-      "troubleshootingTips": [
-        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
-        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/card_data.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
-        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
-    },
-    {
-      "id": "l_01_03_deck_builder",
+      "id": "l_02_05_card_selection",
       "order": 6,
-      "title": "Building & Shuffling the 54-Card Kadi Deck",
-      "targetFile": "res://scripts/game_state.gd",
-      "sceneTree": null,
+      "title": "Stage Cards in Hand & Play Them to the Center Discard Pile!",
+      "targetFile": "res://scenes/table/table.gd",
+      "sceneTree": "PlayerHandContainer (HBoxContainer)\n├── Card_0 (Control)  [card_clicked -> _on_hand_card_clicked]\n├── Card_1 (Control)  [is_selected = true -> lifted -14px]\n└── Card_2 (Control)",
       "editorSteps": [
-        "Understand how an outer loop over 4 suits (`0..3`) and an inner loop over 13 ranks (`range(2, 15)`) produces all 52 suited cards.",
-        "Append the 2 Jokers (`CardTypes.Ranks.JOKER`, rank 15) after the nested loops so the deck totals exactly 54 cards.",
-        "Call `deck.shuffle()` to randomize the 54-card array in place using Godot's Fisher-Yates shuffle."
+        "In `res://scenes/table/table.gd`, declare `var staged_cards: Array[CardData] = []`.",
+        "When `_on_hand_card_clicked(card_node: Control)` fires, check `if card_node.data in staged_cards:`.",
+        "If already staged, remove it with `staged_cards.erase(card_node.data)` and call `card_node.set_selected(false)`.",
+        "If not staged yet, append it with `staged_cards.append(card_node.data)` and call `card_node.set_selected(true)`."
       ],
       "keyTakeaways": [
-        "`range(2, 15)` generates `2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14` (13 ranks per suit, because the end bound `15` is exclusive).",
-        "4 suits × 13 ranks = 52 cards, plus 2 Jokers = 54 cards total.",
-        "`deck.shuffle()` randomizes the deck order in one built-in call."
+        "Separating **selecting a card** (clicking a card to lift it into `staged_cards`) from **playing the move** (clicking `PlaySelectedButton`) lets players build multi-card combos like `Queen + Answer`!",
+        "Updating `PlaySelectedButton.text` to `\"Play Selected (%d)\" % staged_cards.size()` gives instant visual confirmation of how many cards are staged."
       ],
-      "bodyMarkdown": "# Building the 54-Card Kadi Deck with Nested Loops\n\nA complete **Kadi** deck has **54 cards**: 52 standard suited cards (4 suits × 13 ranks from 2 through Ace) plus **2 Jokers**.\n\nInstead of typing 54 lines of code by hand (where a single copy-paste typo could accidentally give the deck two 7 of Spades and zero 7 of Clubs!), we generate the deck with a **nested `for` loop**:\n\n```gdscript\nfunc build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:\n        for rank in range(2, 15):  # 2 through 14 (Ace); 15 is exclusive!\n            new_deck.append(CardData.make(suit, rank))\n    # Add the 2 Jokers (rank 15) to reach 54 cards:\n    new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))\n    new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))\n    new_deck.shuffle()\n    return new_deck\n```\n\n> [!MISTAKE]\n> Watch out for `range(start, end)`! In GDScript, the second number is **exclusive** (it stops at `end - 1`). Since `CardTypes.Ranks.ACE` is `14`, you MUST write `range(2, 15)` so that `14` is included! Writing `range(2, 14)` would stop at `13` (King) and build a 48-card deck with no Aces!\n\n> [!WHY]\n> Why call Godot's built-in `new_deck.shuffle()` instead of writing a random loop yourself? Because `Array.shuffle()` uses an unbiased Fisher-Yates algorithm under the hood, guaranteeing every permutation of the 54 cards is equally likely.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 6: *Building & Shuffling the 54-Card Kadi Deck* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd` |\n| **Scene / Node Context** | `root (Viewport)  (Godot Runtime SceneTree)` |\n| **What Problem Does It Solve?** | `range(2, 15)` generates `2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14` (13 ranks per suit, because the end bound `15` is exclusive). |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **Understand how an outer loop over 4 suits (`0..3`) and an inner loop over 13 ranks (`range(2, 15)`) produces all 52 suited cards.** — Configures `res://scripts/game_state.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n2. **Append the 2 Jokers (`CardTypes.Ranks.JOKER`, rank 15) after the nested loops so the deck totals exactly 54 cards.** — Configures `res://scripts/game_state.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n3. **Call `deck.shuffle()` to randomize the 54-card array in place using Godot's Fisher-Yates shuffle.** — Configures `res://scripts/game_state.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n\n\n## Deep-Dive Walkthrough: How Building & Shuffling the 54-Card Kadi Deck Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: `range(2, 15)` generates `2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14` (13 ranks per suit, because the end bound `15` is exclusive).\n- **Core Principle 2**: 4 suits × 13 ranks = 52 cards, plus 2 Jokers = 54 cards total.\n- **Core Principle 3**: `deck.shuffle()` randomizes the deck order in one built-in call.\n\n### Answering the \"Why?\" Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **What integers does `range(2, 15)` generate in GDScript?** | **2 through 14 inclusive (15 is exclusive)** — `range(start, end)` includes `start` (`2`) and excludes `end` (`15`), producing `2, 3, ..., 14`. |\n| **How many cards are in a complete Kadi deck built by `build_deck()`?** | **54 cards (4 suits × 13 ranks + 2 Jokers)** — Kadi uses all 52 suited cards plus 2 Jokers, totaling 54 cards. |\n| **What bug occurs if you write `for rank in range(2, 14):` in `build_deck()`?** | **Rank 14 (all four Aces!) is excluded from the deck** — Because the upper bound of `range()` is exclusive, `range(2, 14)` stops at 13 (King) and omits all Aces (14). |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Write a function `build_mini_deck() -> Array` that loops over suits `range(2)` (Hearts=0, Diamonds=1) and ranks `range(2, 15)`, appends `CardData.make(suit, rank)` to `var deck: Array = []`, shuffles it, and returns `deck`.\n- **How Godot Evaluates It**: When your script runs `func build_mini_deck() -> Array:`, Godot executes each line top-to-bottom on the active scene or resource instance, validating types and updating the live Kadi state.\n- **Expected Runtime Behavior**: Returns a shuffled 26-card red-suits mini deck.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `func build_deck() -> Array[CardData]:` | Defines function `build_deck()` returning `Array[CardData]`. |\n| **Line 2** | `var new_deck: Array[CardData] = []` | Initializes local/state variable `new_deck` (`Array[CardData]`) to `[]`. |\n| **Line 3** | `for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:` | Iterates variable `suit` through each item in `[CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]`. |\n| **Line 4** | `for rank in range(2, 15):` | Iterates variable `rank` through each item in `range(2, 15)`. |\n| **Line 5** | `new_deck.append(CardData.make(suit, rank))` | Appends `CardData.make(suit, rank` to the end of array `new_deck`. |\n| **Line 6** | `new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))` | Appends `CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER` to the end of array `new_deck`. |\n| **Line 7** | `new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))` | Appends `CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER` to the end of array `new_deck`. |\n| **Line 8** | `new_deck.shuffle()` | Randomizes the order of all cards in `new_deck` in place using Godot's random number generator. |\n| **Line 9** | `return new_deck` | Immediately exits the current function and sends `new_deck` back to the caller. |",
+      "bodyMarkdown": "# Staging Cards & Playing Them onto the Center Discard Slot!\n\n> [!TIP]\n> **Tangible Milestone:** You are about to close the loop on your playable Phase 1 prototype! By the end of this lesson, you can **click one or more cards in your hand, see `Play Selected (2)` update live, and click the button to play them onto the center Discard Pile** (or click `Draw Card` to deal a new card into your hand)!\n\nWhy shouldn't clicking a card in your hand immediately throw it onto the discard pile? Because in **Kadi**, many of the most exciting moves require playing **two or more cards in a single turn**:\n- Playing a **Question Card** (`Q` or `8`) accompanied by its matching **Answer Card** (`4, 5, 6, 7, 9, 10, A`).\n- Playing multiple **Jump Cards** (`J`) or **Kickback Cards** (`K`) in a combo.\n- Playing all of your remaining **Answer Cards** in one move to win after calling *\"Niko Kadi!\"*.\n\n## 1. Two-Step Staging Pattern (`staged_nodes` / `staged_cards`)\n\n1. **Step 1 — Click cards in `PlayerHandContainer` to stage/unstage them**:\n   - If the clicked card is not staged yet, add it, lift it `-14px` (`card_node.set_selected(true)`), and update `PlaySelectedButton.text`.\n   - If it is already staged, remove it and drop it back to `0px` (`card_node.set_selected(false)`).\n2. **Step 2 — Click `PlaySelectedButton` to commit the move**:\n   - Move the staged card(s) from `PlayerHandContainer` onto `DiscardSlot` so the last played card becomes the new face-up card in the center of the table!",
       "codeSnippets": [
         {
-          "id": "cs_01_03_a",
+          "id": "cs_02_05_a",
           "language": "gdscript",
-          "code": "func build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:\n        for rank in range(2, 15):\n            new_deck.append(CardData.make(suit, rank))\n    new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))\n    new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))\n    new_deck.shuffle()\n    return new_deck",
-          "caption": "Nested loops generate 52 suited cards, append 2 Jokers (54 total), and shuffle."
+          "code": "# File: res://scenes/table/table.gd (Playable Phase 1 Prototype!)\nextends Node2D\n\nconst CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")\n\n@onready var discard_slot: Control = $DiscardSlot\n@onready var player_hand_container: HBoxContainer = $PlayerHandContainer\n@onready var status_label: Label = $HUD/StatusLabel\n@onready var feedback_label: Label = $HUD/FeedbackLabel\n@onready var play_button: Button = $HUD/PlaySelectedButton\n@onready var draw_button: Button = $HUD/DrawButton\n\nvar staged_nodes: Array[Control] = []\n\nfunc _ready() -> void:\n\tplay_button.pressed.connect(_on_play_selected_pressed)\n\tdraw_button.pressed.connect(_on_draw_pressed)\n\t_spawn_prototype_table()\n\nfunc _spawn_prototype_table() -> void:\n\t_set_discard_card(\"6♥\", \"♥\", true)\n\tfor item in [\n\t\t{\"rank\": \"7♥\", \"suit\": \"♥\", \"red\": true},\n\t\t{\"rank\": \"Q♥\", \"suit\": \"♥\", \"red\": true},\n\t\t{\"rank\": \"J♠\", \"suit\": \"♠\", \"red\": false},\n\t\t{\"rank\": \"A♦\", \"suit\": \"♦\", \"red\": true}\n\t]:\n\t\t_add_hand_card(item[\"rank\"], item[\"suit\"], item[\"red\"])\n\nfunc _add_hand_card(rank_txt: String, suit_txt: String, is_red: bool) -> void:\n\tvar card_node: Control = CardScene.instantiate()\n\tplayer_hand_container.add_child(card_node)\n\tcard_node.preview_rank_text = rank_txt\n\tcard_node.preview_suit_text = suit_txt\n\tcard_node.preview_is_red = is_red\n\tcard_node._refresh_visuals()\n\tcard_node.card_clicked.connect(_on_hand_card_clicked)\n\nfunc _set_discard_card(rank_txt: String, suit_txt: String, is_red: bool) -> void:\n\tfor child in discard_slot.get_children():\n\t\tchild.queue_free()\n\tvar top_node: Control = CardScene.instantiate()\n\tdiscard_slot.add_child(top_node)\n\ttop_node.preview_rank_text = rank_txt\n\ttop_node.preview_suit_text = suit_txt\n\ttop_node.preview_is_red = is_red\n\ttop_node._refresh_visuals()\n\nfunc _on_hand_card_clicked(card_node: Control) -> void:\n\tif card_node in staged_nodes:\n\t\tstaged_nodes.erase(card_node)\n\t\tcard_node.set_selected(false)\n\telse:\n\t\tstaged_nodes.append(card_node)\n\t\tcard_node.set_selected(true)\n\tplay_button.text = \"Play Selected (%d)\" % staged_nodes.size()\n\nfunc _on_play_selected_pressed() -> void:\n\tif staged_nodes.is_empty():\n\t\treturn\n\tvar last_card: Control = staged_nodes.back()\n\t_set_discard_card(last_card.preview_rank_text, last_card.preview_suit_text, last_card.preview_is_red)\n\tvar played_names: Array[String] = []\n\tfor c in staged_nodes:\n\t\tplayed_names.append(c.preview_rank_text)\n\t\tc.queue_free()\n\tstaged_nodes.clear()\n\tplay_button.text = \"Play Selected (0)\"\n\tfeedback_label.text = \"Played to Discard Pile: %s!\" % \", \".join(played_names)\n\nfunc _on_draw_pressed() -> void:\n\tvar pool: Array = [\n\t\t{\"rank\": \"2♠\", \"suit\": \"♠\", \"red\": false},\n\t\t{\"rank\": \"10♦\", \"suit\": \"♦\", \"red\": true},\n\t\t{\"rank\": \"K♣\", \"suit\": \"♣\", \"red\": false},\n\t\t{\"rank\": \"8♥\", \"suit\": \"♥\", \"red\": true}\n\t]\n\tvar pick: Dictionary = pool.pick_random()\n\t_add_hand_card(pick[\"rank\"], pick[\"suit\"], pick[\"red\"])\n\tfeedback_label.text = \"Drew %s into your hand!\" % pick[\"rank\"]",
+          "caption": "Press F5 — click cards in your hand to stage them, click Play Selected to move them to the center DiscardSlot, and click Draw Card!"
         }
       ],
       "practicePrompt": {
-        "instructions": "Write a function `build_mini_deck() -> Array` that loops over suits `range(2)` (Hearts=0, Diamonds=1) and ranks `range(2, 15)`, appends `CardData.make(suit, rank)` to `var deck: Array = []`, shuffles it, and returns `deck`.",
-        "hint": "Use `for suit in range(2):` then `for rank in range(2, 15):` then `deck.append(CardData.make(suit, rank))`, followed by `deck.shuffle()` and `return deck`.",
-        "starterCode": "func build_mini_deck() -> Array:\n    var deck: Array = []\n    # Write nested loops for 2 suits and ranks 2..14, shuffle, and return:\n",
+        "instructions": "Write a function `clear_staged() -> void` that calls `staged_cards.clear()` and resets `play_button.text = \"Play Selected (0)\"`.",
+        "hint": "Call `staged_cards.clear()` and assign `play_button.text = \"Play Selected (0)\"`.",
+        "starterCode": "func clear_staged() -> void:\n    # Clear staged_cards and reset play_button.text:\n",
         "requiredTokens": [
-          "for",
-          "suit",
-          "range(2)",
-          "rank",
-          "range(2, 15)",
-          "CardData.make",
-          "deck.shuffle()",
-          "return"
-        ],
-        "expectedOutput": "Returns a shuffled 26-card red-suits mini deck.",
-        "solutionCode": "func build_mini_deck() -> Array:\n    var deck: Array = []\n    for suit in range(2):\n        for rank in range(2, 15):\n            deck.append(CardData.make(suit, rank))\n    deck.shuffle()\n    return deck"
-      },
-      "quizQuestions": [
-        {
-          "id": "q_01_03_a",
-          "prompt": "What integers does `range(2, 15)` generate in GDScript?",
-          "choices": [
-            "2 through 15 inclusive",
-            "2 through 14 inclusive (15 is exclusive)",
-            "0 through 15",
-            "Only 2 and 15"
-          ],
-          "correctChoiceIndex": 1,
-          "explanation": "`range(start, end)` includes `start` (`2`) and excludes `end` (`15`), producing `2, 3, ..., 14`.",
-          "concept": "Nested loops"
-        },
-        {
-          "id": "q_01_03_b",
-          "prompt": "How many cards are in a complete Kadi deck built by `build_deck()`?",
-          "choices": [
-            "52 cards",
-            "54 cards (4 suits × 13 ranks + 2 Jokers)",
-            "40 cards",
-            "56 cards"
-          ],
-          "correctChoiceIndex": 1,
-          "explanation": "Kadi uses all 52 suited cards plus 2 Jokers, totaling 54 cards.",
-          "concept": "Nested loops"
-        },
-        {
-          "id": "q_01_03_c",
-          "prompt": "What bug occurs if you write `for rank in range(2, 14):` in `build_deck()`?",
-          "choices": [
-            "Jokers are duplicated",
-            "Rank 14 (all four Aces!) is excluded from the deck",
-            "The game crashes on launch",
-            "Twos are excluded from the deck"
-          ],
-          "correctChoiceIndex": 1,
-          "explanation": "Because the upper bound of `range()` is exclusive, `range(2, 14)` stops at 13 (King) and omits all Aces (14).",
-          "concept": "Nested loops"
-        }
-      ],
-      "verificationSteps": [
-        "Save `res://scripts/game_state.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Building & Shuffling the 54-Card Kadi Deck**."
-      ],
-      "troubleshootingTips": [
-        "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
-        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
-        "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
-    },
-    {
-      "id": "l_01_04_autoloads",
-      "order": 7,
-      "title": "Creating & Registering the GameState Autoload (game_state.gd)",
-      "targetFile": "res://scripts/game_state.gd",
-      "sceneTree": "Project -> Project Settings -> Globals -> Autoload\n└── Path: res://scripts/game_state.gd  |  Node Name: GameState  |  Enable: [x]",
-      "editorSteps": [
-        "In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**, name it `game_state.gd` (`res://scripts/game_state.gd`), and click **Create**.",
-        "Paste the complete `game_state.gd` code below and press **Ctrl+S** to save.",
-        "In the top menu bar, click **Project -> Project Settings...** and switch to the **Globals -> Autoload** tab at the top of the window.",
-        "Click the folder icon next to **Path**, select `res://scripts/game_state.gd`, verify **Node Name** says `GameState`, and click **+ Add**.",
-        "Click **Close** on Project Settings, then press **F5** — verify the Output console prints `GameState Autoload ready: 54 cards in deck`!"
-      ],
-      "keyTakeaways": [
-        "An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads.",
-        "Do NOT put `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState` — Godot's Autoload system already creates the global identifier `GameState`!",
-        "Any script in your project can now call `GameState.start_new_match()`, `GameState.deck`, and `GameState.hands` directly."
-      ],
-      "bodyMarkdown": "# Registering `GameState` as a Global Autoload Singleton\n\nWhere should the 54-card draw pile, the discard pile, the 4 player hands, the active penalty stack, and the declared suit live so that `Table.tscn`, `CardScene.tscn`, and `DeclareSuitDialog.tscn` can all read them cleanly? In an [[Autoloads|Autoload]] singleton!\n\nAn **Autoload** is a script extending `Node` that Godot instantiates once at game startup under `/root/GameState` and keeps alive across the entire session.\n\n> [!MISTAKE]\n> **Crucial Godot 4 Rule:** When you register a script in **Project Settings → Globals → Autoload** under the name `GameState`, **do NOT write `class_name GameState` at the top of `game_state.gd`!** Why? Because registering an Autoload named `GameState` already defines the global name `GameState`. Adding `class_name GameState` too causes the compiler error: `Class \"GameState\" hides an autoload singleton`. Just start `game_state.gd` with `extends Node`!\n\n> [!GODOT]\n> Follow the **Do This in Godot** checklist above to create `res://scripts/game_state.gd` and register it under **Project → Project Settings → Globals → Autoload** with Node Name `GameState`.\n\n```gdscript\n# File: res://scripts/game_state.gd\n# Registered as Autoload singleton named: GameState\nextends Node\n\nsignal state_updated()\nsignal penalty_updated(new_total: int)\nsignal pile_recycled(new_deck_size: int)\n\nvar deck: Array[CardData] = []\nvar discard_pile: Array[CardData] = []\nvar hands: Array = [[], [], [], []]\nvar penalty_stack: int = 0\nvar penalty_rank: int = 0\nvar declared_suit: int = -1  # -1 = no active suit declaration\nvar announced_kadi: Array[bool] = [false, false, false, false]\nvar last_play_was_legal: bool = true\n```\n\n> [!WHY]\n> An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 1 (Project Setup & Deck Model) — Lesson 7: *Creating & Registering the `GameState` Autoload (`game_state.gd`)* |\n| **Which File Do I Edit?** | `res://scripts/game_state.gd` |\n| **Scene / Node Context** | `Project -> Project Settings -> Globals -> Autoload` |\n| **What Problem Does It Solve?** | An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. In the **FileSystem dock**, right-click `res://scripts` -> **Create New -> Script**, name it `game_state.gd` (`res://scripts/game_state.gd`), and click **Create**. — Organizes your `res://` project folders (`scripts/`, `scenes/`, `assets/cards/`, `assets/audio/`) so Godot tracks every resource UID.\n2. Paste the complete `game_state.gd` code below and press **Ctrl+S** to save. — Serializes your node tree or script to `res://scripts/game_state.gd` inside `res://` so `preload()` and `load()` can reference it.\n3. In the top menu bar, click **Project -> Project Settings...** and switch to the **Globals -> Autoload** tab at the top of the window. — Registers `GameManager` as a global Autoload singleton attached to `root`, keeping deck, hands, and turn state alive across scenes.\n4. Click the folder icon next to **Path**, select `res://scripts/game_state.gd`, verify **Node Name** says `GameState`, and click **+ Add**. — Configures `res://scripts/game_state.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n5. Click **Close** on Project Settings, then press **F5** — verify the Output console prints `GameState Autoload ready: 54 cards in deck`! — Registers `GameManager` as a global Autoload singleton attached to `root`, keeping deck, hands, and turn state alive across scenes.\n\n\n## Deep-Dive Walkthrough: How Creating & Registering the GameState Autoload (game_state.gd) Works Under the Hood\n\nWhen beginners build a card game in **Godot 4.3**, one of the hardest parts is picturing what happens **in memory** between the moment a player clicks a card on screen and the moment the game state updates. Let's trace `res://scripts/game_state.gd` step by step at a real 4-player Kadi table:\n\n- **Core Principle 1**: An **Autoload** is a global singleton `Node` that Godot spawns automatically before any scene loads.\n- **Core Principle 2**: Do NOT put `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState` — Godot's Autoload system already creates the global identifier `GameState`!\n- **Core Principle 3**: Any script in your project can now call `GameState.start_new_match()`, `GameState.deck`, and `GameState.hands` directly.\n\n### Answering the \"Why?\" Questions Beginners Ask Most\n\n| Common Question While Coding This Step | Clear Answer & Rulebook Rationale |\n| :--- | :--- |\n| **Where do you register `res://scripts/game_state.gd` so that `GameState` is accessible globally across all scenes?** | **Project -> Project Settings -> Globals -> Autoload** — Autoloads are registered in `Project Settings -> Globals -> Autoload`, which spawns the singleton at `/root/GameState` on launch. |\n| **Why should you OMIT `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState`?** | **Because the Autoload registration already creates the global identifier `GameState`; adding `class_name GameState` causes a name-collision error** — In Godot 4, an Autoload named `GameState` is already a global singleton identifier; declaring `class_name GameState` as well triggers a `hides an autoload singleton` error. |\n| **What does `GameState.top_discard()` return when `discard_pile` is empty?** | **It safely returns `null` because it checks `not discard_pile.is_empty()` first** — Guarding `.back()` with `if not discard_pile.is_empty() else null` prevents empty-array errors. |\n\n### Concrete Example: Tracing Input → Execution → Output\n\n- **Scenario / Goal**: Add a `round_number: int = 1` variable and a `next_round() -> void` function that increments `round_number` by 1 and resets `penalty_stack = 0`.\n- **How Godot Evaluates It**: When your script runs `var penalty_stack: int = 0`, Godot executes each line top-to-bottom on the active scene or resource instance, validating types and updating the live Kadi state.\n- **Expected Runtime Behavior**: Increments round_number and clears penalty_stack for the new round.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `# File: res://scripts/game_state.gd` | Inline comment documenting: *File: res://scripts/game_state.gd* (ignored by GDScript at runtime). |\n| **Line 2** | `# Register in Project Settings -> Globals -> Autoload as: GameState` | Inline comment documenting: *Register in Project Settings -> Globals -> Autoload as: GameState* (ignored by GDScript at runtime). |\n| **Line 3** | `extends Node` | Inherits all properties, signals, and lifecycle methods from Godot's `Node` class. |\n| **Line 5** | `signal state_updated()` | Declares custom typed signal `state_updated()` that this script can broadcast via `.emit(...)`. |\n| **Line 6** | `signal penalty_updated(new_total: int)` | Declares custom typed signal `penalty_updated(new_total: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 7** | `signal pile_recycled(new_deck_size: int)` | Declares custom typed signal `pile_recycled(new_deck_size: int)` that this script can broadcast via `.emit(...)`. |\n| **Line 9** | `var deck: Array[CardData] = []` | Initializes local/state variable `deck` (`Array[CardData]`) to `[]`. |\n| **Line 10** | `var discard_pile: Array[CardData] = []` | Initializes local/state variable `discard_pile` (`Array[CardData]`) to `[]`. |\n| **Line 11** | `var hands: Array = [[], [], [], []]` | Initializes local/state variable `hands` (`Array`) to `[[], [], [], []]`. |\n| **Line 12** | `var penalty_stack: int = 0` | Initializes local/state variable `penalty_stack` (`int`) to `0`. |\n| **Line 13** | `var penalty_rank: int = 0` | Initializes local/state variable `penalty_rank` (`int`) to `0`. |\n| **Line 14** | `var declared_suit: int = -1` | Initializes local/state variable `declared_suit` (`int`) to `-1`. |\n| **Line 15** | `var announced_kadi: Array[bool] = [false, false, false, false]` | Initializes local/state variable `announced_kadi` (`Array[bool]`) to `[false, false, false, false]`. |\n| **Line 16** | `var last_play_was_legal: bool = true` | Initializes local/state variable `last_play_was_legal` (`bool`) to `true`. |\n| **Line 18** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 19** | `deck = build_deck()` | Assigns the computed right-hand value into `deck`. |\n| **Line 20** | `print(\"GameState Autoload ready: %d cards in deck\" % deck.size())` | Logs the formatted message to Godot's bottom **Output** panel for inspection. |\n| **Line 22** | `func build_deck() -> Array[CardData]:` | Defines function `build_deck()` returning `Array[CardData]`. |\n| **Line 23** | `var new_deck: Array[CardData] = []` | Initializes local/state variable `new_deck` (`Array[CardData]`) to `[]`. |\n| **Line 24** | `for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:` | Iterates variable `suit` through each item in `[CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]`. |\n| **Line 25** | `for rank in range(2, 15):` | Iterates variable `rank` through each item in `range(2, 15)`. |\n| **Line 26** | `new_deck.append(CardData.make(suit, rank))` | Appends `CardData.make(suit, rank` to the end of array `new_deck`. |\n| **Line 27** | `new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))` | Appends `CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER` to the end of array `new_deck`. |\n| **Line 28** | `new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))` | Appends `CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER` to the end of array `new_deck`. |\n| **Line 29** | `new_deck.shuffle()` | Randomizes the order of all cards in `new_deck` in place using Godot's random number generator. |\n| **Line 30** | `return new_deck` | Immediately exits the current function and sends `new_deck` back to the caller. |\n| **Line 32** | `func top_discard() -> CardData:` | Defines function `top_discard()` returning `CardData`. |\n| **Line 33** | `return discard_pile.back() if not discard_pile.is_empty() else null` | Immediately exits the current function and sends `discard_pile.back() if not discard_pile.is_empty() else null` back to the caller. |",
-      "codeSnippets": [
-        {
-          "id": "cs_01_04_a",
-          "language": "gdscript",
-          "code": "# File: res://scripts/game_state.gd\n# Register in Project Settings -> Globals -> Autoload as: GameState\nextends Node\n\nsignal state_updated()\nsignal penalty_updated(new_total: int)\nsignal pile_recycled(new_deck_size: int)\n\nvar deck: Array[CardData] = []\nvar discard_pile: Array[CardData] = []\nvar hands: Array = [[], [], [], []]\nvar penalty_stack: int = 0\nvar penalty_rank: int = 0\nvar declared_suit: int = -1\nvar announced_kadi: Array[bool] = [false, false, false, false]\nvar last_play_was_legal: bool = true\n\nfunc _ready() -> void:\n    deck = build_deck()\n    print(\"GameState Autoload ready: %d cards in deck\" % deck.size())\n\nfunc build_deck() -> Array[CardData]:\n    var new_deck: Array[CardData] = []\n    for suit in [CardTypes.Suits.HEARTS, CardTypes.Suits.DIAMONDS, CardTypes.Suits.CLUBS, CardTypes.Suits.SPADES]:\n        for rank in range(2, 15):\n            new_deck.append(CardData.make(suit, rank))\n    new_deck.append(CardData.make(CardTypes.Suits.HEARTS, CardTypes.Ranks.JOKER))\n    new_deck.append(CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.JOKER))\n    new_deck.shuffle()\n    return new_deck\n\nfunc top_discard() -> CardData:\n    return discard_pile.back() if not discard_pile.is_empty() else null",
-          "caption": "Save this as res://scripts/game_state.gd and register it as the 'GameState' Autoload."
-        }
-      ],
-      "practicePrompt": {
-        "instructions": "Add a `round_number: int = 1` variable and a `next_round() -> void` function that increments `round_number` by 1 and resets `penalty_stack = 0`.",
-        "hint": "Declare `var round_number: int = 1`, then inside `func next_round() -> void:` write `round_number += 1` and `penalty_stack = 0`.",
-        "starterCode": "var penalty_stack: int = 0\n# Declare round_number = 1 and next_round() below:\n",
-        "requiredTokens": [
-          "var",
-          "round_number",
-          "1",
           "func",
-          "next_round()",
-          "round_number",
-          "+=",
-          "penalty_stack",
-          "0"
+          "clear_staged()",
+          "staged_cards.clear()",
+          "play_button.text"
         ],
-        "expectedOutput": "Increments round_number and clears penalty_stack for the new round.",
-        "solutionCode": "var penalty_stack: int = 0\nvar round_number: int = 1\n\nfunc next_round() -> void:\n    round_number += 1\n    penalty_stack = 0"
+        "expectedOutput": "Empties the staged move array and resets the Play button label.",
+        "solutionCode": "func clear_staged() -> void:\n    staged_cards.clear()\n    play_button.text = \"Play Selected (0)\""
       },
       "quizQuestions": [
         {
-          "id": "q_01_04_a",
-          "prompt": "Where do you register `res://scripts/game_state.gd` so that `GameState` is accessible globally across all scenes?",
+          "id": "q_02_05_a",
+          "prompt": "Why do we stage clicked cards into `staged_cards` before playing them with `PlaySelectedButton`?",
           "choices": [
-            "In the Inspector dock of a Label",
-            "Project -> Project Settings -> Globals -> Autoload",
-            "Inside AndroidManifest.xml",
-            "In the Audio tab"
+            "Because Godot buttons cannot detect single clicks",
+            "Because Kadi requires multi-card moves (such as playing a Question Card together with its Answer Card, or playing all winning cards in one move)",
+            "To slow down the human player",
+            "To sort the deck"
           ],
           "correctChoiceIndex": 1,
-          "explanation": "Autoloads are registered in `Project Settings -> Globals -> Autoload`, which spawns the singleton at `/root/GameState` on launch.",
-          "concept": "Autoloads"
+          "explanation": "Staging lets the player assemble 2+ card combinations (like Q + Answer) and play them atomically in a single turn.",
+          "concept": "Input Events"
         },
         {
-          "id": "q_01_04_b",
-          "prompt": "Why should you OMIT `class_name GameState` inside `game_state.gd` when registering it as an Autoload named `GameState`?",
+          "id": "q_02_05_b",
+          "prompt": "What happens when the player clicks a card that is ALREADY inside `staged_cards`?",
           "choices": [
-            "Autoloads cannot contain functions",
-            "Because the Autoload registration already creates the global identifier `GameState`; adding `class_name GameState` causes a name-collision error",
-            "Because `class_name` only works in 3D",
-            "To reduce file size"
+            "The game crashes",
+            "`staged_cards.erase(c)` removes it and `card_node.set_selected(false)` lowers the card back down",
+            "It duplicates the card",
+            "It ends the turn"
           ],
           "correctChoiceIndex": 1,
-          "explanation": "In Godot 4, an Autoload named `GameState` is already a global singleton identifier; declaring `class_name GameState` as well triggers a `hides an autoload singleton` error.",
-          "concept": "Autoloads"
+          "explanation": "Clicking a staged card again un-stages it so the player can change their mind before pressing Play Selected.",
+          "concept": "Input Events"
         },
         {
-          "id": "q_01_04_c",
-          "prompt": "What does `GameState.top_discard()` return when `discard_pile` is empty?",
+          "id": "q_02_05_c",
+          "prompt": "Why does `_on_hand_card_clicked()` check `if TurnManager.current_player_index != 0: return` at the top?",
           "choices": [
-            "It crashes",
-            "It safely returns `null` because it checks `not discard_pile.is_empty()` first",
-            "It returns an Ace of Spades",
-            "It returns 0"
+            "So Seat 0 can only play on odd turns",
+            "So the human player cannot stage or toggle cards while an AI opponent (Seats 1..3) is taking its turn",
+            "Because `current_player_index` is always 1",
+            "To hide the hand"
           ],
           "correctChoiceIndex": 1,
-          "explanation": "Guarding `.back()` with `if not discard_pile.is_empty() else null` prevents empty-array errors.",
-          "concept": "Autoloads"
+          "explanation": "Ignoring clicks when `current_player_index != 0` prevents staging cards during AI turns.",
+          "concept": "Input Events"
         }
       ],
       "verificationSteps": [
-        "Save `res://scripts/game_state.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Creating & Registering the GameState Autoload (game_state.gd)**."
+        "Press **F5** and click `Q♥` and `7♥` in your hand — watch both cards lift up `-14px` and see the button update to `Play Selected (2)`!",
+        "Click **Play Selected (2)** — watch `Q♥` and `7♥` leave your hand, `7♥` appear face-up in the center `DiscardSlot`, and `FeedbackLabel` announce `Played to Discard Pile: Q♥, 7♥!`.",
+        "Click **Draw Card** — watch a brand-new clickable card appear in your hand at the bottom of the screen!"
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
-        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
+        "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Click cards in your hand to stage them (`Play Selected (2)`), then click 'Play Selected' to watch those cards move from your hand onto the center Discard Slot!"
     }
   ],
   "debugChallenge": {
@@ -718,5 +612,6 @@
     "explanation": "In GDScript, the second argument of `range(start, end)` is **exclusive**. Because Ace is rank `14`, writing `range(2, 14)` on line 4 stopped at `13` (King) and omitted all 4 Aces! Changing line 4 to `range(2, 15)` includes `14` and restores all 54 cards.",
     "buggyLineNumber": 4,
     "hint": "Check the inner `for rank in range(...)` loop on line 4: remember that `range(start, end)` stops at `end - 1`!"
-  }
+  },
+  "tangibleGoal": "A running 1152×648 Emerald Felt Kadi table window where you can click visual cards in your fanned hand to lift them up -14px and click 'Play Selected' to throw them onto the center discard slot!"
 }

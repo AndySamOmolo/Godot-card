@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Refresh
@@ -30,6 +31,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +69,12 @@ import com.kadicompanion.ui.theme.successColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = hiltViewModel()) {
+fun QuizScreen(
+    onBack: () -> Unit,
+    onComplete: () -> Unit,
+    onNextLesson: ((String) -> Unit)? = null,
+    vm: QuizViewModel = hiltViewModel()
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val reduceMotion = LocalReduceMotion.current
     val duration = if (reduceMotion) 0 else 220
@@ -106,8 +113,10 @@ fun QuizScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: QuizViewModel = h
                     correctCount = state.firstTryCorrectCount,
                     totalCount = state.questions.size,
                     fraction = state.scoreFraction,
+                    nextLessonId = state.nextLessonId,
                     onRetake = vm::restartQuiz,
-                    onComplete = onComplete
+                    onComplete = onComplete,
+                    onNextLesson = onNextLesson
                 )
                 else -> {
                     AnimatedContent(
@@ -230,8 +239,10 @@ private fun QuizCelebration(
     correctCount: Int,
     totalCount: Int,
     fraction: Float,
+    nextLessonId: String?,
     onRetake: () -> Unit,
-    onComplete: () -> Unit
+    onComplete: () -> Unit,
+    onNextLesson: ((String) -> Unit)?
 ) {
     Box(
         modifier = Modifier
@@ -252,7 +263,7 @@ private fun QuizCelebration(
             ) {
                 ProgressRing(fraction = fraction, size = 104.dp, strokeWidth = 9.dp, label = "score")
                 Text(
-                    text = if (correctCount == totalCount) "Perfect First-Try Score!" else "Quiz Completed",
+                    text = if (correctCount == totalCount) "Perfect First-Try Score!" else "Lesson Completed!",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -265,6 +276,17 @@ private fun QuizCelebration(
                     textAlign = TextAlign.Center
                 )
                 Spacer(Modifier.height(4.dp))
+                if (nextLessonId != null && onNextLesson != null) {
+                    Button(
+                        onClick = { onNextLesson(nextLessonId) },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text("Next Lesson", fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.width(6.dp))
+                        Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                    }
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -272,7 +294,7 @@ private fun QuizCelebration(
                     if (correctCount < totalCount) {
                         OutlinedButton(
                             onClick = onRetake,
-                            modifier = Modifier.weight(1f).height(48.dp),
+                            modifier = Modifier.weight(1f).height(46.dp),
                             shape = MaterialTheme.shapes.small
                         ) {
                             Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -280,9 +302,9 @@ private fun QuizCelebration(
                             Text("Retake", fontWeight = FontWeight.SemiBold)
                         }
                     }
-                    Button(
+                    FilledTonalButton(
                         onClick = onComplete,
-                        modifier = Modifier.weight(1.2f).height(48.dp),
+                        modifier = Modifier.weight(1.2f).height(46.dp),
                         shape = MaterialTheme.shapes.small
                     ) {
                         Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp))

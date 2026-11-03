@@ -3,6 +3,7 @@ package com.kadicompanion.ui.tutorial.practice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kadicompanion.domain.model.Lesson
+import com.kadicompanion.domain.repository.ProgressRepository
 import com.kadicompanion.domain.repository.TutorialRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ import javax.inject.Inject
 
 data class PracticeUiState(
     val lesson: Lesson? = null,
+    val nextLessonId: String? = null,
     val userCode: String = "",
     val hintShown: Boolean = false,
     val solutionShown: Boolean = false,
@@ -24,6 +26,7 @@ data class PracticeUiState(
 @HiltViewModel
 class PracticeViewModel @Inject constructor(
     private val tutorialRepository: TutorialRepository,
+    private val progressRepository: ProgressRepository,
     savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
@@ -34,10 +37,13 @@ class PracticeViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val lesson = tutorialRepository.getLesson(lessonId)
+            val next = tutorialRepository.getNextLesson(lessonId)
+                ?: lesson?.let { tutorialRepository.getFirstLessonOfNextPhase(it.phaseId) }
             val starter = lesson?.practicePrompt?.starterCode
                 ?: "# Write your GDScript solution below:\n"
             _ui.value = PracticeUiState(
                 lesson = lesson,
+                nextLessonId = next?.id,
                 userCode = starter,
                 isLoading = false
             )
@@ -89,7 +95,6 @@ class PracticeViewModel @Inject constructor(
             return
         }
 
-        // Determine required tokens: use explicit requiredTokens if present, otherwise extract key identifiers from solutionCode
         val tokensToCheck = if (prompt.requiredTokens.isNotEmpty()) {
             prompt.requiredTokens
         } else {
@@ -106,6 +111,7 @@ class PracticeViewModel @Inject constructor(
                 checkPassed = true,
                 checkFeedback = "Spot on! Your GDScript includes all required constructs (${tokensToCheck.joinToString(", ")}).$outMsg"
             )
+            viewModelScope.launch { progressRepository.markLessonComplete(lessonId) }
         } else {
             _ui.value = s.copy(
                 checkPassed = false,

@@ -1,24 +1,19 @@
-# Kadi Companion App (v2.2.0) — Mobile UI Studio, Clean Rich Text & Full Customization Edition
+# Kadi Companion App (v2.3.0) — Tangible-First Curriculum & Live Playable Kadi Table Edition
 
-An offline-first Android companion app (Kotlin + Jetpack Compose + Material 3 + Room + Hilt) that teaches programming and **Godot 4.3** game development step by step by building the Kenyan card game **Kadi**.
+An offline-first Android companion app (Kotlin + Jetpack Compose + Material 3 + Room + Hilt) that teaches programming and **Godot 4.3** game development step by step by building the Kenyan card game **Kadi** — now restructured so you build and interact with a **visible, clickable Kadi tabletop and playing card from your very first lessons**!
 
-## What's New in v2.2.0
+## What's New in v2.3.0 (Tangible-First Overhaul)
 
-1. **Zero Raw Markdown Artifacts (`''`, `` ` ``, `[[...]]`, `**`) Across Every Screen**:
-   - **Recursive `RichInlineText` Engine (`MarkdownText.kt`)**: Completely rewritten recursive inline parser that cleanly formats nested markdown (`**bold**` containing `` `inline_code` `` or `[[GlossaryTerm|Alias]]`), resolves `[[Term|Alias]]` display labels without leaking brackets or pipes, protects `snake_case` GDScript identifiers from accidental italics, and sanitizes any stray punctuation.
-   - **Universal `RichInlineText` Adoption**: Applied across Callout banners (`Callout.kt`), Lesson Editor Checklists, Verification Steps, Troubleshooting Cards, Key Takeaways, Lab Launch Cards, Quiz Prompts/Choices/Explanations, Practice Workbench Instructions/Hints/Diagnostics, Debug Challenge Symptoms/Hints, Godot Class Member Descriptions (`DocDetailScreen.kt`), Glossary Definitions, and Daily Pro Tips.
-   - **Cleaned JSON & Markdown Assets**: Fixed all nested bold markers, double backticks (` `` `), unescaped table cell pipes, and added 64 missing Godot/GDScript glossary definitions so all 104 `[[...]]` links resolve cleanly.
+1. **Tangible-First Curriculum Progression (Visual Card & Table on Screen Immediately!)**:
+   - **Phase 0 (`Visual GDScript Playground: Animate a Live Kadi Card`)**: No more 8 lessons of dry console `print()` statements before installing Godot! Lesson 1 puts a real **Emerald Felt Kadi Table and an `84×120` visual playing card (`7♥`)** on screen in 60 seconds, and every GDScript concept (`var`, `bool`, `if/elif/else`, `for`, `func`, `Array`, `Dictionary`, `class_name`) visually colors, lifts (`-14px`), fans, and deals cards on screen!
+   - **Phase 1 (`Tangible Quickstart: Visual Card Scene & Playable Table`)**: Flipped the old "backend data first" order into **"Visual Scene First!"** — you build `res://scenes/card/card_scene.tscn` (`84×120` playing card with `-14px` click-to-lift) and `res://scenes/table/table.tscn` (Emerald Felt tabletop, `DiscardSlot`, `PlayerHandContainer`, and `PlaySelectedButton`) **first**, so by the end of Phase 1 you can click cards in your hand and play them onto the center discard pile!
+   - **Phase 2 (`54-Card Kadi Deck Engine & Live 4-Player Dealing`)**: Powers your visible Phase 1 table with `CardTypes`, `CardData` (including automatic downloaded sprite loading), and the `GameState` Autoload singleton so every press of **F5** deals a live 54-card match with a guaranteed legal opening card (`4, 5, 6, 7, 9, 10`).
+   - **Concrete `tangibleOutcome` & Visual Verification Across All 45 Lessons**: Every phase and lesson now highlights **What You'll See on Screen** and replaces generic boilerplate checklists with concrete visual tests in the running Godot 4.3 window.
 
-2. **Phone-First Responsive UI Refinements**:
-   - **Smart Phone Tables (`MarkdownTableView`)**: 2-column tables now fit 100% natively within the phone screen width with word wrapping and zero horizontal scrolling; 3+ column tables compute synchronized column widths across all rows AND include a one-tap **"Mobile Cards / Grid View"** switcher bar.
-   - **Mobile Code Block Word-Wrap (`CodeBlock.kt`)**: Added a one-tap **Wrap / Scroll** toggle button right in the header bar of every GDScript code block alongside **Copy**.
-   - **Compact Phone Tabs & Navigation**: Refined Lesson Studio tabs (`Guide`, `Steps`, `Lab & Quiz` + 1-tap `1-Page / 3-Tab` switcher) and Docs tabs so labels never truncate on narrow 320dp–360dp phone screens.
+2. **Interactive Playable Kadi Mini-Table & Live Card Preview Inside the App**:
+   - **New `"Play Kadi Live"` Tab (`ProjectBlueprintScreen.kt`)**: Play a real interactive mini-match of Kenyan Kadi right on your phone! Tap cards in your hand to watch them lift `-14dp`, stage multi-card Question+Answer combos (`Q♥ + 7♥`), counter penalties with Aces, call *"Niko Kadi!"*, and watch the **Live Godot 4.3 GDScript Execution Trace** below every move.
+   - **In-Lesson `"Try Live Card"` Preview (`LessonDetailScreen.kt`)**: Every lesson includes an expandable interactive `84×120` Godot card preview at the top of the guide so you can tap the card, test `-14px` selection lift, cycle Kadi card roles, and see the live signal trace while reading.
+   - **Seamless Completion & Next-Lesson Flow**: Passing a lesson's **Practice Workbench** check or finishing its **Knowledge Quiz** now automatically marks the lesson complete and provides a one-tap **Continue to Next Lesson** button.
 
-3. **Live UI Studio Customizer (27 Real-Time Options)**:
-   - Tap the **Tune (`Customize UI`)** icon in the top bar of **any screen** to open the **Live UI Studio Bottom Sheet** (`QuickUiCustomizerSheet.kt`), or open **Settings (`SettingsScreen.kt`)** for the full 4-tab customization center:
-     - **Theme Modes**: `Studio Dark`, `Pitch Black (AMOLED #000000)`, `Studio Light`, `System Default` + `Material You Dynamic Color`.
-     - **7 Accent Color Palettes**: `Godot Sapphire`, `Nairobi Kadi Gold`, `Emerald Card Table`, `Cyber Violet`, `Crimson Ace`, `Savannah Sunset`, and `Monochrome Ink`.
-     - **Typography & Sizing**: Independent live sliders for **UI & Lesson Text Size (`85%`–`125%`)** and **GDScript Code Font Size (`85%`–`125%`)**, 4 Font Families (`Modern Sans`, `Editorial Serif`, `Developer Mono`, `Clean Geometric`), 3 Line-Spacing modes (`Compact`, `Comfortable`, `Relaxed`), and Dyslexia-friendly letter tracking.
-     - **Inline Code & Term Style**: Switch between `Pill Badge`, `Accent Text` (no background box), or `Clean Prose` (seamless bold text with zero boxes or underlines).
-     - **Card Geometry & Surface Style**: Live **Corner Roundness (`0dp`–`28dp`)** slider, 4 Card Surface Styles (`Studio Border`, `Elevated Shadow`, `Frosted Glass`, `Minimal Outline`), and a toggle for colored top accent stripes.
-     - **Phone Ergonomics & Layout**: `Compact Phone`, `Balanced`, and `Spacious` screen densities; `Studio Pill`, `Compact Icons Only`, and `Floating Dock` bottom navigation bar styles; `3-Tab Studio` vs. `Single Scroll` lesson layout; `Smart Phone Fit`, `Mobile Cards`, and `Classic Table` display modes; and individual toggles for every Home screen widget plus custom Home Greeting & Studio Subtitle text!
+3. **Zero Raw Markdown Artifacts & Full Live UI Studio (27 Real-Time Options)**:
+   - Recursive `RichInlineText` parser, smart responsive tables, one-tap GDScript code wrap/copy, and 27 live theme, palette, font, and layout customizations.

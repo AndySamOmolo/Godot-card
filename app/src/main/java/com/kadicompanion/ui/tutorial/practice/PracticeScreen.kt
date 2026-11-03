@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.EditNote
@@ -82,7 +83,11 @@ import com.kadicompanion.ui.theme.successColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) {
+fun PracticeScreen(
+    onBack: () -> Unit,
+    onNextLesson: ((String) -> Unit)? = null,
+    vm: PracticeViewModel = hiltViewModel()
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val reduceMotion = LocalReduceMotion.current
     val duration = if (reduceMotion) 0 else 240
@@ -244,7 +249,7 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                         size = 34.dp
                                     )
                                     Text(
-                                        text = if (passed) "CHECK PASSED!" else "KEEP TWEAKING",
+                                        text = if (passed) "CHECK PASSED · LESSON MARKED COMPLETE!" else "KEEP TWEAKING",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = accent
@@ -255,6 +260,17 @@ fun PracticeScreen(onBack: () -> Unit, vm: PracticeViewModel = hiltViewModel()) 
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
+                                if (passed && state.nextLessonId != null && onNextLesson != null) {
+                                    Button(
+                                        onClick = { onNextLesson(state.nextLessonId!!) },
+                                        shape = MaterialTheme.shapes.small,
+                                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(44.dp)
+                                    ) {
+                                        Text("Continue to Next Lesson", fontWeight = FontWeight.Bold)
+                                        Spacer(Modifier.width(6.dp))
+                                        Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    }
+                                }
                             }
                         }
 

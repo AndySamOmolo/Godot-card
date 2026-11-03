@@ -10,6 +10,7 @@ data class Lesson(
     val practicePrompt: PracticePrompt? = null,
     val quizQuestions: List<QuizQuestion> = emptyList(),
     val targetFile: String? = null,
+    val tangibleOutcome: String? = null,
     val sceneTree: String? = null,
     val editorSteps: List<String> = emptyList(),
     val verificationSteps: List<String> = emptyList(),

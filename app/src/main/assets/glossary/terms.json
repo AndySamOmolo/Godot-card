@@ -1188,7 +1188,7 @@
       "relatedLessonIds": [
         "l_01_00b_project_tour",
         "l_02_02_ready_dealing",
-        "l_11_02_particles_sfx"
+        "l_11_02_sound_feedback"
       ],
       "relatedDocClassNames": [
         "Texture2D",
@@ -1200,7 +1200,7 @@
       "shortDefinition": "A `[[Control]]` property (`mouse_filter`) that decides whether a UI node consumes mouse clicks/touch taps (`Stop`), lets them pass to parent controls (`Pass`), or ignores them completely (`Ignore`).\n\nIn `card_scene.tscn`, decorative child nodes like `CardArt` (`[[TextureRect]]`), `TopRankLabel`, and `CenterSuitLabel` must use `MOUSE_FILTER_IGNORE` so they never steal taps from `ClickButton`!",
       "relatedLessonIds": [
         "l_02_01_scenes_instancing",
-        "l_03_01_gui_Signals"
+        "l_03_01_signals"
       ],
       "relatedDocClassNames": [
         "Control",
@@ -1238,7 +1238,7 @@
       "term": "AudioStreamOggVorbis",
       "shortDefinition": "Godot 4.3's audio stream resource for `.ogg` files placed in `res://assets/audio/` (such as `card_slide.ogg`, `penalty_slam.ogg`, and `niko_kadi.ogg`), played via `[[AudioStreamPlayer]]`.",
       "relatedLessonIds": [
-        "l_11_02_particles_sfx"
+        "l_11_02_sound_feedback"
       ],
       "relatedDocClassNames": [
         "AudioStreamPlayer"

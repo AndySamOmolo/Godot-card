@@ -1,8 +1,8 @@
 {
   "id": "phase_00_foundations",
   "order": 0,
-  "title": "Programming Foundations",
-  "summary": "Master the eight GDScript 4.3 building blocks every Kadi rule uses: typed variables, boolean operators, conditionals, loops, functions, arrays, dictionaries, and classes.",
+  "title": "Visual GDScript Playground: Animate a Live Kadi Card",
+  "summary": "Skip dry console theory! Build a visual 84×120 Kadi playing card on a green felt table in 60 seconds, then master GDScript 4.3 variables, booleans, conditionals, loops, functions, arrays, dictionaries, and classes by watching your card transform, glow, lift, and deal on screen.",
   "estimatedMinutes": 75,
   "concepts": [
     "Variables",
@@ -29,40 +29,41 @@
   ],
   "verifiedAgainstGodotVersion": "4.3",
   "projectFiles": [
+    "res://scenes/table/table.tscn",
     "res://scripts/foundations_sandbox.gd"
   ],
-  "sceneTreeBlueprint": "Main (Node2D)  [script: res://scripts/foundations_sandbox.gd]\n└── (Outputs results directly to Godot's Bottom Panel -> Output tab)",
+  "sceneTreeBlueprint": "Table (Node2D)  [script: res://scripts/foundations_sandbox.gd]\n├── Background (ColorRect)       [Size: 1152×648 | Color: #0E231C Emerald Felt]\n├── PreviewCard (Panel)          [Position: (534, 240) | Size: 84×120]\n│   ├── RankLabel (Label)        [Position: (8, 6) | Text: \"7♥\"]\n│   ├── SuitLabel (Label)        [Position: (0, 38) | Size: 84×50 | Text: \"♥\"]\n│   └── CardButton (Button)      [Full Rect | Flat: On — Click to test!]\n└── StatusBanner (Label)         [Position: (380, 180) | Live rule feedback on screen!]",
   "learningObjectives": [
-    "Declare statically typed variables (`var rank: int = 7`) and compile-time constants (`const`).",
-    "Combine card-matching checks using short-circuit boolean operators (`and`, `or`, `not`).",
-    "Branch game rules with `if / elif / else` and automate deck/hand operations with `for` and `while` loops.",
-    "Organize Kadi card state and behavior into reusable functions, `Array` piles, `Dictionary` lookup tables, and `RefCounted` classes."
+    "Set up a 60-second visual Kadi Card & Green Felt Table in Godot 4.3 so every line of code produces an immediate visual change on screen.",
+    "Update on-screen card labels (`RankLabel.text`, `SuitLabel.text`) using statically typed variables (`var rank: int = 7`) and constants (`const`).",
+    "Tint your visual card Emerald Green or Crimson Red using boolean operators (`==`, `and`, `or`, `not`) and `if / elif / else` branches.",
+    "Fan multiple visual cards across the table with `for` loops, lift cards `-14px` with functions, draw from `Array` piles, color suits with `Dictionary` lookups, and package `Card` classes."
   ],
   "lessons": [
     {
       "id": "l_00_01_variables",
       "order": 1,
-      "title": "Variables, Types, and Constants",
-      "targetFile": "res://scripts/foundations_sandbox.gd",
-      "sceneTree": "Main (Node2D)\n└── Attached Script: foundations_sandbox.gd",
+      "title": "Your First Visual Card on Screen (Variables & Constants)",
+      "targetFile": "res://scenes/table/table.tscn + res://scripts/foundations_sandbox.gd",
+      "sceneTree": "Table (Node2D)  [script: res://scripts/foundations_sandbox.gd]\n├── Background (ColorRect)  [Size: 1152×648 | Color: #0E231C]\n└── PreviewCard (Panel)     [Position: (534, 240) | Size: 84×120]\n    ├── RankLabel (Label)   [Position: (8, 6) | Text: \"7♥\"]\n    └── SuitLabel (Label)   [Position: (28, 42) | Text: \"♥\"]",
       "editorSteps": [
-        "In GDScript, write `var name: Type = value` to create a typed variable.",
-        "Use `int` for whole numbers (card rank, player index, penalty stack).",
-        "Use `String` for text (suit names, player names) and `bool` for `true`/`false` flags.",
-        "Use `const` in UPPER_SNAKE_CASE for values that never change during a match (like `MAX_PLAYERS = 5`)."
+        "Download **Godot 4.3 Standard** from `godotengine.org`, click **+ New Project**, name it `Kadi`, pick **Compatibility**, and click **Create & Edit**.",
+        "In the **Scene dock** (top-left), click **2D Scene**, rename `Node2D` to `Table`, and add a child `ColorRect` named `Background` (Size `1152 × 648`, Color `#0E231C` dark green felt).",
+        "Add a child `Panel` under `Table` named `PreviewCard` (Position `534, 240`, Size `84 × 120`), and inside `PreviewCard` add two `Label` children named `RankLabel` and `SuitLabel`.",
+        "Select `Table`, click **Attach Script**, save as `res://scripts/foundations_sandbox.gd`, paste the script below, and press **F5** to see your `7♥` card on the green felt table!"
       ],
       "keyTakeaways": [
         "`var` creates a mutable variable; `const` creates a read-only constant.",
         "Static type annotations (`: int`, `: String`, `: bool`) let Godot 4.3 catch type bugs before you even run the game.",
         "String formatting with `\"%d of %s\" % [rank, suit]` cleanly builds readable card labels."
       ],
-      "bodyMarkdown": "# Variables and Types in GDScript 4.3\n\nEvery rule in **Kadi** depends on remembering state: What rank is on top of the discard pile? Whose turn is it? How many penalty cards have stacked up? In programming, we store each piece of state in a [[Variable]] — a named slot in memory.\n\nIn GDScript 4.3, you declare a variable with the `var` keyword and give it a **type annotation** after a colon (`:`). Annotating types tells Godot's script editor exactly what kind of data belongs in that slot so it can highlight mistakes immediately as you type.\n\n```gdscript\n# Four core types used across our Kadi project:\nvar rank: int = 7               # Whole number (2..14, plus 15 for Joker)\nvar suit: String = \"Hearts\"     # Text inside double quotes\nvar is_penalty: bool = false    # Either true or false\nvar deal_delay: float = 0.25    # Decimal number for animation timing\nconst STARTING_HAND_SIZE: int = 4\n```\n\n> [!KADI]\n> In Kenyan Kadi, a standard 54-card deck has 4 suits (Hearts, Diamonds, Clubs, Spades), 13 ranks per suit (2 through Ace), and 2 Jokers. Modelling `rank` as an `int` (where Jack=11, Queen=12, King=13, Ace=14, Joker=15) makes comparing cards fast and unambiguous.\n\n> [!WHY]\n> Type annotations convert an entire class of runtime bugs (\"I accidentally assigned the String `\"Hearts\"` to a variable expecting a player index `int`\") into instant editor errors. In a turn-based card game, a single bad type mid-round can freeze the match — annotations make that impossible.\n\n> [!MISTAKE]\n> Do not confuse `=` (assignment: stores a value into a variable) with `==` (comparison: checks whether two values are equal). Writing `var rank: int = 7` stores `7` in `rank`.\n\n## How This Lesson Fits Into the Full Kadi Game\n\n| Question | Answer for This Lesson |\n| :--- | :--- |\n| **Which Phase & Step?** | Phase 0 (Programming Foundations) — Lesson 1: *Variables, Types, and Constants* |\n| **Which File Do I Edit?** | `res://scripts/foundations_sandbox.gd` |\n| **Scene / Node Context** | `Main (Node2D)` |\n| **What Problem Does It Solve?** | `var` creates a mutable variable; `const` creates a read-only constant. |\n\n### Detailed Explanation of Each Godot Editor Action\n\n1. **In GDScript, write `var name: Type = value` to create a typed variable.** — Configures `res://scripts/foundations_sandbox.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n2. **Use `int` for whole numbers (card rank, player index, penalty stack).** — Configures `res://scripts/foundations_sandbox.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n3. **Use `String` for text (suit names, player names) and `bool` for `true`/`false` flags.** — Configures `res://scripts/foundations_sandbox.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n4. **Use `const` in UPPER_SNAKE_CASE for values that never change during a match (like `MAX_PLAYERS = 5`).** — Configures `res://scripts/foundations_sandbox.gd` in the Godot 4.3 Editor so the scene hierarchy and script references stay in sync at runtime.\n\n\n## Mental Model: Labelled Boxes on the Kadi Table\n\nImagine sitting at a wooden table in Nairobi playing a match of **Kadi**. To keep the game fair, the dealer keeps a small notepad with labelled boxes:\n- One box is labelled `top_rank` and currently has the number `7` written inside it.\n- Another box is labelled `top_suit` and has the word `\"Hearts\"` written inside it.\n- A third box is labelled `is_penalty_active` and has `false` written inside it.\n\nIn GDScript, each of those labelled boxes is a [[Variable]]. When you write `var rank: int = 7`, you are telling Godot:\n1. `var` — *\"Create a mutable (changeable) box in memory.\"*\n2. `rank` — *\"Write the label `rank` on the outside of the box.\"*\n3. `: int` — *\"Only allow whole numbers (`int`) inside this box — if I ever try to put text inside it by mistake, stop me immediately!\"*\n4. `= 7` — *\"Put the starting value `7` into the box right now.\"*\n\n### The Four Data Types You Will Use Every Day in Godot\n\n| GDScript Type | What It Stores | Example in Kadi | What Happens If You Mix Them Up |\n| :--- | :--- | :--- | :--- |\n| `int` | Whole numbers (positive, negative, or zero) | `var rank: int = 11` (Jack), `var direction: int = -1` | Cannot hold decimals (`0.5`) or text (`\"Hearts\"`) |\n| `float` | Numbers with a decimal point | `var tween_duration: float = 0.25` (seconds) | Used for timers, positions, and smooth animations |\n| `String` | Text wrapped in double quotes `\"...\"` | `var suit: String = \"Spades\"` | Writing `\"7\"` is text, NOT the number `7`! |\n| `bool` | Truth values: ONLY `true` or `false` | `var niko_called: bool = true` | Controls `if` branches and rule switches |\n\n## Step-by-Step Memory Trace\n\nLet's trace what happens in computer memory when Godot runs your script:\n1. **Before `_ready()` runs**: Godot reads the top of your script and allocates `rank = 7`, `suit = \"Hearts\"`, `is_penalty = false`, and locks `MAX_HAND_SIZE = 4` as a constant.\n2. **Inside `describe_card()`**: The expression `\"Card: %d of %s (Penalty: %s)\" % [rank, suit, str(is_penalty)]` replaces `%d` with the integer `7`, the first `%s` with `\"Hearts\"`, and the second `%s` with `\"false\"`.\n3. **Result returned to `_ready()`**: `print()` sends `Card: 7 of Hearts (Penalty: false)` straight to the **Output** panel at the bottom of the Godot editor.\n\n## Line-by-Line Code Walkthrough\n\nEvery single line in the snippet has a specific job. Use this table to trace exactly what Godot does from top to bottom:\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 1** | `extends Node` | Inherits all properties, signals, and lifecycle methods from Godot's `Node` class. |\n| **Line 3** | `var rank: int = 7` | Initializes local/state variable `rank` (`int`) to `7`. |\n| **Line 4** | `var suit: String = \"Hearts\"` | Initializes local/state variable `suit` (`String`) to `\"Hearts\"`. |\n| **Line 5** | `var is_penalty: bool = false` | Initializes local/state variable `is_penalty` (`bool`) to `false`. |\n| **Line 6** | `const MAX_HAND_SIZE: int = 4` | Defines compile-time constant `MAX_HAND_SIZE` (`int`) = `4` so magic values aren't scattered in code. |\n| **Line 8** | `func _ready() -> void:` | Godot lifecycle callback invoked automatically once when this node and all its children enter the SceneTree. |\n| **Line 9** | `print(describe_card())` | Logs the formatted message to Godot's bottom **Output** panel for inspection. |\n| **Line 11** | `func describe_card() -> String:` | Defines function `describe_card()` returning `String`. |\n| **Line 12** | `return \"Card: %d of %s (Penalty: %s)\" % [rank, suit, str(is_penalty)]` | Immediately exits the current function and sends `\"Card: %d of %s (Penalty: %s)\" % [rank, suit, str(is_penalty)]` back to the caller. |",
+      "bodyMarkdown": "# See Your First Kadi Card on Screen in 60 Seconds!\n\n> [!TIP]\n> **Tangible Milestone:** Instead of staring at a blank console, you will put a real **emerald felt Kadi tabletop and a visual `84×120` playing card** on your screen right now, then use GDScript variables to change the card's face live!\n\nEvery rule in **Kadi** depends on remembering state: What rank is on the card? What suit symbol does it show? Is it a penalty card? In GDScript 4.3, we store each piece of state in a **statically typed [[Variables|variable]]** and display it directly on our visual `PreviewCard` node.\n\n## 1. Declaring Typed Variables (`var`) and Constants (`const`)\n\nIn GDScript, you declare a variable with `var`, its name in `snake_case`, a colon `:`, its type (`int`, `String`, `bool`, `float`), and `= initial_value`:\n\n| GDScript Syntax | Type | Visual Effect on Your Kadi Table |\n| :--- | :--- | :--- |\n| `var rank: int = 7` | `int` (Whole number) | Sets the rank number shown on `RankLabel` (`2`..`14`) |\n| `var suit_symbol: String = \"♥\"` | `String` (Text) | Sets the suit glyph (`♥`, `♦`, `♣`, `♠`) on `SuitLabel` |\n| `var is_red_suit: bool = true` | `bool` (`true`/`false`) | Controls whether the card face is tinted crimson red or white |\n| `const CARD_LIFT_Y: float = -14.0` | `const` (Constant) | Fixed `-14px` upward pop when a card is selected |\n\n> [!GODOT]\n> When your script updates `$PreviewCard/RankLabel.text = \"%d%s\" % [rank, suit_symbol]` inside `_ready()`, Godot immediately redraws the label on your `84×120` card in the game window!",
       "codeSnippets": [
         {
           "id": "cs_00_01_a",
           "language": "gdscript",
-          "code": "extends Node\n\nvar rank: int = 7\nvar suit: String = \"Hearts\"\nvar is_penalty: bool = false\nconst MAX_HAND_SIZE: int = 4\n\nfunc _ready() -> void:\n    print(describe_card())\n\nfunc describe_card() -> String:\n    return \"Card: %d of %s (Penalty: %s)\" % [rank, suit, str(is_penalty)]",
-          "caption": "Declaring typed variables and a constant for a Kadi card, then printing them in _ready()."
+          "code": "# File: res://scripts/foundations_sandbox.gd\nextends Node2D\n\nconst MAX_PLAYERS: int = 5\n\nvar rank: int = 7\nvar suit_symbol: String = \"♥\"\nvar is_red_suit: bool = true\n\nfunc _ready() -> void:\n\t# Update the visual card on screen if PreviewCard exists:\n\tif has_node(\"PreviewCard/RankLabel\"):\n\t\t$PreviewCard/RankLabel.text = \"%d%s\" % [rank, suit_symbol]\n\t\t$PreviewCard/SuitLabel.text = suit_symbol\n\t\t$PreviewCard.modulate = Color(\"#FFCDD2\") if is_red_suit else Color(\"#FFFFFF\")\n\tprint(\"Visual Card on Table: %d%s (Red suit: %s)\" % [rank, suit_symbol, is_red_suit])",
+          "caption": "Attach to Table in table.tscn and press F5 — your visual card on screen updates to 7♥!"
         }
       ],
       "practicePrompt": {
@@ -123,27 +124,28 @@
         }
       ],
       "verificationSteps": [
-        "Attach this script to any Node (such as `Table` in `res://scenes/table/table.tscn`) and press **F5**.",
-        "Look at the **Output** panel at the bottom of the Godot window and confirm it prints `Card: 7 of Hearts (Penalty: false)`.",
-        "Try temporarily changing `var rank: int = 7` to `var rank: int = \"Hearts\"` — notice how the script editor immediately highlights the line in red before you even run the game!"
+        "Press **F5** (and click **Select Current** if prompted for the Main Scene) — verify a dark green Kadi table window opens with your `7♥` card centered on screen!",
+        "Change `var rank: int = 7` to `var rank: int = 12` and `var suit_symbol: String = \"♥\"` to `\"♠\"`, press **F5**, and watch the visual card on screen immediately change to `12♠`!",
+        "Try typing `var rank: int = \"Hearts\"` — notice how Godot highlights the line in red immediately because static typing (`: int`) catches bugs before you even run the game."
       ],
       "troubleshootingTips": [
         "Error `Cannot assign a value of type 'String' as 'int'`: You put quotes around a number (like `\"7\"`) on a `: int` variable. Remove the quotes so it is `7`.",
         "Error `Cannot assign a new value to a constant`: You tried to modify a `const` variable (like `MAX_HAND_SIZE = 6`). Change `const` to `var` if the value needs to change during gameplay.",
         "Error `Not enough arguments for '%' operator`: Your format string has three `%` placeholders (`%d`, `%s`, `%s`), so the array on the right of `%` must have 3 items `[rank, suit, str(is_penalty)]`."
-      ]
+      ],
+      "tangibleOutcome": "Press F5 to launch a real green felt Kadi table window with a visible 84×120 playing card whose face updates live (`7♥` -> `Q♠`) whenever you change `rank` or `suit_symbol`!"
     },
     {
       "id": "l_00_02_operators",
       "order": 2,
-      "title": "Operators and Booleans",
+      "title": "Visual Legal-Play Glow: Green vs. Red Card (`bool`, `and`, `or`)",
       "targetFile": "res://scripts/foundations_sandbox.gd",
-      "sceneTree": null,
+      "sceneTree": "Table (Node2D)\n├── Background (ColorRect)\n├── PreviewCard (Panel)   [Glows Green if playable, Red if illegal!]\n└── StatusBanner (Label)  [Position: (380, 180) | Shows \"LEGAL PLAY\" or \"ILLEGAL\"]",
       "editorSteps": [
-        "Use `==` to test if two suits or ranks are equal, and `!=` to test if they differ.",
-        "Combine two conditions with `or` when EITHER condition makes a play legal (e.g. matching suit OR matching rank).",
-        "Combine two conditions with `and` when BOTH conditions must hold simultaneously (e.g. hand is empty AND player declared Niko Kadi).",
-        "Use `not` to invert a boolean check (e.g. `if not deck.is_empty():`)."
+        "Add a `Label` child under `Table` named `StatusBanner` at Position `(380, 180)` so you can see the rule verdict above your card.",
+        "Use `==` to test if `card_suit == top_suit` or `card_rank == top_rank`.",
+        "Combine the checks with `or` (`var can_play: bool = same_suit or same_rank or is_wild`).",
+        "Set `$PreviewCard.modulate` to bright green (`Color(\"#4ADE80\")`) when `can_play` is `true`, or crimson (`Color(\"#F87171\")`) when `false`!"
       ],
       "keyTakeaways": [
         "Ordinary Kadi play validation uses `or`: `card_suit == top_suit or card_rank == top_rank`.",
@@ -155,8 +157,8 @@
         {
           "id": "cs_00_02_a",
           "language": "gdscript",
-          "code": "func is_basic_playable(card_suit: String, card_rank: int, top_suit: String, top_rank: int) -> bool:\n    var same_suit: bool = (card_suit == top_suit)\n    var same_rank: bool = (card_rank == top_rank)\n    var is_wild: bool = (card_rank == 14 or card_rank == 15)\n    return same_suit or same_rank or is_wild",
-          "caption": "Combining suit match, rank match, and wild-card checks with `or`."
+          "code": "# File: res://scripts/foundations_sandbox.gd\nextends Node2D\n\nfunc is_basic_playable(card_suit: String, card_rank: int, top_suit: String, top_rank: int) -> bool:\n\tvar same_suit: bool = (card_suit == top_suit)\n\tvar same_rank: bool = (card_rank == top_rank)\n\tvar is_wild: bool = (card_rank == 14 or card_rank == 15) # Ace (14) or Joker (15)\n\treturn same_suit or same_rank or is_wild\n\nfunc _ready() -> void:\n\tvar legal: bool = is_basic_playable(\"Hearts\", 13, \"Hearts\", 7)\n\tif has_node(\"PreviewCard\"):\n\t\t$PreviewCard.modulate = Color(\"#4ADE80\") if legal else Color(\"#F87171\")\n\tif has_node(\"StatusBanner\"):\n\t\t$StatusBanner.text = \"✅ LEGAL PLAY!\" if legal else \"❌ ILLEGAL PLAY (+1 Penalty)\"\n\tprint(\"Playable on 7♥: \", legal)",
+          "caption": "Visually tinting PreviewCard green or red based on boolean operators (`==`, `or`)."
         }
       ],
       "practicePrompt": {
@@ -216,24 +218,26 @@
         }
       ],
       "verificationSteps": [
-        "Call `print(is_basic_playable(\"Hearts\", 13, \"Hearts\", 7))` inside `_ready()` and press **F5** — confirm it prints `true`.",
-        "Call `print(is_basic_playable(\"Spades\", 9, \"Hearts\", 7))` — confirm it prints `false` because neither suit nor rank matches."
+        "Press **F5** with `card_suit = \"Hearts\"` and `top_suit = \"Hearts\"` — verify `PreviewCard` glows **Emerald Green** on screen and `StatusBanner` reads `✅ LEGAL PLAY!`.",
+        "Change `card_suit = \"Spades\"` and `card_rank = 9` (while the top discard card is `7 of Hearts`) and press **F5** — watch your card immediately turn **Crimson Red** (`❌ ILLEGAL PLAY`)!",
+        "Change `card_rank = 14` (Ace) while keeping `card_suit = \"Spades\"` and press **F5** — confirm the card turns **Emerald Green** again because an Ace is wild (`is_wild == true`)!"
       ],
       "troubleshootingTips": [
         "Error `Expected ':' after 'if' condition` when writing `if a = b:`: You used a single `=` (assignment) instead of double `==` (equality check). Always use `==` to compare two values!",
         "Bug where NO card is playable except an exact duplicate: You wrote `same_suit and same_rank` instead of `same_suit or same_rank`."
-      ]
+      ],
+      "tangibleOutcome": "Your on-screen card automatically glows Emerald Green (`#4ADE80`) when it legally matches the discard pile's suit or rank, or flashes Crimson Red (`#F87171`) when illegal!"
     },
     {
       "id": "l_00_03_conditionals",
       "order": 3,
-      "title": "Conditionals: if / elif / else",
+      "title": "Click-to-Cycle Card Roles on Screen (`if / elif / else`)",
       "targetFile": "res://scripts/foundations_sandbox.gd",
-      "sceneTree": null,
+      "sceneTree": "PreviewCard (Panel)\n├── RankLabel (Label)\n├── SuitLabel (Label)\n└── CardButton (Button)  [Full Rect, Flat = On — Click in game window to cycle cards!]",
       "editorSteps": [
-        "Start a conditional block with `if condition:` followed by an indented block (1 tab or 4 spaces).",
-        "Add `elif other_condition:` for mutually exclusive alternative rules.",
-        "Add `else:` at the end as a fallback for normal cards."
+        "Add a `Button` child inside `PreviewCard` named `CardButton`, enable **Flat = On** in the Inspector, and set its Layout Preset to **Full Rect**.",
+        "Write an `if / elif / else` ladder in `describe_card_role(rank: int) -> String` to classify Penalty (`2, 3, 15`), Question (`8, 12`), Jump (`11`), Kickback (`13`), and Answer cards.",
+        "Connect `$PreviewCard/CardButton.pressed` in `_ready()` so every click advances to the next test rank and refreshes the card face and `StatusBanner` on screen!"
       ],
       "keyTakeaways": [
         "Only the FIRST branch whose condition is `true` executes; all subsequent `elif`/`else` branches are skipped.",
@@ -245,8 +249,8 @@
         {
           "id": "cs_00_03_a",
           "language": "gdscript",
-          "code": "func describe_card_role(rank: int) -> String:\n    if rank == 2 or rank == 3 or rank == 15:\n        return \"Penalty Card\"\n    elif rank == 11:\n        return \"Jump Card (Skip next player)\"\n    elif rank == 13:\n        return \"Kickback Card (Reverse direction)\"\n    elif rank == 12 or rank == 8:\n        return \"Question Card (Must pair with Answer)\"\n    else:\n        return \"Answer Card\"",
-          "caption": "An if/elif/else ladder classifying all 5 Kadi card categories."
+          "code": "# File: res://scripts/foundations_sandbox.gd\nextends Node2D\n\nvar test_ranks: Array[int] = [2, 7, 11, 12, 13, 14]\nvar current_idx: int = 0\n\nfunc describe_card_role(rank: int) -> String:\n\tif rank == 2 or rank == 3 or rank == 15:\n\t\treturn \"⚡ Penalty Card (+2 / +3 / +5)\"\n\telif rank == 12 or rank == 8:\n\t\treturn \"❓ Question Card (Must pair with Answer)\"\n\telif rank == 11:\n\t\treturn \"⏭ Jump Card (Skips next player)\"\n\telif rank == 13:\n\t\treturn \"↺ Kickback Card (Reverses direction)\"\n\telse:\n\t\treturn \"✅ Answer Card (Can win the game!)\"\n\nfunc _ready() -> void:\n\tif has_node(\"PreviewCard/CardButton\"):\n\t\t$PreviewCard/CardButton.pressed.connect(_on_card_clicked)\n\t_refresh_card_on_screen()\n\nfunc _on_card_clicked() -> void:\n\tcurrent_idx = (current_idx + 1) % test_ranks.size()\n\t_refresh_card_on_screen()\n\nfunc _refresh_card_on_screen() -> void:\n\tvar r: int = test_ranks[current_idx]\n\tvar role: String = describe_card_role(r)\n\tif has_node(\"PreviewCard/RankLabel\"):\n\t\t$PreviewCard/RankLabel.text = \"%d♥\" % r\n\tif has_node(\"StatusBanner\"):\n\t\t$StatusBanner.text = \"Rank %d -> %s (Click card to cycle!)\" % [r, role]\n\tprint(\"Rank %d: %s\" % [r, role])",
+          "caption": "Click your visual card in the game window to test every branch of the if/elif/else ladder!"
         }
       ],
       "practicePrompt": {
@@ -308,24 +312,25 @@
         }
       ],
       "verificationSteps": [
-        "In `_ready()`, run `print(describe_card_role(2))`, `print(describe_card_role(12))`, and `print(describe_card_role(7))`.",
-        "Press **F5** and verify the Output panel prints `Penalty Card`, `Question Card (Must pair with Answer)`, and `Answer Card`."
+        "Press **F5** and **click directly on your visual card** in the game window!",
+        "Verify that each click cycles the card on screen (`2♥` -> `7♥` -> `11♥` -> `12♥` -> `13♥` -> `14♥`) and updates `StatusBanner` with the exact Kadi role (`⚡ Penalty Card`, `✅ Answer Card`, `⏭ Jump Card`, `❓ Question Card`, `↺ Kickback Card`)!"
       ],
       "troubleshootingTips": [
         "Error `Mixed tabs and spaces in indentation`: GDScript uses tabs by default in the Godot editor. If you paste code, press **Ctrl+Shift+I** (or Edit -> Convert Indent to Tabs) to unify indentation.",
         "Error `Expected ':' after 'if'/'elif'/'else'`: Every `if`, `elif`, and `else` header line in GDScript must end with a colon `:`."
-      ]
+      ],
+      "tangibleOutcome": "Click your visual card on screen to cycle through ranks (`2`, `7`, `11`, `12`, `13`, `14`) and watch the live HUD badge switch between Penalty, Answer, Jump, Question, Kickback, and Wild Ace!"
     },
     {
       "id": "l_00_04_loops",
       "order": 4,
-      "title": "Loops: for and while",
+      "title": "Fanning a 4-Card Visual Hand Across the Table (`for` & `while`)",
       "targetFile": "res://scripts/foundations_sandbox.gd",
-      "sceneTree": null,
+      "sceneTree": "Table (Node2D)\n├── Background (ColorRect)\n├── PreviewCard (Panel)              [Template card in center]\n└── HandRow (HBoxContainer)          [Position: (320, 460) — 4 cards spawned by for-loop!]",
       "editorSteps": [
-        "Use `for i in range(count):` when you know how many times to repeat (e.g. dealing 4 cards to 4 players).",
-        "Use `for card in hand:` to inspect each element inside an Array.",
-        "Use `while condition:` when repeating until a state changes (e.g. redrawing an invalid opening card), and always verify the loop modifies the condition variable!"
+        "Add an `HBoxContainer` child under `Table` named `HandRow` at Position `(320, 460)` and set **Theme Overrides -> Constants -> Separation** to `12`.",
+        "Use a `for card_label in starting_hand:` loop inside `_ready()` to duplicate `PreviewCard` (or create a card panel) for each card and add it into `HandRow`.",
+        "Use a `while` loop whenever you need to keep drawing from the deck until a valid non-special starter card (`4, 5, 6, 7, 9, 10`) is found."
       ],
       "keyTakeaways": [
         "`for` loops over `range()` or an `Array` are bounded and guaranteed to finish.",
@@ -337,8 +342,8 @@
         {
           "id": "cs_00_04_a",
           "language": "gdscript",
-          "code": "func deal_opening_hands(hands: Array, deck: Array, cards_per_player: int = 4) -> void:\n    for player_idx in range(hands.size()):\n        for _i in range(cards_per_player):\n            if not deck.is_empty():\n                hands[player_idx].append(deck.pop_back())",
-          "caption": "Nested `for` loops deal `cards_per_player` cards from the deck into each player's hand array."
+          "code": "# File: res://scripts/foundations_sandbox.gd\nextends Node2D\n\nfunc deal_cards(deck: Array, num_players: int, cards_per_player: int) -> Array:\n\tvar hands: Array = []\n\tfor p in range(num_players):\n\t\tvar hand: Array = []\n\t\tfor c in range(cards_per_player):\n\t\t\thand.append(deck.pop_back())\n\t\thands.append(hand)\n\treturn hands\n\nfunc _ready() -> void:\n\tvar starting_hand: Array[String] = [\"4♥\", \"7♠\", \"Q♦\", \"A♣\"]\n\tif has_node(\"HandRow\") and has_node(\"PreviewCard\"):\n\t\tfor label_text in starting_hand:\n\t\t\tvar card_copy: Panel = $PreviewCard.duplicate()\n\t\t\tcard_copy.custom_minimum_size = Vector2(84, 120)\n\t\t\tcard_copy.get_node(\"RankLabel\").text = label_text\n\t\t\t$HandRow.add_child(card_copy)\n\tprint(\"Spawned %d visual cards in HandRow!\" % starting_hand.size())",
+          "caption": "Using a `for` loop to spawn a row of visual cards across the bottom of the Kadi table."
         }
       ],
       "practicePrompt": {
@@ -398,28 +403,26 @@
         }
       ],
       "verificationSteps": [
-        "Save `res://scripts/foundations_sandbox.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Loops: for and while**."
+        "Press **F5** and look at the bottom of your green Kadi table window — confirm **4 separate visual cards (`4♥`, `7♠`, `Q♦`, `A♣`)** are fanned neatly side-by-side inside `HandRow`!",
+        "Add a 5th string (`\"10♥\"`) to `starting_hand` and press **F5** — watch the `for` loop automatically spawn a 5th visual card on screen with zero extra UI work!"
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/foundations_sandbox.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "A `for` loop automatically stamps out 4 visual cards side-by-side across the bottom of your green felt Kadi table (`4♥`, `7♠`, `Q♦`, `A♣`)!"
     },
     {
       "id": "l_00_05_functions",
       "order": 5,
-      "title": "Functions: Reusable Rule Blocks",
+      "title": "Click-to-Lift Card Selection (`func` & Parameters)",
       "targetFile": "res://scripts/foundations_sandbox.gd",
       "sceneTree": null,
       "editorSteps": [
-        "Define a function with `func function_name(param: Type) -> ReturnType:`.",
-        "Use `-> void` when a function performs an action (like printing or updating UI) without returning a value.",
-        "Use `return value` to send the computed answer back to the caller.",
-        "Keep rule-checking functions 'pure' (returning a `bool` or `int` without modifying global state) so they are easy to test."
+        "Define a reusable function `func toggle_card_lift(card_control: Control) -> void:` that checks `card_control.position.y`.",
+        "Lift the card up to `position.y = -14.0` (and tint it gold `#FDE047`) when selected, or reset `position.y = 0.0` when deselected.",
+        "Define pure rule functions like `penalty_amount(rank: int) -> int` with explicit parameter types and return types (`-> int`)."
       ],
       "keyTakeaways": [
         "Every function signature in our Kadi codebase specifies parameter types and `-> ReturnType`.",
@@ -495,29 +498,26 @@
         }
       ],
       "verificationSteps": [
-        "Save `res://scripts/foundations_sandbox.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Functions: Reusable Rule Blocks**."
+        "Press **F5** and click your visual card on screen — watch it **physically pop upward by 14 pixels** and glow gold!",
+        "Click the lifted card a second time — confirm it drops smoothly back to `y = 0` and restores its normal color."
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/foundations_sandbox.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Clicking any card on your table calls `toggle_card_lift(card_node)` and physically pops the card `-14px` upward into the air (and back down when clicked again)!"
     },
     {
       "id": "l_00_06_arrays",
       "order": 6,
-      "title": "Arrays: Hands, Draw Pile & Discard Pile",
+      "title": "Live Draw & Discard Piles on Screen (`Array`, `.append()`, `.pop_back()`)",
       "targetFile": "res://scripts/foundations_sandbox.gd",
       "sceneTree": null,
       "editorSteps": [
-        "Create an empty array with `var pile: Array = []`.",
-        "Use `.append(card)` to push a card onto the end (top) of a pile or hand.",
-        "Use `.back()` to peek at the top card of the discard pile without removing it.",
-        "Use `.pop_back()` to draw (remove and return) the top card from the draw pile — always checking `not pile.is_empty()` first!",
-        "Use `.erase(card)` to remove a specific played card from a player's hand."
+        "Create an `Array` for `deck` (`var deck: Array[String] = [\"2♦\", \"5♣\", \"8♥\", \"J♠\", \"K♥\"]`) and `hand`.",
+        "Use `deck.pop_back()` when the player clicks Draw to remove the top card from the draw pile and `hand.append(drawn)` to add it to their hand.",
+        "Use `discard_pile.back()` to display the current top card on `PreviewCard` in the center of the table."
       ],
       "keyTakeaways": [
         "`back()` reads the last element without removing it (perfect for inspecting the top of the discard pile).",
@@ -590,27 +590,26 @@
         }
       ],
       "verificationSteps": [
-        "Save `res://scripts/foundations_sandbox.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Arrays: Hands, Draw Pile & Discard Pile**."
+        "Press **F5** and click your card (or Draw button) — verify `deck.pop_back()` removes a card from the deck, appends it to your hand, and updates the on-screen card count (`Deck: 4 -> 3 -> 2`)!",
+        "Keep clicking until `deck` is empty — confirm `if not deck.is_empty():` prevents any crash when the draw pile hits `0` cards!"
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/foundations_sandbox.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Click a live 'Draw Card' button on your table to pop a card from the `deck` Array (`.pop_back()`) and watch a brand-new visual card appear in your hand!"
     },
     {
       "id": "l_00_07_dictionaries",
       "order": 7,
-      "title": "Dictionaries: Fast Rule & Label Lookups",
+      "title": "Crimson vs. Obsidian Suit Styling (`Dictionary` Lookups)",
       "targetFile": "res://scripts/foundations_sandbox.gd",
       "sceneTree": null,
       "editorSteps": [
-        "Define key-value lookup tables using curly braces `{ key: value }`.",
-        "Use `dict.get(key, default_value)` whenever a key might not be in the dictionary (like looking up penalty amounts for non-penalty ranks).",
-        "Use dictionaries to map enum integers to human-readable suit symbols (`♥`, `♦`, `♣`, `♠`) and rank labels (`\"J\"`, `\"Q\"`, `\"K\"`, `\"A\"`)."
+        "Define `const SUIT_SYMBOLS: Dictionary = { 0: \"♥\", 1: \"♦\", 2: \"♣\", 3: \"♠\" }`.",
+        "Define `const PENALTY_VALUES: Dictionary = { 2: 2, 3: 3, 15: 5 }` and look up values safely with `PENALTY_VALUES.get(rank, 0)`.",
+        "Apply red modulation (`#FF5A67`) for suits `0` and `1` and crisp silver-white (`#ECF2F8`) for suits `2` and `3` on your visual card labels!"
       ],
       "keyTakeaways": [
         "`dict.get(key, default)` safely returns `default` when `key` is missing, avoiding crashes.",
@@ -686,27 +685,26 @@
         }
       ],
       "verificationSteps": [
-        "Save `res://scripts/foundations_sandbox.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Dictionaries: Fast Rule & Label Lookups**."
+        "Press **F5** and verify that Hearts (`♥`) and Diamonds (`♦`) render in bright crimson red on your card face, while Clubs (`♣`) and Spades (`♠`) render in silver-white!",
+        "Check the Output panel to confirm `PENALTY_VALUES.get(7, 0)` safely returns `0` without crashing."
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/foundations_sandbox.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Your visual cards automatically paint Hearts (`♥`) and Diamonds (`♦`) in vibrant Crimson Red and Clubs (`♣`) and Spades (`♠`) in crisp Obsidian/Silver using `Dictionary` lookup tables!"
     },
     {
       "id": "l_00_08_classes",
       "order": 8,
-      "title": "Classes and Objects",
+      "title": "Packaging Cards into Reusable Objects (`class_name` & `RefCounted`)",
       "targetFile": "res://scripts/foundations_sandbox.gd",
       "sceneTree": null,
       "editorSteps": [
-        "Put `class_name ClassName` at the very top of a `.gd` file to register it globally across your Godot project.",
-        "Use `extends RefCounted` (or `extends Resource`) for data objects that don't live in the Scene Tree so Godot frees their memory automatically.",
-        "Define `_init(...)` when you want to pass arguments into `ClassName.new(...)`."
+        "Define a `Card` class (using `class Card extends RefCounted:` or `class_name CardData extends Resource`) with `suit: int` and `rank: int` properties.",
+        "Add `_init(s: int, r: int)` and helper methods like `is_penalty() -> bool` and `label() -> String`.",
+        "Instantiate `var card := Card.new(0, 2)` and bind its `label()` directly to your visual `PreviewCard` on screen!"
       ],
       "keyTakeaways": [
         "`class_name` registers your script as a first-class type across the entire Godot project.",
@@ -781,16 +779,15 @@
         }
       ],
       "verificationSteps": [
-        "Save `res://scripts/foundations_sandbox.gd` with **Ctrl+S** (or **Cmd+S** on macOS) and confirm there are no red syntax highlights in the Godot Script Editor.",
-        "Press **F5** (Run Project) or **F6** (Run Current Scene) to launch the Kadi game window.",
-        "Open the **Output** and **Debugger** tabs in Godot's bottom panel — verify your print logs appear in **Output** and that **Debugger -> Errors (0)** shows zero runtime errors.",
-        "Complete the hands-on **Practice Workbench** and **3-Question Quiz** at the bottom of this lesson to lock in **Classes and Objects**."
+        "Press **F5** and verify your visual card on screen displays the `Card` object's formatted label and penalty status.",
+        "Try typing `card.rankk` in the Script Editor — confirm Godot immediately flags the typo at edit time because `Card` is a typed class!"
       ],
       "troubleshootingTips": [
         "**Red error `Identifier not found` or `Unresolved reference`**: Make sure you saved `res://scripts/card_types.gd`, `res://scripts/card_data.gd`, and `res://scripts/rule_validator.gd` with their `class_name` declarations on Line 1, and registered `GameState` and `TurnManager` under **Project -> Project Settings -> Globals -> Autoload**.",
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/foundations_sandbox.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
-      ]
+      ],
+      "tangibleOutcome": "Your on-screen cards are now powered by real `Card` objects (`Card.new(0, 7)`) that know their own label, suit color, and Kadi penalty status!"
     }
   ],
   "debugChallenge": {
@@ -801,5 +798,6 @@
     "explanation": "Line 2 used `and` instead of `or`. In Kadi, a card is playable if it matches the top card's suit **OR** its rank. Using `and` required both suit and rank to be identical, blocking every normal move!",
     "buggyLineNumber": 2,
     "hint": "Look closely at line 2: does a legal play in Kadi require matching BOTH suit and rank, or EITHER suit or rank?"
-  }
+  },
+  "tangibleGoal": "A live Godot 4.3 window with a green felt tabletop where a visual Kadi playing card changes rank/suit colors, glows green/red for legal plays, lifts -14px when clicked, and fans out into a 4-card drawable hand."
 }

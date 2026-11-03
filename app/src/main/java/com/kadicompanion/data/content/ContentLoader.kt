@@ -80,7 +80,8 @@ private fun PhaseDto.toDomain(): TutorialPhase = TutorialPhase(
     verifiedAgainstGodotVersion = verifiedAgainstGodotVersion,
     projectFiles = projectFiles,
     sceneTreeBlueprint = sceneTreeBlueprint,
-    learningObjectives = learningObjectives
+    learningObjectives = learningObjectives,
+    tangibleGoal = tangibleGoal
 )
 
 private fun LessonDto.toDomain(phaseId: String): Lesson = Lesson(
@@ -93,6 +94,7 @@ private fun LessonDto.toDomain(phaseId: String): Lesson = Lesson(
     practicePrompt = practicePrompt?.toDomain(),
     quizQuestions = quizQuestions.map { it.toDomain(id) },
     targetFile = targetFile,
+    tangibleOutcome = tangibleOutcome,
     sceneTree = sceneTree,
     editorSteps = editorSteps,
     verificationSteps = verificationSteps,

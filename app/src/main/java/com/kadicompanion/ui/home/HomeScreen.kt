@@ -228,9 +228,9 @@ fun HomeScreen(
                 ) {
                     BentoActionTile(
                         modifier = Modifier.weight(1f),
-                        eyebrow = "ASSETS & MAP",
-                        title = "Blueprint & Assets",
-                        subtitle = "Downloaded card packs, res:// map & rule simulator",
+                        eyebrow = "LIVE TABLE & ASSETS",
+                        title = "Play Kadi & Blueprint",
+                        subtitle = "Play live Kadi table, downloaded packs & rule simulator",
                         icon = Icons.Outlined.Collections,
                         accent = MaterialTheme.colorScheme.secondary,
                         onClick = onOpenBlueprint

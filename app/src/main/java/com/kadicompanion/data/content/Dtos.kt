@@ -16,6 +16,7 @@ data class PhaseDto(
     val projectFiles: List<String> = emptyList(),
     val sceneTreeBlueprint: String? = null,
     val learningObjectives: List<String> = emptyList(),
+    val tangibleGoal: String? = null,
     val lessons: List<LessonDto>,
     val debugChallenge: DebugChallengeDto? = null
 )
@@ -26,6 +27,7 @@ data class LessonDto(
     val order: Int,
     val title: String,
     val targetFile: String? = null,
+    val tangibleOutcome: String? = null,
     val sceneTree: String? = null,
     val editorSteps: List<String> = emptyList(),
     val verificationSteps: List<String> = emptyList(),

@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Description
@@ -112,6 +113,7 @@ fun PhaseDetailScreen(
                                 order = phase.order,
                                 title = phase.title,
                                 summary = phase.summary,
+                                tangibleGoal = phase.tangibleGoal,
                                 completed = completedCount,
                                 total = phase.lessons.size,
                                 nextLessonTitle = nextUncompletedLesson?.title,
@@ -122,7 +124,7 @@ fun PhaseDetailScreen(
                             SectionHeader(
                                 title = "Module Syllabus",
                                 modifier = Modifier.padding(top = 6.dp),
-                                eyebrow = "${phase.lessons.size} GUIDED LESSONS",
+                                eyebrow = "${phase.lessons.size} TANGIBLE LESSONS",
                                 trailing = {
                                     Pill(
                                         text = "$completedCount/${phase.lessons.size} Done",
@@ -172,6 +174,7 @@ private fun ModuleHeaderCard(
     order: Int,
     title: String,
     summary: String,
+    tangibleGoal: String?,
     completed: Int,
     total: Int,
     nextLessonTitle: String?,
@@ -218,6 +221,32 @@ private fun ModuleHeaderCard(
             style = MaterialTheme.typography.bodyMedium,
             color = heroSub
         )
+        tangibleGoal?.let { goal ->
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFF34D399).copy(alpha = 0.16f),
+                border = BorderStroke(1.dp, Color(0xFF34D399).copy(alpha = 0.45f))
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFF6EE7B7),
+                        modifier = Modifier.size(16.dp).padding(top = 1.dp)
+                    )
+                    RichInlineText(
+                        text = "**Tangible Module Goal:** $goal",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = heroWhite,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
         LinearProgressIndicator(
             progress = { fraction },
             modifier = Modifier
@@ -336,6 +365,16 @@ private fun SyllabusLessonRow(
                     if (isNext) {
                         Pill(text = "Up Next", color = MaterialTheme.colorScheme.primary)
                     }
+                }
+
+                lesson.tangibleOutcome?.let { outcome ->
+                    RichInlineText(
+                        text = outcome,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 lesson.targetFile?.let { path ->

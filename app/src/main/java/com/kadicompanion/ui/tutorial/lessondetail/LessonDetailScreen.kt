@@ -3,6 +3,9 @@ package com.kadicompanion.ui.tutorial.lessondetail
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +35,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.BugReport
@@ -44,7 +49,9 @@ import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.ViewStream
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -68,12 +75,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -83,8 +92,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.R
 import com.kadicompanion.data.local.datastore.LessonLayoutMode
 import com.kadicompanion.domain.model.Lesson
+import com.kadicompanion.ui.common.CLUB
 import com.kadicompanion.ui.common.CodeBlock
+import com.kadicompanion.ui.common.DIAMOND
 import com.kadicompanion.ui.common.EmptyState
+import com.kadicompanion.ui.common.HEART
 import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.KadiCard
 import com.kadicompanion.ui.common.KadiTopBar
@@ -92,6 +104,7 @@ import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.MarkdownText
 import com.kadicompanion.ui.common.Pill
 import com.kadicompanion.ui.common.RichInlineText
+import com.kadicompanion.ui.common.SPADE
 import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
@@ -103,9 +116,9 @@ import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * Ultra-clean Lesson Studio:
+ * Tangible-First Lesson Studio:
+ * - Leads with a Tangible Milestone & Interactive Godot Card Preview card so the learner immediately sees and interacts with what they are building before reading code!
  * - Slim top bar (`KadiTopBar`) + single-row 34dp tab switcher so ~85% of the phone screen is dedicated to reading.
- * - Metadata chips (`Completed`, `~4 min`, copyable `res://...` file path) live at the top of the scroll area so they scroll out of the way as you read!
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -116,6 +129,7 @@ fun LessonDetailScreen(
     onNextLesson: (String) -> Unit,
     onDebugChallenge: (String) -> Unit,
     onTermClick: (String) -> Unit,
+    onOpenBlueprint: () -> Unit = {},
     vm: LessonDetailViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -156,7 +170,17 @@ fun LessonDetailScreen(
                 },
                 onBack = onBack,
                 actions = {
-                    // Toggle 1-Page vs 3-Tab right in the top bar actions to save vertical space!
+                    IconButton(
+                        onClick = onOpenBlueprint,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.SportsEsports,
+                            contentDescription = "Play Live Kadi Table",
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                     IconButton(
                         onClick = { singleScrollOverride = !singleScrollOverride },
                         modifier = Modifier.size(32.dp)
@@ -218,7 +242,6 @@ fun LessonDetailScreen(
                         0f
                     }
 
-                    // 2dp reading progress line
                     LinearProgressIndicator(
                         progress = { readFraction.coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth().height(2.dp),
@@ -259,7 +282,8 @@ fun LessonDetailScreen(
                             onTermClick = onTermClick,
                             onPractice = onPractice,
                             onQuiz = onQuiz,
-                            onDebugChallenge = { state.phaseId?.let(onDebugChallenge) }
+                            onDebugChallenge = { state.phaseId?.let(onDebugChallenge) },
+                            onOpenBlueprint = onOpenBlueprint
                         )
                     } else {
                         when (activeTab) {
@@ -269,7 +293,8 @@ fun LessonDetailScreen(
                                 scrollState = guideScroll,
                                 context = context,
                                 onTermClick = onTermClick,
-                                onSwitchToSteps = { activeTab = 1 }
+                                onSwitchToSteps = { activeTab = 1 },
+                                onOpenBlueprint = onOpenBlueprint
                             )
                             1 -> GodotStepsTab(
                                 lesson = lesson,
@@ -287,6 +312,208 @@ fun LessonDetailScreen(
                                 onQuiz = onQuiz,
                                 onDebugChallenge = { state.phaseId?.let(onDebugChallenge) }
                             )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Tangible Milestone & Interactive Godot Card Preview widget at the top of each lesson!
+ */
+@Composable
+private fun TangibleMilestoneStudioCard(
+    lesson: Lesson,
+    onTermClick: (String) -> Unit,
+    onOpenBlueprint: () -> Unit
+) {
+    var showInteractivePreview by rememberSaveable(lesson.id) { mutableStateOf(false) }
+    var cardLifted by rememberSaveable(lesson.id) { mutableStateOf(false) }
+    var sampleCardIndex by rememberSaveable(lesson.id) { mutableIntStateOf(0) }
+
+    val sampleCards = remember {
+        listOf(
+            Triple("7$HEART", HEART, "Answer Card · Legal Starter"),
+            Triple("Q$SPADE", SPADE, "Question Card · Pair with Answer"),
+            Triple("2$DIAMOND", DIAMOND, "Penalty +2 · Stack or Ace Cancel"),
+            Triple("J$CLUB", CLUB, "Jump Card · Skips Next Seat"),
+            Triple("K$HEART", HEART, "Kickback · Reverses Direction"),
+            Triple("A$SPADE", SPADE, "Wild Ace · Declares Next Suit")
+        )
+    }
+    val currentSample = sampleCards[sampleCardIndex % sampleCards.size]
+    val isRedSuit = currentSample.second == HEART || currentSample.second == DIAMOND
+    val liftDp by animateDpAsState(
+        targetValue = if (cardLifted) (-12).dp else 0.dp,
+        animationSpec = tween(durationMillis = 150),
+        label = "lessonCardPreviewLift"
+    )
+
+    val outcomeText = lesson.tangibleOutcome
+        ?: "Build and test `${lesson.targetFile ?: "this scene"}` in Godot 4.3 with **F5** to see your Kadi card table update live!"
+
+    KadiCard(accent = MaterialTheme.colorScheme.secondary) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                IconBubble(
+                    icon = Icons.Outlined.AutoAwesome,
+                    tint = MaterialTheme.colorScheme.secondary,
+                    size = 32.dp
+                )
+                Column {
+                    Text(
+                        text = "WHAT YOU'LL SEE ON SCREEN",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = "Tangible Godot 4.3 Outcome",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            Pill(
+                text = if (showInteractivePreview) "Hide Preview" else "Try Live Card",
+                color = MaterialTheme.colorScheme.primary,
+                icon = Icons.Outlined.TouchApp,
+                onClick = { showInteractivePreview = !showInteractivePreview }
+            )
+        }
+
+        RichInlineText(
+            text = outcomeText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            onTermClick = onTermClick
+        )
+
+        AnimatedVisibility(visible = showInteractivePreview) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xFF0E231C),
+                border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF081812), Color(0xFF0E291F))
+                            )
+                        )
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "INTERACTIVE CARD PREVIEW (TAP CARD!)",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6EE7B7)
+                        )
+                        Pill(
+                            text = "Play Full Table",
+                            color = Color(0xFF38BDF8),
+                            icon = Icons.Outlined.SportsEsports,
+                            onClick = onOpenBlueprint
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        // Tappable 84x120 Godot CardScene preview
+                        Box(
+                            modifier = Modifier
+                                .offset(y = liftDp)
+                                .size(width = 76.dp, height = 108.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (cardLifted) Color(0xFFFEFCE8) else Color(0xFFF8FAFC))
+                                .border(
+                                    width = if (cardLifted) 2.5.dp else 1.2.dp,
+                                    color = if (cardLifted) Color(0xFFFACC15) else Color(0xFFCBD5E1),
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .clickable { cardLifted = !cardLifted }
+                                .padding(7.dp)
+                        ) {
+                            val suitCol = if (isRedSuit) Color(0xFFE11D48) else Color(0xFF0F172A)
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = currentSample.first,
+                                    style = MaterialTheme.typography.labelLarge.copy(fontFamily = CodeFontFamily),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = suitCol
+                                )
+                                Text(
+                                    text = currentSample.second,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = suitCol,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Text(
+                                    text = if (cardLifted) "LIFTED" else "TAP ME",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 9.sp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF475569),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = currentSample.third,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "is_selected = $cardLifted\nposition.y = ${if (cardLifted) "-14.0" else "0.0"}\ncard_clicked.emit(self)",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                                color = Color(0xFFA7F3D0)
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Pill(
+                                    text = if (cardLifted) "Drop (0px)" else "Lift (-14px)",
+                                    color = Color(0xFFFACC15),
+                                    onClick = { cardLifted = !cardLifted }
+                                )
+                                Pill(
+                                    text = "Next Card",
+                                    color = Color(0xFF6EE7B7),
+                                    onClick = { sampleCardIndex += 1 }
+                                )
+                            }
                         }
                     }
                 }
@@ -455,7 +682,8 @@ private fun SingleScrollLessonContent(
     onTermClick: (String) -> Unit,
     onPractice: () -> Unit,
     onQuiz: () -> Unit,
-    onDebugChallenge: () -> Unit
+    onDebugChallenge: () -> Unit,
+    onOpenBlueprint: () -> Unit
 ) {
     val hPad = studioScreenPadding()
     val vGap = studioCardSpacing()
@@ -467,6 +695,12 @@ private fun SingleScrollLessonContent(
         verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
         LessonMetadataPillsRow(lesson = lesson, isCompleted = isCompleted, context = context)
+
+        TangibleMilestoneStudioCard(
+            lesson = lesson,
+            onTermClick = onTermClick,
+            onOpenBlueprint = onOpenBlueprint
+        )
 
         MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
 
@@ -552,7 +786,8 @@ private fun GuideAndCodeTab(
     scrollState: androidx.compose.foundation.ScrollState,
     context: Context,
     onTermClick: (String) -> Unit,
-    onSwitchToSteps: () -> Unit
+    onSwitchToSteps: () -> Unit,
+    onOpenBlueprint: () -> Unit
 ) {
     val hPad = studioScreenPadding()
     val vGap = studioCardSpacing()
@@ -564,6 +799,12 @@ private fun GuideAndCodeTab(
         verticalArrangement = Arrangement.spacedBy(vGap)
     ) {
         LessonMetadataPillsRow(lesson = lesson, isCompleted = isCompleted, context = context)
+
+        TangibleMilestoneStudioCard(
+            lesson = lesson,
+            onTermClick = onTermClick,
+            onOpenBlueprint = onOpenBlueprint
+        )
 
         MarkdownText(markdown = lesson.bodyMarkdown, onTermClick = onTermClick)
 
@@ -993,7 +1234,7 @@ private fun VerificationStudioCard(steps: List<String>, onTermClick: (String) ->
                     color = accent
                 )
                 Text(
-                    text = "Confirm your scene and script behave as expected",
+                    text = "Confirm your visual scene and script behave as expected",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
