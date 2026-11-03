@@ -352,7 +352,7 @@ private fun TimelinePhaseRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterVertizontally,
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.width(34.dp).fillMaxHeight()
         ) {
             Box(
