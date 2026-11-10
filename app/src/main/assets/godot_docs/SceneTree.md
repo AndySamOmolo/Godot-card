@@ -42,9 +42,11 @@ In the Kadi app `SceneTree` ties the flow together: the main menu calls `change_
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`SceneTree`)**: When configuring `SceneTree` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `SceneTree` offline. If your `SceneTree` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using SceneTree in Godot 4.3 Kadi
-func configure_scenetree_example(target: SceneTree) -> void:
-    assert(target != null, "SceneTree reference must be valid")
-    print("Configured SceneTree for Kadi table runtime")
+# Switching scenes, pausing the game, or awaiting a quick inline timer:
+func pause_and_return_to_menu() -> void:
+	get_tree().paused = true
+	await get_tree().create_timer(1.0, true).timeout
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 ```
 

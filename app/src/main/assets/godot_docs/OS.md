@@ -31,9 +31,10 @@ In the Kadi app `OS.has_feature("mobile")` switches the layout to touch-friendly
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`OS`)**: When configuring `OS` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `OS` offline. If your `OS` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using OS in Godot 4.3 Kadi
-func configure_os_example(target: OS) -> void:
-    assert(target != null, "OS reference must be valid")
-    print("Configured OS for Kadi table runtime")
+# Running automated self-tests only in debug builds via OS.is_debug_build():
+func _ready() -> void:
+	if OS.is_debug_build():
+		KadiSelfTest.run_all_tests()
+		print("Running on platform: ", OS.get_name())
 ```
 

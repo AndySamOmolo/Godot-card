@@ -122,7 +122,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "`RuleValidator.has_won()` checks all 5 official Kenyan Kadi win conditions (empty hand, prior Niko Kadi call, legal play, Answer-only finish, no cardless opponent)."
+      "tangibleOutcome": "`RuleValidator.has_won()` checks all 5 official Kenyan Kadi win conditions (empty hand, prior Niko Kadi call, legal play, Answer-only finish, no cardless opponent).",
+      "beyondKadi": "How **Multi-Clause Victory Conditions & Pre-Announcement Flags (`announced_kadi`)** transfer across genres:\n- **Boss Fight / Extraction Shooter**: Winning requires `boss_defeated and player_in_extraction_zone and timer_active and not player_downed`.\n- Naming each boolean clause in its own descriptive variable (`var hand_empty: bool = ...`) makes complex win/lose rules self-documenting and bug-free.",
+      "transferChallenge": "**Your Solo Challenge**: Add a helper `static func can_win_next_turn(hand: Array) -> bool:` in `rule_validator.gd` that checks if all cards currently in `hand` are Answer/Question cards that could be played in one move, and pulse `niko_button.modulate = Color(1.0, 0.85, 0.2)` to remind the player to call *\"Niko Kadi!\"*!"
     },
     {
       "id": "l_09_02_niko_button",
@@ -215,7 +217,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Click the `'Niko Kadi!'` button on your table to light up the gold `📢 You announced: NIKO KADI!` banner — and watch it auto-reset if you are forced to draw!"
+      "tangibleOutcome": "Click the `'Niko Kadi!'` button on your table to light up the gold `📢 You announced: NIKO KADI!` banner — and watch it auto-reset if you are forced to draw!",
+      "beyondKadi": "How **Multi-Clause Victory Conditions & Pre-Announcement Flags (`announced_kadi`)** transfer across genres:\n- **Boss Fight / Extraction Shooter**: Winning requires `boss_defeated and player_in_extraction_zone and timer_active and not player_downed`.\n- Naming each boolean clause in its own descriptive variable (`var hand_empty: bool = ...`) makes complex win/lose rules self-documenting and bug-free.",
+      "transferChallenge": "**Your Solo Challenge**: Add a helper `static func can_win_next_turn(hand: Array) -> bool:` in `rule_validator.gd` that checks if all cards currently in `hand` are Answer/Question cards that could be played in one move, and pulse `niko_button.modulate = Color(1.0, 0.85, 0.2)` to remind the player to call *\"Niko Kadi!\"*!"
     },
     {
       "id": "l_09_03_win_overlay",
@@ -305,7 +309,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Play your final Answer Card after announcing 'Niko Kadi!' in the previous round and watch the table display `🏆 PLAYER 1 WINS THE KADI MATCH!`"
+      "tangibleOutcome": "Play your final Answer Card after announcing 'Niko Kadi!' in the previous round and watch the table display `🏆 PLAYER 1 WINS THE KADI MATCH!`",
+      "beyondKadi": "How **Multi-Clause Victory Conditions & Pre-Announcement Flags (`announced_kadi`)** transfer across genres:\n- **Boss Fight / Extraction Shooter**: Winning requires `boss_defeated and player_in_extraction_zone and timer_active and not player_downed`.\n- Naming each boolean clause in its own descriptive variable (`var hand_empty: bool = ...`) makes complex win/lose rules self-documenting and bug-free.",
+      "transferChallenge": "**Your Solo Challenge**: Add a helper `static func can_win_next_turn(hand: Array) -> bool:` in `rule_validator.gd` that checks if all cards currently in `hand` are Answer/Question cards that could be played in one move, and pulse `niko_button.modulate = Color(1.0, 0.85, 0.2)` to remind the player to call *\"Niko Kadi!\"*!"
     }
   ],
   "debugChallenge": {

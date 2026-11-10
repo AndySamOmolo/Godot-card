@@ -119,7 +119,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Playing one Jack (`J`) skips the next player (`P1 -> P3`), and playing two Jacks in a combo skips two players (`P1 -> P4`)!"
+      "tangibleOutcome": "Playing one Jack (`J`) skips the next player (`P1 -> P3`), and playing two Jacks in a combo skips two players (`P1 -> P4`)!",
+      "beyondKadi": "How **Chain Resolution & Direction Vectors (`direction *= -1`)** transfer to real-time games:\n- **2D Platformer Patrol Enemies**: Flipping `direction *= -1` whenever an enemy touches a wall (`if is_on_wall(): direction *= -1`) is the exact same math as a Kickback King reversing turn order!\n- **Pinball / Breakout Bounce Physics**: Multiplying `velocity.x *= -1` or `velocity.y *= -1` on collision.",
+      "transferChallenge": "**Your Solo Challenge**: When one or more Kickback (`K`) or Jump (`J`) cards are played, display a temporary banner in `feedback_label.text` showing *which* seat was skipped or whether direction flipped to `↻ Clockwise` or `↺ Counter-Clockwise`!"
     },
     {
       "id": "l_07_02_kickback_direction",
@@ -212,7 +214,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Playing a King (`K`) reverses `TurnManager.direction` so play flows counter-clockwise (`P1 -> P4 -> P3 -> P2`)!"
+      "tangibleOutcome": "Playing a King (`K`) reverses `TurnManager.direction` so play flows counter-clockwise (`P1 -> P4 -> P3 -> P2`)!",
+      "beyondKadi": "How **Chain Resolution & Direction Vectors (`direction *= -1`)** transfer to real-time games:\n- **2D Platformer Patrol Enemies**: Flipping `direction *= -1` whenever an enemy touches a wall (`if is_on_wall(): direction *= -1`) is the exact same math as a Kickback King reversing turn order!\n- **Pinball / Breakout Bounce Physics**: Multiplying `velocity.x *= -1` or `velocity.y *= -1` on collision.",
+      "transferChallenge": "**Your Solo Challenge**: When one or more Kickback (`K`) or Jump (`J`) cards are played, display a temporary banner in `feedback_label.text` showing *which* seat was skipped or whether direction flipped to `↻ Clockwise` or `↺ Counter-Clockwise`!"
     },
     {
       "id": "l_07_03_jump_kickback_hud",
@@ -303,7 +307,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Your top `StatusLabel` dynamically displays `↻ CW` or `↺ CCW` and announces skipped players on `FeedbackLabel`!"
+      "tangibleOutcome": "Your top `StatusLabel` dynamically displays `↻ CW` or `↺ CCW` and announces skipped players on `FeedbackLabel`!",
+      "beyondKadi": "How **Chain Resolution & Direction Vectors (`direction *= -1`)** transfer to real-time games:\n- **2D Platformer Patrol Enemies**: Flipping `direction *= -1` whenever an enemy touches a wall (`if is_on_wall(): direction *= -1`) is the exact same math as a Kickback King reversing turn order!\n- **Pinball / Breakout Bounce Physics**: Multiplying `velocity.x *= -1` or `velocity.y *= -1` on collision.",
+      "transferChallenge": "**Your Solo Challenge**: When one or more Kickback (`K`) or Jump (`J`) cards are played, display a temporary banner in `feedback_label.text` showing *which* seat was skipped or whether direction flipped to `↻ Clockwise` or `↺ Counter-Clockwise`!"
     }
   ],
   "debugChallenge": {

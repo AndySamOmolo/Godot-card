@@ -124,7 +124,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Create `RuleValidator` (`res://scripts/rule_validator.gd`) so clicking 'Play Selected' checks if your card matches the discard pile's suit or rank (or is a wild Ace/Joker)."
+      "tangibleOutcome": "Create `RuleValidator` (`res://scripts/rule_validator.gd`) so clicking 'Play Selected' checks if your card matches the discard pile's suit or rank (or is a wild Ace/Joker).",
+      "beyondKadi": "How **Static Rule Engines (`RuleValidator`) & `match` Pattern Matching** transfer to any game:\n- Separating pure rules (`RuleValidator`) from visual nodes (`Table.gd`) is **Model-View-Controller (MVC)** architecture. In a **Chess, Puzzle, or Strategy game**, keeping board validation in a static class lets AI opponents test 100 candidate moves in memory without moving a single sprite on screen!\n- `match` statements cleanly route input actions, item IDs, or state machine states without deep `if/elif` chains.",
+      "transferChallenge": "**Your Solo Challenge**: Add a static helper `static func get_playable_cards_in_hand(hand: Array, top: CardData, penalty: int, suit_demand: int) -> Array[CardData]:` to `rule_validator.gd` that returns all cards in `hand` where `is_single_card_playable()` is `true`, and use it in `table.gd` to subtly glow legal cards in Player 0's hand!"
     },
     {
       "id": "l_04_02_drawing_invalid",
@@ -218,7 +220,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Try playing a non-matching card on purpose — watch `Table.gd` reject the move, deal you +1 penalty card into your hand, and announce the penalty on `FeedbackLabel`!"
+      "tangibleOutcome": "Try playing a non-matching card on purpose — watch `Table.gd` reject the move, deal you +1 penalty card into your hand, and announce the penalty on `FeedbackLabel`!",
+      "beyondKadi": "How **Static Rule Engines (`RuleValidator`) & `match` Pattern Matching** transfer to any game:\n- Separating pure rules (`RuleValidator`) from visual nodes (`Table.gd`) is **Model-View-Controller (MVC)** architecture. In a **Chess, Puzzle, or Strategy game**, keeping board validation in a static class lets AI opponents test 100 candidate moves in memory without moving a single sprite on screen!\n- `match` statements cleanly route input actions, item IDs, or state machine states without deep `if/elif` chains.",
+      "transferChallenge": "**Your Solo Challenge**: Add a static helper `static func get_playable_cards_in_hand(hand: Array, top: CardData, penalty: int, suit_demand: int) -> Array[CardData]:` to `rule_validator.gd` that returns all cards in `hand` where `is_single_card_playable()` is `true`, and use it in `table.gd` to subtly glow legal cards in Player 0's hand!"
     },
     {
       "id": "l_04_03_multi_card_combos",
@@ -309,7 +313,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Stage two or three cards of the same rank (e.g. `7♥` + `7♠`) in your hand and play them together in a single explosive combo move!"
+      "tangibleOutcome": "Stage two or three cards of the same rank (e.g. `7♥` + `7♠`) in your hand and play them together in a single explosive combo move!",
+      "beyondKadi": "How **Static Rule Engines (`RuleValidator`) & `match` Pattern Matching** transfer to any game:\n- Separating pure rules (`RuleValidator`) from visual nodes (`Table.gd`) is **Model-View-Controller (MVC)** architecture. In a **Chess, Puzzle, or Strategy game**, keeping board validation in a static class lets AI opponents test 100 candidate moves in memory without moving a single sprite on screen!\n- `match` statements cleanly route input actions, item IDs, or state machine states without deep `if/elif` chains.",
+      "transferChallenge": "**Your Solo Challenge**: Add a static helper `static func get_playable_cards_in_hand(hand: Array, top: CardData, penalty: int, suit_demand: int) -> Array[CardData]:` to `rule_validator.gd` that returns all cards in `hand` where `is_single_card_playable()` is `true`, and use it in `table.gd` to subtly glow legal cards in Player 0's hand!"
     }
   ],
   "debugChallenge": {

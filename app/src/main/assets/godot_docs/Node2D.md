@@ -44,9 +44,11 @@ In the Kadi project the playing field is a `Node2D`. Each card sprite is a [[Spr
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Node2D`)**: When configuring `Node2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Node2D` offline. If your `Node2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Node2D in Godot 4.3 Kadi
-func configure_node2d_example(target: Node2D) -> void:
-    assert(target != null, "Node2D reference must be valid")
-    print("Configured Node2D for Kadi table runtime")
+# Moving, rotating, and scaling 2D world objects in global or local space:
+extends Node2D
+
+func move_toward_target(target_pos: Vector2, speed: float, delta: float) -> void:
+	global_position = global_position.move_toward(target_pos, speed * delta)
+	look_at(target_pos)
 ```
 

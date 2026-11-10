@@ -39,9 +39,11 @@ In the Kadi learning app a `ScrollContainer` wraps the long-form tutorial text f
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`ScrollContainer`)**: When configuring `ScrollContainer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ScrollContainer` offline. If your `ScrollContainer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using ScrollContainer in Godot 4.3 Kadi
-func configure_scrollcontainer_example(target: ScrollContainer) -> void:
-    assert(target != null, "ScrollContainer reference must be valid")
-    print("Configured ScrollContainer for Kadi table runtime")
+# Auto-scrolling a match history log or card collection to the bottom:
+@onready var scroll_box: ScrollContainer = $ScrollContainer
+
+func scroll_to_bottom_next_frame() -> void:
+	await get_tree().process_frame
+	scroll_box.scroll_vertical = int(scroll_box.get_v_scroll_bar().max_value)
 ```
 

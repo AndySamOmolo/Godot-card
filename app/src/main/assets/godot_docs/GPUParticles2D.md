@@ -40,9 +40,11 @@ In the Kadi app `GPUParticles2D` provides the flashy feedback: a golden sparkle 
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`GPUParticles2D`)**: When configuring `GPUParticles2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `GPUParticles2D` offline. If your `GPUParticles2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using GPUParticles2D in Godot 4.3 Kadi
-func configure_gpuparticles2d_example(target: GPUParticles2D) -> void:
-    assert(target != null, "GPUParticles2D reference must be valid")
-    print("Configured GPUParticles2D for Kadi table runtime")
+# Triggering GPU-accelerated particle bursts for card plays or spell impacts:
+@onready var sparks: GPUParticles2D = $SparksParticles
+
+func emit_burst_at(pos: Vector2) -> void:
+	sparks.global_position = pos
+	sparks.restart()
 ```
 

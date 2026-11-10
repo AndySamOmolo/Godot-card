@@ -50,9 +50,10 @@ In the Kadi app `Engine.is_editor_hint()` guards the dealer so cards aren't actu
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Engine`)**: When configuring `Engine` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Engine` offline. If your `Engine` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Engine in Godot 4.3 Kadi
-func configure_engine_example(target: Engine) -> void:
-    assert(target != null, "Engine reference must be valid")
-    print("Configured Engine for Kadi table runtime")
+# Adjusting slow-motion time_scale for dramatic game-winning moments:
+func trigger_victory_slowmo() -> void:
+	Engine.time_scale = 0.35
+	await get_tree().create_timer(0.4).timeout
+	Engine.time_scale = 1.0
 ```
 

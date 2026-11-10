@@ -40,9 +40,12 @@ In the Kadi app `TextureButton` renders the fully-illustrated action controls: t
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`TextureButton`)**: When configuring `TextureButton` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `TextureButton` offline. If your `TextureButton` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using TextureButton in Godot 4.3 Kadi
-func configure_texturebutton_example(target: TextureButton) -> void:
-    assert(target != null, "TextureButton reference must be valid")
-    print("Configured TextureButton for Kadi table runtime")
+# Using downloaded normal/pressed/hover PNG skins on an interactive button:
+@onready var deck_btn: TextureButton = $DrawDeckButton
+
+func setup_deck_button(card_back_tex: Texture2D) -> void:
+	deck_btn.texture_normal = card_back_tex
+	deck_btn.ignore_texture_size = true
+	deck_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 ```
 

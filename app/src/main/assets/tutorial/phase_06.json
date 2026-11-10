@@ -121,7 +121,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "`RuleValidator` identifies Question Cards (`Q`, `8`) and Answer Cards (`4, 5, 6, 7, 9, 10, A`) with null-safe helper functions."
+      "tangibleOutcome": "`RuleValidator` identifies Question Cards (`Q`, `8`) and Answer Cards (`4, 5, 6, 7, 9, 10, A`) with null-safe helper functions.",
+      "beyondKadi": "How **Function Composition & Sequence Validation (`validate_question_chain`)** transfer to other games:\n- **Fighting / Action RPG Combo Chains**: Validating that a sequence of button inputs (`Light -> Light -> Heavy`) forms a legal special move.\n- **Card / Puzzle Crafting**: Checking that each link in a chain of tiles or spells satisfies the adjacent element rule.",
+      "transferChallenge": "**Your Solo Challenge**: Write a helper `static func describe_qa_combo(cards: Array) -> String:` in `rule_validator.gd` that returns `\"Question + Answer Combo (%d cards)!\" % cards.size()` whenever `cards[0]` is a Question card (`8` or `Q`), and show it in `feedback_label.text` when played!"
     },
     {
       "id": "l_06_02_qa_chains",
@@ -220,7 +222,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Stage `Q♥` + `7♥` together in your hand and click `Play Selected (2)` to execute a legal Question + Answer combo on screen!"
+      "tangibleOutcome": "Stage `Q♥` + `7♥` together in your hand and click `Play Selected (2)` to execute a legal Question + Answer combo on screen!",
+      "beyondKadi": "How **Function Composition & Sequence Validation (`validate_question_chain`)** transfer to other games:\n- **Fighting / Action RPG Combo Chains**: Validating that a sequence of button inputs (`Light -> Light -> Heavy`) forms a legal special move.\n- **Card / Puzzle Crafting**: Checking that each link in a chain of tiles or spells satisfies the adjacent element rule.",
+      "transferChallenge": "**Your Solo Challenge**: Write a helper `static func describe_qa_combo(cards: Array) -> String:` in `rule_validator.gd` that returns `\"Question + Answer Combo (%d cards)!\" % cards.size()` whenever `cards[0]` is a Question card (`8` or `Q`), and show it in `feedback_label.text` when played!"
     },
     {
       "id": "l_06_03_ai_qa_pairs",
@@ -310,7 +314,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "AI opponents now scan their hands for valid `Question + Answer` pairs and play 2-card Q+A combos onto the table during their turns!"
+      "tangibleOutcome": "AI opponents now scan their hands for valid `Question + Answer` pairs and play 2-card Q+A combos onto the table during their turns!",
+      "beyondKadi": "How **Function Composition & Sequence Validation (`validate_question_chain`)** transfer to other games:\n- **Fighting / Action RPG Combo Chains**: Validating that a sequence of button inputs (`Light -> Light -> Heavy`) forms a legal special move.\n- **Card / Puzzle Crafting**: Checking that each link in a chain of tiles or spells satisfies the adjacent element rule.",
+      "transferChallenge": "**Your Solo Challenge**: Write a helper `static func describe_qa_combo(cards: Array) -> String:` in `rule_validator.gd` that returns `\"Question + Answer Combo (%d cards)!\" % cards.size()` whenever `cards[0]` is a Question card (`8` or `Q`), and show it in `feedback_label.text` when played!"
     }
   ],
   "debugChallenge": {

@@ -41,9 +41,11 @@ In the Kadi app `Color` drives visual feedback: a legal card is tinted white whi
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Color`)**: When configuring `Color` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Color` offline. If your `Color` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Color in Godot 4.3 Kadi
-func configure_color_example(target: Color) -> void:
-    assert(target != null, "Color reference must be valid")
-    print("Configured Color for Kadi table runtime")
+# Creating colors via hex codes, RGBA floats, and linear interpolation (lerp):
+const FELT_GREEN: Color = Color("#0E231C")
+const CRIMSON_SUIT: Color = Color(0.95, 0.22, 0.30, 1.0)
+
+func pulse_warning_color(t: float) -> Color:
+	return Color.WHITE.lerp(CRIMSON_SUIT, t)
 ```
 

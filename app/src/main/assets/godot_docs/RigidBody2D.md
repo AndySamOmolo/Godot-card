@@ -43,9 +43,11 @@ In the Kadi app `RigidBody2D` is not used for normal card handling — that is d
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`RigidBody2D`)**: When configuring `RigidBody2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `RigidBody2D` offline. If your `RigidBody2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using RigidBody2D in Godot 4.3 Kadi
-func configure_rigidbody2d_example(target: RigidBody2D) -> void:
-    assert(target != null, "RigidBody2D reference must be valid")
-    print("Configured RigidBody2D for Kadi table runtime")
+# Launching a physics-driven coin, dice, or crate with an impulse:
+@onready var token_body: RigidBody2D = $PhysicsToken
+
+func toss_token_upward() -> void:
+	token_body.apply_central_impulse(Vector2(randf_range(-120.0, 120.0), -380.0))
+	token_body.apply_torque_impulse(450.0)
 ```
 

@@ -54,9 +54,19 @@ In the Kadi app an `AnimationPlayer` on the table node drives the dealing montag
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`AnimationPlayer`)**: When configuring `AnimationPlayer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AnimationPlayer` offline. If your `AnimationPlayer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using AnimationPlayer in Godot 4.3 Kadi
-func configure_animationplayer_example(target: AnimationPlayer) -> void:
-    assert(target != null, "AnimationPlayer reference must be valid")
-    print("Configured AnimationPlayer for Kadi table runtime")
+# 1. In Kadi: Playing a keyframed deal or victory banner animation
+@onready var anim: AnimationPlayer = $AnimationPlayer
+
+func play_victory_intro() -> void:
+	anim.play("victory_banner_drop")
+	await anim.animation_finished
+	print("Banner finished animating!")
+
+# 2. In a 2D Platformer / RPG: Switching character sprite animations by velocity
+func update_character_anim(velocity: Vector2) -> void:
+	if velocity.length() > 10.0:
+		anim.play("run")
+	else:
+		anim.play("idle")
 ```
 

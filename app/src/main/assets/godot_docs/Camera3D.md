@@ -49,9 +49,10 @@ The Kadi app is built in 2D, so `Camera3D` is shown here for completeness. Learn
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Camera3D`)**: When configuring `Camera3D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Camera3D` offline. If your `Camera3D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Camera3D in Godot 4.3 Kadi
-func configure_camera3d_example(target: Camera3D) -> void:
-    assert(target != null, "Camera3D reference must be valid")
-    print("Configured Camera3D for Kadi table runtime")
+# Positioning and aiming a 3D perspective camera at a tabletop center:
+@onready var cam3d: Camera3D = $Camera3D
+
+func focus_table_center() -> void:
+	cam3d.look_at_from_position(Vector3(0, 6, 8), Vector3.ZERO, Vector3.UP)
 ```
 

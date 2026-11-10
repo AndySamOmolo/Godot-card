@@ -45,9 +45,11 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Quiz
+import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.StarBorder
@@ -116,9 +118,9 @@ import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
 
 /**
- * Tangible-First Lesson Studio:
+ * Tangible-First & Solo-Builder Lesson Studio:
  * - Leads with a Tangible Milestone & Interactive Godot Card Preview card so the learner immediately sees and interacts with what they are building before reading code!
- * - Slim top bar (`KadiTopBar`) + single-row 34dp tab switcher so ~85% of the phone screen is dedicated to reading.
+ * - Includes "Beyond Kadi: Cross-Genre Game Dev Transfer" and "Solo Builder Challenge (No Hand-Holding)" cards in every lesson so the learner can build any game or upgrade Kadi on their own.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -176,7 +178,7 @@ fun LessonDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.SportsEsports,
-                            contentDescription = "Play Live Kadi Table",
+                            contentDescription = "Play Live Kadi Table & New Game Architect",
                             tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -310,7 +312,8 @@ fun LessonDetailScreen(
                                 onTermClick = onTermClick,
                                 onPractice = onPractice,
                                 onQuiz = onQuiz,
-                                onDebugChallenge = { state.phaseId?.let(onDebugChallenge) }
+                                onDebugChallenge = { state.phaseId?.let(onDebugChallenge) },
+                                onOpenBlueprint = onOpenBlueprint
                             )
                         }
                     }
@@ -442,7 +445,6 @@ private fun TangibleMilestoneStudioCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        // Tappable 84x120 Godot CardScene preview
                         Box(
                             modifier = Modifier
                                 .offset(y = liftDp)
@@ -519,6 +521,104 @@ private fun TangibleMilestoneStudioCard(
                 }
             }
         }
+    }
+}
+
+/**
+ * Shows how the exact concept taught in this Kadi lesson applies to making ANY other game genre in Godot 4.3!
+ */
+@Composable
+private fun BeyondKadiTransferCard(
+    beyondKadi: String,
+    onTermClick: (String) -> Unit,
+    onOpenBlueprint: () -> Unit
+) {
+    val accent = MaterialTheme.colorScheme.secondary
+    KadiCard(accent = accent) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                IconBubble(icon = Icons.Outlined.Explore, tint = accent, size = 34.dp)
+                Column {
+                    Text(
+                        text = "BEYOND KADI · CROSS-GENRE GAME DEV",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = accent
+                    )
+                    Text(
+                        text = "How You'll Use This in Any New Game",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            Pill(
+                text = "New Game Architect",
+                color = MaterialTheme.colorScheme.primary,
+                onClick = onOpenBlueprint
+            )
+        }
+        MarkdownText(markdown = beyondKadi, onTermClick = onTermClick)
+    }
+}
+
+/**
+ * Interactive Solo Builder Challenge (No Tutorial Hand-Holding) card so the learner practices
+ * building modifications and features independently right inside Godot 4.3!
+ */
+@Composable
+private fun SoloTransferChallengeCard(
+    lessonId: String,
+    challengeMarkdown: String,
+    onTermClick: (String) -> Unit
+) {
+    var challengeCompleted by rememberSaveable(lessonId) { mutableStateOf(false) }
+    val success = successColor()
+    val accent = if (challengeCompleted) success else MaterialTheme.colorScheme.tertiary
+
+    KadiCard(accent = accent) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                IconBubble(icon = Icons.Outlined.RocketLaunch, tint = accent, size = 34.dp)
+                Column {
+                    Text(
+                        text = "SOLO BUILDER CHALLENGE · NO HAND-HOLDING",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = accent
+                    )
+                    Text(
+                        text = "Build & Extend This On Your Own",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            Pill(
+                text = if (challengeCompleted) "Built Solo ✓" else "Mark Done",
+                color = accent,
+                onClick = { challengeCompleted = !challengeCompleted }
+            )
+        }
+        MarkdownText(markdown = challengeMarkdown, onTermClick = onTermClick)
     }
 }
 
@@ -711,6 +811,14 @@ private fun SingleScrollLessonContent(
             }
         }
 
+        lesson.beyondKadi?.let { transfer ->
+            BeyondKadiTransferCard(
+                beyondKadi = transfer,
+                onTermClick = onTermClick,
+                onOpenBlueprint = onOpenBlueprint
+            )
+        }
+
         lesson.sceneTree?.let { tree ->
             SceneTreeBlueprintCard(sceneTree = tree)
         }
@@ -733,6 +841,14 @@ private fun SingleScrollLessonContent(
 
         if (lesson.keyTakeaways.isNotEmpty()) {
             KeyTakeawaysStudioCard(takeaways = lesson.keyTakeaways, onTermClick = onTermClick)
+        }
+
+        lesson.transferChallenge?.let { challenge ->
+            SoloTransferChallengeCard(
+                lessonId = lesson.id,
+                challengeMarkdown = challenge,
+                onTermClick = onTermClick
+            )
         }
 
         SectionHeader(title = "Interactive Exercises", eyebrow = "HANDS-ON LABS")
@@ -818,6 +934,14 @@ private fun GuideAndCodeTab(
                     CodeBlock(snippet = snippet)
                 }
             }
+        }
+
+        lesson.beyondKadi?.let { transfer ->
+            BeyondKadiTransferCard(
+                beyondKadi = transfer,
+                onTermClick = onTermClick,
+                onOpenBlueprint = onOpenBlueprint
+            )
         }
 
         if (lesson.editorSteps.isNotEmpty() || lesson.sceneTree != null) {
@@ -921,7 +1045,7 @@ private fun GodotStepsTab(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Open Lab to practice GDScript and take the lesson quiz",
+                        text = "Open Lab for your Solo Builder Challenge, Code Practice & Quiz",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -947,7 +1071,8 @@ private fun LabAndQuizTab(
     onTermClick: (String) -> Unit,
     onPractice: () -> Unit,
     onQuiz: () -> Unit,
-    onDebugChallenge: () -> Unit
+    onDebugChallenge: () -> Unit,
+    onOpenBlueprint: () -> Unit
 ) {
     val hPad = studioScreenPadding()
     val vGap = studioCardSpacing()
@@ -960,6 +1085,22 @@ private fun LabAndQuizTab(
     ) {
         if (lesson.keyTakeaways.isNotEmpty()) {
             KeyTakeawaysStudioCard(takeaways = lesson.keyTakeaways, onTermClick = onTermClick)
+        }
+
+        lesson.beyondKadi?.let { transfer ->
+            BeyondKadiTransferCard(
+                beyondKadi = transfer,
+                onTermClick = onTermClick,
+                onOpenBlueprint = onOpenBlueprint
+            )
+        }
+
+        lesson.transferChallenge?.let { challenge ->
+            SoloTransferChallengeCard(
+                lessonId = lesson.id,
+                challengeMarkdown = challenge,
+                onTermClick = onTermClick
+            )
         }
 
         SectionHeader(

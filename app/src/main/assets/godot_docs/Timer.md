@@ -38,9 +38,15 @@ In the Kadi app a `Timer` paces the AI: when it becomes a CPU player's turn the 
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Timer`)**: When configuring `Timer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Timer` offline. If your `Timer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Timer in Godot 4.3 Kadi
-func configure_timer_example(target: Timer) -> void:
-    assert(target != null, "Timer reference must be valid")
-    print("Configured Timer for Kadi table runtime")
+# Pacing AI opponent turns or weapon cooldowns with a one-shot Timer node:
+@onready var ai_timer: Timer = $AITurnTimer
+
+func _ready() -> void:
+	ai_timer.wait_time = 0.75
+	ai_timer.one_shot = true
+	ai_timer.timeout.connect(_on_ai_timer_timeout)
+
+func _on_ai_timer_timeout() -> void:
+	print("AI timer finished -> executing AI move!")
 ```
 

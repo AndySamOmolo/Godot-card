@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -97,7 +98,7 @@ fun PracticeScreen(
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
-        topBar = { KadiTopBar(title = "Practice Workbench", subtitle = "INTERACTIVE EXERCISE", onBack = onBack) }
+        topBar = { KadiTopBar(title = "Practice Workbench", subtitle = "GUIDED & SOLO GDSCRIPT LAB", onBack = onBack) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
@@ -136,9 +137,10 @@ fun PracticeScreen(
                                     )
                                 }
                                 Pill(
-                                    text = "GDScript 4.3",
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    icon = Icons.Outlined.Bolt
+                                    text = if (state.soloMode) "Solo Mode" else "Guided Mode",
+                                    color = if (state.soloMode) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary,
+                                    icon = if (state.soloMode) Icons.Outlined.RocketLaunch else Icons.Outlined.Bolt,
+                                    onClick = vm::toggleSoloMode
                                 )
                             }
                             RichInlineText(
@@ -200,10 +202,21 @@ fun PracticeScreen(
                             }
                         }
 
-                        SectionHeader(title = "Interactive GDScript Editor", eyebrow = "WRITE & CHECK YOUR CODE")
+                        SectionHeader(
+                            title = "Interactive GDScript Editor",
+                            eyebrow = "WRITE & CHECK YOUR CODE",
+                            trailing = {
+                                Pill(
+                                    text = if (state.soloMode) "Switch to Guided" else "Try Solo (No Starter)",
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    onClick = vm::toggleSoloMode
+                                )
+                            }
+                        )
 
                         InteractiveEditorPanel(
                             code = state.userCode,
+                            soloMode = state.soloMode,
                             onCodeChange = vm::updateUserCode,
                             onInsertToken = vm::insertToken,
                             onReset = vm::resetCode
@@ -249,7 +262,7 @@ fun PracticeScreen(
                                         size = 34.dp
                                     )
                                     Text(
-                                        text = if (passed) "CHECK PASSED · LESSON MARKED COMPLETE!" else "KEEP TWEAKING",
+                                        text = if (passed) "CHECK PASSED · LESSON MARKED COMPLETE!" else "GDSCRIPT DIAGNOSTICS",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = accent
@@ -260,6 +273,20 @@ fun PracticeScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
+                                if (state.syntaxWarnings.isNotEmpty()) {
+                                    Column(
+                                        modifier = Modifier.padding(top = 6.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        state.syntaxWarnings.forEach { warn ->
+                                            RichInlineText(
+                                                text = "• $warn",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    }
+                                }
                                 if (passed && state.nextLessonId != null && onNextLesson != null) {
                                     Button(
                                         onClick = { onNextLesson(state.nextLessonId!!) },
@@ -300,6 +327,7 @@ private val QUICK_TOKENS = listOf(
 @Composable
 private fun InteractiveEditorPanel(
     code: String,
+    soloMode: Boolean,
     onCodeChange: (String) -> Unit,
     onInsertToken: (String) -> Unit,
     onReset: () -> Unit
@@ -332,7 +360,7 @@ private fun InteractiveEditorPanel(
                 modifier = Modifier.size(15.dp)
             )
             Text(
-                text = "GDSCRIPT WORKBENCH",
+                text = if (soloMode) "GDSCRIPT WORKBENCH · SOLO SCRATCHPAD" else "GDSCRIPT WORKBENCH · GUIDED",
                 style = MaterialTheme.typography.labelSmall,
                 fontFamily = CodeFontFamily,
                 fontWeight = FontWeight.Bold,
@@ -342,7 +370,7 @@ private fun InteractiveEditorPanel(
             IconButton(onClick = onReset, modifier = Modifier.size(32.dp)) {
                 Icon(
                     Icons.Outlined.Refresh,
-                    contentDescription = "Reset starter code",
+                    contentDescription = "Reset code",
                     tint = quiet,
                     modifier = Modifier.size(16.dp)
                 )

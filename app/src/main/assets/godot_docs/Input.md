@@ -48,9 +48,10 @@ In the Kadi app `Input` is used for continuous checks rather than per-event hand
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Input`)**: When configuring `Input` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Input` offline. If your `Input` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Input in Godot 4.3 Kadi
-func configure_input_example(target: Input) -> void:
-    assert(target != null, "Input reference must be valid")
-    print("Configured Input for Kadi table runtime")
+# Polling real-time movement vectors and action presses in Platformers, RPGs & Shooters:
+func read_player_commands() -> void:
+	var move_vec: Vector2 = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	if Input.is_action_just_pressed("ui_accept"):
+		print("Jump or Confirm triggered! Move vector: ", move_vec)
 ```
 

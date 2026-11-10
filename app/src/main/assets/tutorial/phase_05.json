@@ -118,7 +118,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Playing a `2`, `3`, or `Joker` increments `GameState.penalty_stack` by `+2`, `+3`, or `+5` and displays `Penalty: +N` live in `StatusLabel`!"
+      "tangibleOutcome": "Playing a `2`, `3`, or `Joker` increments `GameState.penalty_stack` by `+2`, `+3`, or `+5` and displays `Penalty: +N` live in `StatusLabel`!",
+      "beyondKadi": "How **The Accumulator Pattern (`penalty_stack`) & Counter-Moves** transfer across genres:\n- **Action / Fighting Games**: Combo hit counters (`combo_damage += hit_value`) and parry/block counters (pressing Parry cancels incoming damage just like an Ace cancels a Kadi penalty stack!).\n- **Roguelike Status Stacks**: Poison, Burn, or Bleed stacks that accumulate each turn unless cleansed by a potion.",
+      "transferChallenge": "**Your Solo Challenge**: Add a visual warning tint on `Table.tscn`: whenever `GameState.penalty_stack > 0`, tint `status_label.modulate = Color(1.0, 0.45, 0.45)` (coral red) so the player immediately sees danger; reset it to `Color.WHITE` when `penalty_stack == 0`!"
     },
     {
       "id": "l_05_02_countering",
@@ -209,7 +211,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/rule_validator.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "When facing an active penalty stack, play a same-rank Penalty Card to forward the stack (`+2 -> +4`) or play an Ace (`A`) to cancel the penalty back to `0`!"
+      "tangibleOutcome": "When facing an active penalty stack, play a same-rank Penalty Card to forward the stack (`+2 -> +4`) or play an Ace (`A`) to cancel the penalty back to `0`!",
+      "beyondKadi": "How **The Accumulator Pattern (`penalty_stack`) & Counter-Moves** transfer across genres:\n- **Action / Fighting Games**: Combo hit counters (`combo_damage += hit_value`) and parry/block counters (pressing Parry cancels incoming damage just like an Ace cancels a Kadi penalty stack!).\n- **Roguelike Status Stacks**: Poison, Burn, or Bleed stacks that accumulate each turn unless cleansed by a potion.",
+      "transferChallenge": "**Your Solo Challenge**: Add a visual warning tint on `Table.tscn`: whenever `GameState.penalty_stack > 0`, tint `status_label.modulate = Color(1.0, 0.45, 0.45)` (coral red) so the player immediately sees danger; reset it to `Color.WHITE` when `penalty_stack == 0`!"
     },
     {
       "id": "l_05_03_penalty_ui_ai",
@@ -301,7 +305,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Watch AI opponents automatically counter your Penalty Cards with their own matching Penalty Card or Ace, or pick up the full penalty stack when they cannot counter!"
+      "tangibleOutcome": "Watch AI opponents automatically counter your Penalty Cards with their own matching Penalty Card or Ace, or pick up the full penalty stack when they cannot counter!",
+      "beyondKadi": "How **The Accumulator Pattern (`penalty_stack`) & Counter-Moves** transfer across genres:\n- **Action / Fighting Games**: Combo hit counters (`combo_damage += hit_value`) and parry/block counters (pressing Parry cancels incoming damage just like an Ace cancels a Kadi penalty stack!).\n- **Roguelike Status Stacks**: Poison, Burn, or Bleed stacks that accumulate each turn unless cleansed by a potion.",
+      "transferChallenge": "**Your Solo Challenge**: Add a visual warning tint on `Table.tscn`: whenever `GameState.penalty_stack > 0`, tint `status_label.modulate = Color(1.0, 0.45, 0.45)` (coral red) so the player immediately sees danger; reset it to `Color.WHITE` when `penalty_stack == 0`!"
     }
   ],
   "debugChallenge": {

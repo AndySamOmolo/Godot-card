@@ -11,6 +11,8 @@ data class Lesson(
     val quizQuestions: List<QuizQuestion> = emptyList(),
     val targetFile: String? = null,
     val tangibleOutcome: String? = null,
+    val beyondKadi: String? = null,
+    val transferChallenge: String? = null,
     val sceneTree: String? = null,
     val editorSteps: List<String> = emptyList(),
     val verificationSteps: List<String> = emptyList(),

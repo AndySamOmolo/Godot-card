@@ -1,216 +1,8 @@
 {
   "terms": [
     {
-      "term": "Variable",
-      "shortDefinition": "A named container that holds one value, which can be read or changed while the program runs. In GDScript you declare one with `var name = value`.",
-      "relatedLessonIds": [
-        "l_00_01_variables"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "String",
-      "shortDefinition": "A piece of text, written between quotes, e.g. `\"Niko Kadi\"`. It stores words, labels, and messages shown to the player.",
-      "relatedLessonIds": [
-        "l_00_01_variables"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "int",
-      "shortDefinition": "A whole-number type with no decimal point, e.g. `7` or `-3`. Used for card ranks, player counts, and array indexes.",
-      "relatedLessonIds": [
-        "l_00_01_variables",
-        "l_01_01_enums"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "float",
-      "shortDefinition": "A number that can have a fractional part, e.g. `0.5` or `3.14`. Used for timing, animation progress, and smooth motion.",
-      "relatedLessonIds": [
-        "l_00_01_variables",
-        "l_11_01_tweens"
-      ],
-      "relatedDocClassNames": [
-        "Tween"
-      ]
-    },
-    {
-      "term": "bool",
-      "shortDefinition": "A value that is either `true` or `false`. Used to track states like whose turn it is or whether a card is playable.",
-      "relatedLessonIds": [
-        "l_00_02_operators",
-        "l_09_01_win_detection"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Conditionals",
-      "shortDefinition": "`if`, `elif`, and `else` statements that run different code depending on whether a condition is true. They let the game branch on card rules.",
-      "relatedLessonIds": [
-        "l_00_03_conditionals",
-        "l_04_01_match"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Loops",
-      "shortDefinition": "`for` and `while` blocks that repeat code, once per item or until a condition fails. Used to build a deck, deal cards, and walk a hand.",
-      "relatedLessonIds": [
-        "l_00_04_loops",
-        "l_01_03_deck_builder"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Functions",
-      "shortDefinition": "Named, reusable blocks of code that take inputs (parameters) and may return a result. They keep the codebase organized and avoid repetition.",
-      "relatedLessonIds": [
-        "l_00_05_functions"
-      ],
-      "relatedDocClassNames": [
-        "Callable"
-      ]
-    },
-    {
-      "term": "Arrays",
-      "shortDefinition": "Ordered, mutable lists accessed by index, written `[a, b, c]`. They hold a player's hand, the draw pile, or a list of card nodes.",
-      "relatedLessonIds": [
-        "l_00_06_arrays"
-      ],
-      "relatedDocClassNames": [
-        "Array"
-      ]
-    },
-    {
-      "term": "Dictionaries",
-      "shortDefinition": "Collections of key/value pairs, written `{ \"key\": value }`. Used to look things up by name, like mapping a suit string to its colour.",
-      "relatedLessonIds": [
-        "l_00_07_dictionaries"
-      ],
-      "relatedDocClassNames": [
-        "Dictionary"
-      ]
-    },
-    {
-      "term": "Classes",
-      "shortDefinition": "Blueprints that bundle data (properties) and behaviour (methods) into one type. You create instances with `ClassName.new()`.",
-      "relatedLessonIds": [
-        "l_00_08_classes"
-      ],
-      "relatedDocClassNames": [
-        "Object",
-        "Resource"
-      ]
-    },
-    {
-      "term": "Enums",
-      "shortDefinition": "A named set of constant integers, e.g. `enum Suit { CLUBS, DIAMONDS, HEARTS, SPADES }`. They make code readable and type-safe.",
-      "relatedLessonIds": [
-        "l_01_01_enums"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Recursion",
-      "shortDefinition": "When a function calls itself to break a big problem into smaller copies of the same problem. Useful for resolving chains of jump cards.",
-      "relatedLessonIds": [
-        "l_07_01_chain_resolution"
-      ],
-      "relatedDocClassNames": [
-        "Callable"
-      ]
-    },
-    {
-      "term": "Compound boolean conditions",
-      "shortDefinition": "Expressions that combine several true/false checks with `and`, `or`, and `not`. Used to test all the requirements for a valid play or a win.",
-      "relatedLessonIds": [
-        "l_00_02_operators",
-        "l_09_01_win_detection"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Function composition",
-      "shortDefinition": "Calling one function inside another so small helpers combine into bigger operations. Question/answer card pairing is built this way.",
-      "relatedLessonIds": [
-        "l_06_01_qa_composition"
-      ],
-      "relatedDocClassNames": [
-        "Callable"
-      ]
-    },
-    {
-      "term": "Null-handling",
-      "shortDefinition": "Checking whether a value is `null` (nothing) before using it, so the game never crashes on a missing card or empty pile.",
-      "relatedLessonIds": [
-        "l_00_05_functions",
-        "l_02_02_ready_dealing"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Randomness",
-      "shortDefinition": "Unpredictable number generation used to shuffle the deck. Godot provides `randf()`, `randi()`, and `RandomNumberGenerator`.",
-      "relatedLessonIds": [
-        "l_01_03_deck_builder",
-        "l_10_01_reshuffle"
-      ],
-      "relatedDocClassNames": [
-        "RandomNumberGenerator"
-      ]
-    },
-    {
-      "term": "Accumulator variable",
-      "shortDefinition": "A variable that grows by adding to it each loop, e.g. a running penalty total. It collects a result across many steps.",
-      "relatedLessonIds": [
-        "l_05_01_accumulator"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Iterative counter",
-      "shortDefinition": "A variable that increments each loop to track position or how many times something happened, e.g. counting cards in a jump chain.",
-      "relatedLessonIds": [
-        "l_07_01_chain_resolution"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "GDScript",
-      "shortDefinition": "Godot's built-in, Python-like scripting language. It is dynamically typed, concise, and designed for game logic and nodes.",
-      "relatedLessonIds": [
-        "l_00_01_variables",
-        "l_01_01_enums"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Node",
-      "shortDefinition": "The base building block of a Godot scene; every game object is a Node. Nodes form a tree and can have children, a parent, and a name.",
-      "relatedLessonIds": [
-        "l_02_01_scenes_instancing",
-        "l_02_02_ready_dealing"
-      ],
-      "relatedDocClassNames": [
-        "Node"
-      ]
-    },
-    {
-      "term": "Control",
-      "shortDefinition": "The base class for all 2D UI nodes such as buttons, labels, and panels. Controls lay out and receive mouse/keyboard input.",
-      "relatedLessonIds": [
-        "l_08_01_declaration_popup",
-        "l_11_01_tweens"
-      ],
-      "relatedDocClassNames": [
-        "Control"
-      ]
-    },
-    {
-      "term": "Resource",
-      "shortDefinition": "A sharable data object, often saved to a `.tres` file. Card data (suit, rank, effect) is stored as a custom Resource.",
+      "term": "@export",
+      "shortDefinition": "A GDScript 4 annotation (`@export var rank: int = 2`) that exposes a script variable in the Godot Inspector dock so designers can view and edit it visually.\n\n### GDScript 4.3 Pattern\n```gdscript\n@export var max_speed: float = 250.0\n@export var custom_texture: Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **@export** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_02_resources"
       ],
@@ -219,227 +11,8 @@
       ]
     },
     {
-      "term": "Autoloads",
-      "shortDefinition": "Globally-accessible singletons loaded automatically by Godot on startup. The game-state manager (turn, piles) is an Autoload.",
-      "relatedLessonIds": [
-        "l_01_04_autoloads"
-      ],
-      "relatedDocClassNames": [
-        "Node",
-        "ProjectSettings"
-      ]
-    },
-    {
-      "term": "Scenes",
-      "shortDefinition": "Saved trees of nodes, stored as `.tscn` files, that you can instance and reuse. A card, a player area, or the whole table can be a scene.",
-      "relatedLessonIds": [
-        "l_02_01_scenes_instancing"
-      ],
-      "relatedDocClassNames": [
-        "PackedScene",
-        "Node"
-      ]
-    },
-    {
-      "term": "_ready()",
-      "shortDefinition": "A virtual method called once when a Node enters the tree and is ready. It is the standard place to set up initial state and deal cards.",
-      "relatedLessonIds": [
-        "l_02_02_ready_dealing"
-      ],
-      "relatedDocClassNames": [
-        "Node"
-      ]
-    },
-    {
-      "term": "Signals",
-      "shortDefinition": "Named events a node can emit; other nodes connect functions to react. Signals decouple the emitter from the listener, like a turn-changed ping.",
-      "relatedLessonIds": [
-        "l_03_01_signals"
-      ],
-      "relatedDocClassNames": [
-        "Signal",
-        "Object"
-      ]
-    },
-    {
-      "term": "State Machines",
-      "shortDefinition": "A design where an object is always in one of several states (e.g. DEAL, PLAY, RESOLVE) and rules govern transitions between them.",
-      "relatedLessonIds": [
-        "l_03_01_signals"
-      ],
-      "relatedDocClassNames": [
-        "Node"
-      ]
-    },
-    {
-      "term": "match statements",
-      "shortDefinition": "A switch-like construct that runs code based on which pattern a value matches. Used to dispatch on a card's effect type.",
-      "relatedLessonIds": [
-        "l_04_01_match"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Tweens",
-      "shortDefinition": "Objects that interpolate a property over time, easing cards into position. Created with `create_tween()` and chained with `tween_property()`.",
-      "relatedLessonIds": [
-        "l_11_01_tweens"
-      ],
-      "relatedDocClassNames": [
-        "Tween"
-      ]
-    },
-    {
-      "term": "PackedScene",
-      "shortDefinition": "The in-memory representation of a saved scene file. You call `instantiate()` on it to spawn a copy, e.g. a new card node.",
-      "relatedLessonIds": [
-        "l_02_01_scenes_instancing"
-      ],
-      "relatedDocClassNames": [
-        "PackedScene",
-        "Resource"
-      ]
-    },
-    {
-      "term": "Object",
-      "shortDefinition": "The root class of most Godot types; provides properties, methods, signals, and metadata. Everything node- or resource-like derives from it.",
-      "relatedLessonIds": [
-        "l_00_08_classes"
-      ],
-      "relatedDocClassNames": [
-        "Object"
-      ]
-    },
-    {
-      "term": "Button",
-      "shortDefinition": "A pressable UI control that emits `pressed` when clicked. Used for confirm/draw/declare actions and popup choices.",
-      "relatedLessonIds": [
-        "l_08_01_declaration_popup"
-      ],
-      "relatedDocClassNames": [
-        "Button"
-      ]
-    },
-    {
-      "term": "Label",
-      "shortDefinition": "A control that displays non-editable text. Used for the player's name, hand count, penalty total, and status messages.",
-      "relatedLessonIds": [
-        "l_08_01_declaration_popup",
-        "l_11_01_tweens"
-      ],
-      "relatedDocClassNames": [
-        "Label"
-      ]
-    },
-    {
-      "term": "Timer",
-      "shortDefinition": "A node that counts down and emits `timeout` at an interval. Used for AI think-delays, turn limits, and reshuffle pauses.",
-      "relatedLessonIds": [
-        "l_03_01_signals"
-      ],
-      "relatedDocClassNames": [
-        "Timer"
-      ]
-    },
-    {
-      "term": "Kadi",
-      "shortDefinition": "A fast-paced Kenyan shedding card game played by 2–5 players with a 54-card deck (52 suited cards + 2 Jokers). Players race to play all their winning Answer cards in a single move after announcing 'Niko Kadi' in the previous round.\n\n### Core Kadi Card Groups\n- **Answer Cards (`4, 5, 6, 7, 9, 10`)**: Standard scoring/matching cards and the only legal opening cards.\n- **Penalty Cards (`2` = +2, `3` = +3, `Joker` = +5)**: Stackable draw penalties.\n- **Question Cards (`8`, `Q`)**: Must be accompanied by a matching-suit Answer card in the same turn.\n- **Jump (`J`) & Kickback (`K`)**: Skip the next player (`J`) or reverse turn direction (`K`).\n- **Wild Ace (`A`)**: Overrides the active suit (`declared_suit`) or cancels an active penalty stack.",
-      "relatedLessonIds": [
-        "l_01_01_enums",
-        "l_09_01_win_detection"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Penalty Cards",
-      "shortDefinition": "In Kadi, 2, 3, and Joker (JOK) are Penalty Cards that force the next player to draw 2, 3, or 5 cards respectively unless they counter with a same-rank Penalty Card (which forwards the stack) or an Ace (which cancels the stack).\n\n```gdscript\nfunc penalty_value() -> int:\n    match rank:\n        CardTypes.Ranks.TWO: return 2\n        CardTypes.Ranks.THREE: return 3\n        CardTypes.Ranks.JOKER: return 5\n        _: return 0\n```",
-      "relatedLessonIds": [
-        "l_05_01_accumulator"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Jump Cards",
-      "shortDefinition": "In Kadi, Jack (J) cards are Jump Cards. Each Jack played skips one player in the current direction of play; the player about to be skipped can counter by playing their own Jump Card.",
-      "relatedLessonIds": [
-        "l_07_01_chain_resolution"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Kickback Cards",
-      "shortDefinition": "In Kadi, King (K) cards are Kickback Cards. Playing a King reverses the direction of play (clockwise <-> counter-clockwise), and can be countered or stacked.",
-      "relatedLessonIds": [
-        "l_07_01_chain_resolution"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Question Cards",
-      "shortDefinition": "In Kadi, Queen (Q) and 8 are Question Cards. A player who plays a Question Card must accompany it in the same move with a matching-suit Answer Card (or chain of Questions ending in an Answer Card), otherwise they must draw from the pile.\n\n```gdscript\nfunc is_question() -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n```",
-      "relatedLessonIds": [
-        "l_06_01_qa_composition"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Answer Cards",
-      "shortDefinition": "In Kadi, 4, 5, 6, 7, 9, 10, and Ace (A) are Answer Cards. They can open the discard pile (except Ace), accompany Question Cards, and are the only cards on which a player can legally win the game.\n\n```gdscript\nfunc is_answer() -> bool:\n    return rank in [4, 5, 6, 7, 9, 10]\n```",
-      "relatedLessonIds": [
-        "l_06_01_qa_composition"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Niko Kadi",
-      "shortDefinition": "The mandatory declaration a player must make when they realize they can win on the NEXT round of play by playing all their remaining winning cards in a single move. Drawing a card revokes the declaration.\n\n```gdscript\nfunc can_win_this_turn(player_idx: int) -> bool:\n    return announced_kadi[player_idx] and hands[player_idx].is_empty() and penalty_stack == 0\n```",
-      "relatedLessonIds": [
-        "l_09_01_win_detection"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Draw Pile",
-      "shortDefinition": "The face-down stack players draw from. When it runs out, the discard pile (minus the top card) is reshuffled into it.",
-      "relatedLessonIds": [
-        "l_10_01_reshuffle",
-        "l_01_03_deck_builder"
-      ],
-      "relatedDocClassNames": [
-        "Array"
-      ]
-    },
-    {
-      "term": "Discard Pile",
-      "shortDefinition": "The face-up stack of played cards; only the top card matters for matching the next play. It recycles into the draw pile on reshuffle.",
-      "relatedLessonIds": [
-        "l_04_01_match",
-        "l_10_01_reshuffle"
-      ],
-      "relatedDocClassNames": [
-        "Array"
-      ]
-    },
-    {
-      "term": "Suit",
-      "shortDefinition": "One of the four categories of a playing card: Clubs, Diamonds, Hearts, or Spades. Stored as an enum in code.",
-      "relatedLessonIds": [
-        "l_01_01_enums",
-        "l_08_01_declaration_popup"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
-      "term": "Rank",
-      "shortDefinition": "The value of a card within its suit, from Ace through King. Determines most play and penalty rules.",
-      "relatedLessonIds": [
-        "l_01_01_enums"
-      ],
-      "relatedDocClassNames": []
-    },
-    {
       "term": "@onready",
-      "shortDefinition": "A GDScript 4 annotation (`@onready var label: Label = $Label`) that defers fetching a child node reference until `_ready()` runs after the node enters the SceneTree.",
+      "shortDefinition": "A GDScript 4 annotation (`@onready var label: Label = $Label`) that defers fetching a child node reference until `_ready()` runs after the node enters the SceneTree.\n\n### GDScript 4.3 Pattern\n```gdscript\n@onready var top_rank_label: Label = $TopRankLabel\n@onready var play_button: Button = $HUD/PlaySelectedButton\n```\n\n**Solo Game Dev Transfer:** You will use **@onready** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_02_02_ready_dealing",
         "l_02_04_cards_on_screen",
@@ -450,18 +23,526 @@
       ]
     },
     {
-      "term": "@export",
-      "shortDefinition": "A GDScript 4 annotation (`@export var rank: int = 2`) that exposes a script variable in the Godot Inspector dock so designers can view and edit it visually.",
+      "term": "_ready()",
+      "shortDefinition": "A virtual method called once when a Node enters the tree and is ready. It is the standard place to set up initial state and deal cards.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using _ready() (Node) in Godot 4.3:\n@onready var node_ref: Node = $Node\n```\n\n**Solo Game Dev Transfer:** You will use **_ready()** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
-        "l_01_02_resources"
+        "l_02_02_ready_dealing"
       ],
       "relatedDocClassNames": [
+        "Node"
+      ]
+    },
+    {
+      "term": "Accumulator variable",
+      "shortDefinition": "A variable that grows by adding to it each loop, e.g. a running penalty total. It collects a result across many steps.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Applying Accumulator variable in GDScript 4.3:\nfunc apply_concept(card: CardData) -> bool:\n\treturn card != null and card.can_start_discard()\n```\n\n**Solo Game Dev Transfer:** You will use **Accumulator variable** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_05_01_accumulator"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "AnimationPlayer",
+      "shortDefinition": "A node that stores and plays named animations authored in the animation editor.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AnimationPlayer (AnimationPlayer) in Godot 4.3:\n@onready var node_ref: AnimationPlayer = $AnimationPlayer\n```\n\n**Solo Game Dev Transfer:** You will use **AnimationPlayer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AnimationPlayer"
+      ]
+    },
+    {
+      "term": "Answer Cards",
+      "shortDefinition": "In Kadi, 4, 5, 6, 7, 9, 10, and Ace (A) are Answer Cards. They can open the discard pile (except Ace), accompany Question Cards, and are the only cards on which a player can legally win the game.\n\n```gdscript\nfunc is_answer() -> bool:\n    return rank in [4, 5, 6, 7, 9, 10]\n```",
+      "relatedLessonIds": [
+        "l_06_01_qa_composition"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Area2D",
+      "shortDefinition": "A 2D region that detects overlapping bodies and areas and can override physics like gravity.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Area2D (Area2D) in Godot 4.3:\n@onready var node_ref: Area2D = $Area2D\n```\n\n**Solo Game Dev Transfer:** You will use **Area2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Area2D"
+      ]
+    },
+    {
+      "term": "Array",
+      "shortDefinition": "An ordered, dynamic, mutable list of values accessed by index.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Array (Array) in Godot 4.3:\n@onready var node_ref: Array = $Array\n```\n\n**Solo Game Dev Transfer:** You will use **Array** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Array"
+      ]
+    },
+    {
+      "term": "Arrays",
+      "shortDefinition": "Ordered, mutable lists accessed by index, written `[a, b, c]`. They hold a player's hand, the draw pile, or a list of card nodes.\n\n### GDScript 4.3 Pattern\n```gdscript\nvar deck: Array[CardData] = []\ndeck.append(new_card)\ndeck.shuffle()\nvar drawn: CardData = deck.pop_back()\n```\n\n**Solo Game Dev Transfer:** You will use **Arrays** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_06_arrays"
+      ],
+      "relatedDocClassNames": [
+        "Array"
+      ]
+    },
+    {
+      "term": "AtlasTexture",
+      "shortDefinition": "A `[[Texture2D]]` resource that crops a single rectangular `region` (`Rect2`) out of a larger downloaded **Sprite Sheet** (`res://assets/cards/deck_sheet.png`).\n\nInstead of 54 separate image files, many itch.io and Kenney asset packs distribute one combined grid image. `AtlasTexture` lets each `CardData` slice its exact `[suit_row, rank_col]` rectangle at runtime:\n\n```gdscript\nconst SHEET := preload(\"res://assets/cards/deck_sheet.png\")\nfunc slice_card(col: int, row: int, w: int = 140, h: int = 190) -> AtlasTexture:\n    var atlas := AtlasTexture.new()\n    atlas.atlas = SHEET\n    atlas.region = Rect2(col * w, row * h, w, h)\n    return atlas\n```",
+      "relatedLessonIds": [
+        "l_01_02_resources",
+        "l_02_02_ready_dealing"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D",
+        "TextureRect",
         "Resource"
       ]
     },
     {
+      "term": "AudioListener2D",
+      "shortDefinition": "A 2D node that overrides the location sounds are heard from in 2D space.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AudioListener2D (AudioStreamPlayer2D) in Godot 4.3:\n@onready var node_ref: AudioStreamPlayer2D = $AudioStreamPlayer2D\n```\n\n**Solo Game Dev Transfer:** You will use **AudioListener2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer2D"
+      ]
+    },
+    {
+      "term": "AudioListener3D",
+      "shortDefinition": "A 3D node that overrides the location sounds are heard from in 3D space.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AudioListener3D (AudioStreamPlayer3D) in Godot 4.3:\n@onready var node_ref: AudioStreamPlayer3D = $AudioStreamPlayer3D\n```\n\n**Solo Game Dev Transfer:** You will use **AudioListener3D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer3D"
+      ]
+    },
+    {
+      "term": "AudioStream",
+      "shortDefinition": "A base resource for audio data (such as `.wav` or `.ogg` sound files) played by `AudioStreamPlayer`.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AudioStream (AudioStreamPlayer) in Godot 4.3:\n@onready var node_ref: AudioStreamPlayer = $AudioStreamPlayer\n```\n\n**Solo Game Dev Transfer:** You will use **AudioStream** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer",
+        "Resource"
+      ]
+    },
+    {
+      "term": "AudioStreamOggVorbis",
+      "shortDefinition": "Godot 4.3's audio stream resource for `.ogg` files placed in `res://assets/audio/` (such as `card_slide.ogg`, `penalty_slam.ogg`, and `niko_kadi.ogg`), played via `[[AudioStreamPlayer]]`.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AudioStreamOggVorbis (AudioStreamPlayer) in Godot 4.3:\n@onready var node_ref: AudioStreamPlayer = $AudioStreamPlayer\n```\n\n**Solo Game Dev Transfer:** You will use **AudioStreamOggVorbis** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_11_02_sound_feedback"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer"
+      ]
+    },
+    {
+      "term": "AudioStreamPlayer",
+      "shortDefinition": "A node that plays an AudioStream at a non-positional, screen-wide volume.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AudioStreamPlayer (AudioStreamPlayer) in Godot 4.3:\n@onready var node_ref: AudioStreamPlayer = $AudioStreamPlayer\n```\n\n**Solo Game Dev Transfer:** You will use **AudioStreamPlayer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer"
+      ]
+    },
+    {
+      "term": "AudioStreamPlayer2D",
+      "shortDefinition": "A 2D-positioned audio player whose volume attenuates with distance from the Camera2D.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AudioStreamPlayer2D (AudioStreamPlayer2D) in Godot 4.3:\n@onready var node_ref: AudioStreamPlayer2D = $AudioStreamPlayer2D\n```\n\n**Solo Game Dev Transfer:** You will use **AudioStreamPlayer2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer2D"
+      ]
+    },
+    {
+      "term": "AudioStreamPlayer3D",
+      "shortDefinition": "A 3D-positioned audio player with distance attenuation, panning, and doppler.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using AudioStreamPlayer3D (AudioStreamPlayer3D) in Godot 4.3:\n@onready var node_ref: AudioStreamPlayer3D = $AudioStreamPlayer3D\n```\n\n**Solo Game Dev Transfer:** You will use **AudioStreamPlayer3D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "AudioStreamPlayer3D"
+      ]
+    },
+    {
+      "term": "Autoloads",
+      "shortDefinition": "Globally-accessible singletons loaded automatically by Godot on startup. The game-state manager (turn, piles) is an Autoload.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Registered as 'GameState' in Project Settings -> Globals -> Autoload:\nGameState.start_new_match(4, 4)\n```\n\n**Solo Game Dev Transfer:** You will use **Autoloads** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_04_autoloads"
+      ],
+      "relatedDocClassNames": [
+        "Node",
+        "ProjectSettings"
+      ]
+    },
+    {
+      "term": "BaseButton",
+      "shortDefinition": "The abstract base class for all GUI buttons in Godot (`Button`, `TextureButton`, `CheckButton`, `OptionButton`).\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using BaseButton (Button) in Godot 4.3:\n@onready var node_ref: Button = $Button\n```\n\n**Solo Game Dev Transfer:** You will use **BaseButton** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Button",
+        "TextureButton",
+        "CheckButton"
+      ]
+    },
+    {
+      "term": "bool",
+      "shortDefinition": "A value that is either `true` or `false`. Used to track states like whose turn it is or whether a card is playable.\n\n### GDScript 4.3 Pattern\n```gdscript\nvar can_play: bool = (card.suit == top.suit) or (card.rank == top.rank)\n```\n\n**Solo Game Dev Transfer:** You will use **bool** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_02_operators",
+        "l_09_01_win_detection"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Button",
+      "shortDefinition": "A pressable UI control that emits `pressed` when clicked. Used for confirm/draw/declare actions and popup choices.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Button (Button) in Godot 4.3:\n@onready var node_ref: Button = $Button\n```\n\n**Solo Game Dev Transfer:** You will use **Button** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_08_01_declaration_popup"
+      ],
+      "relatedDocClassNames": [
+        "Button"
+      ]
+    },
+    {
+      "term": "Call Down, Signal Up",
+      "shortDefinition": "The golden architectural rule of Godot scene trees: parent nodes **call methods down** on their children (`card_node.setup(data)`), while child nodes **emit signals up** (`card_clicked.emit(self)`) without knowing or caring what parent scene holds them.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Child emits signal upward:\nsignal card_clicked(card_node: Control)\n# Parent connects downward in _ready():\ncard_node.card_clicked.connect(_on_hand_card_clicked)\n```",
+      "relatedLessonIds": [
+        "l_02_02_ready_dealing",
+        "l_13_01_blank_canvas_framework"
+      ],
+      "relatedDocClassNames": [
+        "Signal",
+        "Node"
+      ]
+    },
+    {
+      "term": "Callable",
+      "shortDefinition": "A first-class reference to a method or function, callable later with its arguments.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Callable (Callable) in Godot 4.3:\n@onready var node_ref: Callable = $Callable\n```\n\n**Solo Game Dev Transfer:** You will use **Callable** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Callable"
+      ]
+    },
+    {
+      "term": "Camera2D",
+      "shortDefinition": "A 2D camera that scrolls, zooms, and limits the visible region of the scene.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Camera2D (Camera2D) in Godot 4.3:\n@onready var node_ref: Camera2D = $Camera2D\n```\n\n**Solo Game Dev Transfer:** You will use **Camera2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Camera2D"
+      ]
+    },
+    {
+      "term": "Camera3D",
+      "shortDefinition": "A 3D camera that defines the perspective, field of view, and clip planes of a viewport.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Camera3D (Camera3D) in Godot 4.3:\n@onready var node_ref: Camera3D = $Camera3D\n```\n\n**Solo Game Dev Transfer:** You will use **Camera3D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Camera3D"
+      ]
+    },
+    {
+      "term": "CanvasItem",
+      "shortDefinition": "Base class for anything 2D that can be drawn to the screen, such as Node2D and Control.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CanvasItem (CanvasItem) in Godot 4.3:\n@onready var node_ref: CanvasItem = $CanvasItem\n```\n\n**Solo Game Dev Transfer:** You will use **CanvasItem** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CanvasItem"
+      ]
+    },
+    {
+      "term": "CanvasLayer",
+      "shortDefinition": "A node that renders its 2D/Control children on a separate screen-space layer (`HUD`), keeping buttons and status labels pinned cleanly above the game table.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CanvasLayer (CanvasLayer) in Godot 4.3:\n@onready var node_ref: CanvasLayer = $CanvasLayer\n```\n\n**Solo Game Dev Transfer:** You will use **CanvasLayer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_02_04_cards_on_screen",
+        "l_09_02_niko_button"
+      ],
+      "relatedDocClassNames": [
+        "CanvasLayer"
+      ]
+    },
+    {
+      "term": "CharacterBody2D",
+      "shortDefinition": "A physics body specialized for player- or code-controlled movement with built-in collision sliding.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CharacterBody2D (CharacterBody2D) in Godot 4.3:\n@onready var node_ref: CharacterBody2D = $CharacterBody2D\n```\n\n**Solo Game Dev Transfer:** You will use **CharacterBody2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CharacterBody2D"
+      ]
+    },
+    {
+      "term": "CheckButton",
+      "shortDefinition": "A toggle button that displays a checkmark and a text label, like a checkbox.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CheckButton (CheckButton) in Godot 4.3:\n@onready var node_ref: CheckButton = $CheckButton\n```\n\n**Solo Game Dev Transfer:** You will use **CheckButton** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CheckButton"
+      ]
+    },
+    {
+      "term": "Classes",
+      "shortDefinition": "Blueprints that bundle data (properties) and behaviour (methods) into one type. You create instances with `ClassName.new()`.\n\n### GDScript 4.3 Pattern\n```gdscript\nclass_name CardData\nextends Resource\n\n@export var suit: int = 0\n@export var rank: int = 7\n```\n\n**Solo Game Dev Transfer:** You will use **Classes** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_08_classes"
+      ],
+      "relatedDocClassNames": [
+        "Object",
+        "Resource"
+      ]
+    },
+    {
+      "term": "Collision Layer & Mask",
+      "shortDefinition": "In Godot 4.3 physics (`CharacterBody2D`, `Area2D`, `StaticBody2D`), **Collision Layer** defines *what category this object belongs to* (e.g. Layer 1 = Walls, Layer 2 = Player), while **Collision Mask** defines *which layers this object scans for or collides against*.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Make a pickup Area2D only detect Layer 2 (Player):\ncollision_layer = 0\ncollision_mask = 2\n```",
+      "relatedLessonIds": [
+        "l_13_03_world_combat_camera"
+      ],
+      "relatedDocClassNames": [
+        "Area2D",
+        "CharacterBody2D",
+        "StaticBody2D"
+      ]
+    },
+    {
+      "term": "CollisionShape2D",
+      "shortDefinition": "A node that gives a collision object its 2D shape via a Shape2D resource.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CollisionShape2D (CollisionShape2D) in Godot 4.3:\n@onready var node_ref: CollisionShape2D = $CollisionShape2D\n```\n\n**Solo Game Dev Transfer:** You will use **CollisionShape2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CollisionShape2D"
+      ]
+    },
+    {
+      "term": "Color",
+      "shortDefinition": "A built-in RGBA color with floating-point channels in the 0–1 range.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Color (Color) in Godot 4.3:\n@onready var node_ref: Color = $Color\n```\n\n**Solo Game Dev Transfer:** You will use **Color** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Color"
+      ]
+    },
+    {
+      "term": "ColorRect",
+      "shortDefinition": "A control that fills its rectangle with a single flat color.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using ColorRect (ColorRect) in Godot 4.3:\n@onready var node_ref: ColorRect = $ColorRect\n```\n\n**Solo Game Dev Transfer:** You will use **ColorRect** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "ColorRect"
+      ]
+    },
+    {
+      "term": "Compound boolean conditions",
+      "shortDefinition": "Expressions that combine several true/false checks with `and`, `or`, and `not`. Used to test all the requirements for a valid play or a win.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Applying Compound boolean conditions in GDScript 4.3:\nfunc apply_concept(card: CardData) -> bool:\n\treturn card != null and card.can_start_discard()\n```\n\n**Solo Game Dev Transfer:** You will use **Compound boolean conditions** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_02_operators",
+        "l_09_01_win_detection"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Conditionals",
+      "shortDefinition": "`if`, `elif`, and `else` statements that run different code depending on whether a condition is true. They let the game branch on card rules.\n\n### GDScript 4.3 Pattern\n```gdscript\nif penalty_stack > 0:\n\tdraw_cards(player, penalty_stack)\nelif card.rank == 14:\n\tdeclare_suit_dialog.show()\nelse:\n\tadvance_turn()\n```\n\n**Solo Game Dev Transfer:** You will use **Conditionals** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_03_conditionals",
+        "l_04_01_match"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Container",
+      "shortDefinition": "A base control that automatically positions and resizes its child controls.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Container (Container) in Godot 4.3:\n@onready var node_ref: Container = $Container\n```\n\n**Solo Game Dev Transfer:** You will use **Container** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Container"
+      ]
+    },
+    {
+      "term": "Control",
+      "shortDefinition": "The base class for all 2D UI nodes such as buttons, labels, and panels. Controls lay out and receive mouse/keyboard input.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Control (Control) in Godot 4.3:\n@onready var node_ref: Control = $Control\n```\n\n**Solo Game Dev Transfer:** You will use **Control** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_08_01_declaration_popup",
+        "l_11_01_tweens"
+      ],
+      "relatedDocClassNames": [
+        "Control"
+      ]
+    },
+    {
+      "term": "CPUParticles2D",
+      "shortDefinition": "A 2D particle emitter simulated on the CPU, configurable entirely from properties without a shader.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CPUParticles2D (CPUParticles2D) in Godot 4.3:\n@onready var node_ref: CPUParticles2D = $CPUParticles2D\n```\n\n**Solo Game Dev Transfer:** You will use **CPUParticles2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "CPUParticles2D"
+      ]
+    },
+    {
+      "term": "Delta Time (delta)",
+      "shortDefinition": "The elapsed time in seconds since the previous frame (`delta ≈ 0.0167s` at 60 FPS). Multiply movement speeds and accelerations by `delta` inside `_process(delta)` and `_physics_process(delta)` so your game runs at the exact same speed on 30Hz phones and 144Hz monitors.\n\n### GDScript 4.3 Pattern\n```gdscript\nfunc _physics_process(delta: float) -> void:\n\tposition += direction * 300.0 * delta\n```",
+      "relatedLessonIds": [
+        "l_13_02_realtime_loop_physics"
+      ],
+      "relatedDocClassNames": [
+        "Node",
+        "CharacterBody2D"
+      ]
+    },
+    {
+      "term": "Dictionaries",
+      "shortDefinition": "Collections of key/value pairs, written `{ \"key\": value }`. Used to look things up by name, like mapping a suit string to its colour.\n\n### GDScript 4.3 Pattern\n```gdscript\nconst SUIT_NAMES: Dictionary = {0: \"Hearts\", 1: \"Diamonds\", 2: \"Clubs\", 3: \"Spades\"}\nvar name_str: String = SUIT_NAMES.get(suit, \"Unknown\")\n```\n\n**Solo Game Dev Transfer:** You will use **Dictionaries** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_07_dictionaries"
+      ],
+      "relatedDocClassNames": [
+        "Dictionary"
+      ]
+    },
+    {
+      "term": "Dictionary",
+      "shortDefinition": "An associative container mapping hashable keys to values, like a hash map.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Dictionary (Dictionary) in Godot 4.3:\n@onready var node_ref: Dictionary = $Dictionary\n```\n\n**Solo Game Dev Transfer:** You will use **Dictionary** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Dictionary"
+      ]
+    },
+    {
+      "term": "Discard Pile",
+      "shortDefinition": "The face-up stack of played cards; only the top card matters for matching the next play. It recycles into the draw pile on reshuffle.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Discard Pile (Array) in Godot 4.3:\n@onready var node_ref: Array = $Array\n```\n\n**Solo Game Dev Transfer:** You will use **Discard Pile** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_04_01_match",
+        "l_10_01_reshuffle"
+      ],
+      "relatedDocClassNames": [
+        "Array"
+      ]
+    },
+    {
+      "term": "Draw Pile",
+      "shortDefinition": "The face-down stack players draw from. When it runs out, the discard pile (minus the top card) is reshuffled into it.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Draw Pile (Array) in Godot 4.3:\n@onready var node_ref: Array = $Array\n```\n\n**Solo Game Dev Transfer:** You will use **Draw Pile** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_10_01_reshuffle",
+        "l_01_03_deck_builder"
+      ],
+      "relatedDocClassNames": [
+        "Array"
+      ]
+    },
+    {
+      "term": "Engine",
+      "shortDefinition": "A singleton exposing engine version, frames, time scale, and run-mode information.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Engine (Engine) in Godot 4.3:\n@onready var node_ref: Engine = $Engine\n```\n\n**Solo Game Dev Transfer:** You will use **Engine** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "Engine"
+      ]
+    },
+    {
+      "term": "Enums",
+      "shortDefinition": "A named set of constant integers, e.g. `enum Suit { CLUBS, DIAMONDS, HEARTS, SPADES }`. They make code readable and type-safe.\n\n### GDScript 4.3 Pattern\n```gdscript\nenum Suits { HEARTS, DIAMONDS, CLUBS, SPADES }\nvar active_suit: Suits = Suits.HEARTS\n```\n\n**Solo Game Dev Transfer:** You will use **Enums** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_01_enums"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "FileAccess",
+      "shortDefinition": "A static class for reading from and writing to files on disk.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using FileAccess (FileAccess) in Godot 4.3:\n@onready var node_ref: FileAccess = $FileAccess\n```\n\n**Solo Game Dev Transfer:** You will use **FileAccess** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "FileAccess"
+      ]
+    },
+    {
+      "term": "float",
+      "shortDefinition": "A number that can have a fractional part, e.g. `0.5` or `3.14`. Used for timing, animation progress, and smooth motion.\n\n### GDScript 4.3 Pattern\n```gdscript\nvar lift_offset_y: float = -14.0\nvar speed: float = 240.0\n```\n\n**Solo Game Dev Transfer:** You will use **float** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_01_variables",
+        "l_11_01_tweens"
+      ],
+      "relatedDocClassNames": [
+        "Tween"
+      ]
+    },
+    {
+      "term": "Function composition",
+      "shortDefinition": "Calling one function inside another so small helpers combine into bigger operations. Question/answer card pairing is built this way.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Function composition (Callable) in Godot 4.3:\n@onready var node_ref: Callable = $Callable\n```\n\n**Solo Game Dev Transfer:** You will use **Function composition** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_06_01_qa_composition"
+      ],
+      "relatedDocClassNames": [
+        "Callable"
+      ]
+    },
+    {
+      "term": "Functions",
+      "shortDefinition": "Named, reusable blocks of code that take inputs (parameters) and may return a result. They keep the codebase organized and avoid repetition.\n\n### GDScript 4.3 Pattern\n```gdscript\nfunc is_penalty_card(rank: int) -> bool:\n\treturn rank in [2, 3, 15]\n```\n\n**Solo Game Dev Transfer:** You will use **Functions** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_05_functions"
+      ],
+      "relatedDocClassNames": [
+        "Callable"
+      ]
+    },
+    {
+      "term": "GDScript",
+      "shortDefinition": "Godot's built-in, Python-like scripting language. It is dynamically typed, concise, and designed for game logic and nodes.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Applying GDScript in GDScript 4.3:\nfunc apply_concept(card: CardData) -> bool:\n\treturn card != null and card.can_start_discard()\n```\n\n**Solo Game Dev Transfer:** You will use **GDScript** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_01_variables",
+        "l_01_01_enums"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "GPUParticles2D",
+      "shortDefinition": "A 2D particle emitter simulated on the GPU for large, cheap bursts and continuous effects.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using GPUParticles2D (GPUParticles2D) in Godot 4.3:\n@onready var node_ref: GPUParticles2D = $GPUParticles2D\n```\n\n**Solo Game Dev Transfer:** You will use **GPUParticles2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "GPUParticles2D"
+      ]
+    },
+    {
+      "term": "GridContainer",
+      "shortDefinition": "A container that arranges its children into a grid with a fixed number of columns.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using GridContainer (GridContainer) in Godot 4.3:\n@onready var node_ref: GridContainer = $GridContainer\n```\n\n**Solo Game Dev Transfer:** You will use **GridContainer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "GridContainer"
+      ]
+    },
+    {
       "term": "HBoxContainer",
-      "shortDefinition": "A Godot Container Control that automatically arranges its child Control nodes in a horizontal row — ideal for fanning a player's hand of `CardScene` instances.",
+      "shortDefinition": "A Godot Container Control that automatically arranges its child Control nodes in a horizontal row — ideal for fanning a player's hand of `CardScene` instances.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using HBoxContainer (HBoxContainer) in Godot 4.3:\n@onready var node_ref: HBoxContainer = $HBoxContainer\n```\n\n**Solo Game Dev Transfer:** You will use **HBoxContainer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_02_04_cards_on_screen",
         "l_02_05_card_selection"
@@ -473,293 +554,8 @@
       ]
     },
     {
-      "term": "CanvasLayer",
-      "shortDefinition": "A node that renders its 2D/Control children on a separate screen-space layer (`HUD`), keeping buttons and status labels pinned cleanly above the game table.",
-      "relatedLessonIds": [
-        "l_02_04_cards_on_screen",
-        "l_09_02_niko_button"
-      ],
-      "relatedDocClassNames": [
-        "CanvasLayer"
-      ]
-    },
-    {
-      "term": "OptionButton",
-      "shortDefinition": "A dropdown UI Control node that lets the user pick from a list of selectable items, each with an integer ID — used in `DeclareSuitDialog` to pick Hearts, Diamonds, Clubs, or Spades.",
-      "relatedLessonIds": [
-        "l_08_01_declaration_popup"
-      ],
-      "relatedDocClassNames": [
-        "OptionButton",
-        "Button"
-      ]
-    },
-    {
-      "term": "AnimationPlayer",
-      "shortDefinition": "A node that stores and plays named animations authored in the animation editor.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "AnimationPlayer"
-      ]
-    },
-    {
-      "term": "Area2D",
-      "shortDefinition": "A 2D region that detects overlapping bodies and areas and can override physics like gravity.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Area2D"
-      ]
-    },
-    {
-      "term": "Array",
-      "shortDefinition": "An ordered, dynamic, mutable list of values accessed by index.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Array"
-      ]
-    },
-    {
-      "term": "AudioListener2D",
-      "shortDefinition": "A 2D node that overrides the location sounds are heard from in 2D space.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "AudioStreamPlayer2D"
-      ]
-    },
-    {
-      "term": "AudioListener3D",
-      "shortDefinition": "A 3D node that overrides the location sounds are heard from in 3D space.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "AudioStreamPlayer3D"
-      ]
-    },
-    {
-      "term": "AudioStream",
-      "shortDefinition": "A base resource for audio data (such as `.wav` or `.ogg` sound files) played by `AudioStreamPlayer`.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "AudioStreamPlayer",
-        "Resource"
-      ]
-    },
-    {
-      "term": "AudioStreamPlayer",
-      "shortDefinition": "A node that plays an AudioStream at a non-positional, screen-wide volume.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "AudioStreamPlayer"
-      ]
-    },
-    {
-      "term": "AudioStreamPlayer2D",
-      "shortDefinition": "A 2D-positioned audio player whose volume attenuates with distance from the Camera2D.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "AudioStreamPlayer2D"
-      ]
-    },
-    {
-      "term": "AudioStreamPlayer3D",
-      "shortDefinition": "A 3D-positioned audio player with distance attenuation, panning, and doppler.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "AudioStreamPlayer3D"
-      ]
-    },
-    {
-      "term": "BaseButton",
-      "shortDefinition": "The abstract base class for all GUI buttons in Godot (`Button`, `TextureButton`, `CheckButton`, `OptionButton`).",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Button",
-        "TextureButton",
-        "CheckButton"
-      ]
-    },
-    {
-      "term": "CPUParticles2D",
-      "shortDefinition": "A 2D particle emitter simulated on the CPU, configurable entirely from properties without a shader.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "CPUParticles2D"
-      ]
-    },
-    {
-      "term": "Callable",
-      "shortDefinition": "A first-class reference to a method or function, callable later with its arguments.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Callable"
-      ]
-    },
-    {
-      "term": "Camera2D",
-      "shortDefinition": "A 2D camera that scrolls, zooms, and limits the visible region of the scene.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Camera2D"
-      ]
-    },
-    {
-      "term": "Camera3D",
-      "shortDefinition": "A 3D camera that defines the perspective, field of view, and clip planes of a viewport.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Camera3D"
-      ]
-    },
-    {
-      "term": "CanvasItem",
-      "shortDefinition": "Base class for anything 2D that can be drawn to the screen, such as Node2D and Control.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "CanvasItem"
-      ]
-    },
-    {
-      "term": "CharacterBody2D",
-      "shortDefinition": "A physics body specialized for player- or code-controlled movement with built-in collision sliding.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "CharacterBody2D"
-      ]
-    },
-    {
-      "term": "CheckButton",
-      "shortDefinition": "A toggle button that displays a checkmark and a text label, like a checkbox.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "CheckButton"
-      ]
-    },
-    {
-      "term": "CollisionShape2D",
-      "shortDefinition": "A node that gives a collision object its 2D shape via a Shape2D resource.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "CollisionShape2D"
-      ]
-    },
-    {
-      "term": "Color",
-      "shortDefinition": "A built-in RGBA color with floating-point channels in the 0–1 range.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Color"
-      ]
-    },
-    {
-      "term": "ColorRect",
-      "shortDefinition": "A control that fills its rectangle with a single flat color.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "ColorRect"
-      ]
-    },
-    {
-      "term": "Container",
-      "shortDefinition": "A base control that automatically positions and resizes its child controls.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Container"
-      ]
-    },
-    {
-      "term": "Dictionary",
-      "shortDefinition": "An associative container mapping hashable keys to values, like a hash map.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Dictionary"
-      ]
-    },
-    {
-      "term": "Engine",
-      "shortDefinition": "A singleton exposing engine version, frames, time scale, and run-mode information.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "Engine"
-      ]
-    },
-    {
-      "term": "FileAccess",
-      "shortDefinition": "A static class for reading from and writing to files on disk.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "FileAccess"
-      ]
-    },
-    {
-      "term": "GPUParticles2D",
-      "shortDefinition": "A 2D particle emitter simulated on the GPU for large, cheap bursts and continuous effects.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "GPUParticles2D"
-      ]
-    },
-    {
-      "term": "GridContainer",
-      "shortDefinition": "A container that arranges its children into a grid with a fixed number of columns.",
-      "relatedLessonIds": [
-        "l_01_00c_first_script"
-      ],
-      "relatedDocClassNames": [
-        "GridContainer"
-      ]
-    },
-    {
       "term": "Image",
-      "shortDefinition": "A native image buffer storing raw pixel data in CPU memory before being uploaded to a `Texture2D`.",
+      "shortDefinition": "A native image buffer storing raw pixel data in CPU memory before being uploaded to a `Texture2D`.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Image (Texture2D) in Godot 4.3:\n@onready var node_ref: Texture2D = $Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **Image** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -769,7 +565,7 @@
     },
     {
       "term": "ImageTexture",
-      "shortDefinition": "A `Texture2D` resource created dynamically from an `Image` at runtime.",
+      "shortDefinition": "A `Texture2D` resource created dynamically from an `Image` at runtime.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using ImageTexture (Texture2D) in Godot 4.3:\n@onready var node_ref: Texture2D = $Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **ImageTexture** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -778,8 +574,21 @@
       ]
     },
     {
+      "term": "Import Dock",
+      "shortDefinition": "The dock next to the **Scene** tab in the Godot 4.3 Editor that controls how downloaded `.png`, `.svg`, `.ogg`, and `.wav` files in `res://assets/` are compressed and filtered.\n\n> [!TIP]\n> For downloaded `.ogg` sound effects (`card_slide.ogg`, `shuffle.ogg`), select the file in the **FileSystem** dock, open the **Import** tab, uncheck **Loop**, and click **Reimport** so one-shot SFX don't repeat endlessly.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Import Dock (Texture2D) in Godot 4.3:\n@onready var node_ref: Texture2D = $Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **Import Dock** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00b_project_tour",
+        "l_02_02_ready_dealing",
+        "l_11_02_sound_feedback"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D",
+        "AudioStreamPlayer"
+      ]
+    },
+    {
       "term": "Input",
-      "shortDefinition": "A singleton providing global, polled access to the current input state and action strength.",
+      "shortDefinition": "A singleton providing global, polled access to the current input state and action strength.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Input (Input) in Godot 4.3:\n@onready var node_ref: Input = $Input\n```\n\n**Solo Game Dev Transfer:** You will use **Input** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -789,7 +598,7 @@
     },
     {
       "term": "InputEvent",
-      "shortDefinition": "The base class for all input events such as key presses, mouse clicks, and touch.",
+      "shortDefinition": "The base class for all input events such as key presses, mouse clicks, and touch.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using InputEvent (InputEvent) in Godot 4.3:\n@onready var node_ref: InputEvent = $InputEvent\n```\n\n**Solo Game Dev Transfer:** You will use **InputEvent** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -799,7 +608,7 @@
     },
     {
       "term": "InputMap",
-      "shortDefinition": "Godot's global table mapping named input actions (like `ui_accept`) to physical keys, mouse buttons, or touch events.",
+      "shortDefinition": "Godot's global table mapping named input actions (like `ui_accept`) to physical keys, mouse buttons, or touch events.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using InputMap (Input) in Godot 4.3:\n@onready var node_ref: Input = $Input\n```\n\n**Solo Game Dev Transfer:** You will use **InputMap** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -809,8 +618,25 @@
       ]
     },
     {
+      "term": "int",
+      "shortDefinition": "A whole-number type with no decimal point, e.g. `7` or `-3`. Used for card ranks, player counts, and array indexes.\n\n### GDScript 4.3 Pattern\n```gdscript\nvar penalty_stack: int = 2\npenalty_stack += 3 # -> 5\n```\n\n**Solo Game Dev Transfer:** You will use **int** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_01_variables",
+        "l_01_01_enums"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Iterative counter",
+      "shortDefinition": "A variable that increments each loop to track position or how many times something happened, e.g. counting cards in a jump chain.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Applying Iterative counter in GDScript 4.3:\nfunc apply_concept(card: CardData) -> bool:\n\treturn card != null and card.can_start_discard()\n```\n\n**Solo Game Dev Transfer:** You will use **Iterative counter** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_07_01_chain_resolution"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
       "term": "JSON",
-      "shortDefinition": "A utility class for parsing JSON text into native Variant data and back.",
+      "shortDefinition": "A utility class for parsing JSON text into native Variant data and back.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using JSON (JSON) in Godot 4.3:\n@onready var node_ref: JSON = $JSON\n```\n\n**Solo Game Dev Transfer:** You will use **JSON** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -819,8 +645,44 @@
       ]
     },
     {
+      "term": "Jump Cards",
+      "shortDefinition": "In Kadi, Jack (J) cards are Jump Cards. Each Jack played skips one player in the current direction of play; the player about to be skipped can counter by playing their own Jump Card.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Kenyan Kadi Rule Check (Jump Cards):\nvar is_legal: bool = RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit)\n```\n\n**Solo Game Dev Transfer:** You will use **Jump Cards** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_07_01_chain_resolution"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Kadi",
+      "shortDefinition": "A fast-paced Kenyan shedding card game played by 2–5 players with a 54-card deck (52 suited cards + 2 Jokers). Players race to play all their winning Answer cards in a single move after announcing 'Niko Kadi' in the previous round.\n\n### Core Kadi Card Groups\n- **Answer Cards (`4, 5, 6, 7, 9, 10`)**: Standard scoring/matching cards and the only legal opening cards.\n- **Penalty Cards (`2` = +2, `3` = +3, `Joker` = +5)**: Stackable draw penalties.\n- **Question Cards (`8`, `Q`)**: Must be accompanied by a matching-suit Answer card in the same turn.\n- **Jump (`J`) & Kickback (`K`)**: Skip the next player (`J`) or reverse turn direction (`K`).\n- **Wild Ace (`A`)**: Overrides the active suit (`declared_suit`) or cancels an active penalty stack.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Kenyan Kadi Rule Check (Kadi):\nvar is_legal: bool = RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit)\n```\n\n**Solo Game Dev Transfer:** You will use **Kadi** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_01_enums",
+        "l_09_01_win_detection"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Kickback Cards",
+      "shortDefinition": "In Kadi, King (K) cards are Kickback Cards. Playing a King reverses the direction of play (clockwise <-> counter-clockwise), and can be countered or stacked.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Kenyan Kadi Rule Check (Kickback Cards):\nvar is_legal: bool = RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit)\n```\n\n**Solo Game Dev Transfer:** You will use **Kickback Cards** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_07_01_chain_resolution"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Label",
+      "shortDefinition": "A control that displays non-editable text. Used for the player's name, hand count, penalty total, and status messages.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Label (Label) in Godot 4.3:\n@onready var node_ref: Label = $Label\n```\n\n**Solo Game Dev Transfer:** You will use **Label** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_08_01_declaration_popup",
+        "l_11_01_tweens"
+      ],
+      "relatedDocClassNames": [
+        "Label"
+      ]
+    },
+    {
       "term": "Light2D",
-      "shortDefinition": "A 2D node that casts light and shadows onto 2D `CanvasItem` nodes.",
+      "shortDefinition": "A 2D node that casts light and shadows onto 2D `CanvasItem` nodes.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Light2D (CanvasItem) in Godot 4.3:\n@onready var node_ref: CanvasItem = $CanvasItem\n```\n\n**Solo Game Dev Transfer:** You will use **Light2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -831,7 +693,7 @@
     },
     {
       "term": "LineEdit",
-      "shortDefinition": "A single-line text input field the user can type into.",
+      "shortDefinition": "A single-line text input field the user can type into.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using LineEdit (LineEdit) in Godot 4.3:\n@onready var node_ref: LineEdit = $LineEdit\n```\n\n**Solo Game Dev Transfer:** You will use **LineEdit** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -840,8 +702,17 @@
       ]
     },
     {
+      "term": "Loops",
+      "shortDefinition": "`for` and `while` blocks that repeat code, once per item or until a condition fails. Used to build a deck, deal cards, and walk a hand.\n\n### GDScript 4.3 Pattern\n```gdscript\nfor card_data in GameState.hands[0]:\n\tspawn_card_in_hand(card_data)\n```\n\n**Solo Game Dev Transfer:** You will use **Loops** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_04_loops",
+        "l_01_03_deck_builder"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
       "term": "MainLoop",
-      "shortDefinition": "The abstract base class for the game's main loop in Godot; `SceneTree` is the default implementation used by games.",
+      "shortDefinition": "The abstract base class for the game's main loop in Godot; `SceneTree` is the default implementation used by games.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using MainLoop (SceneTree) in Godot 4.3:\n@onready var node_ref: SceneTree = $SceneTree\n```\n\n**Solo Game Dev Transfer:** You will use **MainLoop** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -852,7 +723,7 @@
     },
     {
       "term": "MarginContainer",
-      "shortDefinition": "A container that adds configurable margins around a single child.",
+      "shortDefinition": "A container that adds configurable margins around a single child.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using MarginContainer (MarginContainer) in Godot 4.3:\n@onready var node_ref: MarginContainer = $MarginContainer\n```\n\n**Solo Game Dev Transfer:** You will use **MarginContainer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -861,8 +732,59 @@
       ]
     },
     {
+      "term": "match statements",
+      "shortDefinition": "A switch-like construct that runs code based on which pattern a value matches. Used to dispatch on a card's effect type.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Applying match statements in GDScript 4.3:\nfunc apply_concept(card: CardData) -> bool:\n\treturn card != null and card.can_start_discard()\n```\n\n**Solo Game Dev Transfer:** You will use **match statements** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_04_01_match"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Mouse Filter",
+      "shortDefinition": "A `[[Control]]` property (`mouse_filter`) that decides whether a UI node consumes mouse clicks/touch taps (`Stop`), lets them pass to parent controls (`Pass`), or ignores them completely (`Ignore`).\n\nIn `card_scene.tscn`, decorative child nodes like `CardArt` (`[[TextureRect]]`), `TopRankLabel`, and `CenterSuitLabel` must use `MOUSE_FILTER_IGNORE` so they never steal taps from `ClickButton`!\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Mouse Filter (Control) in Godot 4.3:\n@onready var node_ref: Control = $Control\n```\n\n**Solo Game Dev Transfer:** You will use **Mouse Filter** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_02_01_scenes_instancing",
+        "l_03_01_signals"
+      ],
+      "relatedDocClassNames": [
+        "Control",
+        "Button",
+        "TextureRect"
+      ]
+    },
+    {
+      "term": "MultiplayerAPI & @rpc",
+      "shortDefinition": "Godot 4.3's built-in networking system (`ENetMultiplayerPeer` + `@rpc`). Marking a function with `@rpc(\"any_peer\", \"call_local\", \"reliable\")` lets you call `my_func.rpc(...)` to execute that exact state update across all connected players over Wi-Fi/LAN.\n\n### GDScript 4.3 Pattern\n```gdscript\n@rpc(\"any_peer\", \"call_local\", \"reliable\")\nfunc sync_card_play(suit: int, rank: int) -> void:\n\tGameState.discard_pile.append(CardData.make(suit as CardTypes.Suits, rank))\n```",
+      "relatedLessonIds": [
+        "l_12_04_multiplayer_lan"
+      ],
+      "relatedDocClassNames": [
+        "Node",
+        "SceneTree"
+      ]
+    },
+    {
+      "term": "Niko Kadi",
+      "shortDefinition": "The mandatory declaration a player must make when they realize they can win on the NEXT round of play by playing all their remaining winning cards in a single move. Drawing a card revokes the declaration.\n\n```gdscript\nfunc can_win_this_turn(player_idx: int) -> bool:\n    return announced_kadi[player_idx] and hands[player_idx].is_empty() and penalty_stack == 0\n```",
+      "relatedLessonIds": [
+        "l_09_01_win_detection"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Node",
+      "shortDefinition": "The base building block of a Godot scene; every game object is a Node. Nodes form a tree and can have children, a parent, and a name.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Node (Node) in Godot 4.3:\n@onready var node_ref: Node = $Node\n```\n\n**Solo Game Dev Transfer:** You will use **Node** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_02_01_scenes_instancing",
+        "l_02_02_ready_dealing"
+      ],
+      "relatedDocClassNames": [
+        "Node"
+      ]
+    },
+    {
       "term": "Node2D",
-      "shortDefinition": "A 2D-positioned node with position, rotation, scale, and a transform.",
+      "shortDefinition": "A 2D-positioned node with position, rotation, scale, and a transform.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Node2D (Node2D) in Godot 4.3:\n@onready var node_ref: Node2D = $Node2D\n```\n\n**Solo Game Dev Transfer:** You will use **Node2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -872,7 +794,7 @@
     },
     {
       "term": "Node3D",
-      "shortDefinition": "A 3D-positioned node with transform, rotation, scale, and a basis; base for 3D scenes.",
+      "shortDefinition": "A 3D-positioned node with transform, rotation, scale, and a basis; base for 3D scenes.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Node3D (Node3D) in Godot 4.3:\n@onready var node_ref: Node3D = $Node3D\n```\n\n**Solo Game Dev Transfer:** You will use **Node3D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -882,7 +804,7 @@
     },
     {
       "term": "NodePath",
-      "shortDefinition": "A pre-parsed relative or absolute path to a node in the `SceneTree` (for example, `\"HUD/PlaySelectedButton\"`).",
+      "shortDefinition": "A pre-parsed relative or absolute path to a node in the `SceneTree` (for example, `\"HUD/PlaySelectedButton\"`).\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using NodePath (Node) in Godot 4.3:\n@onready var node_ref: Node = $Node\n```\n\n**Solo Game Dev Transfer:** You will use **NodePath** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -892,8 +814,49 @@
       ]
     },
     {
+      "term": "Null-handling",
+      "shortDefinition": "Checking whether a value is `null` (nothing) before using it, so the game never crashes on a missing card or empty pile.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Applying Null-handling in GDScript 4.3:\nfunc apply_concept(card: CardData) -> bool:\n\treturn card != null and card.can_start_discard()\n```\n\n**Solo Game Dev Transfer:** You will use **Null-handling** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_05_functions",
+        "l_02_02_ready_dealing"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Object",
+      "shortDefinition": "The root class of most Godot types; provides properties, methods, signals, and metadata. Everything node- or resource-like derives from it.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Object (Object) in Godot 4.3:\n@onready var node_ref: Object = $Object\n```\n\n**Solo Game Dev Transfer:** You will use **Object** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_08_classes"
+      ],
+      "relatedDocClassNames": [
+        "Object"
+      ]
+    },
+    {
+      "term": "OptionButton",
+      "shortDefinition": "A dropdown UI Control node that lets the user pick from a list of selectable items, each with an integer ID — used in `DeclareSuitDialog` to pick Hearts, Diamonds, Clubs, or Spades.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using OptionButton (OptionButton) in Godot 4.3:\n@onready var node_ref: OptionButton = $OptionButton\n```\n\n**Solo Game Dev Transfer:** You will use **OptionButton** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_08_01_declaration_popup"
+      ],
+      "relatedDocClassNames": [
+        "OptionButton",
+        "Button"
+      ]
+    },
+    {
+      "term": "PackedScene",
+      "shortDefinition": "The in-memory representation of a saved scene file. You call `instantiate()` on it to spawn a copy, e.g. a new card node.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using PackedScene (PackedScene) in Godot 4.3:\n@onready var node_ref: PackedScene = $PackedScene\n```\n\n**Solo Game Dev Transfer:** You will use **PackedScene** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_02_01_scenes_instancing"
+      ],
+      "relatedDocClassNames": [
+        "PackedScene",
+        "Resource"
+      ]
+    },
+    {
       "term": "Panel",
-      "shortDefinition": "A Control that draws a styled background rectangle, used to group other UI.",
+      "shortDefinition": "A Control that draws a styled background rectangle, used to group other UI.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Panel (Panel) in Godot 4.3:\n@onready var node_ref: Panel = $Panel\n```\n\n**Solo Game Dev Transfer:** You will use **Panel** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -902,8 +865,16 @@
       ]
     },
     {
+      "term": "Penalty Cards",
+      "shortDefinition": "In Kadi, 2, 3, and Joker (JOK) are Penalty Cards that force the next player to draw 2, 3, or 5 cards respectively unless they counter with a same-rank Penalty Card (which forwards the stack) or an Ace (which cancels the stack).\n\n```gdscript\nfunc penalty_value() -> int:\n    match rank:\n        CardTypes.Ranks.TWO: return 2\n        CardTypes.Ranks.THREE: return 3\n        CardTypes.Ranks.JOKER: return 5\n        _: return 0\n```",
+      "relatedLessonIds": [
+        "l_05_01_accumulator"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
       "term": "PhysicsBody2D",
-      "shortDefinition": "The abstract base class for all 2D physics objects (`StaticBody2D`, `RigidBody2D`, `CharacterBody2D`).",
+      "shortDefinition": "The abstract base class for all 2D physics objects (`StaticBody2D`, `RigidBody2D`, `CharacterBody2D`).\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using PhysicsBody2D (StaticBody2D) in Godot 4.3:\n@onready var node_ref: StaticBody2D = $StaticBody2D\n```\n\n**Solo Game Dev Transfer:** You will use **PhysicsBody2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -915,7 +886,7 @@
     },
     {
       "term": "ProgressBar",
-      "shortDefinition": "A control that visualises progress from min to max as a filled bar.",
+      "shortDefinition": "A control that visualises progress from min to max as a filled bar.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using ProgressBar (ProgressBar) in Godot 4.3:\n@onready var node_ref: ProgressBar = $ProgressBar\n```\n\n**Solo Game Dev Transfer:** You will use **ProgressBar** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -925,7 +896,7 @@
     },
     {
       "term": "ProjectSettings",
-      "shortDefinition": "The singleton holding all project-wide settings: rendering, physics, input map, and autoloads.",
+      "shortDefinition": "The singleton holding all project-wide settings: rendering, physics, input map, and autoloads.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using ProjectSettings (ProjectSettings) in Godot 4.3:\n@onready var node_ref: ProjectSettings = $ProjectSettings\n```\n\n**Solo Game Dev Transfer:** You will use **ProjectSettings** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -935,7 +906,7 @@
     },
     {
       "term": "Quaternion",
-      "shortDefinition": "A 4-component mathematical structure used to represent smooth 3D rotations without gimbal lock.",
+      "shortDefinition": "A 4-component mathematical structure used to represent smooth 3D rotations without gimbal lock.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Quaternion (Node3D) in Godot 4.3:\n@onready var node_ref: Node3D = $Node3D\n```\n\n**Solo Game Dev Transfer:** You will use **Quaternion** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -944,8 +915,27 @@
       ]
     },
     {
+      "term": "Question Cards",
+      "shortDefinition": "In Kadi, Queen (Q) and 8 are Question Cards. A player who plays a Question Card must accompany it in the same move with a matching-suit Answer Card (or chain of Questions ending in an Answer Card), otherwise they must draw from the pile.\n\n```gdscript\nfunc is_question() -> bool:\n    return rank == CardTypes.Ranks.QUEEN or rank == CardTypes.Ranks.EIGHT\n```",
+      "relatedLessonIds": [
+        "l_06_01_qa_composition"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
+      "term": "Randomness",
+      "shortDefinition": "Unpredictable number generation used to shuffle the deck. Godot provides `randf()`, `randi()`, and `RandomNumberGenerator`.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Randomness (RandomNumberGenerator) in Godot 4.3:\n@onready var node_ref: RandomNumberGenerator = $RandomNumberGenerator\n```\n\n**Solo Game Dev Transfer:** You will use **Randomness** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_03_deck_builder",
+        "l_10_01_reshuffle"
+      ],
+      "relatedDocClassNames": [
+        "RandomNumberGenerator"
+      ]
+    },
+    {
       "term": "Range",
-      "shortDefinition": "The abstract base class for UI controls that represent a number within a `[min_value, max_value]` range (`ProgressBar`, `Slider`).",
+      "shortDefinition": "The abstract base class for UI controls that represent a number within a `[min_value, max_value]` range (`ProgressBar`, `Slider`).\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Range (ProgressBar) in Godot 4.3:\n@onready var node_ref: ProgressBar = $ProgressBar\n```\n\n**Solo Game Dev Transfer:** You will use **Range** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -955,8 +945,16 @@
       ]
     },
     {
+      "term": "Rank",
+      "shortDefinition": "The value of a card within its suit, from Ace through King. Determines most play and penalty rules.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Kenyan Kadi Rule Check (Rank):\nvar is_legal: bool = RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit)\n```\n\n**Solo Game Dev Transfer:** You will use **Rank** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_01_enums"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
       "term": "Rect2",
-      "shortDefinition": "A built-in axis-aligned 2D rectangle defined by a position and a size.",
+      "shortDefinition": "A built-in axis-aligned 2D rectangle defined by a position and a size.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Rect2 (Rect2) in Godot 4.3:\n@onready var node_ref: Rect2 = $Rect2\n```\n\n**Solo Game Dev Transfer:** You will use **Rect2** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -965,13 +963,33 @@
       ]
     },
     {
+      "term": "Recursion",
+      "shortDefinition": "When a function calls itself to break a big problem into smaller copies of the same problem. Useful for resolving chains of jump cards.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Recursion (Callable) in Godot 4.3:\n@onready var node_ref: Callable = $Callable\n```\n\n**Solo Game Dev Transfer:** You will use **Recursion** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_07_01_chain_resolution"
+      ],
+      "relatedDocClassNames": [
+        "Callable"
+      ]
+    },
+    {
       "term": "RefCounted",
-      "shortDefinition": "An Object that frees itself automatically once no references to it remain.",
+      "shortDefinition": "An Object that frees itself automatically once no references to it remain.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using RefCounted (RefCounted) in Godot 4.3:\n@onready var node_ref: RefCounted = $RefCounted\n```\n\n**Solo Game Dev Transfer:** You will use **RefCounted** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
       "relatedDocClassNames": [
         "RefCounted"
+      ]
+    },
+    {
+      "term": "Resource",
+      "shortDefinition": "A sharable data object, often saved to a `.tres` file. Card data (suit, rank, effect) is stored as a custom Resource.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Resource (Resource) in Godot 4.3:\n@onready var node_ref: Resource = $Resource\n```\n\n**Solo Game Dev Transfer:** You will use **Resource** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_02_resources"
+      ],
+      "relatedDocClassNames": [
+        "Resource"
       ]
     },
     {
@@ -987,8 +1005,30 @@
       ]
     },
     {
+      "term": "RigidBody2D",
+      "shortDefinition": "**RigidBody2D** is a core Godot 4.3 and GDScript concept used to structure scenes, data, and gameplay logic cleanly.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Working with RigidBody2D in Godot 4.3:\nfunc demo_example() -> void:\n\tprint(\"Using RigidBody2D in Kadi & solo projects\")\n```\n\n**Solo Game Dev Transfer:** Mastering **RigidBody2D** lets you build modular scenes and scripts across card games, 2D platformers, and RPGs without relying on step-by-step tutorials.",
+      "relatedLessonIds": [
+        "l_00_01_variables",
+        "l_13_01_blank_canvas_framework"
+      ],
+      "relatedDocClassNames": [
+        "RigidBody2D"
+      ]
+    },
+    {
+      "term": "Scenes",
+      "shortDefinition": "Saved trees of nodes, stored as `.tscn` files, that you can instance and reuse. A card, a player area, or the whole table can be a scene.\n\n### GDScript 4.3 Pattern\n```gdscript\nconst CardScene: PackedScene = preload(\"res://scenes/card/card_scene.tscn\")\nvar node: Control = CardScene.instantiate()\nadd_child(node)\n```\n\n**Solo Game Dev Transfer:** You will use **Scenes** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_02_01_scenes_instancing"
+      ],
+      "relatedDocClassNames": [
+        "PackedScene",
+        "Node"
+      ]
+    },
+    {
       "term": "SceneTree",
-      "shortDefinition": "The main loop that owns the scene, groups, and the root window.",
+      "shortDefinition": "The main loop that owns the scene, groups, and the root window.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using SceneTree (SceneTree) in Godot 4.3:\n@onready var node_ref: SceneTree = $SceneTree\n```\n\n**Solo Game Dev Transfer:** You will use **SceneTree** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -998,7 +1038,7 @@
     },
     {
       "term": "ScrollContainer",
-      "shortDefinition": "A container that scrolls a single child control that is larger than the viewport.",
+      "shortDefinition": "A container that scrolls a single child control that is larger than the viewport.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using ScrollContainer (ScrollContainer) in Godot 4.3:\n@onready var node_ref: ScrollContainer = $ScrollContainer\n```\n\n**Solo Game Dev Transfer:** You will use **ScrollContainer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1007,8 +1047,19 @@
       ]
     },
     {
+      "term": "Signals",
+      "shortDefinition": "Named events a node can emit; other nodes connect functions to react. Signals decouple the emitter from the listener, like a turn-changed ping.\n\n### GDScript 4.3 Pattern\n```gdscript\nsignal card_clicked(card_node: Control)\n\n# Emit upward:\ncard_clicked.emit(self)\n```\n\n**Solo Game Dev Transfer:** You will use **Signals** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_03_01_signals"
+      ],
+      "relatedDocClassNames": [
+        "Signal",
+        "Object"
+      ]
+    },
+    {
       "term": "SpinBox",
-      "shortDefinition": "A numerical input `Range` control with up/down step arrows.",
+      "shortDefinition": "A numerical input `Range` control with up/down step arrows.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using SpinBox (Slider) in Godot 4.3:\n@onready var node_ref: Slider = $Slider\n```\n\n**Solo Game Dev Transfer:** You will use **SpinBox** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1018,8 +1069,21 @@
       ]
     },
     {
+      "term": "Sprite Sheet",
+      "shortDefinition": "A single image file (e.g., `res://assets/cards/deck_sheet.png`) containing all 52 playing cards and 2 Jokers arranged in a uniform grid of rows (suits) and columns (ranks).\n\nIn Godot 4.3, you slice individual cards from a downloaded sprite sheet using an `[[AtlasTexture]]` whose `region` is set to `Rect2(col * card_width, row * card_height, card_width, card_height)`.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Sprite Sheet (Texture2D) in Godot 4.3:\n@onready var node_ref: Texture2D = $Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **Sprite Sheet** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_02_resources",
+        "l_02_02_ready_dealing"
+      ],
+      "relatedDocClassNames": [
+        "Texture2D",
+        "TextureRect",
+        "Sprite2D"
+      ]
+    },
+    {
       "term": "Sprite2D",
-      "shortDefinition": "A 2D node that draws a Texture2D, optionally split into frames or a region.",
+      "shortDefinition": "A 2D node that draws a Texture2D, optionally split into frames or a region.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Sprite2D (Sprite2D) in Godot 4.3:\n@onready var node_ref: Sprite2D = $Sprite2D\n```\n\n**Solo Game Dev Transfer:** You will use **Sprite2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1028,8 +1092,18 @@
       ]
     },
     {
+      "term": "State Machines",
+      "shortDefinition": "A design where an object is always in one of several states (e.g. DEAL, PLAY, RESOLVE) and rules govern transitions between them.\n\n### GDScript 4.3 Pattern\n```gdscript\nenum State { IDLE, MOVE, ATTACK }\nvar state: State = State.IDLE\nmatch state:\n\tState.IDLE: velocity = Vector2.ZERO\n```\n\n**Solo Game Dev Transfer:** You will use **State Machines** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_03_01_signals"
+      ],
+      "relatedDocClassNames": [
+        "Node"
+      ]
+    },
+    {
       "term": "StaticBody2D",
-      "shortDefinition": "An immovable 2D physics body used for floors, walls, and other fixed collision.",
+      "shortDefinition": "An immovable 2D physics body used for floors, walls, and other fixed collision.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using StaticBody2D (StaticBody2D) in Godot 4.3:\n@onready var node_ref: StaticBody2D = $StaticBody2D\n```\n\n**Solo Game Dev Transfer:** You will use **StaticBody2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1038,8 +1112,16 @@
       ]
     },
     {
+      "term": "String",
+      "shortDefinition": "A piece of text, written between quotes, e.g. `\"Niko Kadi\"`. It stores words, labels, and messages shown to the player.\n\n### GDScript 4.3 Pattern\n```gdscript\nvar card_label: String = \"%d%s\" % [7, \"♥\"] # -> \"7♥\"\n```\n\n**Solo Game Dev Transfer:** You will use **String** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_01_variables"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
       "term": "StyleBox",
-      "shortDefinition": "A resource that defines how UI panels and buttons draw their background, rounded corners, and borders in a `Theme`.",
+      "shortDefinition": "A resource that defines how UI panels and buttons draw their background, rounded corners, and borders in a `Theme`.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using StyleBox (Panel) in Godot 4.3:\n@onready var node_ref: Panel = $Panel\n```\n\n**Solo Game Dev Transfer:** You will use **StyleBox** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1050,8 +1132,30 @@
       ]
     },
     {
+      "term": "StyleBoxTexture",
+      "shortDefinition": "A theme `StyleBox` that skins a `[[Panel]]` or `[[Button]]` using a downloaded nine-patch image texture (`res://assets/ui/button_frame.png`) instead of a flat color (`StyleBoxFlat`).\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using StyleBoxTexture (Panel) in Godot 4.3:\n@onready var node_ref: Panel = $Panel\n```\n\n**Solo Game Dev Transfer:** You will use **StyleBoxTexture** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_02_02_ready_dealing",
+        "l_08_01_declaration_popup"
+      ],
+      "relatedDocClassNames": [
+        "Panel",
+        "Button",
+        "Theme"
+      ]
+    },
+    {
+      "term": "Suit",
+      "shortDefinition": "One of the four categories of a playing card: Clubs, Diamonds, Hearts, or Spades. Stored as an enum in code.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Kenyan Kadi Rule Check (Suit):\nvar is_legal: bool = RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit)\n```\n\n**Solo Game Dev Transfer:** You will use **Suit** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_01_enums",
+        "l_08_01_declaration_popup"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
       "term": "TextEdit",
-      "shortDefinition": "A multi-line text editor with syntax highlighting, selection, and clipboard support.",
+      "shortDefinition": "A multi-line text editor with syntax highlighting, selection, and clipboard support.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using TextEdit (TextEdit) in Godot 4.3:\n@onready var node_ref: TextEdit = $TextEdit\n```\n\n**Solo Game Dev Transfer:** You will use **TextEdit** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1061,12 +1165,25 @@
     },
     {
       "term": "Texture2D",
-      "shortDefinition": "A 2D image resource that can be sampled and drawn by CanvasItem, Sprite2D, Control, and others.",
+      "shortDefinition": "A 2D image resource that can be sampled and drawn by CanvasItem, Sprite2D, Control, and others.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Texture2D (Texture2D) in Godot 4.3:\n@onready var node_ref: Texture2D = $Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **Texture2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
       "relatedDocClassNames": [
         "Texture2D"
+      ]
+    },
+    {
+      "term": "TextureFilter",
+      "shortDefinition": "Controls how Godot 4.3 interpolates pixels when scaling a downloaded `[[Texture2D]]` up or down.\n\n- **Linear (`TEXTURE_FILTER_LINEAR`)**: Smooth bilinear filtering — ideal for high-resolution vector or HD playing card PNGs.\n- **Nearest (`TEXTURE_FILTER_NEAREST`)**: Crisp nearest-neighbor scaling with zero blur — mandatory for retro pixel-art card packs! Set globally in **Project -> Project Settings -> Rendering -> Textures -> Canvas Textures -> Default Texture Filter**.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using TextureFilter (CanvasItem) in Godot 4.3:\n@onready var node_ref: CanvasItem = $CanvasItem\n```\n\n**Solo Game Dev Transfer:** You will use **TextureFilter** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_02_02_ready_dealing",
+        "l_11_01_tweens"
+      ],
+      "relatedDocClassNames": [
+        "CanvasItem",
+        "TextureRect",
+        "Sprite2D"
       ]
     },
     {
@@ -1084,8 +1201,18 @@
       ]
     },
     {
+      "term": "Timer",
+      "shortDefinition": "A node that counts down and emits `timeout` at an interval. Used for AI think-delays, turn limits, and reshuffle pauses.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Timer (Timer) in Godot 4.3:\n@onready var node_ref: Timer = $Timer\n```\n\n**Solo Game Dev Transfer:** You will use **Timer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_03_01_signals"
+      ],
+      "relatedDocClassNames": [
+        "Timer"
+      ]
+    },
+    {
       "term": "Tween",
-      "shortDefinition": "A code-created interpolator that animates properties of objects over time.",
+      "shortDefinition": "A code-created interpolator that animates properties of objects over time.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Tween (Tween) in Godot 4.3:\n@onready var node_ref: Tween = $Tween\n```\n\n**Solo Game Dev Transfer:** You will use **Tween** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1094,18 +1221,26 @@
       ]
     },
     {
-      "term": "VBoxContainer",
-      "shortDefinition": "A container that arranges its children in a vertical column, top to bottom.",
+      "term": "Tweens",
+      "shortDefinition": "Objects that interpolate a property over time, easing cards into position. Created with `create_tween()` and chained with `tween_property()`.\n\n### GDScript 4.3 Pattern\n```gdscript\nvar tw: Tween = create_tween()\ntw.tween_property(card_node, \"position:y\", -14.0, 0.15).set_trans(Tween.TRANS_BACK)\n```\n\n**Solo Game Dev Transfer:** You will use **Tweens** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
-        "l_01_00c_first_script"
+        "l_11_01_tweens"
       ],
       "relatedDocClassNames": [
-        "VBoxContainer"
+        "Tween"
       ]
     },
     {
+      "term": "Variable",
+      "shortDefinition": "A named container that holds one value, which can be read or changed while the program runs. In GDScript you declare one with `var name = value`.\n\n### GDScript 4.3 Pattern\n```gdscript\nvar card_rank: int = 7\nvar player_hp: int = 100 # Changes during gameplay\n```\n\n**Solo Game Dev Transfer:** You will use **Variable** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_00_01_variables"
+      ],
+      "relatedDocClassNames": []
+    },
+    {
       "term": "Variant",
-      "shortDefinition": "Godot's dynamic container type capable of holding any GDScript value (`int`, `float`, `String`, `Array`, `Object`, etc.).",
+      "shortDefinition": "Godot's dynamic container type capable of holding any GDScript value (`int`, `float`, `String`, `Array`, `Object`, etc.).\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Variant (Object) in Godot 4.3:\n@onready var node_ref: Object = $Object\n```\n\n**Solo Game Dev Transfer:** You will use **Variant** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1116,8 +1251,18 @@
       ]
     },
     {
+      "term": "VBoxContainer",
+      "shortDefinition": "A container that arranges its children in a vertical column, top to bottom.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using VBoxContainer (VBoxContainer) in Godot 4.3:\n@onready var node_ref: VBoxContainer = $VBoxContainer\n```\n\n**Solo Game Dev Transfer:** You will use **VBoxContainer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
+      "relatedLessonIds": [
+        "l_01_00c_first_script"
+      ],
+      "relatedDocClassNames": [
+        "VBoxContainer"
+      ]
+    },
+    {
       "term": "Vector2",
-      "shortDefinition": "A built-in 2D vector of two floats used for positions, sizes, and directions.",
+      "shortDefinition": "A built-in 2D vector of two floats used for positions, sizes, and directions.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Vector2 (Vector2) in Godot 4.3:\n@onready var node_ref: Vector2 = $Vector2\n```\n\n**Solo Game Dev Transfer:** You will use **Vector2** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1127,7 +1272,7 @@
     },
     {
       "term": "Viewport",
-      "shortDefinition": "A node that renders its child scene, handling its own drawing, input, and camera.",
+      "shortDefinition": "A node that renders its child scene, handling its own drawing, input, and camera.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Viewport (Viewport) in Godot 4.3:\n@onready var node_ref: Viewport = $Viewport\n```\n\n**Solo Game Dev Transfer:** You will use **Viewport** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1137,7 +1282,7 @@
     },
     {
       "term": "Window",
-      "shortDefinition": "A viewport that is also an operating-system window or embedded sub-window with a title and decorations.",
+      "shortDefinition": "A viewport that is also an operating-system window or embedded sub-window with a title and decorations.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Window (Window) in Godot 4.3:\n@onready var node_ref: Window = $Window\n```\n\n**Solo Game Dev Transfer:** You will use **Window** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
@@ -1147,101 +1292,13 @@
     },
     {
       "term": "World2D",
-      "shortDefinition": "Holds all 2D physics space, canvas, and navigation state shared by a `Viewport`'s 2D nodes.",
+      "shortDefinition": "Holds all 2D physics space, canvas, and navigation state shared by a `Viewport`'s 2D nodes.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using World2D (Viewport) in Godot 4.3:\n@onready var node_ref: Viewport = $Viewport\n```\n\n**Solo Game Dev Transfer:** You will use **World2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
         "l_01_00c_first_script"
       ],
       "relatedDocClassNames": [
         "Viewport",
         "Node2D"
-      ]
-    },
-    {
-      "term": "AtlasTexture",
-      "shortDefinition": "A `[[Texture2D]]` resource that crops a single rectangular `region` (`Rect2`) out of a larger downloaded **Sprite Sheet** (`res://assets/cards/deck_sheet.png`).\n\nInstead of 54 separate image files, many itch.io and Kenney asset packs distribute one combined grid image. `AtlasTexture` lets each `CardData` slice its exact `[suit_row, rank_col]` rectangle at runtime:\n\n```gdscript\nconst SHEET := preload(\"res://assets/cards/deck_sheet.png\")\nfunc slice_card(col: int, row: int, w: int = 140, h: int = 190) -> AtlasTexture:\n    var atlas := AtlasTexture.new()\n    atlas.atlas = SHEET\n    atlas.region = Rect2(col * w, row * h, w, h)\n    return atlas\n```",
-      "relatedLessonIds": [
-        "l_01_02_resources",
-        "l_02_02_ready_dealing"
-      ],
-      "relatedDocClassNames": [
-        "Texture2D",
-        "TextureRect",
-        "Resource"
-      ]
-    },
-    {
-      "term": "Sprite Sheet",
-      "shortDefinition": "A single image file (e.g., `res://assets/cards/deck_sheet.png`) containing all 52 playing cards and 2 Jokers arranged in a uniform grid of rows (suits) and columns (ranks).\n\nIn Godot 4.3, you slice individual cards from a downloaded sprite sheet using an `[[AtlasTexture]]` whose `region` is set to `Rect2(col * card_width, row * card_height, card_width, card_height)`.",
-      "relatedLessonIds": [
-        "l_01_02_resources",
-        "l_02_02_ready_dealing"
-      ],
-      "relatedDocClassNames": [
-        "Texture2D",
-        "TextureRect",
-        "Sprite2D"
-      ]
-    },
-    {
-      "term": "Import Dock",
-      "shortDefinition": "The dock next to the **Scene** tab in the Godot 4.3 Editor that controls how downloaded `.png`, `.svg`, `.ogg`, and `.wav` files in `res://assets/` are compressed and filtered.\n\n> [!TIP]\n> For downloaded `.ogg` sound effects (`card_slide.ogg`, `shuffle.ogg`), select the file in the **FileSystem** dock, open the **Import** tab, uncheck **Loop**, and click **Reimport** so one-shot SFX don't repeat endlessly.",
-      "relatedLessonIds": [
-        "l_01_00b_project_tour",
-        "l_02_02_ready_dealing",
-        "l_11_02_sound_feedback"
-      ],
-      "relatedDocClassNames": [
-        "Texture2D",
-        "AudioStreamPlayer"
-      ]
-    },
-    {
-      "term": "Mouse Filter",
-      "shortDefinition": "A `[[Control]]` property (`mouse_filter`) that decides whether a UI node consumes mouse clicks/touch taps (`Stop`), lets them pass to parent controls (`Pass`), or ignores them completely (`Ignore`).\n\nIn `card_scene.tscn`, decorative child nodes like `CardArt` (`[[TextureRect]]`), `TopRankLabel`, and `CenterSuitLabel` must use `MOUSE_FILTER_IGNORE` so they never steal taps from `ClickButton`!",
-      "relatedLessonIds": [
-        "l_02_01_scenes_instancing",
-        "l_03_01_signals"
-      ],
-      "relatedDocClassNames": [
-        "Control",
-        "Button",
-        "TextureRect"
-      ]
-    },
-    {
-      "term": "TextureFilter",
-      "shortDefinition": "Controls how Godot 4.3 interpolates pixels when scaling a downloaded `[[Texture2D]]` up or down.\n\n- **Linear (`TEXTURE_FILTER_LINEAR`)**: Smooth bilinear filtering — ideal for high-resolution vector or HD playing card PNGs.\n- **Nearest (`TEXTURE_FILTER_NEAREST`)**: Crisp nearest-neighbor scaling with zero blur — mandatory for retro pixel-art card packs! Set globally in **Project -> Project Settings -> Rendering -> Textures -> Canvas Textures -> Default Texture Filter**.",
-      "relatedLessonIds": [
-        "l_02_02_ready_dealing",
-        "l_11_01_tweens"
-      ],
-      "relatedDocClassNames": [
-        "CanvasItem",
-        "TextureRect",
-        "Sprite2D"
-      ]
-    },
-    {
-      "term": "StyleBoxTexture",
-      "shortDefinition": "A theme `StyleBox` that skins a `[[Panel]]` or `[[Button]]` using a downloaded nine-patch image texture (`res://assets/ui/button_frame.png`) instead of a flat color (`StyleBoxFlat`).",
-      "relatedLessonIds": [
-        "l_02_02_ready_dealing",
-        "l_08_01_declaration_popup"
-      ],
-      "relatedDocClassNames": [
-        "Panel",
-        "Button",
-        "Theme"
-      ]
-    },
-    {
-      "term": "AudioStreamOggVorbis",
-      "shortDefinition": "Godot 4.3's audio stream resource for `.ogg` files placed in `res://assets/audio/` (such as `card_slide.ogg`, `penalty_slam.ogg`, and `niko_kadi.ogg`), played via `[[AudioStreamPlayer]]`.",
-      "relatedLessonIds": [
-        "l_11_02_sound_feedback"
-      ],
-      "relatedDocClassNames": [
-        "AudioStreamPlayer"
       ]
     }
   ]

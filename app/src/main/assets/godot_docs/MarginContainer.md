@@ -28,9 +28,11 @@ In the Kadi app a `MarginContainer` pads the screen edges so the table never tou
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`MarginContainer`)**: When configuring `MarginContainer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `MarginContainer` offline. If your `MarginContainer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using MarginContainer in Godot 4.3 Kadi
-func configure_margincontainer_example(target: MarginContainer) -> void:
-    assert(target != null, "MarginContainer reference must be valid")
-    print("Configured MarginContainer for Kadi table runtime")
+# Adding consistent safe-area padding around a HUD or dialog panel:
+@onready var margin_box: MarginContainer = $MarginContainer
+
+func set_uniform_padding(px: int = 16) -> void:
+	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
+		margin_box.add_theme_constant_override(side, px)
 ```
 

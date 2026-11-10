@@ -39,9 +39,15 @@ In the Kadi app `Slider` is rarely a gameplay element — cards are discrete, no
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Slider`)**: When configuring `Slider` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Slider` offline. If your `Slider` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Slider in Godot 4.3 Kadi
-func configure_slider_example(target: Slider) -> void:
-    assert(target != null, "Slider reference must be valid")
-    print("Configured Slider for Kadi table runtime")
+# Connecting an HSlider to adjust Master audio volume or AI turn speed live:
+@onready var speed_slider: Slider = $AISpeedSlider
+
+func _ready() -> void:
+	speed_slider.min_value = 0.2
+	speed_slider.max_value = 2.0
+	speed_slider.step = 0.1
+	speed_slider.value_changed.connect(func(val: float) -> void:
+		$AITurnTimer.wait_time = val
+	)
 ```
 

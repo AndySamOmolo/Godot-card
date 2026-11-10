@@ -35,9 +35,9 @@ In the Kadi app `Rect2` describes card and drop-zone bounds: `has_point` decides
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Rect2`)**: When configuring `Rect2` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Rect2` offline. If your `Rect2` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Rect2 in Godot 4.3 Kadi
-func configure_rect2_example(target: Rect2) -> void:
-    assert(target != null, "Rect2 reference must be valid")
-    print("Configured Rect2 for Kadi table runtime")
+# Checking if a dragged card or 2D point is inside a drop-zone rectangle:
+func is_dropped_in_zone(drop_slot: Control, global_pt: Vector2) -> bool:
+	var rect: Rect2 = drop_slot.get_global_rect()
+	return rect.has_point(global_pt)
 ```
 

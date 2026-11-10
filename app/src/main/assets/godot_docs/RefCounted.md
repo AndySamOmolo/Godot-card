@@ -30,9 +30,11 @@ In the Kadi project you usually extend `RefCounted` only when you need a lightwe
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`RefCounted`)**: When configuring `RefCounted` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `RefCounted` offline. If your `RefCounted` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using RefCounted in Godot 4.3 Kadi
-func configure_refcounted_example(target: RefCounted) -> void:
-    assert(target != null, "RefCounted reference must be valid")
-    print("Configured RefCounted for Kadi table runtime")
+# Lightweight pure-logic helper classes (like RuleValidator or TournamentRules) that auto-free when unreferenced:
+class_name DamageCalculator
+extends RefCounted
+
+static func compute_hit(atk: int, defense: int) -> int:
+	return maxi(1, atk - defense)
 ```
 

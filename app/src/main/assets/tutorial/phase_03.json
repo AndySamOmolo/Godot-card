@@ -119,7 +119,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Your table HUD (`StatusLabel`, `FeedbackLabel`) updates automatically whenever `turn_changed` or `state_updated` emits — without tight coupling!"
+      "tangibleOutcome": "Your table HUD (`StatusLabel`, `FeedbackLabel`) updates automatically whenever `turn_changed` or `state_updated` emits — without tight coupling!",
+      "beyondKadi": "How **Typed Signals, `TurnManager` Modulo Math & `Timer` Nodes** transfer to other games:\n- **Circular Modulo `(idx + dir + size) % size`**: Used whenever a player cycles through weapon slots (`Q`/`E` keys), character select carousels, or patrol waypoints that wrap around.\n- **`Timer` Nodes (`AITurnTimer`)**: Used in action games for attack cooldowns, invincibility frames (`0.8s` after taking damage), enemy wave spawners, and boss phase transitions.",
+      "transferChallenge": "**Your Solo Challenge**: Add a `var turn_count: int = 1` counter inside `turn_manager.gd` that increments every time `advance_turn()` runs, emit a new signal `signal turn_number_updated(turn_num: int)`, and display `\"Turn #%d\"` in `Table.tscn`'s `StatusLabel`!"
     },
     {
       "id": "l_03_02_turn_manager",
@@ -209,7 +211,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/turn_manager.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Register `TurnManager` in Project Settings -> Autoload so `TurnManager.advance_turn()` smoothly cycles turns `P1 -> P2 -> P3 -> P4 -> P1` in both clockwise and counter-clockwise directions."
+      "tangibleOutcome": "Register `TurnManager` in Project Settings -> Autoload so `TurnManager.advance_turn()` smoothly cycles turns `P1 -> P2 -> P3 -> P4 -> P1` in both clockwise and counter-clockwise directions.",
+      "beyondKadi": "How **Typed Signals, `TurnManager` Modulo Math & `Timer` Nodes** transfer to other games:\n- **Circular Modulo `(idx + dir + size) % size`**: Used whenever a player cycles through weapon slots (`Q`/`E` keys), character select carousels, or patrol waypoints that wrap around.\n- **`Timer` Nodes (`AITurnTimer`)**: Used in action games for attack cooldowns, invincibility frames (`0.8s` after taking damage), enemy wave spawners, and boss phase transitions.",
+      "transferChallenge": "**Your Solo Challenge**: Add a `var turn_count: int = 1` counter inside `turn_manager.gd` that increments every time `advance_turn()` runs, emit a new signal `signal turn_number_updated(turn_num: int)`, and display `\"Turn #%d\"` in `Table.tscn`'s `StatusLabel`!"
     },
     {
       "id": "l_03_03_ai_opponents",
@@ -303,7 +307,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.tscn + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "After you play or draw a card, watch `AITurnTimer` pause 0.75s per seat as AI Players 2, 3, and 4 play cards or draw automatically before returning the turn to you!"
+      "tangibleOutcome": "After you play or draw a card, watch `AITurnTimer` pause 0.75s per seat as AI Players 2, 3, and 4 play cards or draw automatically before returning the turn to you!",
+      "beyondKadi": "How **Typed Signals, `TurnManager` Modulo Math & `Timer` Nodes** transfer to other games:\n- **Circular Modulo `(idx + dir + size) % size`**: Used whenever a player cycles through weapon slots (`Q`/`E` keys), character select carousels, or patrol waypoints that wrap around.\n- **`Timer` Nodes (`AITurnTimer`)**: Used in action games for attack cooldowns, invincibility frames (`0.8s` after taking damage), enemy wave spawners, and boss phase transitions.",
+      "transferChallenge": "**Your Solo Challenge**: Add a `var turn_count: int = 1` counter inside `turn_manager.gd` that increments every time `advance_turn()` runs, emit a new signal `signal turn_number_updated(turn_num: int)`, and display `\"Turn #%d\"` in `Table.tscn`'s `StatusLabel`!"
     }
   ],
   "debugChallenge": {

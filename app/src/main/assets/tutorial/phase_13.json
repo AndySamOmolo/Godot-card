@@ -1,0 +1,314 @@
+{
+  "id": "phase_13_new_games_solo",
+  "order": 13,
+  "title": "Escape Tutorial Hell: Build Any New Game in Godot 4.3 Solo!",
+  "summary": "Bridge your Kadi mastery to building 2D Platformers, Top-Down RPGs, Space Shooters, and Puzzle games from scratch without tutorials — mastering the 5-Part Game Architecture Blueprint, 60 FPS `_physics_process(delta)`, `CharacterBody2D`, `Area2D` hitboxes, `TileMapLayer`, `Camera2D`, Finite State Machines, and `F1` offline documentation.",
+  "estimatedMinutes": 65,
+  "concepts": [
+    "CharacterBody2D",
+    "Area2D",
+    "CollisionShape2D",
+    "Camera2D",
+    "Input",
+    "_physics_process",
+    "Finite State Machine",
+    "F1 Search Help"
+  ],
+  "programmingConcepts": [
+    "Delta-Time Physics",
+    "Vector Math",
+    "Component Composition",
+    "Finite State Machines",
+    "Self-Sufficient API Research"
+  ],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scenes/player/player_controller.gd",
+    "res://scripts/health_component.gd",
+    "res://scripts/state_machine.gd"
+  ],
+  "sceneTreeBlueprint": "World (Node2D) -> TileMapLayer + Player (CharacterBody2D + Camera2D) + Spawner + HUD (CanvasLayer)",
+  "learningObjectives": [
+    "Deconstruct any new game idea into Data Resources, Template Scenes, Autoload State, Signals, and Rules without a tutorial",
+    "Write responsive 60 FPS real-time movement for both 2D Platformers and Top-Down RPGs using _physics_process(delta) and CharacterBody2D",
+    "Build decoupled Hitbox/Hurtbox combat with Area2D, Camera2D smoothing/shake, and wave spawners",
+    "Master Godot's built-in F1 Class Reference, Finite State Machines, and the Remote Scene Tree debugger for complete solo independence"
+  ],
+  "tangibleGoal": "Architect and code a playable 2D Platformer or Top-Down RPG prototype from a blank Godot 4.3 project completely on your own!",
+  "lessons": [
+    {
+      "id": "l_13_01_blank_canvas_framework",
+      "order": 1,
+      "title": "The 5-Question Architecture Blueprint: Turning Any Game Idea into Nodes & Scripts",
+      "targetFile": "res://SOLO_GAME_DEV_GUIDE.md",
+      "tangibleOutcome": "Take any blank Godot 4.3 project and design its complete **Scene Tree, Custom Resources, Autoloads, and Signals in 5 minutes** without watching a single tutorial!",
+      "beyondKadi": "This lesson *is* the universal bridge across all genres: whether you're making a **Platformer**, **RPG**, **Deckbuilder**, **Racing Game**, or **Farming Sim**, answering the 5 Architecture Questions gives you your exact file list before writing a line of code.",
+      "transferChallenge": "**Your Solo Task**: Pick a brand-new game idea you want to make (e.g., a 2D Dungeon Crawler or a Endless Runner) and write down your answers to the 5 Questions (1 Resource, 2 Template `.tscn` scenes, 1 Autoload, 2 Signals, and 1 Rule/Physics script)!",
+      "sceneTree": "AnyGodotGame (Root)\n├── 1. Data Layer (Custom Resource: CardData / ItemData / WeaponStats)\n├── 2. Actor Templates (PackedScene: CardScene / Player / Enemy / Bullet)\n├── 3. Global State (Autoload: GameState / SaveManager / Events)\n├── 4. World & Camera (Node2D / TileMapLayer / Camera2D)\n└── 5. UI Overlay (CanvasLayer -> HBoxContainer / Labels / Buttons)",
+      "editorSteps": [
+        "Open the **New Game Architect** tab in this app's **Live Kadi & Solo Dev Studio** to explore full scene trees and starter scripts for 5 distinct game genres.",
+        "Whenever you start a new project in Godot 4.3, create the same 3 core folders first: `res://scenes/`, `res://scripts/`, and `res://assets/`.",
+        "Answer the **5 Architecture Questions** below to turn your idea into concrete `.tscn` and `.gd` files immediately."
+      ],
+      "verificationSteps": [
+        "Verify that you can map every part of Kadi (`CardData`, `CardScene.tscn`, `GameState`, `TurnManager`, `RuleValidator`, `Table.tscn`) to its equivalent in a 2D Platformer or RPG!"
+      ],
+      "troubleshootingTips": [
+        "**Blank-Project Paralysis ('Where do I start?')**: Always follow the **Tangible-First Rule** you used in Phase 1: build **1 visible actor `.tscn`** and **1 main arena/level `.tscn`** first so you can press **F5** within 5 minutes!"
+      ],
+      "keyTakeaways": [
+        "You never need a tutorial to start a new genre if you decompose the game into **Data (`Resource`)**, **Visual Templates (`PackedScene`)**, **Global State (`Autoload`)**, **Communication (`Signal`)**, and **Rules/Physics (`Node2D`/`Static Class`)**.",
+        "Always build a visible, interactive prototype in the first 10 minutes (**F5** early and often!)."
+      ],
+      "bodyMarkdown": "# How to Start Any New Game From a Blank Screen (Zero Tutorials Needed!)\n\n> [!TIP]\n> **Tangible Milestone:** Why do beginners get stuck in \"Tutorial Hell\"? Because tutorials tell you *what to click*, not *how to architect a game from a blank project*. Here is the exact **5-Question Architecture Blueprint** that turns any game idea into a working Godot 4.3 project!\n\nLook back at what you built in **Kadi**. Without realizing it, you already mastered the **5 universal building blocks** of every Godot 4.3 game:\n\n| Building Block | What You Built in Kadi | What It Becomes in a 2D Platformer | What It Becomes in a Top-Down RPG |\n| :--- | :--- | :--- | :--- |\n| **1. Pure Data (`Resource`)** | `CardData` (`suit`, `rank`, `texture`) | `LevelData` / `PowerupStats` (`speed_boost`, `icon`) | `ItemData` / `WeaponData` (`damage`, `cooldown`, `icon`) |\n| **2. Reusable Prefab (`PackedScene`)** | `card_scene.tscn` (`84×120` card) | `coin.tscn`, `slime_enemy.tscn`, `moving_platform.tscn` | `goblin.tscn`, `fireball.tscn`, `loot_chest.tscn` |\n| **3. Global Memory (`Autoload`)** | `GameState` & `TurnManager` | `GameManager` (`coins`, `lives`, `current_level`) | `PartyState` (`inventory`, `gold`, `quest_flags`) |\n| **4. Decoupled Events (`Signal`)** | `card_clicked`, `turn_changed`, `state_updated` | `coin_collected`, `player_died`, `checkpoint_reached` | `enemy_slain(xp)`, `hp_changed(cur, max)`, `level_up` |\n| **5. World & HUD (`Node2D` + `CanvasLayer`)** | `table.tscn` (`DiscardSlot`, `PlayerHandContainer`, `HUD`) | `level_01.tscn` (`TileMapLayer`, `Player`, `HUD`) | `dungeon.tscn` (`TileMapLayer`, `Player`, `Hotbar HUD`) |\n\n## The 5 Questions to Ask Before Starting Any New Game\n\nWhenever you open a blank Godot 4.3 project for a new game idea, write down 5 answers:\n1. **What is my core interactive Actor scene?** (Build that `.tscn` first and test it with **F6**!)\n2. **What is my main World / Board scene?** (Put your Actor inside it and press **F5**!)\n3. **What repeated objects get spawned at runtime?** (Make each one a `PackedScene` instantiated with `.instantiate()`!)\n4. **What data defines an item, card, weapon, or enemy?** (Make a `class_name ... extends Resource` script!)\n5. **How do children notify the HUD or World?** (Use **Call Down, Signal Up** — emit typed `signal`s upward!)\n",
+      "codeSnippets": [
+        {
+          "id": "snip_13_01_arch",
+          "language": "gdscript",
+          "code": "# Universal Decoupled Component Pattern (Works in ANY Godot 4.3 Game!):\n# Attach this HealthComponent (Node) as a child of any Player, Enemy, Boss, or Destructible Crate!\nclass_name HealthComponent\nextends Node\n\nsignal health_changed(current_hp: int, max_hp: int)\nsignal died()\n\n@export var max_hp: int = 100\nvar current_hp: int = 100\n\nfunc _ready() -> void:\n\tcurrent_hp = max_hp\n\nfunc take_damage(amount: int) -> void:\n\tcurrent_hp = clampi(current_hp - amount, 0, max_hp)\n\thealth_changed.emit(current_hp, max_hp)\n\tif current_hp == 0:\n\t\tdied.emit()",
+          "caption": "Drop this `HealthComponent` node into any Player, Enemy, or Boss scene in any future game!"
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Complete the `take_damage(amount: int) -> void` method so it subtracts `amount` from `current_hp` using `clampi(current_hp - amount, 0, max_hp)` and emits `died.emit()` when `current_hp == 0`.",
+        "hint": "Set `current_hp = clampi(current_hp - amount, 0, max_hp)` and check `if current_hp == 0: died.emit()`.",
+        "starterCode": "func take_damage(amount: int) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "take_damage",
+          "current_hp",
+          "clampi",
+          "amount",
+          "if",
+          "0",
+          "died.emit()"
+        ],
+        "expectedOutput": "Clamps HP safely between 0 and max_hp and emits died() at 0 HP.",
+        "solutionCode": "func take_damage(amount: int) -> void:\n\tcurrent_hp = clampi(current_hp - amount, 0, max_hp)\n\tif current_hp == 0:\n\t\tdied.emit()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_13_01_1",
+          "prompt": "Why is creating a reusable `HealthComponent` (`Node`) better than rewriting HP variables inside Player, Goblin, Boss, and Crate scripts separately?",
+          "choices": [
+            "Because any scene with a `HealthComponent` child automatically gains HP clamping and `died` / `health_changed` signals without duplicating code (**Composition over Inheritance**)",
+            "Because Godot 4.3 only allows one script per project to use integers",
+            "Because `Node` automatically draws a 3D mesh",
+            "Because `clampi()` only works inside `RefCounted`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Node composition lets you snap reusable behaviors (`HealthComponent`, `HitboxComponent`) onto any entity in any game genre without code duplication.",
+          "concept": "Component Composition"
+        }
+      ]
+    },
+    {
+      "id": "l_13_02_realtime_loop_physics",
+      "order": 2,
+      "title": "From Turn-Based to 60 FPS Real-Time: `_physics_process(delta)`, `Input` & `CharacterBody2D`",
+      "targetFile": "res://scenes/player/player_controller.gd",
+      "tangibleOutcome": "Build both a **Top-Down 8-Way RPG Controller** and a **2D Platformer Jump/Gravity Controller** using `CharacterBody2D`, `Input.get_vector()`, and `move_and_slide()`!",
+      "beyondKadi": "In Kadi, code only ran when a button or timer fired (**Event-Driven**). In Action, Platformer, RPG, Racing, and Shooter games, movement runs 60 times every second inside `_physics_process(delta: float)`!",
+      "transferChallenge": "**Your Solo Task**: Add a **Sprint / Dash** mechanic to the controller below: while `Input.is_action_pressed(\"ui_select\")` (Spacebar) is held, multiply `max_speed` by `1.6`!",
+      "sceneTree": "Player (CharacterBody2D)  [script: player_controller.gd]\n├── Sprite2D              # Character sprite\n└── CollisionShape2D      # CapsuleShape2D or RectangleShape2D",
+      "editorSteps": [
+        "Create a new scene with root node **`CharacterBody2D`** named `Player`.",
+        "Add a **`Sprite2D`** child (assign `icon.svg` or any character PNG) and a **`CollisionShape2D`** child (in Inspector -> **Shape -> New CapsuleShape2D**).",
+        "Attach `player_controller.gd` below, press **F6**, and use the **Arrow Keys** to move smoothly around the screen!"
+      ],
+      "verificationSteps": [
+        "Press **F6** and hold **Right + Down** simultaneously: verify `Input.get_vector()` normalizes diagonal movement so diagonal speed is not `1.414×` faster than horizontal speed!"
+      ],
+      "troubleshootingTips": [
+        "**Yellow warning triangle on `CharacterBody2D`**: Every `CharacterBody2D`, `Area2D`, or `StaticBody2D` requires a `CollisionShape2D` child with a shape (`RectangleShape2D`, `CircleShape2D`, or `CapsuleShape2D`) assigned in the Inspector!",
+        "**Player moves twice as fast on a 120Hz monitor**: Multiply acceleration and gravity by `delta` (`velocity.y += GRAVITY * delta`); note that `move_and_slide()` in Godot 4 already multiplies `velocity` by `delta` internally!"
+      ],
+      "keyTakeaways": [
+        "`_physics_process(delta)` runs at a fixed 60 ticks/sec (`delta ≈ 0.0167s`). Multiply acceleration and gravity by `delta` for frame-rate independence.",
+        "`Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")` returns a normalized `Vector2` direction in 1 line.",
+        "`move_and_slide()` moves a `CharacterBody2D` using its `velocity` property and automatically slides along walls and floors!"
+      ],
+      "bodyMarkdown": "# Mastering Real-Time 60 FPS Games (`_physics_process` & `CharacterBody2D`)\n\n> [!TIP]\n> **Tangible Milestone:** In Kadi, the game waited for you to click a button. How do you make a **real-time action game** where characters move, jump, and collide at 60 frames per second? Meet `_physics_process(delta)` and `[[CharacterBody2D]]`!\n\n## 1. Event-Driven (Kadi) vs. Real-Time Game Loop (Action Games)\n\n| Aspect | Turn-Based / UI Game (Kadi) | Real-Time Action Game (Platformer / RPG / Shooter) |\n| :--- | :--- | :--- |\n| **When Code Runs** | Inside signal callbacks (`_on_play_pressed()`, `timeout`) | Every physics frame (60 times/sec) inside `_physics_process(delta: float)` |\n| **Root Actor Node** | `Control` (`CardScene`) | `CharacterBody2D` (`Player`, `Enemy`) |\n| **How Input Is Read** | `Button.pressed` or `_gui_input(event)` | `[[Input]].get_vector(...)` or `Input.is_action_just_pressed(...)` |\n| **How Motion Happens** | `Tween` between UI slots | Set `velocity: [[Vector2]]`, then call `move_and_slide()` |\n\n## 2. What Is `delta` (Delta Time)?\n\n`delta` is the elapsed time in seconds since the previous frame (at 60 FPS, `delta` is `1.0 / 60.0 ≈ 0.01667` seconds).\n- If you write `position.x += 5`, a fast 120 FPS computer moves `600 px/sec` while a 30 FPS phone moves only `150 px/sec`!\n- Multiplying rates of change by `delta` (`position.x += 300.0 * delta`, or `velocity = velocity.move_toward(target_vel, ACCEL * delta)`) guarantees **identical speed on every device**!\n- **Important Godot 4.3 Rule**: `CharacterBody2D.move_and_slide()` **already multiplies `velocity` by `delta` internally**, so set `velocity` in pixels-per-second (e.g. `velocity = dir * 240.0`) and only multiply *accelerations* (`GRAVITY * delta`, `ACCEL * delta`) by `delta`!\n",
+      "codeSnippets": [
+        {
+          "id": "snip_13_02_move",
+          "language": "gdscript",
+          "code": "# File: res://scenes/player/player_controller.gd\nextends CharacterBody2D\n\n@export var max_speed: float = 250.0\n@export var acceleration: float = 1500.0\n@export var friction: float = 1200.0\n\nfunc _physics_process(delta: float) -> void:\n\t# Built-in actions \"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\" work out-of-the-box with Arrow Keys!\n\tvar input_dir: Vector2 = Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")\n\tif input_dir != Vector2.ZERO:\n\t\tvelocity = velocity.move_toward(input_dir * max_speed, acceleration * delta)\n\telse:\n\t\tvelocity = velocity.move_toward(Vector2.ZERO, friction * delta)\n\tmove_and_slide()",
+          "caption": "Universal 8-Way Top-Down CharacterBody2D Controller (`res://scenes/player/player_controller.gd`)."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a `_physics_process(delta: float) -> void` function that reads `var dir: Vector2 = Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")`, sets `velocity = dir * 240.0`, and calls `move_and_slide()`.",
+        "hint": "Call `Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")`, assign `velocity = dir * 240.0`, and call `move_and_slide()`.",
+        "starterCode": "func _physics_process(delta: float) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "_physics_process",
+          "Input.get_vector",
+          "velocity",
+          "240.0",
+          "move_and_slide()"
+        ],
+        "expectedOutput": "Moves the CharacterBody2D smoothly in 8 directions at 240 pixels/second with wall sliding.",
+        "solutionCode": "func _physics_process(delta: float) -> void:\n\tvar dir: Vector2 = Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")\n\tvelocity = dir * 240.0\n\tmove_and_slide()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_13_02_1",
+          "prompt": "In Godot 4.3, why should you write `velocity = dir * 240.0` instead of `velocity = dir * 240.0 * delta` before calling `move_and_slide()`?",
+          "choices": [
+            "Because `move_and_slide()` in Godot 4 already multiplies `velocity` by `delta` internally (you only multiply accelerations like `GRAVITY * delta` by `delta`)",
+            "Because `velocity` is an integer in Godot 4",
+            "Because `delta` is always equal to `100.0`",
+            "Because `Input.get_vector()` already multiplies by `delta`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "In Godot 4, `velocity` is expressed in pixels per second, and `move_and_slide()` applies the `delta` step automatically during collision resolution.",
+          "concept": "CharacterBody2D & delta"
+        }
+      ]
+    },
+    {
+      "id": "l_13_03_world_combat_camera",
+      "order": 3,
+      "title": "World Building: `Area2D` Hitboxes, `TileMapLayer`, `Camera2D` & Enemy Spawners",
+      "targetFile": "res://scripts/hitbox_hurtbox.gd",
+      "tangibleOutcome": "Attach a smooth **`Camera2D`** to your player, paint a world with **`TileMapLayer`**, and wire **`Area2D` Hitboxes & Hurtboxes** so projectiles, coins, and enemies interact cleanly!",
+      "beyondKadi": "Understanding the difference between **`CharacterBody2D`** (moves & slides against walls), **`StaticBody2D` / `TileMapLayer`** (immovable walls/floors), and **`Area2D`** (overlap detection for coins, bullets, hitboxes, and trigger zones) lets you build **any 2D world in Godot 4.3**!",
+      "transferChallenge": "**Your Solo Task**: Add a `Camera2D` child to your `Player` scene, check **Position Smoothing -> Enabled = On** (`Speed = 8.0`), and write a 5-line `shake(strength: float)` helper using `create_tween()` that jiggles `camera.offset` when the player takes damage!",
+      "sceneTree": "Level (Node2D)\n├── WorldTiles (TileMapLayer)          # Walls & ground with Physics Layer 1\n├── Player (CharacterBody2D)\n│   ├── Camera2D                       # Follows player automatically!\n│   └── Hurtbox (Area2D)               # Detects enemy/trap Hitboxes\n└── CoinOrBullet (Area2D)              # Emits body_entered / area_entered",
+      "editorSteps": [
+        "To make the camera follow your player in Godot 4.3, simply add a **`Camera2D`** node as a child of `Player` — no camera follow script required!",
+        "In the `Camera2D` Inspector, enable **Position Smoothing -> Enabled** so camera motion eases smoothly when stopping.",
+        "For pickups (Coins, Gems) or Hitboxes (Bullets, Swords), use an **`Area2D`** root node with a `CollisionShape2D` child and connect its `body_entered` or `area_entered` signal in `_ready()`."
+      ],
+      "verificationSteps": [
+        "Move your `Player` (`CharacterBody2D`) into a `Coin` (`Area2D`) in **F5** and verify `body_entered` fires, increments your score, and calls `queue_free()` on the coin!"
+      ],
+      "troubleshootingTips": [
+        "**`Area2D` never detects `body_entered`**: Check **Collision -> Layer** (what this object *is*) and **Collision -> Mask** (what layers this object *scans for*). If `Player` is on Layer 1, the `Area2D`'s **Mask** must have Layer 1 enabled!"
+      ],
+      "keyTakeaways": [
+        "**Collision Layer** = *'What category am I?'* (e.g., Layer 1 = World, Layer 2 = Player, Layer 3 = Enemies, Layer 4 = Pickups).",
+        "**Collision Mask** = *'Which layers do I collide with or detect?'*",
+        "Making `Camera2D` a child of `Player` automatically centers and follows the player across any level size!"
+      ],
+      "bodyMarkdown": "# Choosing the Right 2D Node: Physics Bodies, `Area2D`, `TileMapLayer` & `Camera2D`\n\n> [!TIP]\n> **Tangible Milestone:** When building a new game without a tutorial, one of the biggest questions is: *\"Which 2D node should I pick for a wall, a player, a bullet, a coin, or a camera?\"* Here is the complete decision table!\n\n## 1. The Ultimate Godot 4.3 2D Node Decision Table\n\n| Game Object You Want to Build | Exact Godot 4.3 Node | Why & Key Method / Signal |\n| :--- | :--- | :--- |\n| **Player or Moving Enemy** | `[[CharacterBody2D]]` | Code-driven `velocity` + `move_and_slide()` wall/floor sliding. |\n| **Solid Wall, Floor, or Obstacle** | `[[StaticBody2D]]` or `TileMapLayer` | Blocks `CharacterBody2D` and `RigidBody2D` without moving. |\n| **Coin, Pickup, Bullet, Sword Hitbox, Trigger Zone** | `[[Area2D]]` | Doesn't block movement; emits `body_entered(body)` and `area_entered(area)` on overlap! |\n| **Bouncing Physics Crate / Pinball / Ragdoll** | `[[RigidBody2D]]` | Driven automatically by Godot's 2D physics gravity, mass, and impulses (`apply_central_impulse()`). |\n| **Scrolling Follow Camera** | `[[Camera2D]]` | Add as a child of `Player`; enable **Position Smoothing** in the Inspector! |\n\n## 2. Collision Layers vs. Collision Masks (In Plain English!)\n\nEvery physics node has two bitmask rows in the Inspector under **Collision**:\n- **Layer (\"What I Am\")**: Put `Walls` on Layer 1, `Player` on Layer 2, `Enemies` on Layer 3, `Coins` on Layer 4.\n- **Mask (\"What I Look For\")**: A `Coin` (`Layer 4`) only sets its **Mask** to `Layer 2 (Player)` so enemies walking over coins never pick them up!\n",
+      "codeSnippets": [
+        {
+          "id": "snip_13_03_pickup",
+          "language": "gdscript",
+          "code": "# File: res://scenes/coin_pickup.gd\n# Attach to an Area2D node with a Sprite2D and CollisionShape2D child:\nextends Area2D\n\nsignal collected(value: int)\n@export var coin_value: int = 10\n\nfunc _ready() -> void:\n\tbody_entered.connect(_on_body_entered)\n\nfunc _on_body_entered(body: Node2D) -> void:\n\tif body is CharacterBody2D:\n\t\tcollected.emit(coin_value)\n\t\t# Pop scale up and fade out before deleting (just like Kadi Phase 11!):\n\t\tset_deferred(\"monitoring\", false)\n\t\tvar tw: Tween = create_tween().set_parallel(true)\n\t\ttw.tween_property(self, \"scale\", Vector2(1.4, 1.4), 0.14)\n\t\ttw.tween_property(self, \"modulate:a\", 0.0, 0.14)\n\t\tawait tw.finished\n\t\tqueue_free()",
+          "caption": "Complete collectible Coin/Pickup Area2D script with Tween pop animation and `await` cleanup."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write the `_on_body_entered(body: Node2D) -> void` handler for an `Area2D` pickup: check `if body is CharacterBody2D:`, emit `collected.emit(coin_value)`, and call `queue_free()`.",
+        "hint": "Use `if body is CharacterBody2D:` then `collected.emit(coin_value)` and `queue_free()`.",
+        "starterCode": "func _on_body_entered(body: Node2D) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "_on_body_entered",
+          "if",
+          "body is CharacterBody2D",
+          "collected.emit",
+          "queue_free()"
+        ],
+        "expectedOutput": "Detects when a CharacterBody2D overlaps the Area2D, emits collected, and frees the pickup node.",
+        "solutionCode": "func _on_body_entered(body: Node2D) -> void:\n\tif body is CharacterBody2D:\n\t\tcollected.emit(coin_value)\n\t\tqueue_free()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_13_03_1",
+          "prompt": "Which Godot 4.3 node should you choose for a collectible Coin, a Sword Hitbox, or a Trigger Zone that detects overlaps without physically blocking the player?",
+          "choices": [
+            "`Area2D` (listening to `body_entered` or `area_entered`)",
+            "`StaticBody2D`",
+            "`HBoxContainer`",
+            "`CanvasLayer`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Area2D` detects overlapping physics bodies (`body_entered`) and other areas (`area_entered`) without acting as a solid wall.",
+          "concept": "Area2D vs Physics Bodies"
+        }
+      ]
+    },
+    {
+      "id": "l_13_04_solo_mastery_docs",
+      "order": 4,
+      "title": "Solo Developer Mastery: `F1` Offline Docs, State Machines & Debugging Without Tutorials",
+      "targetFile": "res://scripts/state_machine.gd",
+      "tangibleOutcome": "Master the **3 superpowers of independent Godot developers**: reading **`F1` Built-in Docs** to learn any node in 30 seconds, organizing complex actors with a **Finite State Machine**, and inspecting live nodes in the **Remote Scene Tree**!",
+      "beyondKadi": "Once you know how to press **F1** (or `Ctrl+Click` any type/method in the script editor), use the **Remote** tab while a game is running, and structure actors with an `enum State` machine, **you never need to depend on a video tutorial again**.",
+      "transferChallenge": "**Your Solo Graduation Project**: Open the **New Game Architect** tab or **Upgrade Kadi Lab** tab right here in the app, pick **one** expansion or **one** new game genre, and build a working prototype in Godot 4.3 using only **F1 Search Help** and this app's **Reference Desk & Cookbook**!",
+      "sceneTree": "Godot 4.3 Editor While Game Is Running (F5):\nScene Dock -> Switch from [Local] to [Remote] to inspect & tweak live runtime nodes!",
+      "editorSteps": [
+        "In Godot's Script Editor, hold **Ctrl** and click any class name (`CharacterBody2D`, `Tween`, `HBoxContainer`) or press **F1** to open its built-in offline documentation.",
+        "Press **F5** to run your game, then look at the top of the **Scene dock** (top-left) and click the **Remote** tab to see every live `CardScene` and `Autoload` node currently in memory!",
+        "Use the `enum State` Finite State Machine pattern below whenever an actor (Player, Boss, or Turn Controller) has 3 or more distinct behaviors."
+      ],
+      "verificationSteps": [
+        "While your game is running (**F5**), click **Remote** in the Scene dock, click any `Card` instance under `PlayerHandContainer`, and change its `modulate` or `scale` in the Inspector — watch it update live in the running game window!"
+      ],
+      "troubleshootingTips": [
+        "**'How do I know what methods a Node has without Googling?'**: Type `node_var.` in the GDScript editor (with static typing `: NodeType` enabled!) to get instant autocomplete, or press **F1** and check the **Methods** and **Signals** tables for that class and its parent classes!"
+      ],
+      "keyTakeaways": [
+        "**Ctrl+Click / F1** opens Godot's complete offline manual for any class, property, method, or signal.",
+        "The **Remote Scene Tree** tab lets you x-ray your running game in real time, catching missing children, off-screen coordinates, or blocked mouse filters in seconds.",
+        "A **Finite State Machine (`enum State` + `match state:`)** prevents boolean flag spaghetti (`is_jumping and not is_dashing and not is_hurt`) as your games grow larger."
+      ],
+      "bodyMarkdown": "# Solo Developer Independence: How to Figure Out Anything in Godot Without Tutorials\n\n> [!TIP]\n> **Tangible Milestone:** This is your graduation lesson! Let's lock in the **3 solo developer workflows** that let you learn unfamiliar nodes on the fly, organize complex gameplay cleanly, and debug any issue on your own.\n\n## 1. Workflow 1: The 30-Second `F1` Documentation Habit\n\nWhenever you want to add a feature you haven't built before (for example, *raycast lasers*, *tilemaps*, *2D lighting*, or *gamepad vibration*), don't open YouTube! Instead:\n1. Press **F1** in Godot (or open the **Reference Desk** in this app) and type a keyword (`RayCast2D`, `PointLight2D`, `Input`).\n2. Read the **3 sections** every Godot class has:\n   - **Properties**: What data can I configure in the Inspector or via code?\n   - **Methods**: What actions can I call on this node?\n   - **Signals**: What events does this node emit when something happens?\n3. Check the **Inherits** chain at the top (`Button < BaseButton < Control < CanvasItem < Node`): remember that a `Button` also has every method and signal of `Control` (like `custom_minimum_size`) and `CanvasItem` (like `modulate` and `visible`)!\n\n## 2. Workflow 2: The Finite State Machine (`enum State` + `match`)\n\nBeginners often write 10 boolean flags (`is_idle`, `is_running`, `is_attacking`, `is_stunned`) that conflict with each other. Independent developers use a **[[State Machines|Finite State Machine]]**: an actor can only be in **one `State` at a time**, and `match current_state:` routes each frame cleanly!\n\n## 3. Workflow 3: X-Raying Your Live Game with the **Remote** Scene Tree\n\nWhen you press **F5** and something doesn't look right on screen:\n1. Leave the game window open and switch back to the Godot Editor.\n2. At the top of the **Scene dock**, click **Remote** (next to **Local**).\n3. You are now looking at the **live Scene Tree in memory**! Click any spawned card, bullet, or UI label to inspect its exact `global_position`, `visible`, `size`, and `mouse_filter` in real time!\n",
+      "codeSnippets": [
+        {
+          "id": "snip_13_04_fsm",
+          "language": "gdscript",
+          "code": "# File: res://scripts/state_machine.gd\n# Clean Enum Finite State Machine template for any Actor, Boss, or Game Loop:\nextends CharacterBody2D\n\nenum State { IDLE, MOVE, ATTACK, HURT }\nvar current_state: State = State.IDLE\nvar state_timer: float = 0.0\n\nfunc change_state(next_state: State) -> void:\n\tcurrent_state = next_state\n\tmatch current_state:\n\t\tState.IDLE:\n\t\t\tvelocity = Vector2.ZERO\n\t\tState.ATTACK:\n\t\t\tstate_timer = 0.25 # Lock in attack state for 0.25s\n\t\tState.HURT:\n\t\t\tstate_timer = 0.30\n\nfunc _physics_process(delta: float) -> void:\n\tmatch current_state:\n\t\tState.IDLE:\n\t\t\tif Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\") != Vector2.ZERO:\n\t\t\t\tchange_state(State.MOVE)\n\t\t\telif Input.is_action_just_pressed(\"ui_accept\"):\n\t\t\t\tchange_state(State.ATTACK)\n\t\tState.MOVE:\n\t\t\tvar dir: Vector2 = Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")\n\t\t\tvelocity = dir * 240.0\n\t\t\tmove_and_slide()\n\t\t\tif dir == Vector2.ZERO:\n\t\t\t\tchange_state(State.IDLE)\n\t\tState.ATTACK, State.HURT:\n\t\t\tstate_timer -= delta\n\t\t\tif state_timer <= 0.0:\n\t\t\t\tchange_state(State.IDLE)",
+          "caption": "Universal Enum Finite State Machine (`IDLE`, `MOVE`, `ATTACK`, `HURT`) for any new game."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a `change_state(next_state: State) -> void` function that assigns `current_state = next_state` and uses `match current_state:` to set `velocity = Vector2.ZERO` when `State.IDLE:` is matched.",
+        "hint": "Set `current_state = next_state`, then write `match current_state:` with a `State.IDLE:` branch setting `velocity = Vector2.ZERO`.",
+        "starterCode": "func change_state(next_state: State) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "change_state",
+          "current_state",
+          "next_state",
+          "match",
+          "State.IDLE",
+          "velocity",
+          "Vector2.ZERO"
+        ],
+        "expectedOutput": "Transitions cleanly to next_state and zeroes velocity on entering State.IDLE.",
+        "solutionCode": "func change_state(next_state: State) -> void:\n\tcurrent_state = next_state\n\tmatch current_state:\n\t\tState.IDLE:\n\t\t\tvelocity = Vector2.ZERO"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_13_04_1",
+          "prompt": "While your game is running (**F5**), how can you inspect the exact live position, visibility, and child nodes of dynamically instantiated scenes (`CardScene.instantiate()`)?",
+          "choices": [
+            "Click the **Remote** tab at the top of the **Scene dock** in the Godot Editor while the game is running",
+            "Reinstall Godot 4.3",
+            "Delete `project.godot`",
+            "Change all `Control` nodes to `AudioStreamPlayer`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Switching the Scene dock from **Local** to **Remote** while the game is running shows the live SceneTree in memory, including every node spawned by `.instantiate()`.",
+          "concept": "Remote Scene Tree Debugging"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_13_missing_delta_physics",
+    "brokenCode": "extends Area2D\n@export var bullet_speed: float = 600.0\n\nfunc _physics_process(delta: float) -> void:\n\t# BUG: Bullet teleports 600 pixels per frame (36,000 px/sec at 60 FPS)!\n\tposition += Vector2.RIGHT.rotated(rotation) * bullet_speed",
+    "bugDescription": "You spawned an `Area2D` laser bullet with `bullet_speed = 600.0`, expecting it to travel 600 pixels per second across the screen. Instead, it teleports off-screen in a single blink (`36,000` pixels per second)! Tap the buggy line.",
+    "fixedCode": "extends Area2D\n@export var bullet_speed: float = 600.0\n\nfunc _physics_process(delta: float) -> void:\n\t# FIX: Multiply manual position changes by delta (elapsed frame time in seconds)!\n\tposition += Vector2.RIGHT.rotated(rotation) * bullet_speed * delta",
+    "explanation": "When manually updating `position` inside `_process(delta)` or `_physics_process(delta)` (unlike `CharacterBody2D.move_and_slide()`, which applies `delta` internally), you must multiply speed (pixels/second) by `delta` (seconds/frame) so the object moves `600 * (1/60) = 10` pixels per frame!",
+    "buggyLineNumber": 6,
+    "hint": "Check how `position += ...` is calculated inside `_physics_process(delta: float)` — is `bullet_speed` multiplied by `delta`?"
+  }
+}

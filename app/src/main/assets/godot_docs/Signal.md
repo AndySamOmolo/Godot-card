@@ -40,9 +40,11 @@ In the Kadi app [[Signals]] are the spine of the turn structure from `l_03_01_si
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Signal`)**: When configuring `Signal` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Signal` offline. If your `Signal` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Signal in Godot 4.3 Kadi
-func configure_signal_example(target: Signal) -> void:
-    assert(target != null, "Signal reference must be valid")
-    print("Configured Signal for Kadi table runtime")
+# Declaring, connecting, emitting, and awaiting custom typed signals in Godot 4.3:
+signal card_clicked(card_node: Control)
+signal turn_completed(seat_index: int)
+
+func notify_click() -> void:
+	card_clicked.emit(self)
 ```
 

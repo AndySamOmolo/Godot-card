@@ -25,9 +25,12 @@ In the Kadi app `ColorRect` provides the felt-green table background and the dar
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`ColorRect`)**: When configuring `ColorRect` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ColorRect` offline. If your `ColorRect` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using ColorRect in Godot 4.3 Kadi
-func configure_colorrect_example(target: ColorRect) -> void:
-    assert(target != null, "ColorRect reference must be valid")
-    print("Configured ColorRect for Kadi table runtime")
+# Full-screen emerald felt backdrop or screen-flash overlay (with mouse_filter = Ignore!):
+@onready var flash_overlay: ColorRect = $HUD/FlashRect
+
+func flash_screen_gold() -> void:
+	flash_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flash_overlay.color = Color(1.0, 0.85, 0.2, 0.35)
+	create_tween().tween_property(flash_overlay, "color:a", 0.0, 0.25)
 ```
 

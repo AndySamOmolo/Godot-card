@@ -56,9 +56,9 @@ In the Kadi game, each card on screen is a `Node` (a `TextureRect` or `Sprite2D`
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Node`)**: When configuring `Node` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Node` offline. If your `Node` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Node in Godot 4.3 Kadi
-func configure_node_example(target: Node) -> void:
-    assert(target != null, "Node reference must be valid")
-    print("Configured Node for Kadi table runtime")
+# Managing the SceneTree, groups, and child lifecycle on any Node:
+func clear_all_enemies_in_group() -> void:
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		enemy.queue_free()
 ```
 

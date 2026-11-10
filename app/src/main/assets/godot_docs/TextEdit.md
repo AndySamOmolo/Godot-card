@@ -68,9 +68,10 @@ In the Kadi learning app `TextEdit` is the surface for showing and editing small
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`TextEdit`)**: When configuring `TextEdit` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `TextEdit` offline. If your `TextEdit` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using TextEdit in Godot 4.3 Kadi
-func configure_textedit_example(target: TextEdit) -> void:
-    assert(target != null, "TextEdit reference must be valid")
-    print("Configured TextEdit for Kadi table runtime")
+# Multi-line player notes or in-game deck import/export text box:
+@onready var notes_box: TextEdit = $NotesTextEdit
+
+func get_trimmed_notes() -> String:
+	return notes_box.text.strip_edges()
 ```
 

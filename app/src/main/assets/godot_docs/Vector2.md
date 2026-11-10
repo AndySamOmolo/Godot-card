@@ -38,9 +38,9 @@ In the Kadi app `Vector2` describes where every card sits: dealing tweens a card
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Vector2`)**: When configuring `Vector2` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Vector2` offline. If your `Vector2` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Vector2 in Godot 4.3 Kadi
-func configure_vector2_example(target: Vector2) -> void:
-    assert(target != null, "Vector2 reference must be valid")
-    print("Configured Vector2 for Kadi table runtime")
+# 2D positions, velocities, distances, and normalized movement directions:
+func move_bullet_toward(current_pos: Vector2, target_pos: Vector2, speed: float, delta: float) -> Vector2:
+	var dir: Vector2 = current_pos.direction_to(target_pos)
+	return current_pos + dir * speed * delta
 ```
 

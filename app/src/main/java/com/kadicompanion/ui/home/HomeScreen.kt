@@ -103,7 +103,10 @@ private val DAILY_PRO_TIPS = listOf(
     "Always call `add_child(card_node)` BEFORE calling `card_node.setup(data)` so `@onready` child nodes (`CardArt`, `TopRankLabel`) are initialized first.",
     "In Kenyan Kadi, **2, 3, 8, J, Q, K, Ace, and Joker** cannot start the discard pile — only **4, 5, 6, 7, 9, and 10** are valid openers.",
     "When importing pixel-art or crisp 2D card packs in Godot 4.3, set **Project Settings -> Rendering -> Textures -> Default Texture Filter** to **Nearest** (for pixel art) or **Linear** (for HD vector/PNG cards).",
-    "In Kadi, playing a Question Card (**Q** or **8**) requires accompanying it in the same move with a matching-suit Answer Card (or drawing from the pile)."
+    "In Kadi, playing a Question Card (**Q** or **8**) requires accompanying it in the same move with a matching-suit Answer Card (or drawing from the pile).",
+    "Building a **new game solo**? Press **F1** in Godot 4.3 (or `Ctrl+Click` any type in code) to open the offline class reference and inspect every Property, Method, and Signal!",
+    "While your game is running (**F5**), click the **Remote** tab at the top of Godot's **Scene dock** to inspect and tweak live spawned nodes in real time!",
+    "Always save player progress and settings to `user://` (via `FileAccess.open(\"user://save.json\", FileAccess.WRITE)`), never `res://`, which becomes read-only after exporting!"
 )
 
 @Composable
@@ -229,8 +232,8 @@ fun HomeScreen(
                     BentoActionTile(
                         modifier = Modifier.weight(1f),
                         eyebrow = "LIVE TABLE & ASSETS",
-                        title = "Play Kadi & Blueprint",
-                        subtitle = "Play live Kadi table, downloaded packs & rule simulator",
+                        title = "Play Kadi & Solo Studio",
+                        subtitle = "Live table, New Game Architect & 6 Kadi upgrades",
                         icon = Icons.Outlined.Collections,
                         accent = MaterialTheme.colorScheme.secondary,
                         onClick = onOpenBlueprint
@@ -238,7 +241,7 @@ fun HomeScreen(
                     BentoActionTile(
                         modifier = Modifier.weight(1f),
                         eyebrow = "CURRICULUM",
-                        title = "12-Phase Roadmap",
+                        title = "14-Phase Roadmap",
                         subtitle = "${state.overallCompleted} of ${state.overallTotal} lessons done",
                         icon = Icons.AutoMirrored.Outlined.MenuBook,
                         accent = MaterialTheme.colorScheme.primary,
@@ -250,7 +253,7 @@ fun HomeScreen(
             if (uiPrefs.showHomePhaseStrip && state.phasesMini.isNotEmpty()) {
                 SectionHeader(
                     title = "Course Modules",
-                    eyebrow = "PHASES 00 – 11",
+                    eyebrow = "PHASES 00 – 13",
                     trailing = {
                         Pill(
                             text = "All Phases",

@@ -17,24 +17,42 @@
 @if "%DEBUG%"=="" @echo off
 @rem ##########################################################################
 @rem
-@rem  Gradle startup script for Windows
+@rem  Gradle startup script for Windows (with automatic JDK 17/21 / Android Studio JBR detection)
 @rem
 @rem ##########################################################################
 
-@rem Set local scope for the variables with windows NT shell
 if "%OS%"=="Windows_NT" setlocal
 
 set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
-@rem This is normally unused
 set APP_BASE_NAME=%~n0
 set APP_HOME=%DIRNAME%
 
-@rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
-@rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=-Dfile.encoding=UTF-8 "-Xmx64m" "-Xms64m"
+
+@rem Prefer Android Studio's bundled JBR (JDK 17/21) if system JAVA_HOME is unset or points to JDK 25+ (e.g. 26.0.1)
+if exist "C:\Program Files\Android\Android Studio\jbr\bin\java.exe" (
+    if not defined JAVA_HOME (
+        set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
+    ) else (
+        "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /C:""25." /C:""26." /C:""27." >NUL 2>&1
+        if not errorlevel 1 (
+            set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
+        )
+    )
+)
+if exist "%LOCALAPPDATA%\Programs\Android Studio\jbr\bin\java.exe" (
+    if not defined JAVA_HOME (
+        set "JAVA_HOME=%LOCALAPPDATA%\Programs\Android Studio\jbr"
+    ) else (
+        "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /C:""25." /C:""26." /C:""27." >NUL 2>&1
+        if not errorlevel 1 (
+            set "JAVA_HOME=%LOCALAPPDATA%\Programs\Android Studio\jbr"
+        )
+    )
+)
 
 @rem Find java.exe
 if defined JAVA_HOME goto findJavaFromJavaHome
@@ -47,7 +65,7 @@ echo. 1>&2
 echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH. 1>&2
 echo. 1>&2
 echo Please set the JAVA_HOME variable in your environment to match the 1>&2
-echo location of your Java installation. 1>&2
+echo location of your JDK 17 or JDK 21 installation (or Android Studio's jbr folder). 1>&2
 
 goto fail
 

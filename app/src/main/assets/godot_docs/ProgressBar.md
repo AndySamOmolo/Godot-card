@@ -38,9 +38,11 @@ In the Kadi app `ProgressBar` shows each player's hand size relative to their st
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`ProgressBar`)**: When configuring `ProgressBar` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ProgressBar` offline. If your `ProgressBar` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using ProgressBar in Godot 4.3 Kadi
-func configure_progressbar_example(target: ProgressBar) -> void:
-    assert(target != null, "ProgressBar reference must be valid")
-    print("Configured ProgressBar for Kadi table runtime")
+# Displaying boss HP, XP progress, or a turn countdown bar:
+@onready var hp_bar: ProgressBar = $HUD/HPBar
+
+func update_hp_bar(current_hp: int, max_hp: int) -> void:
+	hp_bar.max_value = max_hp
+	hp_bar.value = current_hp
 ```
 

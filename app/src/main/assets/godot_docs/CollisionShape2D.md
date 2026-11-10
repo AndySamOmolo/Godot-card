@@ -33,9 +33,11 @@ In the Kadi app each card scene carries a `CollisionShape2D` with a `RectangleSh
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`CollisionShape2D`)**: When configuring `CollisionShape2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CollisionShape2D` offline. If your `CollisionShape2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using CollisionShape2D in Godot 4.3 Kadi
-func configure_collisionshape2d_example(target: CollisionShape2D) -> void:
-    assert(target != null, "CollisionShape2D reference must be valid")
-    print("Configured CollisionShape2D for Kadi table runtime")
+# Safely disabling a Hitbox or Pickup collider during a death/pickup animation:
+@onready var hitbox_shape: CollisionShape2D = $CollisionShape2D
+
+func disable_collider_safely() -> void:
+	# Always use set_deferred when changing collision state inside a signal callback!
+	hitbox_shape.set_deferred("disabled", true)
 ```
 

@@ -37,9 +37,14 @@ In the Kadi app the deck shuffle in `l_01_03_deck_builder` uses a `RandomNumberG
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`RandomNumberGenerator`)**: When configuring `RandomNumberGenerator` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `RandomNumberGenerator` offline. If your `RandomNumberGenerator` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using RandomNumberGenerator in Godot 4.3 Kadi
-func configure_randomnumbergenerator_example(target: RandomNumberGenerator) -> void:
-    assert(target != null, "RandomNumberGenerator reference must be valid")
-    print("Configured RandomNumberGenerator for Kadi table runtime")
+# Using a seeded RandomNumberGenerator for reproducible daily challenge decks or procedural maps:
+func shuffle_with_daily_seed(cards: Array, seed_number: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_number
+	for i in range(cards.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var tmp = cards[i]
+		cards[i] = cards[j]
+		cards[j] = tmp
 ```
 

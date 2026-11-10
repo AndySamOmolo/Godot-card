@@ -123,7 +123,7 @@ fun PhaseListScreen(
         topBar = {
             KadiTopBar(
                 title = "Course Curriculum",
-                subtitle = "TANGIBLE-FIRST · 12 PHASES · $totalLessons LESSONS",
+                subtitle = "TANGIBLE-FIRST · ${state.phases.size} PHASES · $totalLessons LESSONS",
                 actions = {
                     IconButton(onClick = onOpenBlueprint) {
                         Icon(
@@ -216,7 +216,7 @@ fun PhaseListScreen(
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Text(
-                                            text = "Play Live Kadi Table, Downloaded Assets & Rule Simulator",
+                                            text = "Play Live Kadi Table, New Game Architect & Upgrade Lab",
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.secondary,

@@ -40,9 +40,12 @@ In the Kadi app `RichTextLabel` powers the rules and tutorial panels: special-ca
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`RichTextLabel`)**: When configuring `RichTextLabel` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `RichTextLabel` offline. If your `RichTextLabel` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using RichTextLabel in Godot 4.3 Kadi
-func configure_richtextlabel_example(target: RichTextLabel) -> void:
-    assert(target != null, "RichTextLabel reference must be valid")
-    print("Configured RichTextLabel for Kadi table runtime")
+# Rendering BBCode colored combat logs, card descriptions, or dialogue waves:
+@onready var log_label: RichTextLabel = $HUD/CombatLog
+
+func append_colored_log(player_name: String, card_text: String) -> void:
+	log_label.bbcode_enabled = true
+	log_label.append_text("[b][color=#38BDF8]%s[/color][/b] played [color=#FACC15]%s[/color]
+" % [player_name, card_text])
 ```
 

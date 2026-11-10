@@ -127,7 +127,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/card_types.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Register `class_name CardTypes` globally so every script and visual card in your project can reference `CardTypes.Suits.HEARTS` and `CardTypes.Ranks.JOKER`."
+      "tangibleOutcome": "Register `class_name CardTypes` globally so every script and visual card in your project can reference `CardTypes.Suits.HEARTS` and `CardTypes.Ranks.JOKER`.",
+      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
+      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
     },
     {
       "id": "l_01_02_resources",
@@ -222,7 +224,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/card_data.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Pass `CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.QUEEN)` to your visual `CardScene` and see it automatically render `Q♠` in silver-white (or load your downloaded PNG sprite)!"
+      "tangibleOutcome": "Pass `CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.QUEEN)` to your visual `CardScene` and see it automatically render `Q♠` in silver-white (or load your downloaded PNG sprite)!",
+      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
+      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
     },
     {
       "id": "l_01_03_deck_builder",
@@ -316,7 +320,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Generate all 52 suited cards plus 2 Jokers (54 total) with nested loops and deal random `CardData` instances into your visual `PlayerHandContainer` on every run!"
+      "tangibleOutcome": "Generate all 52 suited cards plus 2 Jokers (54 total) with nested loops and deal random `CardData` instances into your visual `PlayerHandContainer` on every run!",
+      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
+      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
     },
     {
       "id": "l_01_04_autoloads",
@@ -413,7 +419,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Register `GameState` in Project Settings -> Autoload so your 54-card draw pile, discard pile, and 4 player hands are live globally when you press F5."
+      "tangibleOutcome": "Register `GameState` in Project Settings -> Autoload so your 54-card draw pile, discard pile, and 4 player hands are live globally when you press F5.",
+      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
+      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
     },
     {
       "id": "l_02_03_valid_starter",
@@ -507,7 +515,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Every match deals 4 cards to all 4 players and guarantees the face-up card in the center `DiscardSlot` is a legal Answer Card (`4, 5, 6, 7, 9, or 10`) — never a Penalty, Question, Jump, Kickback, Ace, or Joker!"
+      "tangibleOutcome": "Every match deals 4 cards to all 4 players and guarantees the face-up card in the center `DiscardSlot` is a legal Answer Card (`4, 5, 6, 7, 9, or 10`) — never a Penalty, Question, Jump, Kickback, Ace, or Joker!",
+      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
+      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
     },
     {
       "id": "l_02_04_cards_on_screen",
@@ -602,7 +612,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/table/table.tscn + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Press F5 and watch `Table.tscn` deal a real 54-card Kadi match on screen: a legal starter card in `DiscardSlot`, 4 random `CardData` cards in your hand, live deck/opponent counts in `StatusLabel`, and a working Draw button!"
+      "tangibleOutcome": "Press F5 and watch `Table.tscn` deal a real 54-card Kadi match on screen: a legal starter card in `DiscardSlot`, 4 random `CardData` cards in your hand, live deck/opponent counts in `StatusLabel`, and a working Draw button!",
+      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
+      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
     }
   ],
   "debugChallenge": {

@@ -30,9 +30,10 @@ In the Kadi app a `VBoxContainer` stacks the player areas on the side of the scr
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`VBoxContainer`)**: When configuring `VBoxContainer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `VBoxContainer` offline. If your `VBoxContainer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using VBoxContainer in Godot 4.3 Kadi
-func configure_vboxcontainer_example(target: VBoxContainer) -> void:
-    assert(target != null, "VBoxContainer reference must be valid")
-    print("Configured VBoxContainer for Kadi table runtime")
+# Stacking menu buttons or player score rows vertically with automatic spacing:
+@onready var menu_stack: VBoxContainer = $MenuVBox
+
+func _ready() -> void:
+	menu_stack.add_theme_constant_override("separation", 12)
 ```
 

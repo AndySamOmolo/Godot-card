@@ -25,9 +25,13 @@ In the Kadi app `Marker2D` nodes define every meaningful spot on the table: the 
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Marker2D`)**: When configuring `Marker2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Marker2D` offline. If your `Marker2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Marker2D in Godot 4.3 Kadi
-func configure_marker2d_example(target: Marker2D) -> void:
-    assert(target != null, "Marker2D reference must be valid")
-    print("Configured Marker2D for Kadi table runtime")
+# Using Marker2D as a visual spawn point for dealt cards, bullets, or enemies:
+@onready var deck_origin: Marker2D = $DeckSpawnPoint
+
+func spawn_at_marker(scene: PackedScene) -> Node2D:
+	var inst: Node2D = scene.instantiate()
+	add_child(inst)
+	inst.global_position = deck_origin.global_position
+	return inst
 ```
 

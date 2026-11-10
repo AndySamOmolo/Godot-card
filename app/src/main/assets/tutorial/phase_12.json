@@ -1,0 +1,331 @@
+{
+  "id": "phase_12_expand_kadi",
+  "order": 12,
+  "title": "Expanding Kadi On Your Own: Save/Load, Drag & Drop, Tournament & LAN Multiplayer",
+  "summary": "Learn how to independently upgrade Kadi with persistent JSON save files (`user://`), interactive drag-and-drop card physics, 2D foil shaders, a 100-point Kenyan Tournament Elimination mode, and LAN multiplayer (`@rpc`).",
+  "estimatedMinutes": 55,
+  "concepts": [
+    "FileAccess",
+    "JSON",
+    "Control._gui_input",
+    "ShaderMaterial",
+    "SceneTree.change_scene_to_file",
+    "MultiplayerAPI",
+    "@rpc"
+  ],
+  "programmingConcepts": [
+    "Serialization",
+    "Event-Driven Drag State",
+    "Heuristic Scoring",
+    "Network RPC Synchronization"
+  ],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/save_manager.gd",
+    "res://scripts/tournament_rules.gd",
+    "res://scenes/card/card_scene.gd",
+    "res://scenes/ui/main_menu.tscn"
+  ],
+  "sceneTreeBlueprint": "MainMenu (Control) -> Table (Node2D) [with SaveManager & TournamentRules]",
+  "learningObjectives": [
+    "Serialize and load player stats, win streaks, and Kadi Coins to user://kadi_profile.json using FileAccess and JSON",
+    "Implement smooth mouse/touch drag-and-drop card play with _gui_input() and 2D holographic foil shaders",
+    "Build a Main Menu scene transition and official Kenyan 100-point Tournament Elimination scoring",
+    "Architect Pass-and-Play privacy shields and 4-player LAN multiplayer using ENetMultiplayerPeer and @rpc"
+  ],
+  "tangibleGoal": "Drag cards across the table onto the discard pile, watch your win streak and Kadi Coins persist across restarts, score 100-point tournament rounds, and sync moves over LAN!",
+  "lessons": [
+    {
+      "id": "l_12_01_save_load",
+      "order": 1,
+      "title": "Persistent Player Profiles, Win Streaks & Coins (`FileAccess`, `JSON` & `user://`)",
+      "targetFile": "res://scripts/save_manager.gd",
+      "tangibleOutcome": "Press **F5**, win a Kadi match, close the game window, and press **F5** again — your **Wins, Current Streak, and Kadi Coins** are loaded automatically from disk!",
+      "beyondKadi": "Every commercial game needs persistent save data:\n- **2D Platformer**: Saving unlocked levels, best speedrun times, and collected stars.\n- **RPG / Roguelike**: Saving character level, gold, equipped weapon IDs, and permanent meta-upgrades.\n- **Rule #1 of Godot Saving**: Always write to `user://` (the OS-writable app data folder), **never** `res://` (which becomes read-only inside an exported `.exe` or `.apk`!).",
+      "transferChallenge": "**Your Solo Task**: Add a `\"high_score_streak\": 0` key to `SaveManager.profile`. Whenever `profile[\"streak\"] > profile[\"high_score_streak\"]`, update `profile[\"high_score_streak\"] = profile[\"streak\"]` before calling `save_profile()`, and display the all-time best streak on `Table.tscn`!",
+      "sceneTree": "Project Settings -> Globals -> Autoload\n└── SaveManager (*res://scripts/save_manager.gd)",
+      "editorSteps": [
+        "In Godot's **FileSystem dock**, right-click `res://scripts/` -> **New -> Script**, name it `save_manager.gd`, and click **Create**.",
+        "Go to **Project -> Project Settings -> Globals -> Autoload**, select `res://scripts/save_manager.gd`, set **Node Name** to `SaveManager`, and click **Add**.",
+        "Paste the `save_manager.gd` script below and press **Ctrl+S**.",
+        "In `table.gd`, call `SaveManager.record_match_result(player == 0)` inside `_execute_move()` when a winner is detected, and display `SaveManager.get_summary_text()` in `status_label`."
+      ],
+      "verificationSteps": [
+        "Press **F5** and check the top HUD or Output console to verify `Wins: 0 | Streak: 0 | Coins: 100` loads cleanly even before any save file exists on disk.",
+        "In Godot's top menu, click **Project -> Open User Data Folder** to see the real folder on your computer where `kadi_profile.json` is stored!"
+      ],
+      "troubleshootingTips": [
+        "**Save works in Editor but fails in exported `.exe` / `.apk`**: Verify your path starts with `user://` (`\"user://kadi_profile.json\"`), NOT `res://`!",
+        "**`Invalid get index 'wins' (on base: 'Nil')` when loading**: Always guard `JSON.parse_string()` with `if parsed is Dictionary:` and use `.merge(parsed, true)` so missing keys keep their safe defaults."
+      ],
+      "keyTakeaways": [
+        "`res://` is read-only in exported games; `user://` is guaranteed writable on Windows, macOS, Linux, Android, iOS, and Web.",
+        "`JSON.stringify(dict, \"\\t\")` converts a GDScript `Dictionary` into human-readable JSON text; `JSON.parse_string(text)` parses it back.",
+        "Using `profile.merge(parsed, true)` safely upgrades older save files when you add new keys in future game updates!"
+      ],
+      "bodyMarkdown": "# Saving Player Progress to Disk (`FileAccess` & `JSON`)\n\n> [!TIP]\n> **Tangible Milestone:** Right now, closing the game window wipes your memory clean. In this lesson, you will build a reusable `SaveManager` Autoload singleton that saves **Matches Played, Wins, Win Streak, and Kadi Coins** to `user://kadi_profile.json`!\n\nWhen you improve Kadi on your own — or build a new RPG, platformer, or roguelike — players expect their achievements, unlocked card backs, and settings to persist between sessions.\n\n## 1. Why `user://` Instead of `res://`?\n\nIn Godot 4.3, there are two virtual filesystem prefixes:\n\n| Path Prefix | Where It Points | Can You Write to It at Runtime? |\n| :--- | :--- | :--- |\n| **`res://`** | Your project source assets (`scenes/`, `scripts/`, `assets/`) | **NO** — Packaged inside a read-only `.pck` archive when exported! |\n| **`user://`** | OS-specific writable app folder (`%APPDATA%/Godot/app_userdata/...` on Windows, internal app storage on Android) | **YES** — Always writable for save files, profiles, and settings! |\n\n## 2. The 3-Step JSON Save/Load Pattern\n\n1. **Keep state in a default `Dictionary`** (`var profile: Dictionary = {\"wins\": 0, \"matches\": 0, \"streak\": 0, \"coins\": 100}`).\n2. **To Save**: Open `\"user://kadi_profile.json\"` with `[[FileAccess]].open(SAVE_PATH, FileAccess.WRITE)` and call `file.store_string([[JSON]].stringify(profile, \"\t\"))`.\n3. **To Load**: Check `if FileAccess.file_exists(SAVE_PATH):`, read the text with `FileAccess.get_file_as_string(SAVE_PATH)`, parse it with `JSON.parse_string(text)`, and merge it into `profile` using `profile.merge(parsed, true)`.\n\n## Line-by-Line Code Walkthrough\n\n| Line | GDScript Code | Exact Meaning & Why It's Written This Way |\n| :--- | :--- | :--- |\n| **Line 4** | `const SAVE_PATH: String = \"user://kadi_profile.json\"` | Stores the save file in Godot's writable `user://` directory. |\n| **Line 15** | `var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)` | Opens (or creates) `kadi_profile.json` for writing. |\n| **Line 17** | `file.store_string(JSON.stringify(profile, \"\t\"))` | Serializes the `profile` dictionary as pretty-printed JSON. |\n| **Line 20** | `if not FileAccess.file_exists(SAVE_PATH): return` | Safely exits on first launch when no save file exists yet. |\n| **Line 23** | `if parsed is Dictionary: profile.merge(parsed, true)` | Overwrites default keys with saved values while preserving any newly added default keys! |\n",
+      "codeSnippets": [
+        {
+          "id": "snip_12_01_save",
+          "language": "gdscript",
+          "code": "# File: res://scripts/save_manager.gd\n# Autoload Singleton: SaveManager\nextends Node\n\nsignal profile_updated(profile: Dictionary)\n\nconst SAVE_PATH: String = \"user://kadi_profile.json\"\n\nvar profile: Dictionary = {\n\t\"wins\": 0,\n\t\"matches\": 0,\n\t\"streak\": 0,\n\t\"high_score_streak\": 0,\n\t\"coins\": 100\n}\n\nfunc _ready() -> void:\n\tload_profile()\n\nfunc save_profile() -> void:\n\tvar file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify(profile, \"\t\"))\n\t\tprofile_updated.emit(profile)\n\nfunc load_profile() -> void:\n\tif not FileAccess.file_exists(SAVE_PATH):\n\t\treturn\n\tvar raw_text: String = FileAccess.get_file_as_string(SAVE_PATH)\n\tvar parsed: Variant = JSON.parse_string(raw_text)\n\tif parsed is Dictionary:\n\t\tprofile.merge(parsed, true)\n\t\tprofile_updated.emit(profile)\n\nfunc record_match_result(human_won: bool) -> void:\n\tprofile[\"matches\"] = int(profile.get(\"matches\", 0)) + 1\n\tif human_won:\n\t\tprofile[\"wins\"] = int(profile.get(\"wins\", 0)) + 1\n\t\tprofile[\"streak\"] = int(profile.get(\"streak\", 0)) + 1\n\t\tprofile[\"coins\"] = int(profile.get(\"coins\", 100)) + 50\n\t\tif int(profile[\"streak\"]) > int(profile.get(\"high_score_streak\", 0)):\n\t\t\tprofile[\"high_score_streak\"] = profile[\"streak\"]\n\telse:\n\t\tprofile[\"streak\"] = 0\n\tsave_profile()\n\nfunc get_summary_text() -> String:\n\treturn \"Wins: %d/%d | Streak: %d | Coins: %d\" % [\n\t\tint(profile.get(\"wins\", 0)),\n\t\tint(profile.get(\"matches\", 0)),\n\t\tint(profile.get(\"streak\", 0)),\n\t\tint(profile.get(\"coins\", 100))\n\t]",
+          "caption": "Complete SaveManager Autoload singleton (`res://scripts/save_manager.gd`)."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `save_coins(coins: int) -> void` that opens `\"user://coins.json\"` with `FileAccess.open(\"user://coins.json\", FileAccess.WRITE)` and writes `JSON.stringify({\"coins\": coins})` using `file.store_string(...)`.",
+        "hint": "Call `var file = FileAccess.open(\"user://coins.json\", FileAccess.WRITE)` and then `file.store_string(JSON.stringify({\"coins\": coins}))`.",
+        "starterCode": "# Save coins dictionary as JSON to user://coins.json:\nfunc save_coins(coins: int) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "save_coins",
+          "FileAccess.open",
+          "user://coins.json",
+          "FileAccess.WRITE",
+          "store_string",
+          "JSON.stringify"
+        ],
+        "expectedOutput": "Writes {\"coins\": 100} to user://coins.json safely.",
+        "solutionCode": "func save_coins(coins: int) -> void:\n\tvar file := FileAccess.open(\"user://coins.json\", FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify({\"coins\": coins}))"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_12_01_1",
+          "prompt": "Why must runtime save files in Godot 4.3 use the `user://` prefix instead of `res://`?",
+          "choices": [
+            "Because `res://` becomes read-only inside the packaged `.pck` archive once you export your game to Windows, Android, or Web",
+            "Because `FileAccess` syntax only accepts strings of 7 characters or fewer",
+            "Because `res://` automatically deletes JSON files when `_ready()` finishes",
+            "Because `JSON.stringify()` cannot format dictionaries stored in `res://`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "When exported, `res://` is packed inside a read-only resource bundle, whereas `user://` points to a dedicated OS-writable application data directory.",
+          "concept": "FileAccess & user://"
+        },
+        {
+          "id": "q_12_01_2",
+          "prompt": "What does `profile.merge(parsed, true)` do when loading a saved `Dictionary` from disk?",
+          "choices": [
+            "It updates keys present in `parsed` while keeping default values for any new keys added in later versions of your game",
+            "It deletes all keys in `profile` that have integer values",
+            "It encrypts the JSON string with a password",
+            "It converts the Dictionary into a PackedScene"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Dictionary.merge(other, true)` overwrites matching keys with saved values while preserving any new default keys that didn't exist when the older save file was created.",
+          "concept": "Dictionary.merge"
+        }
+      ]
+    },
+    {
+      "id": "l_12_02_drag_drop_shaders",
+      "order": 2,
+      "title": "Drag-and-Drop Card Physics, Victory Particles & 2D Foil Shaders",
+      "targetFile": "res://scenes/card/card_scene.gd",
+      "tangibleOutcome": "Physically **drag any card across the emerald felt table with your mouse or finger and drop it onto `DiscardSlot` to play it**, while Aces and Jokers shimmer with a **2D gold foil shader**!",
+      "beyondKadi": "How `_gui_input` drag-and-drop, `CPUParticles2D`, and `.gdshader` files transfer to other genres:\n- **RPG / Survival Inventory**: Dragging potions or armor from a backpack slot onto a character equipment slot (`slot.get_global_rect().has_point(mouse_pos)`).\n- **Action Games**: Using a white flash `canvas_item` shader for `0.08s` whenever an enemy takes a hit, plus `CPUParticles2D` blood/sparks.",
+      "transferChallenge": "**Your Solo Task**: In your drag-and-drop handler, tilt the card slightly while it is being dragged (`rotation_degrees = clampf((get_global_mouse_position().x - prev_mouse_x) * 0.8, -12.0, 12.0)`) and Tween `rotation_degrees` back to `0.0` when released — just like Balatro and Hearthstone!",
+      "sceneTree": "Card (Control)\n├── CardBg (Panel) [material: ShaderMaterial (foil_card.gdshader)]\n├── CardArt (TextureRect)\n├── TopRankLabel (Label)\n├── CenterSuitLabel (Label)\n└── ClickButton (Button) [mouse_filter = Pass]",
+      "editorSteps": [
+        "Open `res://scenes/card/card_scene.tscn`, select `ClickButton`, and in the Inspector under **Control -> Mouse -> Filter**, set it to **Pass** so drag events also reach the root `Card` node.",
+        "Add the `card_dropped_on_discard` signal and `_gui_input(event: InputEvent)` drag-and-drop logic to `res://scenes/card/card_scene.gd`.",
+        "In `res://scenes/table/table.tscn`, add a `CPUParticles2D` child named `WinConfetti` (`Position = 576, 120`, `Emitting = Off`, `Amount = 60`, `One Shot = On`, `Explosiveness = 0.85`).",
+        "Call `win_confetti.restart()` inside `table.gd` whenever a player wins the match!"
+      ],
+      "verificationSteps": [
+        "Press **F5**, press and hold the left mouse button on a card in your hand, drag it over the center `DiscardSlot`, and release to watch it play automatically!",
+        "Drag a card halfway across the screen and release it *outside* `DiscardSlot` — verify it snaps smoothly back to its slot in your hand via a Tween."
+      ],
+      "troubleshootingTips": [
+        "**`_gui_input` never fires when dragging a card**: Check that `ClickButton`'s **Mouse -> Filter** is set to `Pass` (not `Stop`), or handle the drag inside `ClickButton.gui_input`.",
+        "**Dragged card renders behind neighboring cards in hand**: Set `z_index = 20` when `is_dragging = true` and reset `z_index = 0` on release!"
+      ],
+      "keyTakeaways": [
+        "`Control._gui_input(event)` handles mouse clicks, touch drags, and releases in local UI coordinates.",
+        "`target_control.get_global_rect().has_point(get_global_mouse_position())` tests whether the cursor/finger is inside any UI drop zone in 1 line of code.",
+        "Godot's `.gdshader` language (`shader_type canvas_item;`) runs on the GPU to create foil sheens, hit flashes, and dissolve effects."
+      ],
+      "bodyMarkdown": "# Drag-and-Drop Card Physics, Particles & 2D Shaders\n\n> [!TIP]\n> **Tangible Milestone:** Upgrade your Kadi table from click-only to tactile **Drag-and-Drop Card Physics** (`_gui_input`), celebratory **`CPUParticles2D` confetti bursts**, and a **GPU Foil Shader** for wild Aces and Jokers!\n\n## 1. How 2D Drag-and-Drop Works in Godot 4.3\n\nAny `[[Control]]` node can become draggable in 3 states using `_gui_input(event: [[InputEvent]])`:\n1. **Press (`event.pressed == true`)**: Save `home_position = position`, compute `drag_offset = get_global_mouse_position() - global_position`, and raise `z_index = 20` so the dragged card renders on top of all other cards.\n2. **Motion (`event is InputEventMouseMotion and is_dragging`)**: Follow the cursor/finger with `global_position = get_global_mouse_position() - drag_offset`.\n3. **Release (`event.pressed == false`)**: Check if the cursor is inside `DiscardSlot`'s global rectangle using `[[Rect2]].has_point()`:\n   - **Inside `DiscardSlot`**: Emit `card_dropped_on_discard.emit(self)` to play the card!\n   - **Outside `DiscardSlot`**: Tween `position` back to `home_position` over `0.14s`!\n\n```gdscript\nif discard_slot.get_global_rect().has_point(get_global_mouse_position()):\n    card_dropped_on_discard.emit(self)\nelse:\n    create_tween().tween_property(self, \"position\", home_position, 0.14)\n```\n\n## 2. Writing Your First 2D Foil Shader (`foil_card.gdshader`)\n\nIn Godot 4.3, shaders aren't mysterious black boxes — a 2D shader starts with `shader_type canvas_item;` and defines a `void fragment()` function that computes the `COLOR` of each pixel using `UV` (`0.0..1.0` coordinates) and `TIME` (elapsed seconds):\n\n```gdscript\nshader_type canvas_item;\nuniform bool is_foil = false;\n\nvoid fragment() {\n    vec4 base = texture(TEXTURE, UV) * COLOR;\n    if (is_foil) {\n        float sheen = smoothstep(0.8, 0.98, sin((UV.x + UV.y) * 10.0 - TIME * 3.0));\n        base.rgb = mix(base.rgb, vec3(1.0, 0.88, 0.35), sheen * 0.25);\n    }\n    COLOR = base;\n}\n```\n",
+      "codeSnippets": [
+        {
+          "id": "snip_12_02_drag",
+          "language": "gdscript",
+          "code": "# Add to res://scenes/card/card_scene.gd:\nsignal card_dropped_on_discard(card_node: Control)\n\nvar is_dragging: bool = false\nvar drag_offset: Vector2 = Vector2.ZERO\nvar home_position: Vector2 = Vector2.ZERO\n\nfunc _gui_input(event: InputEvent) -> void:\n\tif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:\n\t\tif event.pressed:\n\t\t\tis_dragging = true\n\t\t\thome_position = position\n\t\t\tdrag_offset = get_global_mouse_position() - global_position\n\t\t\tz_index = 20\n\t\telse:\n\t\t\tis_dragging = false\n\t\t\tz_index = 0\n\t\t\tvar table := get_tree().current_scene\n\t\t\tvar slot: Control = table.get_node_or_null(\"DiscardSlot\") if table else null\n\t\t\tif slot != null and slot.get_global_rect().has_point(get_global_mouse_position()):\n\t\t\t\tcard_dropped_on_discard.emit(self)\n\t\t\telse:\n\t\t\t\tcreate_tween().tween_property(self, \"position\", home_position, 0.14)\n\telif event is InputEventMouseMotion and is_dragging:\n\t\tglobal_position = get_global_mouse_position() - drag_offset",
+          "caption": "Complete drag-and-drop handler for CardScene (`res://scenes/card/card_scene.gd`)."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `is_cursor_over_slot(slot: Control, cursor_pos: Vector2) -> bool` that returns `true` if `slot.get_global_rect().has_point(cursor_pos)` is true.",
+        "hint": "Call `return slot.get_global_rect().has_point(cursor_pos)`.",
+        "starterCode": "# Check if cursor_pos is inside slot's global Rect2:\nfunc is_cursor_over_slot(slot: Control, cursor_pos: Vector2) -> bool:\n\t",
+        "requiredTokens": [
+          "func",
+          "is_cursor_over_slot",
+          "return",
+          "slot.get_global_rect()",
+          "has_point",
+          "cursor_pos"
+        ],
+        "expectedOutput": "Returns true whenever the dragged card is released inside the target Control's bounding rectangle.",
+        "solutionCode": "func is_cursor_over_slot(slot: Control, cursor_pos: Vector2) -> bool:\n\treturn slot.get_global_rect().has_point(cursor_pos)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_12_02_1",
+          "prompt": "Which `Rect2` method checks whether the mouse or touch position is inside a target `Control` node's screen area?",
+          "choices": [
+            "`slot.get_global_rect().has_point(get_global_mouse_position())`",
+            "`slot.queue_free()`",
+            "`slot.get_children()`",
+            "`slot.is_inside_tree()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Control.get_global_rect()` returns the control's global `Rect2`, and `.has_point(point)` checks if a global `Vector2` coordinate lies inside it.",
+          "concept": "Rect2.has_point"
+        }
+      ]
+    },
+    {
+      "id": "l_12_03_menus_tournament",
+      "order": 3,
+      "title": "Main Menu, Scene Switching & Kenyan 100-Point Tournament Mode",
+      "targetFile": "res://scripts/tournament_rules.gd",
+      "tangibleOutcome": "Launch from a **Main Menu scene (`main_menu.tscn`)** where you can pick player count or **Tournament Mode**, and watch cumulative card points (`Joker=50, 3=30, 2/A=20, J/Q/K=10`) eliminate players who cross 100 points!",
+      "beyondKadi": "How multi-scene flow (`change_scene_to_file`) and heuristic AI scoring apply to every game:\n- **Any Game Genre**: `Splash -> MainMenu.tscn -> Gameplay.tscn -> VictoryScreen.tscn` using `get_tree().change_scene_to_file()` while Autoload singletons keep your selected difficulty and character across the transition.\n- **Strategy & RPG AI**: Scoring candidate actions with weights (`score_ai_move()`) lets you create Easy, Normal, and Ruthless AI opponents without writing massive decision trees!",
+      "transferChallenge": "**Your Solo Task**: Add a `CheckButton` on your Main Menu or HUD for a custom **House Rule: Allow Winning on an Ace (`allow_ace_finish: bool`)** stored in `GameState`, and check that flag inside `RuleValidator.is_winning_move_cards()`!",
+      "sceneTree": "MainMenu (Control)  [script: res://scenes/ui/main_menu.gd]\n├── TitleLabel (Label)\n├── ModeOptionButton (OptionButton)  # Classic Single Match vs. 100-Pt Tournament\n└── StartMatchButton (Button)        # Calls get_tree().change_scene_to_file()",
+      "editorSteps": [
+        "Create `res://scripts/tournament_rules.gd` (`class_name TournamentRules`) with `card_points()`, `compute_hand_points()`, and `score_ai_candidate()`.",
+        "Create `res://scenes/ui/main_menu.tscn` with a `StartMatchButton` that calls `get_tree().change_scene_to_file(\"res://scenes/table/table.tscn\")`.",
+        "At the end of each round in `table.gd`, call `TournamentRules.compute_hand_points(GameState.hands[seat])` to tally each player's penalty points."
+      ],
+      "verificationSteps": [
+        "Press **F5** and verify that finishing a round calculates each opponent's remaining hand points (`Joker = 50`, `3 = 30`, `2 = 20`, `Ace = 20`, `J/Q/K = 10`, number cards = face value)."
+      ],
+      "troubleshootingTips": [
+        "**`change_scene_to_file` returns `ERR_CANT_OPEN`**: Double-check the exact case-sensitive `res://` path in the FileSystem dock."
+      ],
+      "keyTakeaways": [
+        "`get_tree().change_scene_to_file(\"res://...\")` cleanly frees the current scene and loads the new scene while keeping Autoload singletons alive.",
+        "Official Kenyan Kadi tournament rules penalize high-power cards held at the end of a round (`Joker=50, 3=30, 2=20, A=20`), creating deep risk/reward tension!"
+      ],
+      "bodyMarkdown": "# Main Menu, Scene Transitions & Kenyan 100-Point Tournament Scoring\n\n> [!TIP]\n> **Tangible Milestone:** Add a real **Kenyan Tournament Elimination Mode** where holding a Joker or 3 when someone else wins costs you `50` or `30` penalty points—and upgrade your AI to prioritize shedding high-risk cards!\n\n## 1. Kenyan Kadi Tournament Point Values\n\nIn competitive Kenyan Kadi tournaments, hoarding Penalty cards (`Joker`, `3`, `2`) and `Ace`s is risky: if another player goes out first, every card still trapped in your hand adds penalty points toward the **100-point elimination cap**:\n\n| Card in Hand at Round End | Tournament Penalty Points | Strategic Consequence |\n| :--- | :--- | :--- |\n| **Joker (`15`)** | **50 points** | Holding 2 Jokers when someone wins eliminates you immediately (`100 pts`)! |\n| **3 (`THREE`)** | **30 points** | High risk to hold late in a round. |\n| **2 (`TWO`) or Ace (`ACE`)** | **20 points** | Valuable blockers, but expensive if caught holding them. |\n| **Jack (`11`), Queen (`12`), King (`13`)** | **10 points** | Moderate penalty. |\n| **Number Cards (`4..10`)** | **Face value (`4..10` pts)** | Lowest penalty risk. |\n\n## 2. Switching Scenes with `SceneTree.change_scene_to_file()`\n\nWhen your game has a `MainMenu.tscn` and a `Table.tscn`, you switch between them with one call on `[[SceneTree]]`:\n\n```gdscript\nget_tree().change_scene_to_file(\"res://scenes/table/table.tscn\")\n```\n\nBecause `GameState`, `TurnManager`, and `SaveManager` are **Autoload singletons**, they live directly under `root` above the active scene and preserve all settings across scene changes!\n",
+      "codeSnippets": [
+        {
+          "id": "snip_12_03_tournament",
+          "language": "gdscript",
+          "code": "# File: res://scripts/tournament_rules.gd\nclass_name TournamentRules\nextends RefCounted\n\nconst ELIMINATION_POINTS: int = 100\n\nstatic func card_points(card: CardData) -> int:\n\tif card == null:\n\t\treturn 0\n\tmatch card.rank:\n\t\tCardTypes.Ranks.JOKER: return 50\n\t\tCardTypes.Ranks.THREE: return 30\n\t\tCardTypes.Ranks.TWO, CardTypes.Ranks.ACE: return 20\n\t\tCardTypes.Ranks.JACK, CardTypes.Ranks.QUEEN, CardTypes.Ranks.KING: return 10\n\t\t_: return card.rank\n\nstatic func compute_hand_points(hand: Array) -> int:\n\tvar total: int = 0\n\tfor c in hand:\n\t\ttotal += card_points(c)\n\treturn total\n\n## Heuristic scorer so smart AI sheds high-risk cards while saving 1 Ace for defense:\nstatic func score_ai_move(cards: Array, penalty_stack: int, hand_size: int) -> int:\n\tif cards.is_empty():\n\t\treturn -999\n\tvar score: int = 0\n\tfor c in cards:\n\t\tscore += card_points(c)\n\t\tif c.rank == CardTypes.Ranks.ACE and penalty_stack == 0 and hand_size > 2:\n\t\t\tscore -= 35 # Save Ace for emergency penalty defense!\n\treturn score",
+          "caption": "Kenyan Kadi tournament point calculator & smart AI heuristic (`res://scripts/tournament_rules.gd`)."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a static function `static func card_points(rank: int) -> int` using `match rank:` that returns `50` for `15` (Joker), `30` for `3`, `20` for `2` or `14` (Ace), and `rank` for `_:`.",
+        "hint": "Use `match rank:` with branches for `15: return 50`, `3: return 30`, `2, 14: return 20`, and `_: return rank`.",
+        "starterCode": "static func card_points(rank: int) -> int:\n\tmatch rank:\n\t\t",
+        "requiredTokens": [
+          "static func",
+          "card_points",
+          "match",
+          "rank",
+          "50",
+          "30",
+          "20",
+          "return"
+        ],
+        "expectedOutput": "Correctly scores Joker=50, 3=30, 2/Ace=20, and standard ranks by face value.",
+        "solutionCode": "static func card_points(rank: int) -> int:\n\tmatch rank:\n\t\t15: return 50\n\t\t3: return 30\n\t\t2, 14: return 20\n\t\t11, 12, 13: return 10\n\t\t_: return rank"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_12_03_1",
+          "prompt": "What happens to Autoload singletons (`GameState`, `TurnManager`, `SaveManager`) when you call `get_tree().change_scene_to_file(\"res://scenes/table/table.tscn\")`?",
+          "choices": [
+            "They remain alive in memory under `root` so all match settings and scores persist across the scene change",
+            "They are deleted and reset to `null`",
+            "They are converted into `TextureRect` nodes",
+            "They pause permanently until Godot restarts"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Autoloads are siblings of the current scene under `get_tree().root`, so changing the current scene leaves Autoload singletons intact.",
+          "concept": "SceneTree & Autoloads"
+        }
+      ]
+    },
+    {
+      "id": "l_12_04_multiplayer_lan",
+      "order": 4,
+      "title": "Pass-and-Play Hotseat & LAN Multiplayer (`ENetMultiplayerPeer` & `@rpc`)",
+      "targetFile": "res://scenes/table/table.gd",
+      "tangibleOutcome": "Play Kadi with friends either on one device via a **Pass-and-Play Privacy Curtain** or across laptops/phones over Wi-Fi using Godot 4.3's **`ENetMultiplayerPeer` and `@rpc`**!",
+      "beyondKadi": "Godot 4.3's high-level multiplayer (`ENetMultiplayerPeer` + `@rpc` + `MultiplayerSpawner`) works identically across genres:\n- **Co-op Action RPG**: Syncing player positions and spell casts across Wi-Fi.\n- **Turn-Based Strategy / Board Game**: Syncing turn actions cleanly with `@rpc(\"any_peer\", \"call_local\", \"reliable\")`.",
+      "transferChallenge": "**Your Solo Task**: Add a quick-chat emoji bar (`\"🔥 Moto!\"`, `\"😂 Pole!\"`, `\"📢 Niko Kadi!\"`) that calls an `@rpc(\"any_peer\", \"call_local\", \"reliable\") func send_table_emote(sender_name: String, message: String)` so players can react live across the network!",
+      "sceneTree": "Table (Node2D)\n└── HUD (CanvasLayer)\n    └── PassDeviceOverlay (ColorRect)  # Privacy shield for local hotseat multiplayer",
+      "editorSteps": [
+        "For **Local Pass-and-Play**, add a full-screen `ColorRect` under `HUD` named `PassDeviceOverlay` with a centered `ReadyButton` (`\"Pass phone to Player X — Tap when ready\"`).",
+        "For **LAN Wi-Fi Multiplayer**, use `ENetMultiplayerPeer.new()` to host (`create_server(8910, 4)`) or join (`create_client(ip, 8910)`).",
+        "Decorate state-syncing methods with `@rpc(\"any_peer\", \"call_local\", \"reliable\")` and invoke them with `.rpc(...)`."
+      ],
+      "verificationSteps": [
+        "In Godot 4.3's top menu, click **Debug -> Customize Run Instances**, check **Enable Multiple Instances**, set count to **2**, and press **F5** to launch two game windows side-by-side on your computer and test LAN hosting & joining!"
+      ],
+      "troubleshootingTips": [
+        "**`@rpc` runs on remote peers but not on the sender**: Add `\"call_local\"` inside `@rpc(\"any_peer\", \"call_local\", \"reliable\")` so the function executes on both the caller and all connected peers!"
+      ],
+      "keyTakeaways": [
+        "`@rpc(\"any_peer\", \"call_local\", \"reliable\")` is the golden combination for turn-based card and strategy games: any player can submit their turn, it runs locally and remotely, and TCP-like reliability guarantees no dropped card plays.",
+        "**Debug -> Customize Run Instances** in Godot 4.3 lets you test 2–4 multiplayer windows on a single machine!"
+      ],
+      "bodyMarkdown": "# Local Pass-and-Play & LAN Multiplayer (`ENetMultiplayerPeer` & `@rpc`)\n\n> [!TIP]\n> **Tangible Milestone:** Turn your single-player vs. AI Kadi game into a **Multiplayer Party Game** — supporting both **1-Phone Pass-and-Play Hotseat** and **Multi-Device Wi-Fi LAN Multiplayer**!\n\n## 1. Local Pass-and-Play Hotseat (The Privacy Curtain Pattern)\n\nWhen 2–4 human friends share one phone or laptop, you don't want Seat 1 to see Seat 2's cards during the handoff!\n1. Whenever `TurnManager.turn_changed` fires for a human seat, hide `player_hand_container.visible = false` and show `pass_device_overlay.visible = true` (`\"Pass device to Player 2 — Tap to Reveal Hand\"`).\n2. When the next player taps `ReadyButton`, hide `pass_device_overlay` and rebuild `player_hand_container` from `GameState.hands[current_seat]`!\n\n## 2. Wi-Fi / LAN Multiplayer in 15 Lines with `@rpc`\n\nGodot 4.3 has a built-in high-level networking API (`ENetMultiplayerPeer`) and `@rpc` (Remote Procedure Call) annotations:\n\n| `@rpc` Argument | What It Means |\n| :--- | :--- |\n| **`\"any_peer\"`** | Allows non-host client players (Seats 1, 2, 3) to invoke this RPC when they play a card. |\n| **`\"call_local\"`** | Runs the function on the sender's machine as well as all connected peers so state stays 100% identical. |\n| **`\"reliable\"`** | Guarantees every card play packet arrives in order (essential for turn-based games!). |\n",
+      "codeSnippets": [
+        {
+          "id": "snip_12_04_rpc",
+          "language": "gdscript",
+          "code": "# Hosting & Joining LAN Kadi + Syncing Moves via @rpc:\nconst PORT: int = 8910\n\nfunc host_lan_game() -> void:\n\tvar peer := ENetMultiplayerPeer.new()\n\tpeer.create_server(PORT, 4)\n\tmultiplayer.multiplayer_peer = peer\n\nfunc join_lan_game(host_ip: String = \"127.0.0.1\") -> void:\n\tvar peer := ENetMultiplayerPeer.new()\n\tpeer.create_client(host_ip, PORT)\n\tmultiplayer.multiplayer_peer = peer\n\n@rpc(\"any_peer\", \"call_local\", \"reliable\")\nfunc rpc_commit_card_play(seat: int, suit: int, rank: int) -> void:\n\tvar played := CardData.make(suit as CardTypes.Suits, rank)\n\tGameState.discard_pile.append(played)\n\tGameState.state_updated.emit()\n\tTurnManager.advance_turn()",
+          "caption": "Godot 4.3 LAN host/join and `@rpc` move synchronization."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write an `@rpc(\"any_peer\", \"call_local\", \"reliable\")` function `func sync_niko_kadi(seat: int) -> void` that sets `GameState.announced_kadi[seat] = true`.",
+        "hint": "Place `@rpc(\"any_peer\", \"call_local\", \"reliable\")` right above `func sync_niko_kadi(seat: int) -> void:`.",
+        "starterCode": "# Synchronize Niko Kadi announcement across all peers:\n",
+        "requiredTokens": [
+          "@rpc",
+          "any_peer",
+          "call_local",
+          "reliable",
+          "func",
+          "sync_niko_kadi",
+          "GameState.announced_kadi[seat]",
+          "true"
+        ],
+        "expectedOutput": "Syncs the player's Niko Kadi announcement across all connected LAN devices.",
+        "solutionCode": "@rpc(\"any_peer\", \"call_local\", \"reliable\")\nfunc sync_niko_kadi(seat: int) -> void:\n\tGameState.announced_kadi[seat] = true"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_12_04_1",
+          "prompt": "Why do we include `\"call_local\"` inside `@rpc(\"any_peer\", \"call_local\", \"reliable\")` when syncing a turn-based move?",
+          "choices": [
+            "So calling `func_name.rpc(...)` executes the function on the sender's own game instance as well as on all remote peers",
+            "So the game only runs without Wi-Fi",
+            "So textures compress faster",
+            "So `HBoxContainer` centers cards vertically"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Without `\"call_local\"`, `.rpc()` only executes on remote peers; adding `\"call_local\"` runs the exact same state update on both the local sender and remote peers.",
+          "concept": "@rpc & Multiplayer"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_12_save_res_vs_user",
+    "brokenCode": "func save_player_stats(wins: int, coins: int) -> void:\n\tvar data: Dictionary = {\"wins\": wins, \"coins\": coins}\n\t# BUG: Works in editor, but fails silently in exported Windows/Android builds!\n\tvar file := FileAccess.open(\"res://kadi_save.json\", FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify(data))",
+    "bugDescription": "Saving works inside the Godot Editor, but as soon as you export the game to Windows `.exe` or Android `.apk`, `FileAccess.open()` returns `null` and player progress is never saved! Tap the buggy line.",
+    "fixedCode": "func save_player_stats(wins: int, coins: int) -> void:\n\tvar data: Dictionary = {\"wins\": wins, \"coins\": coins}\n\t# FIX: Always use user:// for writable runtime save files!\n\tvar file := FileAccess.open(\"user://kadi_save.json\", FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify(data))",
+    "explanation": "In exported builds, `res://` is packed inside a read-only archive (`.pck` or `.apk`), so `FileAccess.open(\"res://...\", FileAccess.WRITE)` fails and returns `null`. Always save runtime files to `user://`!",
+    "buggyLineNumber": 4,
+    "hint": "Look at the virtual filesystem prefix (`res://` vs `user://`) passed to `FileAccess.open()`."
+  }
+}

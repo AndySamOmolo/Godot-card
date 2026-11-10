@@ -45,9 +45,10 @@ The Kadi app is primarily 2D, so `Node3D` is rarely used directly. It is documen
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Node3D`)**: When configuring `Node3D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Node3D` offline. If your `Node3D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Node3D in Godot 4.3 Kadi
-func configure_node3d_example(target: Node3D) -> void:
-    assert(target != null, "Node3D reference must be valid")
-    print("Configured Node3D for Kadi table runtime")
+# Positioning and rotating a 3D object in world space:
+extends Node3D
+
+func spin_trophy(delta: float) -> void:
+	rotate_y(1.5 * delta)
 ```
 

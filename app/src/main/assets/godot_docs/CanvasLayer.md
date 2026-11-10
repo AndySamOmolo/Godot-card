@@ -39,9 +39,11 @@ In the Kadi app a `CanvasLayer` at a high `layer` holds the persistent HUD — t
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`CanvasLayer`)**: When configuring `CanvasLayer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CanvasLayer` offline. If your `CanvasLayer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using CanvasLayer in Godot 4.3 Kadi
-func configure_canvaslayer_example(target: CanvasLayer) -> void:
-    assert(target != null, "CanvasLayer reference must be valid")
-    print("Configured CanvasLayer for Kadi table runtime")
+# Keeping HUD buttons and popups pinned to the screen independent of Camera2D scroll:
+@onready var hud_layer: CanvasLayer = $HUD
+@onready var pause_overlay: Control = $HUD/PauseOverlay
+
+func set_hud_visible(show_hud: bool) -> void:
+	hud_layer.visible = show_hud
 ```
 

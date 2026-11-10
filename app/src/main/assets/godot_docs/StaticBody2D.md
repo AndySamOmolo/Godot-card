@@ -31,9 +31,12 @@ In the Kadi app `StaticBody2D` forms the invisible boundary of the play table. T
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`StaticBody2D`)**: When configuring `StaticBody2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `StaticBody2D` offline. If your `StaticBody2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using StaticBody2D in Godot 4.3 Kadi
-func configure_staticbody2d_example(target: StaticBody2D) -> void:
-    assert(target != null, "StaticBody2D reference must be valid")
-    print("Configured StaticBody2D for Kadi table runtime")
+# Solid immovable walls, floors, and table boundaries that block CharacterBody2D & RigidBody2D:
+# Attach a CollisionShape2D (RectangleShape2D or WorldBoundaryShape2D) under StaticBody2D!
+extends StaticBody2D
+
+func _ready() -> void:
+	# Layer 1 = World Walls
+	collision_layer = 1
 ```
 

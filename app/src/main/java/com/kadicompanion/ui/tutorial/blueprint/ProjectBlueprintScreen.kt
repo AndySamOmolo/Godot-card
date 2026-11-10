@@ -1,5 +1,6 @@
 package com.kadicompanion.ui.tutorial.blueprint
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -27,15 +28,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material3.Button
@@ -92,12 +98,14 @@ import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
 /**
- * 5-Tab Playable Kadi Table, Downloaded Assets Studio & Architecture Blueprint:
- * - Tab 0: Play Kadi Live    (Play a real interactive Kadi table right on your phone + see the live GDScript trace!)
- * - Tab 1: Downloaded Assets (Interactive Asset Pack Naming & GDScript Loader Generator + Import Dock Guide)
- * - Tab 2: Project Map       (Complete res:// folder structure including res://assets/ & file breakdown)
- * - Tab 3: Scene & Signals   (Exact Node Hierarchy with TextureRect / TextureButton for downloaded sprites)
- * - Tab 4: Rule Simulator    (Interactive Kenyan Kadi rule sandbox)
+ * 7-Tab Solo Game Developer Studio, Playable Kadi Table & Architecture Blueprint:
+ * - Tab 0: Play Kadi Live     (Play a real interactive Kadi table right on your phone + see the live GDScript trace!)
+ * - Tab 1: New Game Architect (Deconstruct & generate starter architecture for ANY new Godot 4.3 game genre solo!)
+ * - Tab 2: Upgrade Kadi Lab   (6 Self-Guided Kadi Expansion Blueprints with no-spoiler hints & reference code)
+ * - Tab 3: Downloaded Assets  (Interactive Asset Pack Naming & GDScript Loader Generator + Import Dock Guide)
+ * - Tab 4: Project Map        (Complete res:// folder structure across Phases 00–13)
+ * - Tab 5: Scene & Signals    (Exact Node Hierarchy with TextureRect / TextureButton for downloaded sprites)
+ * - Tab 6: Rule Simulator     (Interactive Kenyan Kadi rule sandbox)
  */
 @Composable
 fun ProjectBlueprintScreen(
@@ -105,7 +113,15 @@ fun ProjectBlueprintScreen(
     onNavigateToPhase: (String) -> Unit
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val tabs = listOf("Play Kadi Live", "Downloaded Assets", "Project Map", "Scene & Signals", "Rule Simulator")
+    val tabs = listOf(
+        "Play Kadi Live",
+        "New Game Architect",
+        "Upgrade Kadi Lab",
+        "Downloaded Assets",
+        "Project Map",
+        "Scene & Signals",
+        "Rule Simulator"
+    )
     val hPad = studioScreenPadding()
     val vGap = studioCardSpacing()
 
@@ -114,8 +130,8 @@ fun ProjectBlueprintScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             KadiTopBar(
-                title = "Live Kadi Table & Blueprint",
-                subtitle = "PLAYABLE PROTOTYPE · ASSETS · ARCHITECTURE",
+                title = "Live Kadi & Solo Dev Studio",
+                subtitle = "PLAYABLE TABLE · NEW GAME ARCHITECT · UPGRADES",
                 onBack = onBack
             )
         }
@@ -165,12 +181,905 @@ fun ProjectBlueprintScreen(
             ) {
                 when (selectedTab) {
                     0 -> PlayableKadiMiniTableTab(onNavigateToPhase = onNavigateToPhase)
-                    1 -> DownloadedAssetsTab()
-                    2 -> ProjectMapTab(onNavigateToPhase = onNavigateToPhase)
-                    3 -> SceneAndSignalsTab()
-                    4 -> RuleSimulatorTab()
+                    1 -> NewGameArchitectTab(onNavigateToPhase = onNavigateToPhase)
+                    2 -> UpgradeKadiLabTab(onNavigateToPhase = onNavigateToPhase)
+                    3 -> DownloadedAssetsTab()
+                    4 -> ProjectMapTab(onNavigateToPhase = onNavigateToPhase)
+                    5 -> SceneAndSignalsTab()
+                    6 -> RuleSimulatorTab()
                 }
                 Spacer(Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+private data class GenreBlueprint(
+    val id: Int,
+    val label: String,
+    val tagline: String,
+    val kadiToGenreBridge: List<Pair<String, String>>,
+    val sceneTree: String,
+    val coreScriptTitle: String,
+    val coreScriptCode: String,
+    val soloMissions: List<String>
+)
+
+private val GENRE_BLUEPRINTS = listOf(
+    GenreBlueprint(
+        id = 0,
+        label = "2D Action Platformer",
+        tagline = "Celeste / Hollow Knight / Mario style side-scroller with responsive jump, coins & enemies",
+        kadiToGenreBridge = listOf(
+            "CardData (Resource)" to "WeaponStats / LevelData (Resource) storing jump height, dash cooldown, or enemy HP",
+            "CardScene.tscn (Template)" to "Coin.tscn / EnemySlime.tscn instantiated across levels with PackedScene.instantiate()",
+            "GameState (Autoload)" to "GameManager (Autoload) tracking player lives, collected coins, and active checkpoint",
+            "card_clicked (Signal)" to "Coin.body_entered / Hurtbox.area_entered signals notifying HUD when score or HP changes",
+            "Card Lift Tween" to "Squash-and-stretch jump Tween (scale = Vector2(0.8, 1.25)) and coin pickup pop"
+        ),
+        sceneTree = """
+        Level01 (Node2D)  [script: res://scenes/level_01.gd]
+        ├── WorldTileMap (TileMapLayer)             # Platforms, walls & spikes (Physics Layer 1)
+        ├── Player (CharacterBody2D)                # [script: res://scenes/player/player.gd]
+        │   ├── Sprite2D                            # Player sprite sheet
+        │   ├── CollisionShape2D                    # Capsule / Rectangle physics collider
+        │   ├── Camera2D                            # Position Smoothing = On, Drag Horizontal/Vertical
+        │   └── Hurtbox (Area2D)                    # Detects enemy & hazard Hitboxes
+        ├── Coins (Node2D)                          # Holds instanced Coin.tscn nodes
+        ├── Enemies (Node2D)                        # Holds instanced PatrolEnemy.tscn nodes
+        └── HUD (CanvasLayer)
+            ├── HeartsContainer (HBoxContainer)     # Same HBoxContainer as Kadi's PlayerHandContainer!
+            └── CoinCountLabel (Label)              # Connected to GameManager.coins_changed signal
+        """.trimIndent(),
+        coreScriptTitle = "res://scenes/player/player.gd (Platformer Controller with Coyote Jump & Dash)",
+        coreScriptCode = """
+        extends CharacterBody2D
+
+        const SPEED: float = 250.0
+        const JUMP_VELOCITY: float = -430.0
+        const GRAVITY: float = 1180.0
+        const DASH_SPEED: float = 560.0
+
+        var coyote_time: float = 0.0
+        var dash_time: float = 0.0
+        @onready var sprite: Sprite2D = ${'$'}Sprite2D
+
+        func _physics_process(delta: float) -> void:
+            if is_on_floor():
+                coyote_time = 0.12
+            else:
+                coyote_time = maxf(0.0, coyote_time - delta)
+                if dash_time <= 0.0:
+                    velocity.y += GRAVITY * delta
+
+            if dash_time > 0.0:
+                dash_time -= delta
+                move_and_slide()
+                return
+
+            if Input.is_action_just_pressed("jump") and coyote_time > 0.0:
+                velocity.y = JUMP_VELOCITY
+                coyote_time = 0.0
+                # Squash-and-stretch using the exact Tween pattern from Kadi Phase 11!
+                sprite.scale = Vector2(0.8, 1.25)
+                create_tween().tween_property(sprite, "scale", Vector2.ONE, 0.18)
+
+            var dir: float = Input.get_axis("move_left", "move_right")
+            velocity.x = move_toward(velocity.x, dir * SPEED, 1600.0 * delta)
+            if dir != 0.0:
+                sprite.flip_h = (dir < 0.0)
+
+            if Input.is_action_just_pressed("dash") and dir != 0.0:
+                dash_time = 0.14
+                velocity = Vector2(dir * DASH_SPEED, 0.0)
+
+            move_and_slide()
+        """.trimIndent(),
+        soloMissions = listOf(
+            "**Mission 1 (Double Jump)**: Add `var jumps_left: int = 2` that resets whenever `is_on_floor()` is `true`, and decrement it on each jump so the player can jump once in mid-air.",
+            "**Mission 2 (Collectible Coin Scene)**: Build `coin.tscn` (`Area2D` + `Sprite2D` + `CollisionShape2D`). Connect `body_entered` in `_ready()`, check `if body is CharacterBody2D:`, increment `GameManager.coins += 1`, and call `queue_free()`.",
+            "**Mission 3 (Moving Platform)**: Use `create_tween().set_loops()` on an `AnimatableBody2D` to ping-pong `position.x` by `+160px` and back over `2.0` seconds."
+        )
+    ),
+    GenreBlueprint(
+        id = 1,
+        label = "Top-Down RPG / Survivor",
+        tagline = "Zelda / Vampire Survivors / Hades style 8-way exploration, wave spawner, inventory & loot",
+        kadiToGenreBridge = listOf(
+            "CardData (Resource)" to "ItemData / SpellData (Resource) with @export var damage, cooldown, icon, rarity",
+            "PlayerHandContainer (HBoxContainer)" to "HotbarContainer (HBoxContainer) displaying your equipped weapons/potions",
+            "AITurnTimer (Timer)" to "WaveSpawnTimer (Timer) spawning enemies around a Marker2D / PathFollow2D ring",
+            "RuleValidator (Static Engine)" to "CombatCalculator (RefCounted) computing elemental weaknesses & critical hits",
+            "GameState.deck.shuffle()" to "LootTable array shuffling & weighted random chest drops"
+        ),
+        sceneTree = """
+        ArenaWorld (Node2D)  [y_sort_enabled = true, script: res://scenes/arena_world.gd]
+        ├── GroundTileMap (TileMapLayer)            # Grass, dungeon floor & obstacle walls
+        ├── Player (CharacterBody2D)                # [motion_mode = Floating, script: player_topdown.gd]
+        │   ├── Sprite2D
+        │   ├── CollisionShape2D
+        │   ├── Camera2D
+        │   └── AutoWeaponPivot (Node2D)            # Aims at nearest enemy in group "enemies"
+        ├── EnemyContainer (Node2D)                 # [y_sort_enabled = true]
+        ├── WaveSpawnTimer (Timer)                  # wait_time = 1.5, autostart = true
+        └── HUD (CanvasLayer)
+            ├── XPBar (ProgressBar)                 # Level-up bar
+            ├── Hotbar (HBoxContainer)              # Equipped ItemSlot.tscn instances
+            └── UpgradeDraftPopup (Control)         # Same modal pattern as Kadi's DeclareSuitDialog!
+        """.trimIndent(),
+        coreScriptTitle = "res://scenes/arena_world.gd (8-Way Movement + Wave Spawner + Nearest-Enemy Targeting)",
+        coreScriptCode = """
+        extends Node2D
+
+        const EnemyScene: PackedScene = preload("res://scenes/enemy_goblin.tscn")
+        @onready var player: CharacterBody2D = ${'$'}Player
+        @onready var enemy_container: Node2D = ${'$'}EnemyContainer
+        @onready var spawn_timer: Timer = ${'$'}WaveSpawnTimer
+
+        func _ready() -> void:
+            spawn_timer.timeout.connect(_on_spawn_timer_timeout)
+
+        func _on_spawn_timer_timeout() -> void:
+            var angle: float = randf() * TAU
+            var spawn_pos: Vector2 = player.global_position + Vector2.from_angle(angle) * 420.0
+            var enemy: CharacterBody2D = EnemyScene.instantiate()
+            enemy_container.add_child(enemy)
+            enemy.global_position = spawn_pos
+            enemy.add_to_group("enemies")
+
+        func find_nearest_enemy(from_pos: Vector2) -> Node2D:
+            var nearest: Node2D = null
+            var best_dist_sq: float = INF
+            for node in get_tree().get_nodes_in_group("enemies"):
+                var d_sq: float = from_pos.distance_squared_to(node.global_position)
+                if d_sq < best_dist_sq:
+                    best_dist_sq = d_sq
+                    nearest = node
+            return nearest
+        """.trimIndent(),
+        soloMissions = listOf(
+            "**Mission 1 (Chasing AI Enemy)**: In `enemy_goblin.gd`, set `var dir = global_position.direction_to(player.global_position)` inside `_physics_process(delta)`, set `velocity = dir * 95.0`, and call `move_and_slide()`.",
+            "**Mission 2 (XP Gem & Level-Up Popup)**: When an enemy's HP reaches `0`, instantiate an `xp_gem.tscn` (`Area2D`). When `xp >= xp_to_next_level`, pause the tree (`get_tree().paused = true`) and show a 3-card upgrade picker modal just like `DeclareSuitDialog`!",
+            "**Mission 3 (Custom Resource Inventory)**: Create `ItemData` (`extends Resource`) with `@export var name: String` and `@export var icon: Texture2D`, and display `Array[ItemData]` inside `Hotbar (HBoxContainer)`."
+        )
+    ),
+    GenreBlueprint(
+        id = 2,
+        label = "Roguelike Deckbuilder",
+        tagline = "Slay the Spire / Balatro / Monster Train style tactical card battler with energy, relics & synergies",
+        kadiToGenreBridge = listOf(
+            "CardData (suit, rank)" to "BattleCardData (mana_cost, damage, block, status_effect, description)",
+            "GameState.deck & discard_pile" to "draw_pile, hand, discard_pile, and exhaust_pile (exact samereshuffle_if_empty()!)",
+            "RuleValidator.validate_move()" to "can_play_card(card): checks current_energy >= card.mana_cost",
+            "TurnManager.advance_turn()" to "Phase State Machine: PLAYER_START -> PLAYER_ACTION -> ENEMY_INTENT -> ENEMY_ATTACK",
+            "Penalty Stack (+2/+3/+5)" to "Status Effect stacks (Poison, Vulnerable, Strength, Burn) stored in a Dictionary"
+        ),
+        sceneTree = """
+        BattleArena (Control)  [script: res://scenes/battle_arena.gd]
+        ├── CombatantsRow (HBoxContainer)
+        │   ├── HeroActor (Control)                 # HP Bar, Block Badge, Status Icons
+        │   └── BossActor (Control)                 # HP Bar, IntentLabel ("⚡ Attacking for 14")
+        ├── HandContainer (HBoxContainer)           # Exact same CardScene instancing as Kadi!
+        ├── HUD (CanvasLayer)
+        │   ├── EnergyOrbLabel (Label)              # "Energy: 3 / 3"
+        │   ├── DrawPileCount (Label)               # Uses Kadi's exact deck.size()
+        │   ├── DiscardPileCount (Label)            # Uses Kadi's exact discard_pile.size()
+        │   └── EndTurnButton (Button)              # Discards remaining hand & triggers Boss turn
+        """.trimIndent(),
+        coreScriptTitle = "res://scripts/deckbuilder_combat.gd (Energy Pool, Card Execution & Enemy Intents)",
+        coreScriptCode = """
+        extends Node
+
+        var max_energy: int = 3
+        var current_energy: int = 3
+        var player_hp: int = 60
+        var player_block: int = 0
+        var boss_hp: int = 120
+        var boss_statuses: Dictionary = {"poison": 0, "vulnerable": 0}
+
+        func can_play_card(card: BattleCardData) -> bool:
+            return current_energy >= card.mana_cost
+
+        func play_card(card: BattleCardData) -> void:
+            if not can_play_card(card):
+                return
+            current_energy -= card.mana_cost
+            var mult: float = 1.5 if boss_statuses["vulnerable"] > 0 else 1.0
+            boss_hp -= int(round(card.damage * mult))
+            player_block += card.block
+            if card.poison_stacks > 0:
+                boss_statuses["poison"] += card.poison_stacks
+
+        func end_player_turn(boss_attack_damage: int) -> void:
+            # 1. Tick boss poison at start of boss turn
+            if boss_statuses["poison"] > 0:
+                boss_hp -= boss_statuses["poison"]
+                boss_statuses["poison"] -= 1
+            # 2. Boss attacks player through block
+            var unblocked: int = maxi(0, boss_attack_damage - player_block)
+            player_hp -= unblocked
+            # 3. Reset block & energy for next player turn
+            player_block = 0
+            current_energy = max_energy
+        """.trimIndent(),
+        soloMissions = listOf(
+            "**Mission 1 (Synergy Multipliers — Balatro Style)**: Add `var base_chips: int` and `var mult: int` to your turn evaluator so playing matching suits or sequences multiplies the score before hitting the Boss HP!",
+            "**Mission 2 (Relic Passives)**: Create `RelicData` (`extends Resource`) and store `var active_relics: Array[RelicData]` in `GameState` (e.g., *\"Whenever you play 3 cards in a single turn, gain +4 Block\"*).",
+            "**Mission 3 (Post-Battle 3-Card Reward Draft)**: Reuse Kadi's `HBoxContainer` card spawning to offer 3 random new `BattleCardData` cards to add to the player's permanent deck after winning a fight."
+        )
+    ),
+    GenreBlueprint(
+        id = 3,
+        label = "Arcade Space / Twin-Stick Shooter",
+        tagline = "Geometry Wars / Asteroids / Space Invaders style fast-paced projectile action with waves & bosses",
+        kadiToGenreBridge = listOf(
+            "CardScene.instantiate()" to "LaserBullet.instantiate() & ExplosionParticles.instantiate()",
+            "DiscardSlot / PlayerHandContainer" to "ProjectileContainer & AsteroidContainer nodes keeping SceneTree organized",
+            "GameState.penalty_stack" to "Combo Multiplier meter & Overheat weapon gauge",
+            "AITurnTimer (Timer)" to "FireRateTimer (0.12s cooldown) & WaveDirectorTimer",
+            "54-Card Conservation assert()" to "Screen-bounds cleanup (queue_free() bullets via VisibleOnScreenNotifier2D)"
+        ),
+        sceneTree = """
+        SpaceShooter (Node2D)  [script: res://scenes/space_shooter.gd]
+        ├── StarfieldBg (CPUParticles2D)            # Scrolling star particles
+        ├── Ship (CharacterBody2D)                  # [script: res://scenes/ship.gd]
+        │   ├── Sprite2D
+        │   ├── CollisionPolygon2D
+        │   └── Muzzle (Marker2D)                   # Bullet spawn point at nose of ship
+        ├── Projectiles (Node2D)                    # Holds active LaserBullet.tscn instances
+        ├── Enemies (Node2D)                        # Holds active Asteroid/Alien instances
+        └── HUD (CanvasLayer)
+            ├── ScoreLabel (Label)
+            └── ShieldBar (ProgressBar)
+        """.trimIndent(),
+        coreScriptTitle = "res://scenes/ship.gd (Mouse Aiming, Rapid-Fire Cooldown & Bullet Spawning)",
+        coreScriptCode = """
+        extends CharacterBody2D
+
+        const BulletScene: PackedScene = preload("res://scenes/laser_bullet.tscn")
+        @export var speed: float = 320.0
+        @export var fire_interval: float = 0.14
+        var fire_cooldown: float = 0.0
+        @onready var muzzle: Marker2D = ${'$'}Muzzle
+
+        func _physics_process(delta: float) -> void:
+            # Rotate ship smoothly toward mouse cursor or right thumbstick:
+            look_at(get_global_mouse_position())
+            var move_dir: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+            velocity = move_dir * speed
+            move_and_slide()
+
+            fire_cooldown = maxf(0.0, fire_cooldown - delta)
+            if Input.is_action_pressed("fire") and fire_cooldown <= 0.0:
+                fire_cooldown = fire_interval
+                _spawn_bullet()
+
+        func _spawn_bullet() -> void:
+            var b: Area2D = BulletScene.instantiate()
+            get_tree().current_scene.get_node("Projectiles").add_child(b)
+            b.global_position = muzzle.global_position
+            b.rotation = global_rotation
+        """.trimIndent(),
+        soloMissions = listOf(
+            "**Mission 1 (Bullet Movement & Auto-Cleanup)**: In `laser_bullet.gd` (`Area2D`), move forward each frame with `position += Vector2.RIGHT.rotated(rotation) * 750.0 * delta`, and connect a `VisibleOnScreenNotifier2D.screen_exited` signal to `queue_free()`.",
+            "**Mission 2 (Splitting Asteroids)**: When a large asteroid (`scale = Vector2.ONE`) is hit by a bullet, spawn 2 medium asteroids at its `global_position` with `scale = Vector2(0.55, 0.55)` and random velocities before calling `queue_free()`.",
+            "**Mission 3 (Spread-Shot Powerup)**: When `spread_shot_active == true`, loop `for angle_deg in [-15.0, 0.0, 15.0]:` inside `_spawn_bullet()` to fire a 3-beam fan!"
+        )
+    ),
+    GenreBlueprint(
+        id = 4,
+        label = "Grid Puzzle / Tactical Board Game",
+        tagline = "Match-3 / 2048 / Into the Breach / Chess style 2D grid logic with Tween cascades",
+        kadiToGenreBridge = listOf(
+            "2-Nested Loops in build_deck()" to "for x in width: for y in height: building a 2D board grid",
+            "CardData (suit, rank)" to "TileData (tile_type, grid_coords: Vector2i, is_locked)",
+            "RuleValidator.validate_question_chain()" to "find_connected_matches(grid) scanning rows/columns for 3+ matching tiles",
+            "CardScene.set_selected(-14px)" to "Highlighting selected board tile & valid movement/swap squares",
+            "Tween animations (Phase 11)" to "Sliding tiles between grid coordinates (grid_to_pixel(coords))"
+        ),
+        sceneTree = """
+        PuzzleBoard (Node2D)  [script: res://scenes/puzzle_board.gd]
+        ├── BoardFrame (Panel)
+        ├── GridContainerOrRoot (Node2D)            # Holds TileScene.tscn nodes positioned by grid_to_pixel()
+        └── HUD (CanvasLayer)
+            ├── MovesLeftLabel (Label)
+            ├── ScoreLabel (Label)
+            └── RestartButton (Button)
+        """.trimIndent(),
+        coreScriptTitle = "res://scenes/puzzle_board.gd (2D Grid Coordinate Math, Tile Swapping & Match Scan)",
+        coreScriptCode = """
+        extends Node2D
+
+        const COLS: int = 6
+        const ROWS: int = 6
+        const CELL_SIZE: int = 72
+        var board: Array = [] # 2D Array: board[x][y] stores tile_id (0..4)
+
+        func grid_to_pixel(cell: Vector2i) -> Vector2:
+            return Vector2(cell.x * CELL_SIZE + 36, cell.y * CELL_SIZE + 36)
+
+        func setup_board() -> void:
+            board.clear()
+            for x in range(COLS):
+                var col: Array[int] = []
+                for y in range(ROWS):
+                    col.append(randi() % 5)
+                board.append(col)
+
+        func has_horizontal_match_at(x: int, y: int) -> bool:
+            if x < 2:
+                return false
+            var t: int = board[x][y]
+            return t != -1 and board[x - 1][y] == t and board[x - 2][y] == t
+        """.trimIndent(),
+        soloMissions = listOf(
+            "**Mission 1 (Prevent Starting Matches)**: In `setup_board()`, use a `while has_horizontal_match_at(x, y):` loop when picking a tile color—just like Kadi's `while not is_valid_starter(card):` loop in Phase 2!",
+            "**Mission 2 (Animated Tile Swap)**: Write `swap_tiles(a: Vector2i, b: Vector2i)` that swaps `board[a.x][a.y]` and `board[b.x][b.y]` and uses `create_tween().set_parallel(true)` to slide both tile nodes to their new `grid_to_pixel()` positions.",
+            "**Mission 3 (Gravity Cascade)**: Scan each column from bottom (`ROWS - 1`) to top (`0`), shifting non-empty tiles down into empty (`-1`) slots and spawning fresh tiles at the top."
+        )
+    )
+)
+
+@Composable
+private fun NewGameArchitectTab(onNavigateToPhase: (String) -> Unit) {
+    var selectedGenreId by rememberSaveable { mutableIntStateOf(0) }
+    val genre = GENRE_BLUEPRINTS.firstOrNull { it.id == selectedGenreId } ?: GENRE_BLUEPRINTS.first()
+    val isDark = isDarkScheme()
+    val uiPrefs = LocalUiPreferences.current
+    val codeBg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
+
+    HeroPanel {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Outlined.RocketLaunch, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(18.dp))
+                Text(
+                    text = "SOLO GAME ARCHITECT · ESCAPE TUTORIAL HELL",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF38BDF8)
+                )
+            }
+            Pill(
+                text = "Phase 13 Guide",
+                color = Color(0xFF34D399),
+                onClick = { onNavigateToPhase("phase_13_new_games_solo") }
+            )
+        }
+        Text(
+            text = "Build Any New Game in Godot 4.3 On Your Own",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = heroTextPrimary()
+        )
+        Text(
+            text = "Every game in Godot 4.3 is built from the exact same 5 building blocks you mastered in Kadi: **Data Resources**, **Template Scenes (`PackedScene`)**, **Autoload State**, **Signals**, and **Rule/Physics Validators**. Pick any genre below to see how your Kadi skills translate directly into a brand-new game!",
+            style = MaterialTheme.typography.bodySmall,
+            color = heroTextSecondary()
+        )
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.primary) {
+        Text(
+            text = "SELECT THE GAME GENRE YOU WANT TO BUILD NEXT:",
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        ChipSelectorRow(
+            items = GENRE_BLUEPRINTS.map { it.id to it.label },
+            selected = selectedGenreId,
+            onSelect = { selectedGenreId = it }
+        )
+        Text(
+            text = genre.label,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = genre.tagline,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.secondary) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconBubble(icon = Icons.Outlined.Explore, tint = MaterialTheme.colorScheme.secondary, size = 34.dp)
+            Column {
+                Text(
+                    text = "1. CONCEPT BRIDGE · KADI -> ${genre.label.uppercase()}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "You Already Know the Architecture!",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            genre.kadiToGenreBridge.forEach { (inKadi, inNewGame) ->
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = "In Kadi: $inKadi",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "➔ In ${genre.label}: $inNewGame",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.primary) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconBubble(icon = Icons.Outlined.AccountTree, tint = MaterialTheme.colorScheme.primary, size = 34.dp)
+            Column {
+                Text(
+                    text = "2. GODOT 4.3 SCENE TREE FOR ${genre.label.uppercase()}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "How to Set Up Your Nodes Without a Tutorial",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small,
+            color = codeBg,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = genre.sceneTree,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = CodeFontFamily,
+                        fontSize = (12f * uiPrefs.codeFontScale).sp,
+                        lineHeight = (19f * uiPrefs.codeFontScale).sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.secondary) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconBubble(icon = Icons.Outlined.Bolt, tint = MaterialTheme.colorScheme.secondary, size = 34.dp)
+            Column {
+                Text(
+                    text = "3. CORE STARTER SCRIPT (COPY-READY GDSCRIPT)",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = genre.coreScriptTitle,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        CodeBlock(
+            snippet = CodeSnippet(
+                id = "genre_starter_${genre.id}",
+                language = "gdscript",
+                code = genre.coreScriptCode,
+                caption = "Paste this into a new Godot 4.3 project to have a playable ${genre.label} foundation in 2 minutes!"
+            )
+        )
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.tertiary) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconBubble(icon = Icons.Outlined.RocketLaunch, tint = MaterialTheme.colorScheme.tertiary, size = 34.dp)
+            Column {
+                Text(
+                    text = "4. SOLO EXPANSION MISSIONS (NO TUTORIAL NEEDED!)",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+                Text(
+                    text = "3 Features to Build Completely On Your Own",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            genre.soloMissions.forEach { mission ->
+                RichInlineText(
+                    text = "• $mission",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+
+private data class KadiUpgradeBlueprint(
+    val id: Int,
+    val title: String,
+    val badge: String,
+    val goal: String,
+    val classesToLookUp: List<String>,
+    val architectureSteps: List<String>,
+    val referenceCode: String
+)
+
+private val KADI_UPGRADES = listOf(
+    KadiUpgradeBlueprint(
+        id = 0,
+        title = "Upgrade 1: Drag-and-Drop Cards onto the Discard Pile",
+        badge = "INPUT & UI PHYSICS",
+        goal = "Let players physically drag a card from `PlayerHandContainer` across the emerald felt table and drop it onto `DiscardSlot` to play it!",
+        classesToLookUp = listOf("Control", "InputEvent", "Rect2", "Tween"),
+        architectureSteps = listOf(
+            "In `card_scene.gd`, override `func _gui_input(event: InputEvent) -> void:` (and set `ClickButton.mouse_filter = MOUSE_FILTER_PASS` so `Card` receives mouse drag events).",
+            "When `event is InputEventMouseButton` (`MOUSE_BUTTON_LEFT`), record `drag_start_pos = position` and `drag_offset = get_global_mouse_position() - global_position` on press.",
+            "While dragging (`event is InputEventMouseMotion`), update `global_position = get_global_mouse_position() - drag_offset` and set `z_index = 20` so the dragged card floats above all other cards.",
+            "On release, check if `discard_slot.get_global_rect().has_point(get_global_mouse_position())` is `true`: if so, emit `card_dropped_on_discard(self)`; otherwise Tween `position` smoothly back to `drag_start_pos`!"
+        ),
+        referenceCode = """
+        # Add inside res://scenes/card/card_scene.gd:
+        signal card_dropped_on_discard(card_node: Control)
+
+        var is_dragging: bool = false
+        var drag_offset: Vector2 = Vector2.ZERO
+        var home_pos: Vector2 = Vector2.ZERO
+
+        func _gui_input(event: InputEvent) -> void:
+            if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+                if event.pressed:
+                    is_dragging = true
+                    home_pos = position
+                    drag_offset = get_global_mouse_position() - global_position
+                    z_index = 20
+                else:
+                    is_dragging = false
+                    z_index = 0
+                    var table := get_tree().current_scene
+                    var slot: Control = table.get_node_or_null("DiscardSlot")
+                    if slot and slot.get_global_rect().has_point(get_global_mouse_position()):
+                        card_dropped_on_discard.emit(self)
+                    else:
+                        create_tween().tween_property(self, "position", home_pos, 0.14)
+            elif event is InputEventMouseMotion and is_dragging:
+                global_position = get_global_mouse_position() - drag_offset
+        """.trimIndent()
+    ),
+    KadiUpgradeBlueprint(
+        id = 1,
+        title = "Upgrade 2: Persistent Save File (Win Streak, Coins & Stats)",
+        badge = "FILEACCESS & JSON",
+        goal = "Save the player's total matches played, wins, current win streak, and Kadi Coins to `user://kadi_save.json` so progress is kept forever!",
+        classesToLookUp = listOf("FileAccess", "JSON", "Dictionary"),
+        architectureSteps = listOf(
+            "Create `res://scripts/save_manager.gd` and register it as an Autoload singleton (`SaveManager`) in **Project Settings -> Globals -> Autoload**.",
+            "Define `const SAVE_PATH = \"user://kadi_save.json\"` and a `var profile: Dictionary = {\"wins\": 0, \"matches\": 0, \"streak\": 0, \"coins\": 100}`.",
+            "In `save_to_disk()`, open `FileAccess.open(SAVE_PATH, FileAccess.WRITE)` and call `file.store_string(JSON.stringify(profile, \"\\t\"))`.",
+            "In `load_from_disk()`, check `FileAccess.file_exists(SAVE_PATH)`, read with `FileAccess.get_file_as_string(SAVE_PATH)`, and parse with `JSON.parse_string()`."
+        ),
+        referenceCode = """
+        # File: res://scripts/save_manager.gd (Autoload: SaveManager)
+        extends Node
+
+        const SAVE_PATH: String = "user://kadi_save.json"
+        var profile: Dictionary = {
+            "wins": 0,
+            "matches": 0,
+            "streak": 0,
+            "coins": 100
+        }
+
+        func _ready() -> void:
+            load_profile()
+
+        func record_match_result(human_won: bool) -> void:
+            profile["matches"] = int(profile.get("matches", 0)) + 1
+            if human_won:
+                profile["wins"] = int(profile.get("wins", 0)) + 1
+                profile["streak"] = int(profile.get("streak", 0)) + 1
+                profile["coins"] = int(profile.get("coins", 0)) + 50
+            else:
+                profile["streak"] = 0
+            save_profile()
+
+        func save_profile() -> void:
+            var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+            if f != null:
+                f.store_string(JSON.stringify(profile, "\t"))
+
+        func load_profile() -> void:
+            if not FileAccess.file_exists(SAVE_PATH):
+                return
+            var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+            if parsed is Dictionary:
+                profile.merge(parsed, true)
+        """.trimIndent()
+    ),
+    KadiUpgradeBlueprint(
+        id = 2,
+        title = "Upgrade 3: Kenyan Tournament Elimination Mode (100-Point Cap)",
+        badge = "SCORING & ELIMINATION",
+        goal = "Implement official Kenyan Kadi multi-round tournament scoring where remaining cards in losers' hands add penalty points (Joker=50, A=20, 2=20, 3=30, J/Q/K=10, 8=8), eliminating anyone who hits 100 points!",
+        classesToLookUp = listOf("Array", "Dictionary", "RefCounted"),
+        architectureSteps = listOf(
+            "Add a helper `card_tournament_points() -> int` on `CardData` using a `match rank:` block.",
+            "In `GameState`, store `var tournament_scores: Array[int] = [0, 0, 0, 0]` and `const ELIMINATION_LIMIT: int = 100`.",
+            "When a round ends, sum `card.card_tournament_points()` for each player's remaining hand and add it to `tournament_scores[seat]`.",
+            "Display the tournament scoreboard in an overlay and mark any seat with `tournament_scores[seat] >= 100` as eliminated!"
+        ),
+        referenceCode = """
+        # Add to res://scripts/card_data.gd:
+        func tournament_points() -> int:
+            match rank:
+                CardTypes.Ranks.JOKER: return 50
+                CardTypes.Ranks.THREE: return 30
+                CardTypes.Ranks.TWO, CardTypes.Ranks.ACE: return 20
+                CardTypes.Ranks.JACK, CardTypes.Ranks.QUEEN, CardTypes.Ranks.KING: return 10
+                _: return rank # Ranks 4..10 count as face value
+
+        # Add to res://scripts/game_state.gd:
+        var tournament_scores: Array[int] = [0, 0, 0, 0]
+
+        func score_round_end() -> Dictionary:
+            for seat in range(hands.size()):
+                var penalty_pts: int = 0
+                for card in hands[seat]:
+                    penalty_pts += card.tournament_points()
+                tournament_scores[seat] += penalty_pts
+            return {"scores": tournament_scores.duplicate()}
+        """.trimIndent()
+    ),
+    KadiUpgradeBlueprint(
+        id = 3,
+        title = "Upgrade 4: Smart AI Personalities (Aggressive vs. Ace-Saver)",
+        badge = "AI HEURISTIC SCORING",
+        goal = "Upgrade the AI from playing the first legal card in its loop to scoring every legal candidate move based on an AI Personality (`AGGRESSIVE`, `DEFENSIVE`, `COMBO_MASTER`)!",
+        classesToLookUp = listOf("Array", "RandomNumberGenerator"),
+        architectureSteps = listOf(
+            "Instead of returning the first legal card in `_choose_ai_move()`, collect all legal candidate moves into `var candidates: Array = []`.",
+            "Write `score_candidate_move(move: Array[CardData], personality: int) -> int`.",
+            "If `GameState.penalty_stack == 0`, give Aces a `-30` score for `DEFENSIVE` AI so it saves its Ace to block a future `+5` Joker penalty!",
+            "Give multi-card Q+A chains and high-point cards (`Joker`, `3`, `2`, `K`, `J`) bonus score for `AGGRESSIVE` AI so it sheds dangerous tournament points fast."
+        ),
+        referenceCode = """
+        enum AIPersonality { BALANCED, AGGRESSIVE, ACE_SAVER }
+
+        func score_ai_card(card: CardData, personality: AIPersonality, penalty_active: bool) -> int:
+            var score: int = card.rank
+            if card.rank == CardTypes.Ranks.ACE and not penalty_active:
+                # Save Aces for emergencies unless it's the AI's last 2 cards!
+                score -= 40 if personality == AIPersonality.ACE_SAVER else 15
+            if personality == AIPersonality.AGGRESSIVE and card.is_penalty():
+                score += 35 # Prioritize dropping +2, +3, and +5 Jokers!
+            return score
+        """.trimIndent()
+    ),
+    KadiUpgradeBlueprint(
+        id = 4,
+        title = "Upgrade 5: 3D-Illusion Card Flip Tween & Victory Confetti",
+        badge = "TWEENS & PARTICLES",
+        goal = "Animate drawn cards flipping from `card_back.png` to their face-up rank/suit using a `scale.x` Tween, and burst `CPUParticles2D` gold confetti on victory!",
+        classesToLookUp = listOf("Tween", "CPUParticles2D", "Control"),
+        architectureSteps = listOf(
+            "In `card_scene.gd`, add `func animate_flip_reveal() -> void:` and set `pivot_offset = size * 0.5` so scaling happens around the center of the card.",
+            "Start with `top_rank_label.visible = false` and `card_bg` tinted navy blue (card back). Tween `scale.x` from `1.0` to `0.0` over `0.11s`.",
+            "In `tween.tween_callback(_refresh_visuals)`, switch to the front face, then Tween `scale.x` from `0.0` back to `1.0` over `0.13s`!",
+            "Add a `CPUParticles2D` node named `WinConfetti` on `Table.tscn` (`one_shot = true`, `explosiveness = 0.9`, `amount = 64`) and call `win_confetti.restart()` when `RuleValidator.has_won()` returns `true`."
+        ),
+        referenceCode = """
+        # Add to res://scenes/card/card_scene.gd:
+        func animate_flip_reveal() -> void:
+            pivot_offset = size * 0.5
+            top_rank_label.visible = false
+            center_suit_label.visible = false
+            var tw: Tween = create_tween()
+            tw.tween_property(self, "scale:x", 0.0, 0.11).set_trans(Tween.TRANS_QUAD)
+            tw.tween_callback(_refresh_visuals)
+            tw.tween_property(self, "scale:x", 1.0, 0.13).set_trans(Tween.TRANS_BACK)
+        """.trimIndent()
+    ),
+    KadiUpgradeBlueprint(
+        id = 5,
+        title = "Upgrade 6: Holographic Foil Joker & Ace Card Shader (.gdshader)",
+        badge = "2D CANVAS SHADER",
+        goal = "Write a custom Godot 4.3 2D `canvas_item` shader that sweeps a shimmering gold/rainbow foil sheen across Jokers and Aces!",
+        classesToLookUp = listOf("CanvasItem", "Color", "TextureRect"),
+        architectureSteps = listOf(
+            "In the Inspector for `CardBg` or `CardArt`, expand **CanvasItem -> Material -> New ShaderMaterial -> New Shader** and save it as `res://assets/shaders/foil_card.gdshader`.",
+            "Begin the shader with `shader_type canvas_item;` so it runs on 2D UI/Sprite nodes.",
+            "In `void fragment()`, compute a diagonal wave using `sin((UV.x + UV.y) * 8.0 + TIME * 3.0)` and mix a warm gold highlight (`vec3(1.0, 0.88, 0.35)`) into `COLOR.rgb` when `is_foil` uniform is enabled!"
+        ),
+        referenceCode = """
+        // File: res://assets/shaders/foil_card.gdshader
+        shader_type canvas_item;
+
+        uniform bool is_foil = true;
+        uniform float sheen_strength : hint_range(0.0, 0.6) = 0.22;
+
+        void fragment() {
+            vec4 tex = texture(TEXTURE, UV) * COLOR;
+            if (is_foil) {
+                float wave = sin((UV.x * 1.4 + UV.y) * 10.0 - TIME * 3.2);
+                float band = smoothstep(0.75, 0.98, wave);
+                vec3 gold = vec3(1.0, 0.85, 0.32);
+                tex.rgb = mix(tex.rgb, gold, band * sheen_strength);
+            }
+            COLOR = tex;
+        }
+        """.trimIndent()
+    )
+)
+
+@Composable
+private fun UpgradeKadiLabTab(onNavigateToPhase: (String) -> Unit) {
+    var selectedUpgrade by rememberSaveable { mutableIntStateOf(0) }
+    var showSolution by rememberSaveable(selectedUpgrade) { mutableStateOf(false) }
+    val item = KADI_UPGRADES.firstOrNull { it.id == selectedUpgrade } ?: KADI_UPGRADES.first()
+
+    HeroPanel {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Outlined.Build, contentDescription = null, tint = Color(0xFFFBBF24), modifier = Modifier.size(18.dp))
+                Text(
+                    text = "UPGRADE KADI LAB · SELF-GUIDED EXPANSIONS",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFBBF24)
+                )
+            }
+            Pill(
+                text = "Open Phase 12",
+                color = Color(0xFF38BDF8),
+                onClick = { onNavigateToPhase("phase_12_expand_kadi") }
+            )
+        }
+        Text(
+            text = "6 Pro Upgrades to Build Into Kadi On Your Own",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = heroTextPrimary()
+        )
+        Text(
+            text = "Ready to improve Kadi without watching a tutorial? Pick a feature upgrade below, read the **No-Spoiler Architecture Spec**, look up the listed Godot 4.3 classes in the Reference Desk (or with **F1**), and code it yourself—then tap **Reveal Reference Code** to compare!",
+            style = MaterialTheme.typography.bodySmall,
+            color = heroTextSecondary()
+        )
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.primary) {
+        Text(
+            text = "PICK AN UPGRADE PROJECT:",
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        ChipSelectorRow(
+            items = KADI_UPGRADES.map { it.id to "Upgrade ${it.id + 1}" },
+            selected = selectedUpgrade,
+            onSelect = { selectedUpgrade = it }
+        )
+        Pill(text = item.badge, color = MaterialTheme.colorScheme.secondary)
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        RichInlineText(
+            text = item.goal,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    KadiCard(accent = MaterialTheme.colorScheme.secondary) {
+        Text(
+            text = "GODOT 4.3 CLASSES TO LOOK UP (F1 OR REFERENCE DESK):",
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.secondary
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item.classesToLookUp.forEach { cls ->
+                Pill(text = cls, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+
+        Text(
+            text = "NO-SPOILER ARCHITECTURE BLUEPRINT (TRY BUILDING FROM THIS FIRST!):",
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 6.dp)
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item.architectureSteps.forEachIndexed { idx, step ->
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${idx + 1}.",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    RichInlineText(
+                        text = step,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
+        OutlinedButton(
+            onClick = { showSolution = !showSolution },
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+        ) {
+            Icon(Icons.Outlined.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = if (showSolution) "Hide Reference Implementation" else "Reveal Reference Implementation (Compare Your Code)",
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        AnimatedVisibility(visible = showSolution) {
+            Column(modifier = Modifier.padding(top = 8.dp)) {
+                CodeBlock(
+                    snippet = CodeSnippet(
+                        id = "kadi_upgrade_${item.id}",
+                        language = "gdscript",
+                        code = item.referenceCode,
+                        caption = "Reference GDScript / Shader for ${item.title}"
+                    )
+                )
             }
         }
     }
@@ -279,7 +1188,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
             gdscriptTrace = "TurnManager.advance_turn(extra_skips = 1)\n# AI Seat skipped! Current turn returns to Player 0 (You)."
             return
         }
-        // Simple tangible AI response so the table feels alive!
         if (penaltyStack > 0) {
             aiCardCount += penaltyStack
             deckCount = (deckCount - penaltyStack).coerceAtLeast(10)
@@ -342,7 +1250,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
         )
     }
 
-    // Simulated Godot 4.3 1152x648 Emerald Felt Table Window
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -360,7 +1267,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Top HUD Status Bar
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = Color.Black.copy(alpha = 0.38f),
@@ -412,13 +1318,11 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                 }
             }
 
-            // Center Table Area: Draw Pile + DiscardSlot (Top Face-Up Card)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Draw Pile Visual
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -457,7 +1361,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
 
                 Spacer(Modifier.width(24.dp))
 
-                // Center DiscardSlot
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -476,7 +1379,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                 }
             }
 
-            // Ace Suit Picker Modal Banner when an Ace is played
             if (awaitingSuitChoice) {
                 Surface(
                     shape = RoundedCornerShape(10.dp),
@@ -522,7 +1424,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                 }
             }
 
-            // PlayerHandContainer (Fanned Clickable Cards with -14dp Lift!)
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -530,7 +1431,7 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "PlayerHandContainer (HBoxContainer) · Tap cards to stage:",
+                        text = "PlayerHandContainer (HBoxContainer) — Tap cards to stage:",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFA7F3D0)
@@ -574,7 +1475,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                 }
             }
 
-            // HUD Action Buttons Row (PlaySelectedButton, DrawButton, NikoKadiButton)
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -591,7 +1491,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                             declaredSuit = declaredSuit
                         )
                         if (!validation.first) {
-                            // Illegal play -> +1 Penalty card drawn!
                             val drawn = randomLiveCard(nextCardId++, matchSeed + deckCount)
                             playerHand.add(drawn)
                             deckCount = (deckCount - 1).coerceAtLeast(1)
@@ -601,7 +1500,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                             gdscriptTrace = "RuleValidator.validate_move(...) == false\n" +
                                 "GameState.draw_cards(0, 1) # +1 Penalty for invalid move!"
                         } else {
-                            // Legal play!
                             val hadPenalty = penaltyStack > 0
                             var skips = 0
                             stagedCards.forEach { c ->
@@ -618,7 +1516,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                             stagedIds.clear()
                             val playedStr = stagedCards.joinToString(", ") { it.displayName }
 
-                            // Check win condition!
                             val allWinningTypes = stagedCards.all { it.isAnswer || it.isQuestion }
                             if (playerHand.isEmpty() && announcedNikoKadi && allWinningTypes && aiCardCount > 0) {
                                 matchWon = true
@@ -723,7 +1620,6 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
         }
     }
 
-    // Live GDScript Trace Card showing what Godot 4.3 code just ran
     KadiCard(accent = MaterialTheme.colorScheme.secondary) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -855,7 +1751,6 @@ private fun validateLiveMove(
 ): Pair<Boolean, String> {
     if (cards.isEmpty()) return false to "No cards selected"
     val first = cards.first()
-    // 1. Check first card against top discard / active modifiers
     val firstLegal = when {
         penaltyStack > 0 -> first.rank == 14 || (first.isPenalty && first.rank == top.rank)
         declaredSuit != -1 -> first.suit == declaredSuit || first.rank == 14 || first.rank == 15
@@ -869,7 +1764,6 @@ private fun validateLiveMove(
             else -> false to "${first.displayName} does not match ${top.displayName}'s suit or rank"
         }
     }
-    // 2. Check Question+Answer chains and multi-card combos
     for (i in cards.indices) {
         val cur = cards[i]
         if (cur.isQuestion) {
@@ -1142,7 +2036,7 @@ private val PROJECT_FILES = listOf(
     BlueprintFileEntry(
         path = "res://scenes/table/table.tscn + table.gd",
         phaseId = "phase_01_project_deck",
-        phaseLabel = "Phases 1–11",
+        phaseLabel = "Phases 1–12",
         role = "Main gameplay scene built right in Phase 1 combining the green felt tabletop, `DiscardSlot`, `PlayerHandContainer`, HUD buttons, AI Turn Timer, Tweens, and downloaded Audio.",
         keyContents = "func _ready() -> void\nfunc _on_play_selected_pressed() -> void\nfunc _on_draw_pressed() -> void\nfunc _on_niko_pressed() -> void\nfunc _execute_ai_turn(ai_seat: int) -> void"
     ),
@@ -1187,6 +2081,13 @@ private val PROJECT_FILES = listOf(
         phaseLabel = "Phase 8",
         role = "Popup dialog shown whenever Player 0 plays an Ace to demand Hearts, Diamonds, Clubs, or Spades.",
         keyContents = "signal suit_declared(suit: int)"
+    ),
+    BlueprintFileEntry(
+        path = "res://scripts/save_manager.gd + tournament_rules.gd",
+        phaseId = "phase_12_expand_kadi",
+        phaseLabel = "Phase 12 (Expansions)",
+        role = "Persistent JSON save/load system (`user://kadi_profile.json`), Kenyan 100-point Tournament Elimination scorer, and LAN multiplayer `@rpc` sync.",
+        keyContents = "func save_profile() -> void\nfunc load_profile() -> void\nstatic func compute_hand_points(hand: Array) -> int"
     )
 )
 
@@ -1209,7 +2110,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
             color = heroTextPrimary()
         )
         Text(
-            text = "You build the visual scenes (`card_scene.tscn` & `table.tscn`) first in Phase 1 so your game is immediately tangible, then wire the 54-card deck (`GameState`) in Phase 2 and rules in Phases 3–11. Tap any file card below to open its phase.",
+            text = "You build the visual scenes (`card_scene.tscn` & `table.tscn`) first in Phase 1 so your game is immediately tangible, wire the 54-card deck (`GameState`) in Phase 2, add full Kadi rules in Phases 3–11, and master solo expansions & new game genres in Phases 12–13.",
             style = MaterialTheme.typography.bodyMedium,
             color = heroTextSecondary()
         )
@@ -1230,7 +2131,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
             Text(
                 text = """
                 res:// (Your Godot 4.3 Kadi Project Root)
-                ├── project.godot                 # Registers GameState & TurnManager Autoloads
+                ├── project.godot                 # Registers GameState, TurnManager & SaveManager Autoloads
                 ├── assets/                       # Drop your downloaded assets here!
                 │   ├── cards/                    # 52 card PNGs + joker PNGs + card_back.png
                 │   ├── table/                    # table_bg.png (felt or wood background)
@@ -1243,7 +2144,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
                 │   │   └── card_scene.gd         # Phase 1: Click-to-lift (-14px) & downloaded sprite loader
                 │   ├── table/
                 │   │   ├── table.tscn            # Phase 1+: Main green felt board, HUD, AI timer, sounds
-                │   │   └── table.gd              # Phases 1-11: Orchestrates dealing, human/AI turns, wins
+                │   │   └── table.gd              # Phases 1-12: Orchestrates dealing, human/AI turns, wins
                 │   └── ui/
                 │       ├── declare_suit_dialog.tscn  # Phase 8: Ace suit-picker popup
                 │       └── declare_suit_dialog.gd    # Phase 8: Emits suit_declared(suit)
@@ -1252,7 +2153,10 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
                     ├── card_data.gd              # Phase 2: CardData Resource + resolve_downloaded_texture()
                     ├── game_state.gd             # Phase 2+: Autoload singleton holding 54-card deck & hands
                     ├── turn_manager.gd           # Phase 3+: Autoload singleton for turn order & direction
-                    └── rule_validator.gd         # Phases 4-9: Pure Kadi rule & move validation helpers
+                    ├── rule_validator.gd         # Phases 4-9: Pure Kadi rule & move validation helpers
+                    ├── kadi_self_test.gd         # Phase 10: Automated edge-case & 54-card invariant suite
+                    ├── save_manager.gd           # Phase 12: Persistent JSON save/load (user://kadi_profile.json)
+                    └── tournament_rules.gd       # Phase 12: Kenyan 100-pt Tournament Elimination & AI scorer
                 """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontFamily = CodeFontFamily,

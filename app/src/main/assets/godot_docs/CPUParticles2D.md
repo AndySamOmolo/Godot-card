@@ -40,9 +40,13 @@ In the Kadi app `CPUParticles2D` handles the subtle, always-on flourishes that m
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`CPUParticles2D`)**: When configuring `CPUParticles2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CPUParticles2D` offline. If your `CPUParticles2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using CPUParticles2D in Godot 4.3 Kadi
-func configure_cpuparticles2d_example(target: CPUParticles2D) -> void:
-    assert(target != null, "CPUParticles2D reference must be valid")
-    print("Configured CPUParticles2D for Kadi table runtime")
+# Triggering a one-shot celebratory confetti or hit-spark burst:
+@onready var confetti: CPUParticles2D = $WinConfetti
+
+func burst_confetti(at_pos: Vector2) -> void:
+	confetti.global_position = at_pos
+	confetti.one_shot = true
+	confetti.explosiveness = 0.9
+	confetti.restart()
 ```
 

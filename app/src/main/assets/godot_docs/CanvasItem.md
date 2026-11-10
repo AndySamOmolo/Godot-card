@@ -47,9 +47,9 @@ In the Kadi app the playing area is a `CanvasItem` subtree. Each card node's `mo
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`CanvasItem`)**: When configuring `CanvasItem` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CanvasItem` offline. If your `CanvasItem` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using CanvasItem in Godot 4.3 Kadi
-func configure_canvasitem_example(target: CanvasItem) -> void:
-    assert(target != null, "CanvasItem reference must be valid")
-    print("Configured CanvasItem for Kadi table runtime")
+# Tinting any 2D Control or Node2D with modulate and toggling visibility:
+func highlight_legal_card(card_node: CanvasItem, is_legal: bool) -> void:
+	card_node.modulate = Color(1.0, 1.0, 1.0, 1.0) if is_legal else Color(0.6, 0.6, 0.6, 0.85)
+	card_node.z_index = 10 if is_legal else 0
 ```
 

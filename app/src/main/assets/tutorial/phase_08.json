@@ -123,7 +123,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scenes/ui/declare_suit_dialog.tscn + res://scenes/ui/declare_suit_dialog.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Build `res://scenes/ui/declare_suit_dialog.tscn` and preview the modal suit-picker dialog on screen with **F6**!"
+      "tangibleOutcome": "Build `res://scenes/ui/declare_suit_dialog.tscn` and preview the modal suit-picker dialog on screen with **F6**!",
+      "beyondKadi": "How **Modal Dialogs (`DeclareSuitDialog`) & 3-Stage State Lifecycles (`Set -> Enforce -> Clear`)** transfer to any game:\n- **RPG Level-Up / Shop Modal**: Popup emits `upgrade_chosen(upgrade_id: int)` upward to the game controller.\n- **Temporary Buffs / Debuffs**: Setting a state modifier (`declared_suit = HEARTS` or `active_buff = DOUBLE_DAMAGE`), enforcing it on the next action, and clearing it (`-1`) once consumed.",
+      "transferChallenge": "**Your Solo Challenge**: Enhance `declare_suit_dialog.gd` so each suit item in `OptionButton` also displays how many cards of that suit Player 0 currently holds in `GameState.hands[0]` (e.g., `\"♥ Hearts (2 in hand)\"`), helping the player pick their strongest suit!"
     },
     {
       "id": "l_08_02_declared_suit",
@@ -215,7 +217,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd + res://scenes/table/table.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Play an Ace (`A`) from your hand — the Suit-Declaration Popup appears over the table, sets `Demand: Hearts` on the HUD, and blocks non-matching suits until satisfied!"
+      "tangibleOutcome": "Play an Ace (`A`) from your hand — the Suit-Declaration Popup appears over the table, sets `Demand: Hearts` on the HUD, and blocks non-matching suits until satisfied!",
+      "beyondKadi": "How **Modal Dialogs (`DeclareSuitDialog`) & 3-Stage State Lifecycles (`Set -> Enforce -> Clear`)** transfer to any game:\n- **RPG Level-Up / Shop Modal**: Popup emits `upgrade_chosen(upgrade_id: int)` upward to the game controller.\n- **Temporary Buffs / Debuffs**: Setting a state modifier (`declared_suit = HEARTS` or `active_buff = DOUBLE_DAMAGE`), enforcing it on the next action, and clearing it (`-1`) once consumed.",
+      "transferChallenge": "**Your Solo Challenge**: Enhance `declare_suit_dialog.gd` so each suit item in `OptionButton` also displays how many cards of that suit Player 0 currently holds in `GameState.hands[0]` (e.g., `\"♥ Hearts (2 in hand)\"`), helping the player pick their strongest suit!"
     },
     {
       "id": "l_08_03_ai_ace_suit_picker",
@@ -306,7 +310,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "When an AI opponent plays an Ace, it counts the suits in its remaining hand and automatically demands its strongest suit on the HUD!"
+      "tangibleOutcome": "When an AI opponent plays an Ace, it counts the suits in its remaining hand and automatically demands its strongest suit on the HUD!",
+      "beyondKadi": "How **Modal Dialogs (`DeclareSuitDialog`) & 3-Stage State Lifecycles (`Set -> Enforce -> Clear`)** transfer to any game:\n- **RPG Level-Up / Shop Modal**: Popup emits `upgrade_chosen(upgrade_id: int)` upward to the game controller.\n- **Temporary Buffs / Debuffs**: Setting a state modifier (`declared_suit = HEARTS` or `active_buff = DOUBLE_DAMAGE`), enforcing it on the next action, and clearing it (`-1`) once consumed.",
+      "transferChallenge": "**Your Solo Challenge**: Enhance `declare_suit_dialog.gd` so each suit item in `OptionButton` also displays how many cards of that suit Player 0 currently holds in `GameState.hands[0]` (e.g., `\"♥ Hearts (2 in hand)\"`), helping the player pick their strongest suit!"
     }
   ],
   "debugChallenge": {

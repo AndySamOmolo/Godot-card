@@ -45,9 +45,10 @@ In the Kadi app `ProjectSettings` carries the app's display name ("Kadi Tutor"),
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`ProjectSettings`)**: When configuring `ProjectSettings` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ProjectSettings` offline. If your `ProjectSettings` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using ProjectSettings in Godot 4.3 Kadi
-func configure_projectsettings_example(target: ProjectSettings) -> void:
-    assert(target != null, "ProjectSettings reference must be valid")
-    print("Configured ProjectSettings for Kadi table runtime")
+# Reading display viewport dimensions or custom config settings at runtime:
+func get_configured_viewport_size() -> Vector2i:
+	var w: int = int(ProjectSettings.get_setting("display/window/size/viewport_width", 1152))
+	var h: int = int(ProjectSettings.get_setting("display/window/size/viewport_height", 648))
+	return Vector2i(w, h)
 ```
 

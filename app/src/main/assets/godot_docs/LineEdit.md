@@ -54,9 +54,13 @@ The Kadi app uses `LineEdit` for naming players before a match, and in the learn
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`LineEdit`)**: When configuring `LineEdit` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `LineEdit` offline. If your `LineEdit` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using LineEdit in Godot 4.3 Kadi
-func configure_lineedit_example(target: LineEdit) -> void:
-    assert(target != null, "LineEdit reference must be valid")
-    print("Configured LineEdit for Kadi table runtime")
+# Reading a player's custom nickname or LAN host IP address from a LineEdit input:
+@onready var name_input: LineEdit = $PlayerNameInput
+
+func _ready() -> void:
+	name_input.placeholder_text = "Enter your Kadi nickname..."
+	name_input.text_submitted.connect(func(new_name: String) -> void:
+		print("Saved player name: ", new_name.strip_edges())
+	)
 ```
 

@@ -117,7 +117,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/game_state.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "When `Deck: 0` is reached mid-game, `GameState.reshuffle_if_empty()` recycles all discard cards except the face-up top card back into a fresh draw pile!"
+      "tangibleOutcome": "When `Deck: 0` is reached mid-game, `GameState.reshuffle_if_empty()` recycles all discard cards except the face-up top card back into a fresh draw pile!",
+      "beyondKadi": "How **Array Duplication (`.duplicate()`), Automated `assert()` Self-Tests & Conservation Invariants** make you a pro solo developer:\n- Writing a 20-line `self_test.gd` script with `assert()` lets you test tricky edge cases (inventory full, 0 HP overkill, empty spawn pool) in **0.01 seconds** on startup instead of playing for 15 minutes hoping the rare case happens!\n- Conservation invariants (total cards == 54; total party items == constant) catch duplication/deletion bugs immediately.",
+      "transferChallenge": "**Your Solo Challenge**: Add a third automated test `static func test_ace_cancels_joker_penalty() -> void:` inside `kadi_self_test.gd` that sets `GameState.penalty_stack = 5`, verifies `RuleValidator.is_single_card_playable(ace_card, joker_card, 5, -1) == true`, and runs automatically in `run_all_tests()`!"
     },
     {
       "id": "l_10_02_edge_cases",
@@ -208,7 +210,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/kadi_self_test.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Create `res://scripts/kadi_self_test.gd` so pressing F5 automatically verifies mid-penalty reshuffles and cardless-opponent win blocks in under 5 milliseconds!"
+      "tangibleOutcome": "Create `res://scripts/kadi_self_test.gd` so pressing F5 automatically verifies mid-penalty reshuffles and cardless-opponent win blocks in under 5 milliseconds!",
+      "beyondKadi": "How **Array Duplication (`.duplicate()`), Automated `assert()` Self-Tests & Conservation Invariants** make you a pro solo developer:\n- Writing a 20-line `self_test.gd` script with `assert()` lets you test tricky edge cases (inventory full, 0 HP overkill, empty spawn pool) in **0.01 seconds** on startup instead of playing for 15 minutes hoping the rare case happens!\n- Conservation invariants (total cards == 54; total party items == constant) catch duplication/deletion bugs immediately.",
+      "transferChallenge": "**Your Solo Challenge**: Add a third automated test `static func test_ace_cancels_joker_penalty() -> void:` inside `kadi_self_test.gd` that sets `GameState.penalty_stack = 5`, verifies `RuleValidator.is_single_card_playable(ace_card, joker_card, 5, -1) == true`, and runs automatically in `run_all_tests()`!"
     },
     {
       "id": "l_10_03_card_conservation_invariant",
@@ -299,7 +303,9 @@
         "**Error `Invalid get index ... (on base: 'Nil')`**: A `$NodePath` inside `res://scripts/kadi_self_test.gd` could not find its child node. Check the **Godot Scene Tree Hierarchy** box at the top of this lesson and verify the node's exact spelling and capitalization in your Scene dock!",
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
-      "tangibleOutcome": "Enforce the 54-Card Conservation Invariant (`deck + discard + 4 hands == 54`) after every single turn so no card is ever duplicated or lost!"
+      "tangibleOutcome": "Enforce the 54-Card Conservation Invariant (`deck + discard + 4 hands == 54`) after every single turn so no card is ever duplicated or lost!",
+      "beyondKadi": "How **Array Duplication (`.duplicate()`), Automated `assert()` Self-Tests & Conservation Invariants** make you a pro solo developer:\n- Writing a 20-line `self_test.gd` script with `assert()` lets you test tricky edge cases (inventory full, 0 HP overkill, empty spawn pool) in **0.01 seconds** on startup instead of playing for 15 minutes hoping the rare case happens!\n- Conservation invariants (total cards == 54; total party items == constant) catch duplication/deletion bugs immediately.",
+      "transferChallenge": "**Your Solo Challenge**: Add a third automated test `static func test_ace_cancels_joker_penalty() -> void:` inside `kadi_self_test.gd` that sets `GameState.penalty_stack = 5`, verifies `RuleValidator.is_single_card_playable(ace_card, joker_card, 5, -1) == true`, and runs automatically in `run_all_tests()`!"
     }
   ],
   "debugChallenge": {

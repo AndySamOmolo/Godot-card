@@ -57,9 +57,13 @@ In the Kadi app `Array` is the universal container for ordered game data: the dr
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Array`)**: When configuring `Array` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Array` offline. If your `Array` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Array in Godot 4.3 Kadi
-func configure_array_example(target: Array) -> void:
-    assert(target != null, "Array reference must be valid")
-    print("Configured Array for Kadi table runtime")
+# 1. In Kadi: Building, shuffling, and drawing from a typed Array[CardData]
+var deck: Array[CardData] = []
+deck.append(CardData.make(CardTypes.Suits.HEARTS, 7))
+deck.shuffle()
+var top_card: CardData = deck.pop_back()
+
+# 2. In an RPG / Shooter: Filtering active enemies or inventory items
+var low_hp_enemies: Array = enemies.filter(func(e): return e.hp < 20)
 ```
 

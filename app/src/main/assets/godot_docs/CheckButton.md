@@ -35,9 +35,12 @@ In the Kadi app `CheckButton`s populate the settings panel: "Auto-call Niko Kadi
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`CheckButton`)**: When configuring `CheckButton` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CheckButton` offline. If your `CheckButton` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using CheckButton in Godot 4.3 Kadi
-func configure_checkbutton_example(target: CheckButton) -> void:
-    assert(target != null, "CheckButton reference must be valid")
-    print("Configured CheckButton for Kadi table runtime")
+# Toggling a House Rule or Sound setting with CheckButton.toggled(bool):
+@onready var ace_win_toggle: CheckButton = $AceWinCheckButton
+
+func _ready() -> void:
+	ace_win_toggle.toggled.connect(func(enabled: bool) -> void:
+		GameState.allow_winning_on_ace = enabled
+	)
 ```
 

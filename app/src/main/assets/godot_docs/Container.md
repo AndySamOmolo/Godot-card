@@ -28,9 +28,9 @@ In the Kadi app containers structure the whole interface: the player's hand is a
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Container`)**: When configuring `Container` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Container` offline. If your `Container` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Container in Godot 4.3 Kadi
-func configure_container_example(target: Container) -> void:
-    assert(target != null, "Container reference must be valid")
-    print("Configured Container for Kadi table runtime")
+# Queuing a layout sort or clearing all dynamically spawned children in any Container:
+func clear_container_children(box: Container) -> void:
+	for child in box.get_children():
+		child.queue_free()
 ```
 

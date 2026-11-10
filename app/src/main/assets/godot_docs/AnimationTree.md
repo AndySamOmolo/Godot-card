@@ -41,9 +41,18 @@ The Kadi app is mostly UI, so `AnimationTree` is used sparingly — a 3D card-fl
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`AnimationTree`)**: When configuring `AnimationTree` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AnimationTree` offline. If your `AnimationTree` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using AnimationTree in Godot 4.3 Kadi
-func configure_animationtree_example(target: AnimationTree) -> void:
-    assert(target != null, "AnimationTree reference must be valid")
-    print("Configured AnimationTree for Kadi table runtime")
+# Blending Idle/Run/Attack states in a 2D RPG or Platformer:
+@onready var anim_tree: AnimationTree = $AnimationTree
+@onready var playback: AnimationNodeStateMachinePlayback = anim_tree.get("parameters/playback")
+
+func update_blend_and_travel(move_dir: Vector2, attacking: bool) -> void:
+	anim_tree.set("parameters/Idle/blend_position", move_dir)
+	anim_tree.set("parameters/Run/blend_position", move_dir)
+	if attacking:
+		playback.travel("Attack")
+	elif move_dir != Vector2.ZERO:
+		playback.travel("Run")
+	else:
+		playback.travel("Idle")
 ```
 

@@ -31,9 +31,14 @@ In the Kadi app `GridContainer` lays out the four [[Suit]] buttons in the declar
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`GridContainer`)**: When configuring `GridContainer` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `GridContainer` offline. If your `GridContainer` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using GridContainer in Godot 4.3 Kadi
-func configure_gridcontainer_example(target: GridContainer) -> void:
-    assert(target != null, "GridContainer reference must be valid")
-    print("Configured GridContainer for Kadi table runtime")
+# Building a 4-column card gallery, deckbuilder collection, or RPG inventory grid:
+@onready var grid: GridContainer = $CardGrid
+
+func populate_deck_gallery(all_cards: Array[CardData], card_scene: PackedScene) -> void:
+	grid.columns = 6
+	for c in all_cards:
+		var node: Control = card_scene.instantiate()
+		grid.add_child(node)
+		node.setup(c)
 ```
 

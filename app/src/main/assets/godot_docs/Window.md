@@ -44,9 +44,9 @@ In the Kadi app the game runs inside the main `Window`, and on desktop builds `t
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Window`)**: When configuring `Window` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Window` offline. If your `Window` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Window in Godot 4.3 Kadi
-func configure_window_example(target: Window) -> void:
-    assert(target != null, "Window reference must be valid")
-    print("Configured Window for Kadi table runtime")
+# Toggling fullscreen or resizing the game window from a Settings menu:
+func set_fullscreen_enabled(enabled: bool) -> void:
+	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED
+	DisplayServer.window_set_mode(mode)
 ```
 

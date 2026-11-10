@@ -36,9 +36,9 @@ In the Kadi app every tap on a card arrives as an `InputEventScreenTouch` (on An
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`InputEvent`)**: When configuring `InputEvent` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `InputEvent` offline. If your `InputEvent` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using InputEvent in Godot 4.3 Kadi
-func configure_inputevent_example(target: InputEvent) -> void:
-    assert(target != null, "InputEvent reference must be valid")
-    print("Configured InputEvent for Kadi table runtime")
+# Inspecting mouse, touch, or keyboard events inside _input() or _gui_input():
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		print("Card clicked at local pos: ", event.position)
 ```
 

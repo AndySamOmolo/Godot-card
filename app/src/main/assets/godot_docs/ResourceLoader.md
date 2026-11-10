@@ -39,9 +39,12 @@ In the Kadi app `ResourceLoader.load` fetches each card's [[Texture2D]] from `re
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`ResourceLoader`)**: When configuring `ResourceLoader` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `ResourceLoader` offline. If your `ResourceLoader` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using ResourceLoader in Godot 4.3 Kadi
-func configure_resourceloader_example(target: ResourceLoader) -> void:
-    assert(target != null, "ResourceLoader reference must be valid")
-    print("Configured ResourceLoader for Kadi table runtime")
+# Safely checking if a downloaded sprite or audio file exists before loading it:
+func load_optional_card_art(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var res = ResourceLoader.load(path)
+		if res is Texture2D:
+			return res
+	return null
 ```
 

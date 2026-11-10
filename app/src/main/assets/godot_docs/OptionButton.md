@@ -48,9 +48,17 @@ In the Kadi app an `OptionButton` selects the number of players (2–6), the AI 
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`OptionButton`)**: When configuring `OptionButton` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `OptionButton` offline. If your `OptionButton` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using OptionButton in Godot 4.3 Kadi
-func configure_optionbutton_example(target: OptionButton) -> void:
-    assert(target != null, "OptionButton reference must be valid")
-    print("Configured OptionButton for Kadi table runtime")
+# Populating and reading a dropdown selector (like DeclareSuitDialog):
+@onready var suit_picker: OptionButton = $Panel/OptionButton
+
+func populate_suits() -> void:
+	suit_picker.clear()
+	suit_picker.add_item("♥ Hearts", 0)
+	suit_picker.add_item("♦ Diamonds", 1)
+	suit_picker.add_item("♣ Clubs", 2)
+	suit_picker.add_item("♠ Spades", 3)
+
+func get_chosen_suit_id() -> int:
+	return suit_picker.get_selected_id()
 ```
 

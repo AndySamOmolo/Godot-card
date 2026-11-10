@@ -39,9 +39,21 @@ In the Kadi app most cards are laid out by tweens, but `CharacterBody2D` powers 
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`CharacterBody2D`)**: When configuring `CharacterBody2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `CharacterBody2D` offline. If your `CharacterBody2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using CharacterBody2D in Godot 4.3 Kadi
-func configure_characterbody2d_example(target: CharacterBody2D) -> void:
-    assert(target != null, "CharacterBody2D reference must be valid")
-    print("Configured CharacterBody2D for Kadi table runtime")
+# 1. Top-Down 8-Way RPG Movement:
+extends CharacterBody2D
+@export var speed: float = 240.0
+
+func _physics_process(_delta: float) -> void:
+	var dir: Vector2 = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	velocity = dir * speed
+	move_and_slide()
+
+# 2. 2D Platformer Gravity & Jump:
+func platformer_step(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y += 1200.0 * delta
+	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+		velocity.y = -420.0
+	move_and_slide()
 ```
 

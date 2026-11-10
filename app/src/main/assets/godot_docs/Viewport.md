@@ -42,9 +42,8 @@ In the Kadi app the root `Viewport` handles all card input and hosts the table's
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Viewport`)**: When configuring `Viewport` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Viewport` offline. If your `Viewport` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Viewport in Godot 4.3 Kadi
-func configure_viewport_example(target: Viewport) -> void:
-    assert(target != null, "Viewport reference must be valid")
-    print("Configured Viewport for Kadi table runtime")
+# Converting screen coordinates or capturing a screenshot texture of the current Viewport:
+func get_viewport_center() -> Vector2:
+	return get_viewport().get_visible_rect().size * 0.5
 ```
 

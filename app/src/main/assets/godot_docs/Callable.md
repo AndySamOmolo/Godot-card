@@ -48,9 +48,10 @@ In the Kadi app `Callable` is the connective tissue for [[Signals]]. The declara
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Callable`)**: When configuring `Callable` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Callable` offline. If your `Callable` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Callable in Godot 4.3 Kadi
-func configure_callable_example(target: Callable) -> void:
-    assert(target != null, "Callable reference must be valid")
-    print("Configured Callable for Kadi table runtime")
+# Passing a Callable function reference to signals, tweens, or Array.filter():
+func animate_and_cleanup(node: Control) -> void:
+	var tw: Tween = create_tween()
+	tw.tween_property(node, "modulate:a", 0.0, 0.2)
+	tw.tween_callback(Callable(node, "queue_free"))
 ```
 

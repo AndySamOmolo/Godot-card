@@ -30,9 +30,13 @@ In the Kadi app `Time` stamps every saved game and high-score entry with `get_da
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Time`)**: When configuring `Time` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Time` offline. If your `Time` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Time in Godot 4.3 Kadi
-func configure_time_example(target: Time) -> void:
-    assert(target != null, "Time reference must be valid")
-    print("Configured Time for Kadi table runtime")
+# Measuring elapsed match duration or benchmarking a function in milliseconds:
+var match_start_msec: int = 0
+
+func start_stopwatch() -> void:
+	match_start_msec = Time.get_ticks_msec()
+
+func get_elapsed_seconds() -> float:
+	return (Time.get_ticks_msec() - match_start_msec) / 1000.0
 ```
 

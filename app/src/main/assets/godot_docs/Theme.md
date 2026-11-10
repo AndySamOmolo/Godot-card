@@ -35,9 +35,9 @@ In the Kadi app a single `Theme` defines the card-table aesthetic — the felt-g
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Theme`)**: When configuring `Theme` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Theme` offline. If your `Theme` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Theme in Godot 4.3 Kadi
-func configure_theme_example(target: Theme) -> void:
-    assert(target != null, "Theme reference must be valid")
-    print("Configured Theme for Kadi table runtime")
+# Applying a consistent font size or button color across an entire UI tree via Theme overrides:
+func style_heading_label(lbl: Label) -> void:
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.add_theme_color_override("font_color", Color("#38BDF8"))
 ```
 

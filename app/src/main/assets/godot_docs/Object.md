@@ -45,9 +45,9 @@ In the Kadi project you rarely subclass `Object` directly. Instead you extend [[
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Object`)**: When configuring `Object` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Object` offline. If your `Object` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Object in Godot 4.3 Kadi
-func configure_object_example(target: Object) -> void:
-    assert(target != null, "Object reference must be valid")
-    print("Configured Object for Kadi table runtime")
+# Checking dynamic properties or deferring method calls to the end of the frame:
+func safe_late_update(target: Object) -> void:
+	if target.has_method("refresh_table_ui"):
+		target.call_deferred("refresh_table_ui")
 ```
 

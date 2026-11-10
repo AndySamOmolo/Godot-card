@@ -59,9 +59,18 @@ In the Kadi app `FileAccess` reads the tutorial phase JSON from `res://assets/tu
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`FileAccess`)**: When configuring `FileAccess` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `FileAccess` offline. If your `FileAccess` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using FileAccess in Godot 4.3 Kadi
-func configure_fileaccess_example(target: FileAccess) -> void:
-    assert(target != null, "FileAccess reference must be valid")
-    print("Configured FileAccess for Kadi table runtime")
+# Saving and loading a JSON dictionary to user:// (writable on all platforms):
+const SAVE_FILE: String = "user://kadi_save.json"
+
+func save_dict(data: Dictionary) -> void:
+	var f := FileAccess.open(SAVE_FILE, FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify(data, "	"))
+
+func load_dict() -> Dictionary:
+	if not FileAccess.file_exists(SAVE_FILE):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_FILE))
+	return parsed if parsed is Dictionary else {}
 ```
 

@@ -34,9 +34,13 @@ In the Kadi app `Vector2i` addresses the logical card grid: each hand slot and t
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Vector2i`)**: When configuring `Vector2i` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Vector2i` offline. If your `Vector2i` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Vector2i in Godot 4.3 Kadi
-func configure_vector2i_example(target: Vector2i) -> void:
-    assert(target != null, "Vector2i reference must be valid")
-    print("Configured Vector2i for Kadi table runtime")
+# Whole-number 2D coordinates for TileMapLayer cells, puzzle grids, and window sizes:
+func get_orthogonal_neighbors(cell: Vector2i) -> Array[Vector2i]:
+	return [
+		cell + Vector2i.UP,
+		cell + Vector2i.DOWN,
+		cell + Vector2i.LEFT,
+		cell + Vector2i.RIGHT
+	]
 ```
 

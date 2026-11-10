@@ -43,9 +43,16 @@ In the Kadi app `Area2D` marks the interactive zones of the table: the central d
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Area2D`)**: When configuring `Area2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Area2D` offline. If your `Area2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Area2D in Godot 4.3 Kadi
-func configure_area2d_example(target: Area2D) -> void:
-    assert(target != null, "Area2D reference must be valid")
-    print("Configured Area2D for Kadi table runtime")
+# 1. In a 2D Platformer / RPG: Collectible Coin or Sword Hitbox
+extends Area2D
+signal coin_picked_up(amount: int)
+
+func _ready() -> void:
+	body_entered.connect(_on_body_entered)
+
+func _on_body_entered(body: Node2D) -> void:
+	if body is CharacterBody2D:
+		coin_picked_up.emit(10)
+		queue_free()
 ```
 

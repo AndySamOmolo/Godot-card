@@ -38,9 +38,9 @@ In the Kadi app `JSON` persists the learner's progress and settings: a `Dictiona
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`JSON`)**: When configuring `JSON` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `JSON` offline. If your `JSON` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using JSON in Godot 4.3 Kadi
-func configure_json_example(target: JSON) -> void:
-    assert(target != null, "JSON reference must be valid")
-    print("Configured JSON for Kadi table runtime")
+# Converting Dictionaries/Arrays to and from JSON strings for save files or network APIs:
+func serialize_match_score(winner_name: String, turns: int) -> String:
+	var payload: Dictionary = {"winner": winner_name, "turns": turns}
+	return JSON.stringify(payload)
 ```
 

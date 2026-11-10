@@ -42,9 +42,17 @@ In the Kadi app the camera stays mostly static — the table fits on screen — 
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Camera2D`)**: When configuring `Camera2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Camera2D` offline. If your `Camera2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Camera2D in Godot 4.3 Kadi
-func configure_camera2d_example(target: Camera2D) -> void:
-    assert(target != null, "Camera2D reference must be valid")
-    print("Configured Camera2D for Kadi table runtime")
+# Smooth follow camera + juicy screen shake on +5 Joker penalty or explosion:
+@onready var cam: Camera2D = $Camera2D
+
+func _ready() -> void:
+	cam.position_smoothing_enabled = true
+	cam.position_smoothing_speed = 8.0
+
+func shake_camera(intensity: float = 8.0) -> void:
+	var tw: Tween = create_tween()
+	for _i in range(5):
+		tw.tween_property(cam, "offset", Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity)), 0.03)
+	tw.tween_property(cam, "offset", Vector2.ZERO, 0.04)
 ```
 

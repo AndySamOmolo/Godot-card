@@ -46,9 +46,12 @@ In the Kadi app each card snap is played through an `AudioStreamPlayer2D` parent
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`AudioStreamPlayer2D`)**: When configuring `AudioStreamPlayer2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AudioStreamPlayer2D` offline. If your `AudioStreamPlayer2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using AudioStreamPlayer2D in Godot 4.3 Kadi
-func configure_audiostreamplayer2d_example(target: AudioStreamPlayer2D) -> void:
-    assert(target != null, "AudioStreamPlayer2D reference must be valid")
-    print("Configured AudioStreamPlayer2D for Kadi table runtime")
+# Positional 2D audio (louder when near the Camera2D, panned left/right):
+@onready var explosion_sfx: AudioStreamPlayer2D = $ExplosionSound2D
+
+func trigger_at(world_pos: Vector2) -> void:
+	explosion_sfx.global_position = world_pos
+	explosion_sfx.max_distance = 900.0
+	explosion_sfx.play()
 ```
 

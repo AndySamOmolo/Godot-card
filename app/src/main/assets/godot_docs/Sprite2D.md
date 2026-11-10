@@ -41,9 +41,11 @@ In the Kadi app a card can be drawn either as a `Sprite2D` (in a free-roaming ta
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`Sprite2D`)**: When configuring `Sprite2D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `Sprite2D` offline. If your `Sprite2D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using Sprite2D in Godot 4.3 Kadi
-func configure_sprite2d_example(target: Sprite2D) -> void:
-    assert(target != null, "Sprite2D reference must be valid")
-    print("Configured Sprite2D for Kadi table runtime")
+# Flipping a 2D character sprite horizontally based on movement direction or slicing a sprite sheet:
+@onready var sprite: Sprite2D = $Sprite2D
+
+func update_facing(dir_x: float) -> void:
+	if dir_x != 0.0:
+		sprite.flip_h = (dir_x < 0.0)
 ```
 

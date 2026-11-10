@@ -49,9 +49,11 @@ The Kadi app is 2D, so `AudioStreamPlayer3D` is documented here for learners who
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`AudioStreamPlayer3D`)**: When configuring `AudioStreamPlayer3D` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `AudioStreamPlayer3D` offline. If your `AudioStreamPlayer3D` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using AudioStreamPlayer3D in Godot 4.3 Kadi
-func configure_audiostreamplayer3d_example(target: AudioStreamPlayer3D) -> void:
-    assert(target != null, "AudioStreamPlayer3D reference must be valid")
-    print("Configured AudioStreamPlayer3D for Kadi table runtime")
+# 3D spatial audio emitter attached to a 3D card table or enemy:
+@onready var sfx_3d: AudioStreamPlayer3D = $AudioStreamPlayer3D
+
+func play_3d_chime() -> void:
+	sfx_3d.unit_size = 5.0
+	sfx_3d.play()
 ```
 

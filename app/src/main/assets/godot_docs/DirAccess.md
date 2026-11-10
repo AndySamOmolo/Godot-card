@@ -47,9 +47,11 @@ In the Kadi app `DirAccess` is used to ensure `user://` subdirectories exist bef
 > **Godot 4.3 Inspector & Downloaded Assets Tip (`DirAccess`)**: When configuring `DirAccess` in the Godot 4.3 Inspector, hover any property name to read its built-in engine tooltip, or press **F1** to jump to `DirAccess` offline. If your `DirAccess` works with downloaded card PNGs (`res://assets/cards/`) or audio (`res://assets/audio/`), always verify paths with `ResourceLoader.exists(path)` so procedural fallbacks remain active while testing.
 
 ```gdscript
-# Using DirAccess in Godot 4.3 Kadi
-func configure_diraccess_example(target: DirAccess) -> void:
-    assert(target != null, "DirAccess reference must be valid")
-    print("Configured DirAccess for Kadi table runtime")
+# Scanning res://assets/cards/ or user://saves/ for files at runtime:
+func list_saved_profiles() -> PackedStringArray:
+	var dir := DirAccess.open("user://")
+	if dir == null:
+		return PackedStringArray()
+	return dir.get_files()
 ```
 
