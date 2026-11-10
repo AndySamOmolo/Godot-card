@@ -41,7 +41,6 @@ import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material3.Button
@@ -535,7 +534,7 @@ private fun NewGameArchitectTab(onNavigateToPhase: (String) -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.RocketLaunch, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(18.dp))
                 Text(
                     text = "SOLO GAME ARCHITECT · ESCAPE TUTORIAL HELL",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
@@ -703,7 +702,7 @@ private fun NewGameArchitectTab(onNavigateToPhase: (String) -> Unit) {
 
     KadiCard(accent = MaterialTheme.colorScheme.tertiary) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            IconBubble(icon = Icons.Outlined.RocketLaunch, tint = MaterialTheme.colorScheme.tertiary, size = 34.dp)
+            IconBubble(icon = Icons.Outlined.AutoAwesome, tint = MaterialTheme.colorScheme.tertiary, size = 34.dp)
             Column {
                 Text(
                     text = "4. SOLO EXPANSION MISSIONS (NO TUTORIAL NEEDED!)",

@@ -49,7 +49,6 @@ import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Quiz
-import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.StarBorder
@@ -596,7 +595,7 @@ private fun SoloTransferChallengeCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                IconBubble(icon = Icons.Outlined.RocketLaunch, tint = accent, size = 34.dp)
+                IconBubble(icon = Icons.Outlined.AutoAwesome, tint = accent, size = 34.dp)
                 Column {
                     Text(
                         text = "SOLO BUILDER CHALLENGE · NO HAND-HOLDING",

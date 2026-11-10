@@ -34,7 +34,6 @@ import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -139,7 +138,7 @@ fun PracticeScreen(
                                 Pill(
                                     text = if (state.soloMode) "Solo Mode" else "Guided Mode",
                                     color = if (state.soloMode) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary,
-                                    icon = if (state.soloMode) Icons.Outlined.RocketLaunch else Icons.Outlined.Bolt,
+                                    icon = if (state.soloMode) Icons.Outlined.AutoAwesome else Icons.Outlined.Bolt,
                                     onClick = vm::toggleSoloMode
                                 )
                             }
