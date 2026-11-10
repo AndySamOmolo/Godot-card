@@ -43,7 +43,7 @@ jobs:
           python3 - << 'EOF'
           import json, glob
           phases = sorted(glob.glob("app/src/main/assets/tutorial/phase_*.json"))
-          assert len(phases) == 12, f"Expected 12 phases, found {len(phases)}"
+          assert len(phases) == 14, f"Expected 14 phases, found {len(phases)}"
           for p in phases:
               with open(p, encoding="utf-8") as f:
                   d = json.load(f)

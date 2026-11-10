@@ -69,7 +69,7 @@
     <string name="settings_track">Learner track</string>
     <string name="settings_content_version">Content version</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_text">Kadi Companion v2.3.0 — Tangible-First Edition. Build a visual, playable Kenyan Kadi card game in Godot 4.3 from your very first lesson, play the live interactive Kadi table inside the app, and customize every UI detail offline.</string>
+    <string name="settings_about_text">Kadi Companion v3.0.0 — Solo Game Architect & Tangible-First Edition. Master Godot 4.3 across 14 phases (55 lessons), play the live interactive Kadi table, and use the New Game Architect, Upgrade Lab, and GDScript Cookbook to build any game on your own.</string>
 
     <string name="insights_accuracy">Quiz accuracy</string>
     <string name="insights_attempted">Questions attempted</string>

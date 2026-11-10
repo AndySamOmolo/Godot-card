@@ -1258,7 +1258,7 @@ private fun CourseAndAboutSection(state: SettingsUiState, vm: SettingsViewModel)
         ToggleRow(
             icon = Icons.Outlined.LockOpen,
             title = stringResource(R.string.settings_skip_gating),
-            description = "Unlock all 12 phases immediately without sequential gating.",
+            description = "Unlock all 14 phases immediately without sequential gating.",
             checked = p.skipGating,
             onCheckedChange = vm::setSkipGating
         )
