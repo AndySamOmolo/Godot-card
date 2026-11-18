@@ -195,7 +195,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                         .padding(horizontal = 10.dp, vertical = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    lines.forEachIndexed { idx, lineText ->
+                    lines.forEachIndexed { idx, _ ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.Top
@@ -253,7 +253,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                         }
                     }
                     Column {
-                        lines.forEach { lineText ->
+                        lines.forEachIndexed { idx, lineText ->
                             Text(
                                 text = highlightedLines[idx],
                                 style = MaterialTheme.typography.bodyMedium.copy(

@@ -62,7 +62,7 @@ private const val TERM_TAG = "term"
 private val WIKI_ALIAS_CLEAN_REGEX = Regex("\\[\\[([^\\]|]+)\\|([^\\]]+)\\]\\]")
 private val WIKI_SIMPLE_CLEAN_REGEX = Regex("\\[\\[([^\\]]+)\\]\\]")
 private val MD_LINK_CLEAN_REGEX = Regex("\\[([^\\]]+)\\]\\([^)]+\\)")
-private val NUMBERED_ITEM_REGEX = NUMBERED_ITEM_REGEX
+private val NUMBERED_ITEM_REGEX = Regex("^\\s*\\d+[.)]\\s+")
 
 fun cleanPlainText(raw: String): String {
     if (raw.isEmpty()) return raw
@@ -635,7 +635,7 @@ private object MarkdownParser {
                 NUMBERED_ITEM_REGEX.containsMatchIn(line) -> {
                     val items = mutableListOf<String>()
                     while (i < lines.size && NUMBERED_ITEM_REGEX.containsMatchIn(lines[i])) {
-                        items += lines[i].trimStart().substringAfter(". ").trim()
+                        items += NUMBERED_ITEM_REGEX.replace(lines[i].trimStart(), "").trim()
                         i++
                     }
                     blocks += MarkdownBlock.NumberedList(items)
