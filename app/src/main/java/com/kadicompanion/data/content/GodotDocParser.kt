@@ -20,9 +20,9 @@ object GodotDocParser {
         val short = front["short"] ?: ""
 
         val sections = parseSections(body)
-        val properties = sections["Properties"]?.let(::parseMembers) ?: emptyList()
-        val methods = sections["Methods"]?.let(::parseMembers) ?: emptyList()
-        val signals = sections["Signals"]?.let(::parseMembers) ?: emptyList()
+        val properties = sections["Properties"]?.let { parseMembers(it, propertiesSection = true) } ?: emptyList()
+        val methods = sections["Methods"]?.let { parseMembers(it, propertiesSection = false) } ?: emptyList()
+        val signals = sections["Signals"]?.let { parseMembers(it, propertiesSection = false) } ?: emptyList()
         val description = sections["Description"]?.trim() ?: body.trim()
 
         return GodotDocEntry(
@@ -69,7 +69,7 @@ object GodotDocParser {
         return out
     }
 
-    private fun parseMembers(sectionText: String): List<DocMember> {
+    private fun parseMembers(sectionText: String, propertiesSection: Boolean): List<DocMember> {
         return sectionText.lineSequence()
             .filter { it.trimStart().startsWith("- ") }
             .mapNotNull { line ->
@@ -78,14 +78,25 @@ object GodotDocParser {
                 if (!body.startsWith('`') || backtickEnd == -1) return@mapNotNull null
                 val signature = body.substring(1, backtickEnd)
                 val rest = body.substring(backtickEnd + 1).trim()
-                val description = when {
-                    rest.startsWith("\u2014") -> rest.removePrefix("\u2014").trim()
-                    rest.startsWith("-") -> rest.removePrefix("-").trim()
-                    rest.startsWith(":") -> rest.removePrefix(":").trim()
-                    else -> rest
+                val restType = if (propertiesSection) {
+                    Regex("^:\\s*`([^`]+)`").find(rest)?.groupValues?.get(1)
+                        ?: Regex("^\\s*`([^`]+)`").find(rest)?.groupValues?.get(1)
+                } else {
+                    null
+                }
+                val description = if (restType != null) {
+                    val dashIdx = rest.indexOf('\u2014')
+                    if (dashIdx >= 0) rest.substring(dashIdx + 1).trim() else ""
+                } else {
+                    when {
+                        rest.startsWith("\u2014") -> rest.removePrefix("\u2014").trim()
+                        rest.startsWith("-") -> rest.removePrefix("-").trim()
+                        rest.startsWith(":") -> rest.removePrefix(":").trim()
+                        else -> rest
+                    }
                 }
                 val (name, type) = splitSignature(signature)
-                DocMember(name = name, type = type, description = description)
+                DocMember(name = name, type = restType ?: type, description = description)
             }
             .toList()
     }
