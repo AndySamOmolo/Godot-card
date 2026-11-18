@@ -12,6 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -45,7 +49,16 @@ fun ProgressRing(
         label = "progressRing"
     )
 
-    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
+    val clamped = fraction.coerceIn(0f, 1f)
+    Box(
+        modifier = modifier
+            .size(size)
+            .semantics(mergeDescendants = true) {
+                progressBarRangeInfo = ProgressBarRangeInfo(clamped, 0f..1f)
+                contentDescription = "${(clamped * 100).toInt()} percent ${label ?: "complete"}"
+            },
+        contentAlignment = Alignment.Center
+    ) {
         Canvas(modifier = Modifier.size(size)) {
             val strokePx = strokeWidth.toPx()
             val stroke = Stroke(width = strokePx, cap = StrokeCap.Round)
@@ -84,7 +97,7 @@ fun ProgressRing(
             )
             if (label != null) {
                 Text(
-                    text = label.uppercase(),
+                    text = label.uppercase(java.util.Locale.ROOT),
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.72f)
                 )

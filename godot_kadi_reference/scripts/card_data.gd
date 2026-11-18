@@ -29,6 +29,9 @@ const ASSET_RANK_WORDS: Dictionary = {
 @export var display_name: String = ""
 @export var custom_texture: Texture2D = null
 
+var _resolved_cache: Texture2D = null
+var _cache_checked: bool = false
+
 static func make(s: CardTypes.Suits, r: int) -> CardData:
 	var c := CardData.new()
 	c.suit = s
@@ -64,7 +67,7 @@ func is_answer() -> bool:
 func can_start_discard() -> bool:
 	return rank in [4, 5, 6, 7, 9, 10]
 
-## Resolves a downloaded card texture from res://assets/cards/ automatically
+## Resolves and caches a downloaded card texture from res://assets/cards/ automatically
 ## supporting the 3 most common downloaded card asset pack naming conventions:
 ## 1) suit_rank.png      (e.g. hearts_7.png, spades_14.png, joker_red.png)
 ## 2) rank_of_suit.png   (e.g. 7_of_hearts.png, ace_of_spades.png, red_joker.png)
@@ -72,11 +75,15 @@ func can_start_discard() -> bool:
 func resolve_downloaded_texture() -> Texture2D:
 	if custom_texture != null:
 		return custom_texture
+	if _cache_checked:
+		return _resolved_cache
+	_cache_checked = true
 	for candidate in get_candidate_texture_paths():
 		if ResourceLoader.exists(candidate):
 			var tex = load(candidate)
 			if tex is Texture2D:
-				return tex
+				_resolved_cache = tex
+				return _resolved_cache
 	return null
 
 func get_candidate_texture_paths() -> Array[String]:

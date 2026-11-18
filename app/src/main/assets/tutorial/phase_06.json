@@ -122,8 +122,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "`RuleValidator` identifies Question Cards (`Q`, `8`) and Answer Cards (`4, 5, 6, 7, 9, 10, A`) with null-safe helper functions.",
-      "beyondKadi": "How **Function Composition & Sequence Validation (`validate_question_chain`)** transfer to other games:\n- **Fighting / Action RPG Combo Chains**: Validating that a sequence of button inputs (`Light -> Light -> Heavy`) forms a legal special move.\n- **Card / Puzzle Crafting**: Checking that each link in a chain of tiles or spells satisfies the adjacent element rule.",
-      "transferChallenge": "**Your Solo Challenge**: Write a helper `static func describe_qa_combo(cards: Array) -> String:` in `rule_validator.gd` that returns `\"Question + Answer Combo (%d cards)!\" % cards.size()` whenever `cards[0]` is a Question card (`8` or `Q`), and show it in `feedback_label.text` when played!"
+      "beyondKadi": "Classifying actions into **Setup/Primer** (`is_question()`) and **Finisher/Detonator** (`is_answer()`) powers primer-detonator combat systems (Mass Effect, Genshin Impact, Dragon Age) where applying Wet/Fire primes a target and Lightning/Wind detonates a combo.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `is_valid_elemental_combo(primer: String, detonator: String) -> bool` where primers are `[\"WET\", \"FROST\", \"OIL\"]` and detonators are `[\"LIGHTNING\", \"SHATTER\", \"FLAME\"]`, returning `true` only when a primer is followed by a valid detonator."
     },
     {
       "id": "l_06_02_qa_chains",
@@ -146,7 +146,7 @@
         {
           "id": "cs_06_02_a",
           "language": "gdscript",
-          "code": "# Add inside res://scripts/rule_validator.gd:\nstatic func validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if not is_question_card(card.rank):\n            continue\n        if i + 1 >= cards.size():\n            return false\n        var next_card: CardData = cards[i + 1]\n        if is_question_card(next_card.rank):\n            continue\n        if not is_answer_card(next_card.rank):\n            return false\n        if next_card.suit != card.suit and next_card.rank != CardTypes.Ranks.ACE:\n            return false\n    return true\n\nstatic func validate_move(cards: Array, top: CardData, penalty_stack: int, declared_suit: int) -> bool:\n    if cards.is_empty():\n        return false\n    if not is_single_card_playable(cards[0], top, penalty_stack, declared_suit):\n        return false\n    return validate_question_chain(cards)",
+          "code": "# Add inside res://scripts/rule_validator.gd:\nstatic func validate_question_chain(cards: Array) -> bool:\n    for i in range(cards.size()):\n        var card: CardData = cards[i]\n        if not is_question_card(card.rank):\n            continue\n        if i + 1 >= cards.size():\n            return false\n        var next_card: CardData = cards[i + 1]\n        if is_question_card(next_card.rank):\n            if next_card.suit != card.suit and next_card.rank != card.rank:\n                return false\n            continue\n        if not is_answer_card(next_card.rank):\n            return false\n        if next_card.suit != card.suit and next_card.rank != CardTypes.Ranks.ACE:\n            return false\n    return true\n\nstatic func validate_move(cards: Array, top: CardData, penalty_stack: int, declared_suit: int) -> bool:\n    if cards.is_empty():\n        return false\n    if not is_single_card_playable(cards[0], top, penalty_stack, declared_suit):\n        return false\n    return validate_question_chain(cards)",
           "caption": "Complete multi-card move and Q/A chain validation in RuleValidator."
         },
         {
@@ -223,8 +223,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Stage `Q♥` + `7♥` together in your hand and click `Play Selected (2)` to execute a legal Question + Answer combo on screen!",
-      "beyondKadi": "How **Function Composition & Sequence Validation (`validate_question_chain`)** transfer to other games:\n- **Fighting / Action RPG Combo Chains**: Validating that a sequence of button inputs (`Light -> Light -> Heavy`) forms a legal special move.\n- **Card / Puzzle Crafting**: Checking that each link in a chain of tiles or spells satisfies the adjacent element rule.",
-      "transferChallenge": "**Your Solo Challenge**: Write a helper `static func describe_qa_combo(cards: Array) -> String:` in `rule_validator.gd` that returns `\"Question + Answer Combo (%d cards)!\" % cards.size()` whenever `cards[0]` is a Question card (`8` or `Q`), and show it in `feedback_label.text` when played!"
+      "beyondKadi": "Validating an ordered sequence of tokens (`Q -> Q -> Answer`) is a finite-state sequence parser—the exact algorithm behind fighting-game motion inputs (`Down -> Down-Forward -> Forward -> Punch`), rune-casting combos, and rhythm chains.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a combo sequence validator `is_valid_sword_combo(inputs: Array[String]) -> bool` where every `\"WINDUP\"` input must be followed by either another `\"WINDUP\"` or a concluding `\"STRIKE\"`, and a sequence ending in `\"WINDUP\"` is rejected (`false`)."
     },
     {
       "id": "l_06_03_ai_qa_pairs",
@@ -315,8 +315,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "AI opponents now scan their hands for valid `Question + Answer` pairs and play 2-card Q+A combos onto the table during their turns!",
-      "beyondKadi": "How **Function Composition & Sequence Validation (`validate_question_chain`)** transfer to other games:\n- **Fighting / Action RPG Combo Chains**: Validating that a sequence of button inputs (`Light -> Light -> Heavy`) forms a legal special move.\n- **Card / Puzzle Crafting**: Checking that each link in a chain of tiles or spells satisfies the adjacent element rule.",
-      "transferChallenge": "**Your Solo Challenge**: Write a helper `static func describe_qa_combo(cards: Array) -> String:` in `rule_validator.gd` that returns `\"Question + Answer Combo (%d cards)!\" % cards.size()` whenever `cards[0]` is a Question card (`8` or `Q`), and show it in `feedback_label.text` when played!"
+      "beyondKadi": "Searching two-element combinations (`for q in hand: for ans in hand:`) to build legal multi-step AI actions is how tactical RPGs pair `Move + Attack` or `Buff + Spell` in a single turn.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `find_buff_and_spell_combo(spells: Array[Dictionary], mana: int) -> Array[Dictionary]` that searches for a `\"BUFF\"` spell and an `\"ATTACK\"` spell whose combined `\"cost\"` is `<= mana`, returning the 2-spell pair."
     }
   ],
   "debugChallenge": {

@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build & Verify Android APK
 
 on:
   push:
@@ -9,19 +9,21 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-apk:
-    name: Assemble Debug & Signed Release APKs
+    name: Validate Assets, Run Tests & Assemble APKs
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 17 (Temurin)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -38,26 +40,40 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Validate Tutorial & Glossary JSON Assets
+      - name: Validate Tutorial Phases, Godot Docs & Glossary Cross-References
         run: |
-          python3 - << 'EOF'
-          import json, glob
+          python3 - << 'PY'
+          import json, glob, os
           phases = sorted(glob.glob("app/src/main/assets/tutorial/phase_*.json"))
-          assert len(phases) == 14, f"Expected 14 phases, found {len(phases)}"
+          assert len(phases) >= 14, f"Expected >= 14 phases, found {len(phases)}"
+          lesson_ids = set()
           for p in phases:
               with open(p, encoding="utf-8") as f:
                   d = json.load(f)
               assert len(d["lessons"]) > 0, f"Empty lessons in {p}"
+              for l in d["lessons"]:
+                  assert l["id"] not in lesson_ids, f"Duplicate lesson ID: {l['id']}"
+                  lesson_ids.add(l["id"])
+                  assert l.get("beyondKadi"), f"Missing beyondKadi in {l['id']}"
+                  assert l.get("transferChallenge"), f"Missing transferChallenge in {l['id']}"
+                  for q in l.get("quizQuestions", []):
+                      assert 0 <= q["correctChoiceIndex"] < len(q["choices"]), f"Invalid quiz choice index in {q['id']}"
+          docs = {os.path.basename(p)[:-3] for p in glob.glob("app/src/main/assets/godot_docs/*.md")}
+          assert len(docs) >= 74, f"Expected >= 74 docs, found {len(docs)}"
           with open("app/src/main/assets/glossary/terms.json", encoding="utf-8") as f:
               g = json.load(f)
-          terms_count = len(g["terms"])
-          print(f"Validated {len(phases)} phases and {terms_count} glossary terms successfully.")
-          EOF
+          for t in g["terms"]:
+              for lid in t.get("relatedLessonIds", []):
+                  assert lid in lesson_ids, f"Term {t['term']} references missing lesson {lid}"
+              for cid in t.get("relatedDocClassNames", []):
+                  assert cid in docs, f"Term {t['term']} references missing doc {cid}"
+          print(f"Validated {len(phases)} phases ({len(lesson_ids)} lessons), {len(docs)} docs, and {len(g['terms'])} glossary terms.")
+          PY
 
-      - name: Build Debug and Unsigned Release APKs with Gradle
-        run: ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
+      - name: Run Unit Tests, Lint & Assemble Debug/Release APKs
+        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 
-      - name: Sign Release APK (using Repository Secrets or Ephemeral CI Keystore)
+      - name: Sign Release APK
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -67,6 +83,7 @@ jobs:
           UNSIGNED_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
           SIGNED_APK="app/build/outputs/apk/release/kadi-companion-release-signed.apk"
           DEBUG_APK="app/build/outputs/apk/debug/app-debug.apk"
+          trap 'rm -f /tmp/*.jks /tmp/app-release-aligned.apk' EXIT
 
           if [ -f "$UNSIGNED_APK" ]; then
             if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
@@ -76,32 +93,23 @@ jobs:
               KS_PASS="$KEYSTORE_PASSWORD"
               K_ALIAS="$KEY_ALIAS"
               K_PASS="$KEY_PASSWORD"
+            elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+              echo "::error::Release tag push requires KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD secrets."
+              exit 1
             else
-              echo "No signing secrets configured — generating CI keystore so release APK is immediately installable..."
-              keytool -genkeypair -v \
-                -keystore /tmp/ci-release.jks \
-                -alias kadi_ci \
-                -keyalg RSA -keysize 2048 -validity 10000 \
-                -storepass kadi123456 -keypass kadi123456 \
-                -dname "CN=Kadi Companion, OU=Dev, O=Kadi, L=Nairobi, S=Nairobi, C=KE"
+              echo "Non-release branch build — generating one-time ephemeral keystore with random password..."
+              KS_PASS="$(openssl rand -hex 32)"
+              K_ALIAS="kadi_ci_ephemeral"
+              K_PASS="$KS_PASS"
+              keytool -genkeypair -v                 -keystore /tmp/ci-release.jks                 -alias "$K_ALIAS"                 -keyalg RSA -keysize 3072 -validity 1                 -storepass "$KS_PASS" -keypass "$K_PASS"                 -dname "CN=Kadi Companion CI, OU=Dev, O=Kadi, L=Nairobi, S=Nairobi, C=KE"
               KS_PATH="/tmp/ci-release.jks"
-              KS_PASS="kadi123456"
-              K_ALIAS="kadi_ci"
-              K_PASS="kadi123456"
             fi
 
             SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
             BUILD_TOOLS_DIR=$(ls -d "$SDK_ROOT"/build-tools/* | sort -V | tail -n 1)
             "$BUILD_TOOLS_DIR/zipalign" -v -p 4 "$UNSIGNED_APK" /tmp/app-release-aligned.apk
-            "$BUILD_TOOLS_DIR/apksigner" sign \
-              --ks "$KS_PATH" \
-              --ks-pass "pass:$KS_PASS" \
-              --key-pass "pass:$K_PASS" \
-              --ks-key-alias "$K_ALIAS" \
-              --out "$SIGNED_APK" \
-              /tmp/app-release-aligned.apk
+            "$BUILD_TOOLS_DIR/apksigner" sign               --ks "$KS_PATH"               --ks-pass "pass:$KS_PASS"               --key-pass "pass:$K_PASS"               --ks-key-alias "$K_ALIAS"               --out "$SIGNED_APK"               /tmp/app-release-aligned.apk
             "$BUILD_TOOLS_DIR/apksigner" verify "$SIGNED_APK"
-            rm -f /tmp/*.jks /tmp/app-release-aligned.apk
           fi
 
           mkdir -p dist-apks
@@ -112,24 +120,35 @@ jobs:
           ls -lh dist-apks/
 
       - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: kadi-companion-debug-apk
           path: dist-apks/kadi-companion-debug.apk
           retention-days: 30
 
       - name: Upload Signed Release APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: kadi-companion-release-signed-apk
           path: dist-apks/kadi-companion-release-signed.apk
           retention-days: 30
 
-      - name: Publish GitHub Release on Tag Push (v*)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+  publish-release:
+    name: Publish Signed Release APK on Tag Push (v*)
+    needs: build-apk
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Signed Release APK Artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.2.1
         with:
-          generate_release_notes: true
-          files: |
-            dist-apks/kadi-companion-debug.apk
-            dist-apks/kadi-companion-release-signed.apk
+          name: kadi-companion-release-signed-apk
+          path: dist-apks
+
+      - name: Publish GitHub Release via GitHub CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}"             dist-apks/kadi-companion-release-signed.apk             --generate-notes

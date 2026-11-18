@@ -113,13 +113,13 @@ fun GlossaryDetailScreen(
                                     )
                                     if (entry.relatedLessonIds.isNotEmpty()) {
                                         Pill(
-                                            text = "${entry.relatedLessonIds.size} Lessons",
+                                            text = if (entry.relatedLessonIds.size == 1) "1 Lesson" else "${entry.relatedLessonIds.size} Lessons",
                                             color = MaterialTheme.colorScheme.secondary
                                         )
                                     }
                                     if (entry.relatedDocClassNames.isNotEmpty()) {
                                         Pill(
-                                            text = "${entry.relatedDocClassNames.size} Classes",
+                                            text = if (entry.relatedDocClassNames.size == 1) "1 Class" else "${entry.relatedDocClassNames.size} Classes",
                                             color = MaterialTheme.colorScheme.tertiary
                                         )
                                     }

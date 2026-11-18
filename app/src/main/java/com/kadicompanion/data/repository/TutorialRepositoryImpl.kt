@@ -4,12 +4,14 @@ import com.kadicompanion.data.content.ContentLoader
 import com.kadicompanion.domain.model.Lesson
 import com.kadicompanion.domain.model.TutorialPhase
 import com.kadicompanion.domain.repository.TutorialRepository
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,26 +23,28 @@ class TutorialRepositoryImpl @Inject constructor(
     private val cacheMutex = Mutex()
     private val _phases = MutableStateFlow<List<TutorialPhase>>(emptyList())
     private val phases = _phases.asStateFlow()
-    private var loadStarted = false
+    @Volatile private var isLoaded = false
+    @Volatile private var lessonById: Map<String, Lesson> = emptyMap()
+    @Volatile private var phaseById: Map<String, TutorialPhase> = emptyMap()
 
-    override fun observePhases(): Flow<List<TutorialPhase>> = phases.onEach {
-        if (!loadStarted) ensureLoaded()
+    override fun observePhases(): Flow<List<TutorialPhase>> = phases.onStart {
+        if (!isLoaded) ensureLoaded()
     }
 
     override suspend fun getPhase(phaseId: String): TutorialPhase? {
         ensureLoaded()
-        return _phases.value.firstOrNull { it.id == phaseId }
+        return phaseById[phaseId]
     }
 
     override suspend fun getLesson(lessonId: String): Lesson? {
         ensureLoaded()
-        return _phases.value.flatMap { it.lessons }.firstOrNull { it.id == lessonId }
+        return lessonById[lessonId]
     }
 
     override suspend fun getPreviousLesson(lessonId: String): Lesson? {
         ensureLoaded()
-        for (phase in _phases.value.sortedBy { it.order }) {
-            val lessons = phase.lessons.sortedBy { it.order }
+        for (phase in _phases.value) {
+            val lessons = phase.lessons
             val idx = lessons.indexOfFirst { it.id == lessonId }
             if (idx != -1) {
                 if (idx - 1 >= 0) return lessons[idx - 1]
@@ -52,8 +56,8 @@ class TutorialRepositoryImpl @Inject constructor(
 
     override suspend fun getNextLesson(lessonId: String): Lesson? {
         ensureLoaded()
-        for (phase in _phases.value.sortedBy { it.order }) {
-            val lessons = phase.lessons.sortedBy { it.order }
+        for (phase in _phases.value) {
+            val lessons = phase.lessons
             val idx = lessons.indexOfFirst { it.id == lessonId }
             if (idx != -1) {
                 if (idx + 1 < lessons.size) return lessons[idx + 1]
@@ -65,27 +69,33 @@ class TutorialRepositoryImpl @Inject constructor(
 
     override suspend fun getLastLessonOfPreviousPhase(phaseId: String): Lesson? {
         ensureLoaded()
-        val sorted = _phases.value.sortedBy { it.order }
+        val sorted = _phases.value
         val idx = sorted.indexOfFirst { it.id == phaseId }
         if (idx <= 0) return null
-        return sorted[idx - 1].lessons.maxByOrNull { it.order }
+        return sorted[idx - 1].lessons.lastOrNull()
     }
 
     override suspend fun getFirstLessonOfNextPhase(phaseId: String): Lesson? {
         ensureLoaded()
-        val sorted = _phases.value.sortedBy { it.order }
+        val sorted = _phases.value
         val idx = sorted.indexOfFirst { it.id == phaseId }
         if (idx == -1 || idx + 1 >= sorted.size) return null
-        return sorted[idx + 1].lessons.minByOrNull { it.order }
+        return sorted[idx + 1].lessons.firstOrNull()
     }
 
     private suspend fun ensureLoaded() {
-        if (_phases.value.isNotEmpty()) return
-        loadStarted = true
+        if (isLoaded && _phases.value.isNotEmpty()) return
         cacheMutex.withLock {
-            if (_phases.value.isNotEmpty()) return
-            val loaded = contentLoader.loadPhases()
+            if (isLoaded && _phases.value.isNotEmpty()) return
+            val loaded = withContext(NonCancellable) {
+                contentLoader.loadPhases().sortedBy { it.order }
+            }
+            phaseById = loaded.associateBy { it.id }
+            lessonById = loaded.flatMap { it.lessons }.associateBy { it.id }
             _phases.value = loaded
+            if (loaded.isNotEmpty()) {
+                isLoaded = true
+            }
         }
     }
 }

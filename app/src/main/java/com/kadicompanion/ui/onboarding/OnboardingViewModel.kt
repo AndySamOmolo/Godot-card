@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.kadicompanion.domain.model.LearnerTrack
 import com.kadicompanion.domain.repository.LearnerProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class OnboardingUiState(
@@ -17,7 +19,7 @@ data class OnboardingUiState(
     val resolvedTrack: LearnerTrack? = null,
     val isSaving: Boolean = false
 ) {
-    val canFinish: Boolean get() = programmedBefore != null && usedGodotBefore != null
+    val canFinish: Boolean get() = programmedBefore != null && usedGodotBefore != null && !isSaving
 }
 
 @HiltViewModel
@@ -36,20 +38,24 @@ class OnboardingViewModel @Inject constructor(
         val godot = s.usedGodotBefore
         val track = when {
             prog == null || godot == null -> null
-            godot -> LearnerTrack.GODOT_REFERENCE
+            prog && godot -> LearnerTrack.GODOT_REFERENCE
             prog -> LearnerTrack.EXPERIENCED_DEV
             else -> LearnerTrack.FOUNDATIONS
         }
         _ui.value = s.copy(resolvedTrack = track)
     }
 
-    fun finish() {
+    fun finish(onComplete: () -> Unit = {}) {
         val track = _ui.value.resolvedTrack ?: return
+        if (_ui.value.isSaving) return
         _ui.value = _ui.value.copy(isSaving = true)
         viewModelScope.launch {
-            learnerProfile.setTrack(track)
-            learnerProfile.markOnboarded()
+            withContext(NonCancellable) {
+                learnerProfile.setTrack(track)
+                learnerProfile.markOnboarded()
+            }
             _ui.value = _ui.value.copy(isSaving = false)
+            onComplete()
         }
     }
 }

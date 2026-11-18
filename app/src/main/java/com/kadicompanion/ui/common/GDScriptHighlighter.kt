@@ -47,7 +47,7 @@ object GDScriptHighlighter {
             keyword = Color(0xFFFF7085),
             type = Color(0xFF8EFFDA),
             string = Color(0xFFFFEDA1),
-            comment = Color(0xFF79828E),
+            comment = Color(0xFF94A3B8),
             number = Color(0xFFA1FFE0),
             function = Color(0xFF57B3FF),
             plain = Color(0xFFE0E5EC)
@@ -60,7 +60,7 @@ object GDScriptHighlighter {
             keyword = Color(0xFFFF79C6),
             type = Color(0xFF8BE9FD),
             string = Color(0xFFF1FA8C),
-            comment = Color(0xFF6272A4),
+            comment = Color(0xFF8B9FD9),
             number = Color(0xFFBD93F9),
             function = Color(0xFF50FA7B),
             plain = Color(0xFFF8F8F2)
@@ -73,7 +73,7 @@ object GDScriptHighlighter {
             keyword = Color(0xFFFF6188),
             type = Color(0xFF78DCE8),
             string = Color(0xFFFFD866),
-            comment = Color(0xFF727072),
+            comment = Color(0xFFA09FA0),
             number = Color(0xFFAB9DF2),
             function = Color(0xFFA9DC76),
             plain = Color(0xFFFCFCFA)
@@ -86,7 +86,7 @@ object GDScriptHighlighter {
             keyword = Color(0xFF81A1C1),
             type = Color(0xFF8FBCBB),
             string = Color(0xFFA3BE8C),
-            comment = Color(0xFF616E88),
+            comment = Color(0xFF94A3B8),
             number = Color(0xFFB48EAD),
             function = Color(0xFF88C0D0),
             plain = Color(0xFFECEFF4)
@@ -171,7 +171,7 @@ object GDScriptHighlighter {
                     m.groups[5] != null -> withStyle(SpanStyle(color = c.keyword, fontWeight = FontWeight.Bold)) { append(text) }
                     m.groups[6] != null -> {
                         when {
-                            text in KEYWORDS && (text.first().isUpperCase() || text.lowercase() in primitiveTypes) ->
+                            text in KEYWORDS && (text.first().isUpperCase() || text.lowercase(java.util.Locale.ROOT) in primitiveTypes) ->
                                 withStyle(SpanStyle(color = c.type, fontWeight = FontWeight.Medium)) { append(text) }
                             text in KEYWORDS ->
                                 withStyle(SpanStyle(color = c.keyword, fontWeight = FontWeight.Bold)) { append(text) }

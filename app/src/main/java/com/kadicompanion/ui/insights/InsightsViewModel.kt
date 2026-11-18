@@ -27,7 +27,10 @@ data class InsightsUiState(
 class InsightsViewModel @Inject constructor(
     private val assessmentRepository: AssessmentRepository
 ) : ViewModel() {
-    val uiState: StateFlow<InsightsUiState> = combine(assessmentRepository.observeQuizAttempts(), assessmentRepository.observeDebugAttempts()) { quiz, debug ->
+    val uiState: StateFlow<InsightsUiState> = combine(
+        assessmentRepository.observeQuizAttempts(),
+        assessmentRepository.observeDebugAttempts()
+    ) { quiz, debug ->
         val correct = quiz.count { it.wasCorrect }
         val total = quiz.size
         val accuracy = if (total == 0) 0f else correct.toFloat() / total
@@ -35,6 +38,15 @@ class InsightsViewModel @Inject constructor(
             .map { (concept, rows) -> concept to (1f - (rows.count { it.wasCorrect }.toFloat() / rows.size)) }
             .sortedByDescending { it.second }
             .take(5)
-        InsightsUiState(false, quiz, debug, accuracy, total, byConcept, debug.size, debug.count { it.viewedFix && it.completedAt == null })
+        InsightsUiState(
+            isLoading = false,
+            quizAttempts = quiz,
+            debugAttempts = debug,
+            accuracyFraction = accuracy,
+            totalQuestions = total,
+            weakestConcepts = byConcept,
+            debugTotal = debug.size,
+            debugRevealedWithoutAttempt = debug.count { it.viewedFix }
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InsightsUiState())
 }

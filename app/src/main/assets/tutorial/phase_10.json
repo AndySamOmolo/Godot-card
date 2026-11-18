@@ -118,8 +118,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "When `Deck: 0` is reached mid-game, `GameState.reshuffle_if_empty()` recycles all discard cards except the face-up top card back into a fresh draw pile!",
-      "beyondKadi": "How **Array Duplication (`.duplicate()`), Automated `assert()` Self-Tests & Conservation Invariants** make you a pro solo developer:\n- Writing a 20-line `self_test.gd` script with `assert()` lets you test tricky edge cases (inventory full, 0 HP overkill, empty spawn pool) in **0.01 seconds** on startup instead of playing for 15 minutes hoping the rare case happens!\n- Conservation invariants (total cards == 54; total party items == constant) catch duplication/deletion bugs immediately.",
-      "transferChallenge": "**Your Solo Challenge**: Add a third automated test `static func test_ace_cancels_joker_penalty() -> void:` inside `kadi_self_test.gd` that sets `GameState.penalty_stack = 5`, verifies `RuleValidator.is_single_card_playable(ace_card, joker_card, 5, -1) == true`, and runs automatically in `run_all_tests()`!"
+      "beyondKadi": "Recycling a spent pool (`discard_pile`) back into the active supply (`deck`) when empty—while preserving the currently active top item—is the exact algorithm used in roguelike deckbuilders (Slay the Spire), music playlist shufflers, and tetromino bags.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a music playlist recycler `next_track(queue: Array[String], played_history: Array[String]) -> String` that pops the next song from `queue`, and when `queue` is empty, recycles all but the currently playing last song from `played_history`, shuffles them, and continues seamlessly."
     },
     {
       "id": "l_10_02_edge_cases",
@@ -211,8 +211,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Create `res://scripts/kadi_self_test.gd` so pressing F5 automatically verifies mid-penalty reshuffles and cardless-opponent win blocks in under 5 milliseconds!",
-      "beyondKadi": "How **Array Duplication (`.duplicate()`), Automated `assert()` Self-Tests & Conservation Invariants** make you a pro solo developer:\n- Writing a 20-line `self_test.gd` script with `assert()` lets you test tricky edge cases (inventory full, 0 HP overkill, empty spawn pool) in **0.01 seconds** on startup instead of playing for 15 minutes hoping the rare case happens!\n- Conservation invariants (total cards == 54; total party items == constant) catch duplication/deletion bugs immediately.",
-      "transferChallenge": "**Your Solo Challenge**: Add a third automated test `static func test_ace_cancels_joker_penalty() -> void:` inside `kadi_self_test.gd` that sets `GameState.penalty_stack = 5`, verifies `RuleValidator.is_single_card_playable(ace_card, joker_card, 5, -1) == true`, and runs automatically in `run_all_tests()`!"
+      "beyondKadi": "Writing deterministic edge-case tests (`test_reshuffle_mid_penalty`, `test_no_win_while_opponent_cardless`) that construct exact boundary states directly in memory lets you verify rare 1-in-1,000 gameplay scenarios in under 1 millisecond.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `test_shield_overflow_edge_case()` that sets `player_hp = 10`, `shield = 15`, applies `20` damage, and uses `assert(shield == 0 and player_hp == 5)` to verify damage spills over from shield to HP."
     },
     {
       "id": "l_10_03_card_conservation_invariant",
@@ -304,8 +304,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Enforce the 54-Card Conservation Invariant (`deck + discard + 4 hands == 54`) after every single turn so no card is ever duplicated or lost!",
-      "beyondKadi": "How **Array Duplication (`.duplicate()`), Automated `assert()` Self-Tests & Conservation Invariants** make you a pro solo developer:\n- Writing a 20-line `self_test.gd` script with `assert()` lets you test tricky edge cases (inventory full, 0 HP overkill, empty spawn pool) in **0.01 seconds** on startup instead of playing for 15 minutes hoping the rare case happens!\n- Conservation invariants (total cards == 54; total party items == constant) catch duplication/deletion bugs immediately.",
-      "transferChallenge": "**Your Solo Challenge**: Add a third automated test `static func test_ace_cancels_joker_penalty() -> void:` inside `kadi_self_test.gd` that sets `GameState.penalty_stack = 5`, verifies `RuleValidator.is_single_card_playable(ace_card, joker_card, 5, -1) == true`, and runs automatically in `run_all_tests()`!"
+      "beyondKadi": "Conservation invariants (`deck.size() + discard.size() + sum(hands) == 54`) are the gold standard for catching item-duplication exploits in RPG inventories, resource leaks in strategy games, and currency bugs in economy sims.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `assert_gold_conservation(bank_gold: int, player_wallets: Array[int], escrow_gold: int, expected_total: int) -> void` that sums all wallets plus bank and escrow and calls `assert(total == expected_total)`."
     }
   ],
   "debugChallenge": {

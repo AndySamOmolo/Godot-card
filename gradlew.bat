@@ -37,7 +37,7 @@ if exist "C:\Program Files\Android\Android Studio\jbr\bin\java.exe" (
     if not defined JAVA_HOME (
         set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
     ) else (
-        "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /C:""25." /C:""26." /C:""27." >NUL 2>&1
+        "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /C:"\"22." /C:"\"23." /C:"\"24." /C:"\"25." /C:"\"26." /C:"\"27." /C:"\"28." >NUL 2>&1
         if not errorlevel 1 (
             set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
         )
@@ -47,7 +47,7 @@ if exist "%LOCALAPPDATA%\Programs\Android Studio\jbr\bin\java.exe" (
     if not defined JAVA_HOME (
         set "JAVA_HOME=%LOCALAPPDATA%\Programs\Android Studio\jbr"
     ) else (
-        "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /C:""25." /C:""26." /C:""27." >NUL 2>&1
+        "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /C:"\"22." /C:"\"23." /C:"\"24." /C:"\"25." /C:"\"26." /C:"\"27." /C:"\"28." >NUL 2>&1
         if not errorlevel 1 (
             set "JAVA_HOME=%LOCALAPPDATA%\Programs\Android Studio\jbr"
         )

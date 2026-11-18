@@ -1,6 +1,17 @@
 {
   "terms": [
     {
+      "term": "3D Ray Picking (project_ray_origin)",
+      "shortDefinition": "Converting a 2D mouse/touch screen position into a 3D ray using `Camera3D.project_ray_origin()` and `project_ray_normal()` (or `Area3D.input_event`) to click 3D cards and board pieces.",
+      "relatedLessonIds": [
+        "l_17_04_3d_ray_picking_spatial_audio"
+      ],
+      "relatedDocClassNames": [
+        "Camera3D",
+        "Area3D"
+      ]
+    },
+    {
       "term": "@export",
       "shortDefinition": "A GDScript 4 annotation (`@export var rank: int = 2`) that exposes a script variable in the Godot Inspector dock so designers can view and edit it visually.\n\n### GDScript 4.3 Pattern\n```gdscript\n@export var max_speed: float = 250.0\n@export var custom_texture: Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **@export** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -20,6 +31,16 @@
       ],
       "relatedDocClassNames": [
         "Node"
+      ]
+    },
+    {
+      "term": "@tool & Engine.is_editor_hint()",
+      "shortDefinition": "Placing `@tool` at the top of a script runs it live inside the Godot Editor for visual previews; `Engine.is_editor_hint()` guards gameplay-only code from running while editing.",
+      "relatedLessonIds": [
+        "l_18_01_tool_scripts_editor_preview"
+      ],
+      "relatedDocClassNames": [
+        "Engine"
       ]
     },
     {
@@ -47,6 +68,17 @@
         "l_01_00c_first_script"
       ],
       "relatedDocClassNames": [
+        "AnimationPlayer"
+      ]
+    },
+    {
+      "term": "AnimationTree & BlendSpace2D",
+      "shortDefinition": "Node that blends `AnimationPlayer` clips across a 2D directional coordinate (`blend_position`) and transitions states via `AnimationNodeStateMachinePlayback.travel()`.",
+      "relatedLessonIds": [
+        "l_16_04_animation_tree_blendspace"
+      ],
+      "relatedDocClassNames": [
+        "AnimationTree",
         "AnimationPlayer"
       ]
     },
@@ -89,6 +121,16 @@
       ]
     },
     {
+      "term": "AStarGrid2D",
+      "shortDefinition": "Godot 4.3's built-in 2D grid A* pathfinder (`extends RefCounted`) that computes shortest obstacle-avoiding tile paths via `get_id_path(start, goal)`.",
+      "relatedLessonIds": [
+        "l_14_05_recursion_trees_astar"
+      ],
+      "relatedDocClassNames": [
+        "AStarGrid2D"
+      ]
+    },
+    {
       "term": "AtlasTexture",
       "shortDefinition": "A `[[Texture2D]]` resource that crops a single rectangular `region` (`Rect2`) out of a larger downloaded **Sprite Sheet** (`res://assets/cards/deck_sheet.png`).\n\nInstead of 54 separate image files, many itch.io and Kenney asset packs distribute one combined grid image. `AtlasTexture` lets each `CardData` slice its exact `[suit_row, rank_col]` rectangle at runtime:\n\n```gdscript\nconst SHEET := preload(\"res://assets/cards/deck_sheet.png\")\nfunc slice_card(col: int, row: int, w: int = 140, h: int = 190) -> AtlasTexture:\n    var atlas := AtlasTexture.new()\n    atlas.atlas = SHEET\n    atlas.region = Rect2(col * w, row * h, w, h)\n    return atlas\n```",
       "relatedLessonIds": [
@@ -119,6 +161,17 @@
       ],
       "relatedDocClassNames": [
         "AudioStreamPlayer3D"
+      ]
+    },
+    {
+      "term": "AudioServer & linear_to_db()",
+      "shortDefinition": "Godot's audio mixer singleton where `0.0..1.0` UI volume sliders are converted to logarithmic decibels via `linear_to_db()` and applied with `AudioServer.set_bus_volume_db()`.",
+      "relatedLessonIds": [
+        "l_18_02_audio_buses_configfile_inputmap"
+      ],
+      "relatedDocClassNames": [
+        "AudioServer",
+        "ConfigFile"
       ]
     },
     {
@@ -193,6 +246,38 @@
         "Button",
         "TextureButton",
         "CheckButton"
+      ]
+    },
+    {
+      "term": "Basis & Transform3D",
+      "shortDefinition": "`Transform3D` combines a `3x3` `Basis` rotation/scale matrix (`basis.x`, `basis.y`, `basis.z`) with a 3D `origin` position (`Vector3`).",
+      "relatedLessonIds": [
+        "l_17_01_node3d_vector3_basis"
+      ],
+      "relatedDocClassNames": [
+        "Basis",
+        "Node3D"
+      ]
+    },
+    {
+      "term": "Big-O Complexity",
+      "shortDefinition": "Mathematical notation (`O(1)`, `O(log n)`, `O(n)`, `O(n log n)`, `O(n²)`) describing how an algorithm's execution time or memory grows as the input size `n` increases.\n\n```gdscript\n# O(1) Dictionary lookup vs O(n) Array scan:\nvar card: CardData = registry.get(\"7♥\")\n```",
+      "relatedLessonIds": [
+        "l_14_01_big_o_complexity"
+      ],
+      "relatedDocClassNames": [
+        "Dictionary",
+        "Array"
+      ]
+    },
+    {
+      "term": "Binary Search (bsearch)",
+      "shortDefinition": "An `O(log n)` search algorithm (`sorted_array.bsearch(val)`) that repeatedly halves a sorted array to locate a target in ~10 steps for 1,000 items.",
+      "relatedLessonIds": [
+        "l_14_04_sorting_binary_search"
+      ],
+      "relatedDocClassNames": [
+        "Array"
       ]
     },
     {
@@ -288,6 +373,17 @@
       ]
     },
     {
+      "term": "CharacterBody3D & SpringArm3D",
+      "shortDefinition": "3D player controller (`CharacterBody3D.move_and_slide()`) paired with a collision-retracting camera boom (`SpringArm3D`) for 3rd-person cameras.",
+      "relatedLessonIds": [
+        "l_17_03_characterbody3d_springarm_camera"
+      ],
+      "relatedDocClassNames": [
+        "CharacterBody3D",
+        "Camera3D"
+      ]
+    },
+    {
       "term": "CheckButton",
       "shortDefinition": "A toggle button that displays a checkmark and a text label, like a checkbox.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CheckButton (CheckButton) in Godot 4.3:\n@onready var node_ref: CheckButton = $CheckButton\n```\n\n**Solo Game Dev Transfer:** You will use **CheckButton** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -321,6 +417,17 @@
       ]
     },
     {
+      "term": "Collision Layer vs. Collision Mask",
+      "shortDefinition": "`collision_layer` bitmask defines **what object category a node is**, while `collision_mask` defines **which layers the node scans or collides with**.",
+      "relatedLessonIds": [
+        "l_16_02_collision_layers_raycasts"
+      ],
+      "relatedDocClassNames": [
+        "Area2D",
+        "CharacterBody2D"
+      ]
+    },
+    {
       "term": "CollisionShape2D",
       "shortDefinition": "A node that gives a collision object its 2D shape via a Shape2D resource.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using CollisionShape2D (CollisionShape2D) in Godot 4.3:\n@onready var node_ref: CollisionShape2D = $CollisionShape2D\n```\n\n**Solo Game Dev Transfer:** You will use **CollisionShape2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -348,6 +455,26 @@
       ],
       "relatedDocClassNames": [
         "ColorRect"
+      ]
+    },
+    {
+      "term": "Command Pattern",
+      "shortDefinition": "Encapsulating an action (such as a card play or grid move) as an object with `execute()` and `undo()` methods to power Undo/Redo stacks and deterministic replays.",
+      "relatedLessonIds": [
+        "l_15_04_design_patterns_command_strategy"
+      ],
+      "relatedDocClassNames": [
+        "RefCounted"
+      ]
+    },
+    {
+      "term": "Composition over Inheritance",
+      "shortDefinition": "Building game entities by combining small, reusable child component nodes (`HealthComponent`, `Hurtbox`, `VelocityComponent`) rather than deep, rigid class inheritance hierarchies.",
+      "relatedLessonIds": [
+        "l_15_05_design_patterns_pool_composition"
+      ],
+      "relatedDocClassNames": [
+        "Node"
       ]
     },
     {
@@ -397,6 +524,28 @@
       ],
       "relatedDocClassNames": [
         "CPUParticles2D"
+      ]
+    },
+    {
+      "term": "Custom Comparator (sort_custom)",
+      "shortDefinition": "A two-argument function `func(a, b) -> bool` passed to `Array.sort_custom()` that returns `true` when `a` must appear strictly before `b`.",
+      "relatedLessonIds": [
+        "l_14_04_sorting_binary_search"
+      ],
+      "relatedDocClassNames": [
+        "Array",
+        "Callable"
+      ]
+    },
+    {
+      "term": "Deep Copy (.duplicate(true))",
+      "shortDefinition": "Recursively cloning an `Array` or `Dictionary` along with all nested sub-arrays and sub-dictionaries (`hands.duplicate(true)`) so AI simulations never mutate live game state.",
+      "relatedLessonIds": [
+        "l_14_02_value_vs_reference_memory"
+      ],
+      "relatedDocClassNames": [
+        "Array",
+        "Dictionary"
       ]
     },
     {
@@ -554,6 +703,17 @@
       ]
     },
     {
+      "term": "Higher-Order Array Methods",
+      "shortDefinition": "Functional `Array` methods (`filter`, `map`, `reduce`, `any`, `all`) that accept a `Callable` or lambda to transform or query collections declaratively.",
+      "relatedLessonIds": [
+        "l_15_01_callables_lambdas_functional"
+      ],
+      "relatedDocClassNames": [
+        "Array",
+        "Callable"
+      ]
+    },
+    {
       "term": "Image",
       "shortDefinition": "A native image buffer storing raw pixel data in CPU memory before being uploaded to a `Texture2D`.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Image (Texture2D) in Godot 4.3:\n@onready var node_ref: Texture2D = $Texture2D\n```\n\n**Solo Game Dev Transfer:** You will use **Image** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -681,6 +841,17 @@
       ]
     },
     {
+      "term": "Lambda Function",
+      "shortDefinition": "An anonymous inline function (`func(c: CardData) -> bool: return c.is_answer()`) that can be passed directly into `Array.filter()`, `map()`, `sort_custom()`, or `.connect()`.",
+      "relatedLessonIds": [
+        "l_15_01_callables_lambdas_functional"
+      ],
+      "relatedDocClassNames": [
+        "Callable",
+        "Array"
+      ]
+    },
+    {
       "term": "Light2D",
       "shortDefinition": "A 2D node that casts light and shadows onto 2D `CanvasItem` nodes.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Light2D (CanvasItem) in Godot 4.3:\n@onready var node_ref: CanvasItem = $CanvasItem\n```\n\n**Solo Game Dev Transfer:** You will use **Light2D** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -740,6 +911,17 @@
       "relatedDocClassNames": []
     },
     {
+      "term": "MeshInstance3D & StandardMaterial3D",
+      "shortDefinition": "Core 3D rendering pair where `MeshInstance3D` holds the 3D geometry (`QuadMesh`, `.glb`) and `StandardMaterial3D` configures PBR `albedo_texture`, `roughness`, and `metallic`.",
+      "relatedLessonIds": [
+        "l_17_02_meshes_materials_lighting_3d"
+      ],
+      "relatedDocClassNames": [
+        "MeshInstance3D",
+        "Node3D"
+      ]
+    },
+    {
       "term": "Mouse Filter",
       "shortDefinition": "A `[[Control]]` property (`mouse_filter`) that decides whether a UI node consumes mouse clicks/touch taps (`Stop`), lets them pass to parent controls (`Pass`), or ignores them completely (`Ignore`).\n\nIn `card_scene.tscn`, decorative child nodes like `CardArt` (`[[TextureRect]]`), `TopRankLabel`, and `CenterSuitLabel` must use `MOUSE_FILTER_IGNORE` so they never steal taps from `ClickButton`!\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Mouse Filter (Control) in Godot 4.3:\n@onready var node_ref: Control = $Control\n```\n\n**Solo Game Dev Transfer:** You will use **Mouse Filter** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -754,13 +936,24 @@
     },
     {
       "term": "MultiplayerAPI & @rpc",
-      "shortDefinition": "Godot 4.3's built-in networking system (`ENetMultiplayerPeer` + `@rpc`). Marking a function with `@rpc(\"any_peer\", \"call_local\", \"reliable\")` lets you call `my_func.rpc(...)` to execute that exact state update across all connected players over Wi-Fi/LAN.\n\n### GDScript 4.3 Pattern\n```gdscript\n@rpc(\"any_peer\", \"call_local\", \"reliable\")\nfunc sync_card_play(suit: int, rank: int) -> void:\n\tGameState.discard_pile.append(CardData.make(suit as CardTypes.Suits, rank))\n```",
+      "shortDefinition": "Godot 4.3's high-level networking system (`multiplayer` + `@rpc`). Clients request moves via `@rpc(\"any_peer\")` and the server validates `multiplayer.is_server()` and `multiplayer.get_remote_sender_id()` before broadcasting with `@rpc(\"authority\")`.\n\n### GDScript 4.3 Pattern\n```gdscript\n@rpc(\"any_peer\", \"call_local\", \"reliable\")\nfunc request_play_card(suit: int, rank: int) -> void:\n\tif not multiplayer.is_server():\n\t\treturn\n\tvar sender_id: int = multiplayer.get_remote_sender_id()\n```\n\n**Solo Game Dev Transfer:** Server-authoritative `@rpc` validation prevents cheating in multiplayer card, strategy, and action games.",
       "relatedLessonIds": [
         "l_12_04_multiplayer_lan"
       ],
       "relatedDocClassNames": [
-        "Node",
-        "SceneTree"
+        "MultiplayerAPI",
+        "ENetMultiplayerPeer"
+      ]
+    },
+    {
+      "term": "NavigationAgent2D",
+      "shortDefinition": "Node that queries a baked `NavigationRegion2D` polygon to steer a `CharacterBody2D` smoothly around walls via `get_next_path_position()`.",
+      "relatedLessonIds": [
+        "l_16_03_navigation_agent_2d"
+      ],
+      "relatedDocClassNames": [
+        "NavigationAgent2D",
+        "NavigationRegion2D"
       ]
     },
     {
@@ -833,6 +1026,17 @@
       ]
     },
     {
+      "term": "Object Pool Pattern",
+      "shortDefinition": "Pre-instantiating and reusing inactive `Node` instances (`visible = false`) instead of calling `instantiate()` and `queue_free()` repeatedly during gameplay.",
+      "relatedLessonIds": [
+        "l_15_05_design_patterns_pool_composition"
+      ],
+      "relatedDocClassNames": [
+        "PackedScene",
+        "Node"
+      ]
+    },
+    {
       "term": "OptionButton",
       "shortDefinition": "A dropdown UI Control node that lets the user pick from a list of selectable items, each with an integer ID — used in `DeclareSuitDialog` to pick Hearts, Diamonds, Clubs, or Spades.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using OptionButton (OptionButton) in Godot 4.3:\n@onready var node_ref: OptionButton = $OptionButton\n```\n\n**Solo Game Dev Transfer:** You will use **OptionButton** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -865,6 +1069,16 @@
       ]
     },
     {
+      "term": "Parallax2D",
+      "shortDefinition": "Godot 4.3's single-node 2D parallax controller using `scroll_scale`, `repeat_size`, and `autoscroll` to create depth-scrolling backgrounds.",
+      "relatedLessonIds": [
+        "l_16_05_2d_lighting_parallax_camera"
+      ],
+      "relatedDocClassNames": [
+        "Parallax2D"
+      ]
+    },
+    {
       "term": "Penalty Cards",
       "shortDefinition": "In Kadi, 2, 3, and Joker (JOK) are Penalty Cards that force the next player to draw 2, 3, or 5 cards respectively unless they counter with a same-rank Penalty Card (which forwards the stack) or an Ace (which cancels the stack).\n\n```gdscript\nfunc penalty_value() -> int:\n    match rank:\n        CardTypes.Ranks.TWO: return 2\n        CardTypes.Ranks.THREE: return 3\n        CardTypes.Ranks.JOKER: return 5\n        _: return 0\n```",
       "relatedLessonIds": [
@@ -882,6 +1096,17 @@
         "StaticBody2D",
         "RigidBody2D",
         "CharacterBody2D"
+      ]
+    },
+    {
+      "term": "PointLight2D & CanvasModulate",
+      "shortDefinition": "2D lighting pair where `CanvasModulate` dims the ambient canvas layer and `PointLight2D` illuminates scenes with radial textures and 2D shadows.",
+      "relatedLessonIds": [
+        "l_16_05_2d_lighting_parallax_camera"
+      ],
+      "relatedDocClassNames": [
+        "PointLight2D",
+        "CanvasModulate"
       ]
     },
     {
@@ -905,6 +1130,16 @@
       ]
     },
     {
+      "term": "Property Setter & Getter",
+      "shortDefinition": "GDScript 2.0 `set(value):` and `get:` blocks attached to a variable declaration that automatically clamp values and emit signals whenever the property is assigned.",
+      "relatedLessonIds": [
+        "l_15_02_properties_getters_setters"
+      ],
+      "relatedDocClassNames": [
+        "Object"
+      ]
+    },
+    {
       "term": "Quaternion",
       "shortDefinition": "A 4-component mathematical structure used to represent smooth 3D rotations without gimbal lock.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Quaternion (Node3D) in Godot 4.3:\n@onready var node_ref: Node3D = $Node3D\n```\n\n**Solo Game Dev Transfer:** You will use **Quaternion** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -921,6 +1156,16 @@
         "l_06_01_qa_composition"
       ],
       "relatedDocClassNames": []
+    },
+    {
+      "term": "Queue (FIFO)",
+      "shortDefinition": "First-In, First-Out data structure where items are processed in the exact chronological order they were added—used for turn queues, buffered inputs, and sequential card animations.",
+      "relatedLessonIds": [
+        "l_14_03_stacks_and_queues"
+      ],
+      "relatedDocClassNames": [
+        "Array"
+      ]
     },
     {
       "term": "Randomness",
@@ -953,6 +1198,17 @@
       "relatedDocClassNames": []
     },
     {
+      "term": "RayCast2D & ShapeCast2D",
+      "shortDefinition": "2D spatial query nodes that project a thin line (`RayCast2D`) or sweep a 2D shape (`ShapeCast2D`) to check line-of-sight, ledges, and laser hits.",
+      "relatedLessonIds": [
+        "l_16_02_collision_layers_raycasts"
+      ],
+      "relatedDocClassNames": [
+        "RayCast2D",
+        "ShapeCast2D"
+      ]
+    },
+    {
       "term": "Rect2",
       "shortDefinition": "A built-in axis-aligned 2D rectangle defined by a position and a size.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Rect2 (Rect2) in Godot 4.3:\n@onready var node_ref: Rect2 = $Rect2\n```\n\n**Solo Game Dev Transfer:** You will use **Rect2** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -970,6 +1226,16 @@
       ],
       "relatedDocClassNames": [
         "Callable"
+      ]
+    },
+    {
+      "term": "Recursion & Base Case",
+      "shortDefinition": "A function that solves a nested problem (like traversing a `SceneTree`) by calling itself on smaller sub-problems until reaching a non-recursive stopping condition (**Base Case**).",
+      "relatedLessonIds": [
+        "l_14_05_recursion_trees_astar"
+      ],
+      "relatedDocClassNames": [
+        "Node"
       ]
     },
     {
@@ -1092,6 +1358,16 @@
       ]
     },
     {
+      "term": "Stack (LIFO)",
+      "shortDefinition": "Last-In, First-Out data structure (`push_back` + `pop_back` in `O(1)` time) used for Kadi's `discard_pile`, Undo/Redo command history, and UI navigation back-stacks.",
+      "relatedLessonIds": [
+        "l_14_03_stacks_and_queues"
+      ],
+      "relatedDocClassNames": [
+        "Array"
+      ]
+    },
+    {
       "term": "State Machines",
       "shortDefinition": "A design where an object is always in one of several states (e.g. DEAL, PLAY, RESOLVE) and rules govern transitions between them.\n\n### GDScript 4.3 Pattern\n```gdscript\nenum State { IDLE, MOVE, ATTACK }\nvar state: State = State.IDLE\nmatch state:\n\tState.IDLE: velocity = Vector2.ZERO\n```\n\n**Solo Game Dev Transfer:** You will use **State Machines** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -1109,6 +1385,16 @@
       ],
       "relatedDocClassNames": [
         "StaticBody2D"
+      ]
+    },
+    {
+      "term": "Strategy Pattern",
+      "shortDefinition": "Defining interchangeable behavior algorithms (such as `AggressiveAI` vs `DefensiveAI`) as swappable `Resource` subclasses injected via `@export`.",
+      "relatedLessonIds": [
+        "l_15_04_design_patterns_command_strategy"
+      ],
+      "relatedDocClassNames": [
+        "Resource"
       ]
     },
     {
@@ -1142,6 +1428,17 @@
         "Panel",
         "Button",
         "Theme"
+      ]
+    },
+    {
+      "term": "SubViewport",
+      "shortDefinition": "Off-screen 2D/3D rendering viewport (`get_texture()`) used for minimaps, split-screen multiplayer, and rendering 3D objects inside 2D UI.",
+      "relatedLessonIds": [
+        "l_16_05_2d_lighting_parallax_camera"
+      ],
+      "relatedDocClassNames": [
+        "SubViewport",
+        "Viewport"
       ]
     },
     {
@@ -1201,6 +1498,17 @@
       ]
     },
     {
+      "term": "TileMapLayer",
+      "shortDefinition": "Godot 4.3's node for rendering a single 2D grid layer from a `TileSet` resource, converting coordinates with `local_to_map()` and `map_to_local()`.",
+      "relatedLessonIds": [
+        "l_16_01_tilemaplayer_tileset"
+      ],
+      "relatedDocClassNames": [
+        "TileMapLayer",
+        "TileSet"
+      ]
+    },
+    {
       "term": "Timer",
       "shortDefinition": "A node that counts down and emits `timeout` at an interval. Used for AI think-delays, turn limits, and reshuffle pauses.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Timer (Timer) in Godot 4.3:\n@onready var node_ref: Timer = $Timer\n```\n\n**Solo Game Dev Transfer:** You will use **Timer** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -1208,6 +1516,17 @@
       ],
       "relatedDocClassNames": [
         "Timer"
+      ]
+    },
+    {
+      "term": "TranslationServer & tr()",
+      "shortDefinition": "Godot's built-in localization engine where `tr(\"KEY\")` looks up translated text for the active locale set via `TranslationServer.set_locale(\"sw\")`.",
+      "relatedLessonIds": [
+        "l_18_03_localization_translation_server"
+      ],
+      "relatedDocClassNames": [
+        "TranslationServer",
+        "Object"
       ]
     },
     {
@@ -1228,6 +1547,17 @@
       ],
       "relatedDocClassNames": [
         "Tween"
+      ]
+    },
+    {
+      "term": "Value vs. Reference Semantics",
+      "shortDefinition": "In GDScript, primitive and math types (`int`, `float`, `Vector2`, `Vector3`, `Color`) are copied by value on assignment, whereas containers and objects (`Array`, `Dictionary`, `Node`, `Resource`) share a reference until cloned with `.duplicate()`.",
+      "relatedLessonIds": [
+        "l_14_02_value_vs_reference_memory"
+      ],
+      "relatedDocClassNames": [
+        "Array",
+        "Dictionary"
       ]
     },
     {
@@ -1271,6 +1601,17 @@
       ]
     },
     {
+      "term": "Vector3 & Right-Handed Y-Up Space",
+      "shortDefinition": "Godot's 3D coordinate system where `+X` is Right, `+Y` is Up (`Vector3.UP`), and `-Z` is Forward (`Vector3.FORWARD = Vector3(0, 0, -1)`).",
+      "relatedLessonIds": [
+        "l_17_01_node3d_vector3_basis"
+      ],
+      "relatedDocClassNames": [
+        "Vector3",
+        "Node3D"
+      ]
+    },
+    {
       "term": "Viewport",
       "shortDefinition": "A node that renders its child scene, handling its own drawing, input, and camera.\n\n### GDScript 4.3 Pattern\n```gdscript\n# Using Viewport (Viewport) in Godot 4.3:\n@onready var node_ref: Viewport = $Viewport\n```\n\n**Solo Game Dev Transfer:** You will use **Viewport** both when expanding Kadi and when building your own 2D Platformers, RPGs, Shooters, and Puzzle games in Godot 4.3.",
       "relatedLessonIds": [
@@ -1299,6 +1640,17 @@
       "relatedDocClassNames": [
         "Viewport",
         "Node2D"
+      ]
+    },
+    {
+      "term": "WorldEnvironment & DirectionalLight3D",
+      "shortDefinition": "3D environment nodes that configure sky illumination, ACES tonemapping, glow, SSAO, and directional sun shadows.",
+      "relatedLessonIds": [
+        "l_17_02_meshes_materials_lighting_3d"
+      ],
+      "relatedDocClassNames": [
+        "Node3D",
+        "Camera3D"
       ]
     }
   ]

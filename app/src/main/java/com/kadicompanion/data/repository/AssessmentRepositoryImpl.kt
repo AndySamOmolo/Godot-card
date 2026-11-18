@@ -44,6 +44,7 @@ class AssessmentRepositoryImpl @Inject constructor(
 
     override suspend fun markDebugFixViewed(challengeId: String) {
         val existing = debugChallengeAttemptDao.get(challengeId)
+        if (existing?.completedAt != null && !existing.viewedFix) return
         debugChallengeAttemptDao.upsert(
             DebugChallengeAttemptEntity(
                 challengeId = challengeId,
@@ -73,4 +74,9 @@ class AssessmentRepositoryImpl @Inject constructor(
         debugChallengeAttemptDao.observeAll().map { list ->
             list.map { DebugAttemptRecord(it.challengeId, it.viewedFix, it.completedAt) }
         }
+
+    override suspend fun clearAllAttempts() {
+        quizAttemptDao.deleteAll()
+        debugChallengeAttemptDao.deleteAll()
+    }
 }

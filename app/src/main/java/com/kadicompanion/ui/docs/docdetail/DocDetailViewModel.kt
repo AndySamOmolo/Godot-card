@@ -1,5 +1,6 @@
 package com.kadicompanion.ui.docs.docdetail
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,14 +28,14 @@ class DocDetailViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val className: String = checkNotNull(savedStateHandle["className"])
+    private val className: String = Uri.decode(checkNotNull(savedStateHandle["className"]))
     private val _entry = MutableStateFlow<GodotDocEntry?>(null)
     private val _loading = MutableStateFlow(true)
 
     val uiState: StateFlow<DocDetailUiState> = combine(
         _entry,
         _loading,
-        progressRepository.observeBookmarkForPhase(className)
+        progressRepository.observeBookmarkForDoc(className)
     ) { entry, loading, bookmark ->
         DocDetailUiState(
             entry = entry,
@@ -45,7 +46,7 @@ class DocDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _entry.value = docsRepository.get(className)
+            _entry.value = runCatching { docsRepository.get(className) }.getOrNull()
             _loading.value = false
         }
     }
@@ -55,10 +56,11 @@ class DocDetailViewModel @Inject constructor(
         val doc = current.entry ?: return
         viewModelScope.launch {
             if (current.isBookmarked) {
-                progressRepository.removeBookmarkForPhase(doc.className)
+                progressRepository.removeBookmarkForDoc(doc.className)
             } else {
                 progressRepository.addBookmark(
-                    phaseId = doc.className,
+                    phaseId = "docs",
+                    docClassName = doc.className,
                     note = doc.shortDescription
                 )
             }

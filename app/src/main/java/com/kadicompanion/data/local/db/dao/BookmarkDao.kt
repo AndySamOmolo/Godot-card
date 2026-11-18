@@ -15,8 +15,11 @@ interface BookmarkDao {
     @Query("SELECT * FROM bookmarks WHERE lessonId = :lessonId LIMIT 1")
     fun observeForLesson(lessonId: String): Flow<BookmarkEntity?>
 
-    @Query("SELECT * FROM bookmarks WHERE phaseId = :phaseId AND lessonId IS NULL AND glossaryTerm IS NULL LIMIT 1")
+    @Query("SELECT * FROM bookmarks WHERE phaseId = :phaseId AND lessonId IS NULL AND docClassName IS NULL AND glossaryTerm IS NULL LIMIT 1")
     fun observeForPhase(phaseId: String): Flow<BookmarkEntity?>
+
+    @Query("SELECT * FROM bookmarks WHERE docClassName = :className OR (docClassName IS NULL AND phaseId = :className AND lessonId IS NULL AND glossaryTerm IS NULL) LIMIT 1")
+    fun observeForDoc(className: String): Flow<BookmarkEntity?>
 
     @Query("SELECT * FROM bookmarks WHERE glossaryTerm = :term LIMIT 1")
     fun observeForGlossary(term: String): Flow<BookmarkEntity?>
@@ -30,9 +33,15 @@ interface BookmarkDao {
     @Query("DELETE FROM bookmarks WHERE lessonId = :lessonId")
     suspend fun deleteForLesson(lessonId: String)
 
-    @Query("DELETE FROM bookmarks WHERE phaseId = :phaseId AND lessonId IS NULL AND glossaryTerm IS NULL")
+    @Query("DELETE FROM bookmarks WHERE phaseId = :phaseId AND lessonId IS NULL AND docClassName IS NULL AND glossaryTerm IS NULL")
     suspend fun deleteForPhase(phaseId: String)
+
+    @Query("DELETE FROM bookmarks WHERE docClassName = :className OR (docClassName IS NULL AND phaseId = :className AND lessonId IS NULL AND glossaryTerm IS NULL)")
+    suspend fun deleteForDoc(className: String)
 
     @Query("DELETE FROM bookmarks WHERE glossaryTerm = :term")
     suspend fun deleteForGlossary(term: String)
+
+    @Query("DELETE FROM bookmarks")
+    suspend fun deleteAll()
 }

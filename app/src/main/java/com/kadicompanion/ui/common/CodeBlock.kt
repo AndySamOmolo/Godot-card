@@ -64,9 +64,14 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
     }
     val panelColor = codePalette.background
     val headerBg = codePalette.headerBg
-    val gutterColor = codePalette.comment.copy(alpha = 0.65f)
+    val gutterColor = codePalette.comment
     val borderColor = codePalette.borderColor
     val lines = remember(snippet.code) { snippet.code.lines() }
+    val highlightedLines = remember(lines, isDark, uiPrefs.codeThemePreset) {
+        lines.map { lineText ->
+            GDScriptHighlighter.highlight(lineText, isDark, uiPrefs.codeThemePreset)
+        }
+    }
     var copied by remember { mutableStateOf(false) }
     var wrapLines by remember(uiPrefs.codeWordWrap) { mutableStateOf(uiPrefs.codeWordWrap) }
 
@@ -109,7 +114,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                         }
                     }
                     Text(
-                        text = "${snippet.language.uppercase()} · ${lines.size} ${if (lines.size == 1) "LINE" else "LINES"}",
+                        text = "${snippet.language.uppercase(java.util.Locale.ROOT)} · ${lines.size} ${if (lines.size == 1) "LINE" else "LINES"}",
                         style = MaterialTheme.typography.labelSmall,
                         fontFamily = CodeFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -209,7 +214,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                                 )
                             }
                             Text(
-                                text = GDScriptHighlighter.highlight(lineText, isDark, uiPrefs.codeThemePreset),
+                                text = highlightedLines[idx],
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontFamily = CodeFontFamily,
                                     fontSize = codeFontSize,
@@ -250,7 +255,7 @@ fun CodeBlock(snippet: CodeSnippet, modifier: Modifier = Modifier) {
                     Column {
                         lines.forEach { lineText ->
                             Text(
-                                text = GDScriptHighlighter.highlight(lineText, isDark, uiPrefs.codeThemePreset),
+                                text = highlightedLines[idx],
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontFamily = CodeFontFamily,
                                     fontSize = codeFontSize,

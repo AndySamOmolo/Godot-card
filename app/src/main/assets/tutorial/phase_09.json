@@ -123,8 +123,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "`RuleValidator.has_won()` checks all 5 official Kenyan Kadi win conditions (empty hand, prior Niko Kadi call, legal play, Answer-only finish, no cardless opponent).",
-      "beyondKadi": "How **Multi-Clause Victory Conditions & Pre-Announcement Flags (`announced_kadi`)** transfer across genres:\n- **Boss Fight / Extraction Shooter**: Winning requires `boss_defeated and player_in_extraction_zone and timer_active and not player_downed`.\n- Naming each boolean clause in its own descriptive variable (`var hand_empty: bool = ...`) makes complex win/lose rules self-documenting and bug-free.",
-      "transferChallenge": "**Your Solo Challenge**: Add a helper `static func can_win_next_turn(hand: Array) -> bool:` in `rule_validator.gd` that checks if all cards currently in `hand` are Answer/Question cards that could be played in one move, and pulse `niko_button.modulate = Color(1.0, 0.85, 0.2)` to remind the player to call *\"Niko Kadi!\"*!"
+      "beyondKadi": "Combining 5 named boolean predicates (`hand_empty and declared_niko and final_play_legal and valid_cards and no_opponent_cardless`) makes complex quest-completion, achievement-unlocking, and raid-boss phase transitions self-documenting and bug-free.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `can_unlock_secret_ending(all_relics_found: bool, boss_defeated: bool, timer_under_limit: bool, no_ally_fainted: bool) -> bool` using named boolean variables and return whether all 4 conditions are satisfied."
     },
     {
       "id": "l_09_02_niko_button",
@@ -218,8 +218,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Click the `'Niko Kadi!'` button on your table to light up the gold `📢 You announced: NIKO KADI!` banner — and watch it auto-reset if you are forced to draw!",
-      "beyondKadi": "How **Multi-Clause Victory Conditions & Pre-Announcement Flags (`announced_kadi`)** transfer across genres:\n- **Boss Fight / Extraction Shooter**: Winning requires `boss_defeated and player_in_extraction_zone and timer_active and not player_downed`.\n- Naming each boolean clause in its own descriptive variable (`var hand_empty: bool = ...`) makes complex win/lose rules self-documenting and bug-free.",
-      "transferChallenge": "**Your Solo Challenge**: Add a helper `static func can_win_next_turn(hand: Array) -> bool:` in `rule_validator.gd` that checks if all cards currently in `hand` are Answer/Question cards that could be played in one move, and pulse `niko_button.modulate = Color(1.0, 0.85, 0.2)` to remind the player to call *\"Niko Kadi!\"*!"
+      "beyondKadi": "Requiring a pre-condition flag (`announced_kadi[player] = true`) before a final state transition—and resetting that flag if the actor's state regresses (`draw_cards()`)—models charging an Ultimate meter that resets if interrupted before cast!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a `BossChargeState` helper where `is_primed: bool` is set to `true` on turn 1, reset to `false` if `on_damage_taken()` is called, and checked in `can_cast_ultimate() -> bool` on turn 2."
     },
     {
       "id": "l_09_03_win_overlay",
@@ -310,8 +310,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Play your final Answer Card after announcing 'Niko Kadi!' in the previous round and watch the table display `🏆 PLAYER 1 WINS THE KADI MATCH!`",
-      "beyondKadi": "How **Multi-Clause Victory Conditions & Pre-Announcement Flags (`announced_kadi`)** transfer across genres:\n- **Boss Fight / Extraction Shooter**: Winning requires `boss_defeated and player_in_extraction_zone and timer_active and not player_downed`.\n- Naming each boolean clause in its own descriptive variable (`var hand_empty: bool = ...`) makes complex win/lose rules self-documenting and bug-free.",
-      "transferChallenge": "**Your Solo Challenge**: Add a helper `static func can_win_next_turn(hand: Array) -> bool:` in `rule_validator.gd` that checks if all cards currently in `hand` are Answer/Question cards that could be played in one move, and pulse `niko_button.modulate = Color(1.0, 0.85, 0.2)` to remind the player to call *\"Niko Kadi!\"*!"
+      "beyondKadi": "Separating utility/control actions (Jump, Kickback, Penalty) from finisher-eligible actions (`is_winning_move_cards()`) and locking match input on victory (`match_over = true`) appears in fighting games where chip damage cannot KO an opponent.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `can_ko_boss(attack_damage: int, boss_hp: int, is_chip_damage: bool) -> bool` where an attack reducing `boss_hp` to `<= 0` only defeats the boss if `not is_chip_damage` (otherwise clamping `boss_hp` at `1`)."
     }
   ],
   "debugChallenge": {

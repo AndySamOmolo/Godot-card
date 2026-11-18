@@ -30,7 +30,7 @@ class PhaseDetailViewModel @Inject constructor(
     private val progressRepo: ProgressRepository
 ) : ViewModel() {
 
-    private val phaseId: String = checkNotNull(savedStateHandle[Routes.ARG_PHASE_ID])
+    private val phaseId: String = android.net.Uri.decode(checkNotNull(savedStateHandle[Routes.ARG_PHASE_ID]))
 
     val uiState: StateFlow<PhaseDetailUiState> = combine(
         flow {

@@ -128,8 +128,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Register `class_name CardTypes` globally so every script and visual card in your project can reference `CardTypes.Suits.HEARTS` and `CardTypes.Ranks.JOKER`.",
-      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
-      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
+      "beyondKadi": "In any RPG, RTS, or Shooter, `class_name` enums (`DamageType { PHYSICAL, FIRE, ICE }`, `WeaponSlot { PRIMARY, SECONDARY, MELEE }`, `AIState { IDLE, PATROL, CHASE }`) replace fragile magic strings and give you autocomplete across the entire project.",
+      "transferChallenge": "**Solo Transfer Challenge**: Create a `class_name DamageTypes` script with `enum Element { FIRE, WATER, EARTH, AIR }` and a static helper `get_multiplier(attack: Element, defense: Element) -> float` that returns `2.0` when Fire hits Earth or Water hits Fire."
     },
     {
       "id": "l_01_02_resources",
@@ -225,8 +225,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Pass `CardData.make(CardTypes.Suits.SPADES, CardTypes.Ranks.QUEEN)` to your visual `CardScene` and see it automatically render `Q♠` in silver-white (or load your downloaded PNG sprite)!",
-      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
-      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
+      "beyondKadi": "Custom `Resource` classes (`extends Resource`) are Godot 4.3's secret weapon for data-driven games: RPG items (`ItemData`), dialogue trees (`DialogueNode`), tower-defense waves (`WaveConfig`), and character stats (`HeroStats`) all use the exact `@export` Resource pattern you built for `CardData`.",
+      "transferChallenge": "**Solo Transfer Challenge**: Create `class_name WeaponData extends Resource` with `@export var weapon_name: String`, `@export var base_damage: int = 10`, and `@export var crit_chance: float = 0.15`, plus a method `roll_damage() -> int` that doubles damage when `randf() < crit_chance`."
     },
     {
       "id": "l_01_03_deck_builder",
@@ -321,8 +321,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Generate all 52 suited cards plus 2 Jokers (54 total) with nested loops and deal random `CardData` instances into your visual `PlayerHandContainer` on every run!",
-      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
-      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
+      "beyondKadi": "Nested `for` loops + `Array.shuffle()` power procedural dungeon room generation, roguelike loot chest tables, tetromino bag randomizers in puzzle games, and wave spawn queues in twin-stick shooters.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a function `build_loot_bag() -> Array[String]` that uses nested loops to generate 3 tiers (`Common`, `Rare`, `Epic`) across 4 item types (`Sword`, `Shield`, `Staff`, `Bow`), appends 2 `Legendary Relic` items, shuffles the array, and returns it."
     },
     {
       "id": "l_01_04_autoloads",
@@ -420,8 +420,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Register `GameState` in Project Settings -> Autoload so your 54-card draw pile, discard pile, and 4 player hands are live globally when you press F5.",
-      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
-      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
+      "beyondKadi": "Autoload singletons (`GameState`, `AudioManager`, `SaveManager`, `QuestTracker`) persist across `get_tree().change_scene_to_file()` calls so player inventory, quest progress, and background music survive level transitions.",
+      "transferChallenge": "**Solo Transfer Challenge**: Create a `QuestTracker` Autoload script (`extends Node`) with `var active_quests: Dictionary = {}`, `signal quest_updated(id: String, stage: int)`, and `advance_quest(id: String) -> void` that increments the quest stage and emits `quest_updated`."
     },
     {
       "id": "l_02_03_valid_starter",
@@ -516,8 +516,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Every match deals 4 cards to all 4 players and guarantees the face-up card in the center `DiscardSlot` is a legal Answer Card (`4, 5, 6, 7, 9, or 10`) — never a Penalty, Question, Jump, Kickback, Ace, or Joker!",
-      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
-      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
+      "beyondKadi": "Popping from a shared pool (`pop_back()`) and validating starter constraints with a `while` loop is the exact pattern used to spawn players onto non-hazardous tiles, pick valid starting quest givers, and seed Match-3 boards without pre-existing 3-in-a-row matches.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `pick_safe_spawn_tile(tiles: Array[Dictionary]) -> Dictionary` that pops a random tile from `tiles` and loops `while tile.get(\"is_lava\", false):`—pushing lava tiles back to the front and reshuffling—until a safe starter tile is returned."
     },
     {
       "id": "l_02_04_cards_on_screen",
@@ -613,8 +613,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Press F5 and watch `Table.tscn` deal a real 54-card Kadi match on screen: a legal starter card in `DiscardSlot`, 4 random `CardData` cards in your hand, live deck/opponent counts in `StatusLabel`, and a working Draw button!",
-      "beyondKadi": "How **Enums, Custom `Resource`s & Autoload Singletons** transfer to any new game you build solo:\n- **`enum` (`CardTypes`)**: In an RPG or Platformer, use `enum Element { FIRE, ICE, LIGHTNING }` or `enum EnemyState { PATROL, CHASE, ATTACK }` to replace magic numbers.\n- **`Resource` (`CardData`)**: Create `class_name WeaponData extends Resource` or `EnemyStats extends Resource` so every weapon, spell, or enemy type is a lightweight data object with `@export` fields and helper methods.\n- **Autoload (`GameState`)**: Every multi-scene game uses an Autoload singleton to hold player inventory, current level index, and global signals across scene changes.",
-      "transferChallenge": "**Your Solo Challenge**: Add a new helper method `func is_royal_card() -> bool:` to `res://scripts/card_data.gd` that returns `true` when `rank in [11, 12, 13]` (`J, Q, K`), and write a quick `print()` check in `GameState._ready()` that counts how many royal cards were dealt into Player 0's starting hand!"
+      "beyondKadi": "Syncing a data `Array` (`GameState.hands[0]`) to a UI `HBoxContainer` by spawning `PackedScene` instances and wiring their signals in a loop is how every RPG inventory grid, RTS build bar, and roguelike relic bar is rendered.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `render_hotbar(items: Array[Resource], container: HBoxContainer, slot_scene: PackedScene) -> void` that loops over `items`, instantiates `slot_scene`, adds it to `container`, calls `slot.setup(item)`, and connects `slot.slot_clicked`."
     }
   ],
   "debugChallenge": {

@@ -120,8 +120,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Playing one Jack (`J`) skips the next player (`P1 -> P3`), and playing two Jacks in a combo skips two players (`P1 -> P4`)!",
-      "beyondKadi": "How **Chain Resolution & Direction Vectors (`direction *= -1`)** transfer to real-time games:\n- **2D Platformer Patrol Enemies**: Flipping `direction *= -1` whenever an enemy touches a wall (`if is_on_wall(): direction *= -1`) is the exact same math as a Kickback King reversing turn order!\n- **Pinball / Breakout Bounce Physics**: Multiplying `velocity.x *= -1` or `velocity.y *= -1` on collision.",
-      "transferChallenge": "**Your Solo Challenge**: When one or more Kickback (`K`) or Jump (`J`) cards are played, display a temporary banner in `feedback_label.text` showing *which* seat was skipped or whether direction flipped to `↻ Clockwise` or `↺ Counter-Clockwise`!"
+      "beyondKadi": "Passing `extra_skips` into a turn scheduler (`advance_turn(skips)`) directly models `Stun` / `Freeze` status effects in tactical RPGs (Final Fantasy, Pokémon, XCOM) where frozen units have their turn slots skipped.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `advance_combat_queue(current_idx: int, unit_stun_counts: Array[int]) -> int` that steps forward through `unit_stun_counts` modulo `size()`, decrementing any stunned unit's counter and skipping them until an unstunned unit (`0`) is reached."
     },
     {
       "id": "l_07_02_kickback_direction",
@@ -215,8 +215,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Playing a King (`K`) reverses `TurnManager.direction` so play flows counter-clockwise (`P1 -> P4 -> P3 -> P2`)!",
-      "beyondKadi": "How **Chain Resolution & Direction Vectors (`direction *= -1`)** transfer to real-time games:\n- **2D Platformer Patrol Enemies**: Flipping `direction *= -1` whenever an enemy touches a wall (`if is_on_wall(): direction *= -1`) is the exact same math as a Kickback King reversing turn order!\n- **Pinball / Breakout Bounce Physics**: Multiplying `velocity.x *= -1` or `velocity.y *= -1` on collision.",
-      "transferChallenge": "**Your Solo Challenge**: When one or more Kickback (`K`) or Jump (`J`) cards are played, display a temporary banner in `feedback_label.text` showing *which* seat was skipped or whether direction flipped to `↻ Clockwise` or `↺ Counter-Clockwise`!"
+      "beyondKadi": "Flipping a direction multiplier (`direction *= -1`) with a single integer is how 2D patrol enemies reverse at wall sensors (`velocity.x = speed * direction`), how Pong/Breakout balls bounce on paddles, and how timeline-rewind puzzles work.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `step_patrol_platform(pos_x: float, speed: float, dir: int, min_x: float, max_x: float, delta: float) -> Dictionary` that moves `pos_x + speed * dir * delta` and flips `dir *= -1` whenever `pos_x` reaches `min_x` or `max_x`."
     },
     {
       "id": "l_07_03_jump_kickback_hud",
@@ -308,8 +308,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Your top `StatusLabel` dynamically displays `↻ CW` or `↺ CCW` and announces skipped players on `FeedbackLabel`!",
-      "beyondKadi": "How **Chain Resolution & Direction Vectors (`direction *= -1`)** transfer to real-time games:\n- **2D Platformer Patrol Enemies**: Flipping `direction *= -1` whenever an enemy touches a wall (`if is_on_wall(): direction *= -1`) is the exact same math as a Kickback King reversing turn order!\n- **Pinball / Breakout Bounce Physics**: Multiplying `velocity.x *= -1` or `velocity.y *= -1` on collision.",
-      "transferChallenge": "**Your Solo Challenge**: When one or more Kickback (`K`) or Jump (`J`) cards are played, display a temporary banner in `feedback_label.text` showing *which* seat was skipped or whether direction flipped to `↻ Clockwise` or `↺ Counter-Clockwise`!"
+      "beyondKadi": "Iterating through a batch of queued actions and accumulating net effects (`skips += 1`, `reverse_direction()`) before advancing the state machine is the Command Queue pattern used in auto-battlers (Teamfight Tactics, Super Auto Pets).",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `resolve_action_queue(actions: Array[String], start_dir: int) -> Dictionary` that loops over strings (`\"STEP\"`, `\"SKIP\"`, `\"REVERSE\"`), flips `dir` on each `\"REVERSE\"`, counts `\"SKIP\"`s, and returns `{\"final_dir\": dir, \"total_skips\": skips}`."
     }
   ],
   "debugChallenge": {
@@ -319,7 +319,12 @@
     "fixedCode": "func resolve_jump_chain(chain: Array, start_player: int) -> int:\n    var skips: int = 0\n    var i: int = 0\n    while i < chain.size():\n        var card: CardData = chain[i]\n        if card.rank == CardTypes.Ranks.JACK:\n            skips += 1\n            i += 1\n        elif card.rank == CardTypes.Ranks.KING:\n            reverse_turn_order()\n            i += 1\n        else:\n            break\n    return (start_player + skips + 1) % 4",
     "explanation": "Look at the `if card.rank == CardTypes.Ranks.JACK:` branch on lines 6–7: it increments `skips += 1`, but **forgot `i += 1`!** Because `i` stays `0` forever, the `while i < chain.size():` loop inspects `chain[0]` in an infinite loop, freezing the main thread.",
     "buggyLineNumber": 7,
-    "hint": "Compare the `JACK` branch (lines 6–7) with the `KING` branch (lines 8–10): why does `i` advance in the `KING` branch but not in the `JACK` branch?"
+    "hint": "Compare the `JACK` branch (lines 6–7) with the `KING` branch (lines 8–10): why does `i` advance in the `KING` branch but not in the `JACK` branch?",
+    "buggyLineNumbers": [
+      4,
+      6,
+      7
+    ]
   },
   "tangibleGoal": "Play Jump (`J`) cards to skip opponents across the table and Kickback (`K`) cards to reverse turn direction (`↻ CW` <-> `↺ CCW`) live on the HUD!"
 }

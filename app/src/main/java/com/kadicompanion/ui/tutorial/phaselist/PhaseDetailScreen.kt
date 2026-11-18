@@ -93,7 +93,7 @@ fun PhaseDetailScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> LoadingSkeleton()
-                phase == null -> EmptyState(title = "Module not found", message = "")
+                phase == null -> EmptyState(title = "Module not found", message = "Return to the curriculum list and choose a valid module.")
                 else -> {
                     val completedCount = phase.lessons.count { it.id in state.completedIds }
                     val nextUncompletedLesson = phase.lessons.firstOrNull { it.id !in state.completedIds }

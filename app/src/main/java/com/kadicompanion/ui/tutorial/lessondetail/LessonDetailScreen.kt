@@ -10,6 +10,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -739,7 +742,7 @@ private fun StudioSegmentedTabs(
                     modifier = Modifier
                         .weight(1f)
                         .clip(MaterialTheme.shapes.extraSmall)
-                        .clickable { onSelectTab(idx) },
+                        .selectable(selected = selected, role = Role.Tab, onClick = { onSelectTab(idx) }),
                     shape = MaterialTheme.shapes.extraSmall,
                     color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
                 ) {
@@ -1308,11 +1311,15 @@ private fun EditorChecklistStudioCard(
                             else MaterialTheme.colorScheme.outlineVariant,
                             shape = MaterialTheme.shapes.small
                         )
-                        .clickable {
-                            if (idx < checkedStates.size) {
-                                checkedStates[idx] = !checkedStates[idx]
+                        .toggleable(
+                            value = isChecked,
+                            role = Role.Checkbox,
+                            onValueChange = {
+                                if (idx < checkedStates.size) {
+                                    checkedStates[idx] = it
+                                }
                             }
-                        }
+                        )
                         .padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)

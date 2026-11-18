@@ -30,6 +30,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -57,12 +59,18 @@ private const val TERM_TAG = "term"
  * Strips any raw markdown markers (`backticks`, `**bold**`, `[[Term|Alias]]`) from single-line plain strings
  * such as top app bar titles or compact badges so raw `''` or `[]` characters never appear.
  */
+private val WIKI_ALIAS_CLEAN_REGEX = Regex("\\[\\[([^\\]|]+)\\|([^\\]]+)\\]\\]")
+private val WIKI_SIMPLE_CLEAN_REGEX = Regex("\\[\\[([^\\]]+)\\]\\]")
+private val MD_LINK_CLEAN_REGEX = Regex("\\[([^\\]]+)\\]\\([^)]+\\)")
+private val NUMBERED_ITEM_REGEX = NUMBERED_ITEM_REGEX
+
 fun cleanPlainText(raw: String): String {
     if (raw.isEmpty()) return raw
+    if ('[' !in raw && '*' !in raw && '`' !in raw) return raw
     return raw
-        .replace(Regex("\\[\\[([^\\]|]+)\\|([^\\]]+)\\]\\]"), "$2")
-        .replace(Regex("\\[\\[([^\\]]+)\\]\\]"), "$1")
-        .replace(Regex("\\[([^\\]]+)\\]\\([^)]+\\)"), "$1")
+        .replace(WIKI_ALIAS_CLEAN_REGEX, "$2")
+        .replace(WIKI_SIMPLE_CLEAN_REGEX, "$1")
+        .replace(MD_LINK_CLEAN_REGEX, "$1")
         .replace("**", "")
         .replace("``", "")
         .replace("`", "")
@@ -159,7 +167,7 @@ fun MarkdownText(
                         text = block.text,
                         style = style.copy(fontWeight = FontWeight.Bold),
                         color = color,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp).semantics { heading() },
                         onTermClick = onTermClick
                     )
                 }
@@ -236,7 +244,7 @@ fun MarkdownText(
                     )
                 }
                 is MarkdownBlock.Callout -> {
-                    val calloutType = when (block.kind.uppercase()) {
+                    val calloutType = when (block.kind.uppercase(java.util.Locale.ROOT)) {
                         "WHY" -> CalloutType.WHY
                         "MISTAKE", "WARNING" -> CalloutType.MISTAKE
                         "GODOT", "EDITOR" -> CalloutType.GODOT
@@ -624,9 +632,9 @@ private object MarkdownParser {
                     }
                     blocks += MarkdownBlock.BulletList(items)
                 }
-                Regex("^\\s*\\d+\\.\\s").containsMatchIn(line) -> {
+                NUMBERED_ITEM_REGEX.containsMatchIn(line) -> {
                     val items = mutableListOf<String>()
-                    while (i < lines.size && Regex("^\\s*\\d+\\.\\s").containsMatchIn(lines[i])) {
+                    while (i < lines.size && NUMBERED_ITEM_REGEX.containsMatchIn(lines[i])) {
                         items += lines[i].trimStart().substringAfter(". ").trim()
                         i++
                     }
@@ -643,7 +651,7 @@ private object MarkdownParser {
                         !lines[i].trimStart().startsWith("* ") &&
                         !lines[i].trimStart().startsWith("> ") &&
                         !lines[i].trimStart().startsWith("```") &&
-                        !Regex("^\\s*\\d+\\.\\s").containsMatchIn(lines[i])
+                        !NUMBERED_ITEM_REGEX.containsMatchIn(lines[i])
                     ) {
                         sb.append(' ').append(lines[i])
                         i++

@@ -40,7 +40,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -131,7 +138,7 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
                         state.attemptFeedback?.let { feedback ->
                             val isSolved = state.solvedByAttempt
                             val accent = if (isSolved) successColor() else MaterialTheme.colorScheme.tertiary
-                            KadiCard(accent = accent) {
+                            KadiCard(accent = accent, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
                                 RichInlineText(
                                     text = feedback,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -253,7 +260,10 @@ private fun TappableBrokenCodePanel(
         GDScriptHighlighter.paletteFor(uiPrefs.codeThemePreset, isDark)
     }
     val bg = palette.background
-    val lines = brokenCode.lines()
+    val lines = remember(brokenCode) { brokenCode.lines() }
+    val highlightedLines = remember(lines, isDark, uiPrefs.codeThemePreset) {
+        lines.map { GDScriptHighlighter.highlight(it, isDark, uiPrefs.codeThemePreset) }
+    }
     val success = successColor()
     val codeFontSize = (13f * uiPrefs.codeFontScale).sp
     val codeLineHeight = (20f * uiPrefs.codeFontScale).sp
@@ -278,13 +288,21 @@ private fun TappableBrokenCodePanel(
                     isSelected && isBuggy -> success.copy(alpha = 0.18f)
                     else -> Color.Transparent
                 }
+                val statusLabel = when {
+                    fixShown && isBuggy -> "Buggy line"
+                    isSelected && !isBuggy -> "Selected, no bug on this line"
+                    isSelected && isBuggy -> "Selected, bug found"
+                    else -> "Line $lineNum"
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 38.dp)
                         .background(rowBg)
-                        .clickable(enabled = !fixShown) { onLineClick(lineNum) }
-                        .padding(horizontal = 14.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.Top
+                        .clickable(enabled = !fixShown, role = Role.Button) { onLineClick(lineNum) }
+                        .semantics(mergeDescendants = true) { stateDescription = statusLabel }
+                        .padding(horizontal = 14.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = lineNum.toString().padStart(2, ' '),
@@ -293,12 +311,12 @@ private fun TappableBrokenCodePanel(
                             fontSize = (12f * uiPrefs.codeFontScale).sp,
                             lineHeight = codeLineHeight
                         ),
-                        color = if (fixShown && isBuggy) success else palette.plain.copy(alpha = 0.5f),
+                        color = if (fixShown && isBuggy) success else palette.comment,
                         fontWeight = if (isSelected || (fixShown && isBuggy)) FontWeight.Bold else FontWeight.Normal,
                         modifier = Modifier.width(28.dp)
                     )
                     Text(
-                        text = GDScriptHighlighter.highlight(lineText, isDark, uiPrefs.codeThemePreset),
+                        text = highlightedLines[idx],
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontFamily = CodeFontFamily,
                             fontSize = codeFontSize,
@@ -319,7 +337,7 @@ private fun BugHero(symptom: String) {
     val heroTextMuted = heroTextTertiary()
     HeroPanel(
         gradient = Brush.linearGradient(
-            colors = listOf(Color(0xFF450A0A), Color(0xFF991B1B), scheme.tertiary)
+            colors = listOf(Color(0xFF450A0A), Color(0xFF7F1D1D), Color(0xFF991B1B))
         )
     ) {
         Row(

@@ -9,14 +9,24 @@ interface ProgressRepository {
     fun observeAllLessonProgress(): Flow<List<LessonProgress>>
     fun observeBookmarkForLesson(lessonId: String): Flow<Bookmark?>
     fun observeBookmarkForPhase(phaseId: String): Flow<Bookmark?>
+    fun observeBookmarkForDoc(className: String): Flow<Bookmark?>
     fun observeBookmarkForGlossary(term: String): Flow<Bookmark?>
     fun observeAllBookmarks(): Flow<List<Bookmark>>
     suspend fun markLessonComplete(lessonId: String)
     suspend fun markLessonOpened(lessonId: String)
     suspend fun getLastOpenedLesson(): LessonProgress?
-    suspend fun addBookmark(phaseId: String, lessonId: String? = null, glossaryTerm: String? = null, note: String? = null)
+    suspend fun addBookmark(
+        phaseId: String,
+        lessonId: String? = null,
+        docClassName: String? = null,
+        glossaryTerm: String? = null,
+        note: String? = null
+    )
     suspend fun removeBookmark(id: Long)
     suspend fun removeBookmarkForLesson(lessonId: String)
     suspend fun removeBookmarkForPhase(phaseId: String)
+    suspend fun removeBookmarkForDoc(className: String)
     suspend fun removeBookmarkForGlossary(term: String)
+    suspend fun clearAllProgress()
+    suspend fun clearAllBookmarks()
 }

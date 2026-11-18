@@ -30,7 +30,7 @@ class GlossaryDetailViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val rawTerm: String = checkNotNull(savedStateHandle["term"])
+    private val rawTerm: String = android.net.Uri.decode(checkNotNull(savedStateHandle["term"]))
     private val cleanTerm: String = rawTerm.substringBefore('|').trim()
 
     private val _entry = MutableStateFlow<GlossaryEntry?>(null)

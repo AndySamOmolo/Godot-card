@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -206,7 +207,7 @@ private fun AccuracyHero(fraction: Float, totalQuestions: Int) {
                     color = heroText
                 )
                 Text(
-                    text = "$totalQuestions " + stringResource(R.string.insights_attempted).lowercase(),
+                    text = pluralStringResource(R.plurals.questions_attempted_count, totalQuestions, totalQuestions),
                     style = MaterialTheme.typography.bodyMedium,
                     color = heroTextSub
                 )

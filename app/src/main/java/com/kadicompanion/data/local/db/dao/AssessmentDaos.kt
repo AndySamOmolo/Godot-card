@@ -15,6 +15,9 @@ interface QuizAttemptDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: QuizAttemptEntity)
+
+    @Query("DELETE FROM quiz_attempts")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -27,4 +30,7 @@ interface DebugChallengeAttemptDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: DebugChallengeAttemptEntity)
+
+    @Query("DELETE FROM debug_challenge_attempts")
+    suspend fun deleteAll()
 }

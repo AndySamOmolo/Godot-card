@@ -88,7 +88,6 @@ func reshuffle_if_empty() -> void:
 	deck = discard_pile.duplicate()
 	deck.shuffle()
 	discard_pile = [top_card]
-	randomize()
 	pile_recycled.emit(deck.size())
 
 func choose_best_suit_for_ai(hand: Array) -> int:

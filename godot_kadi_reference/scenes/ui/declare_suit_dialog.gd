@@ -13,6 +13,7 @@ func _ready() -> void:
 	option_button.add_item("♦ Diamonds", CardTypes.Suits.DIAMONDS)
 	option_button.add_item("♣ Clubs", CardTypes.Suits.CLUBS)
 	option_button.add_item("♠ Spades", CardTypes.Suits.SPADES)
+	option_button.add_item("★ Any Suit (No Demand)", -1)
 	confirm_button.pressed.connect(_on_confirm)
 	hide()
 

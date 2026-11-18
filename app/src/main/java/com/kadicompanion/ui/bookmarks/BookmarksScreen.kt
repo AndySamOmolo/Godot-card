@@ -53,6 +53,7 @@ fun BookmarksScreen(
     onLessonClick: (String) -> Unit,
     onDocClick: (String) -> Unit,
     onGlossaryClick: (String) -> Unit,
+    onPhaseClick: (String) -> Unit = {},
     vm: BookmarksViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -106,6 +107,7 @@ fun BookmarksScreen(
                                 }
                                 items(rows, key = { it.id }) { bookmark ->
                                     val displayTitle = bookmark.glossaryTerm
+                                        ?: bookmark.docClassName
                                         ?: bookmark.lessonId?.let { state.lessonTitles[it] ?: it }
                                         ?: state.phaseTitles[bookmark.phaseId]
                                         ?: bookmark.phaseId
@@ -123,6 +125,8 @@ fun BookmarksScreen(
                                             when {
                                                 bookmark.lessonId != null -> onLessonClick(bookmark.lessonId)
                                                 bookmark.glossaryTerm != null -> onGlossaryClick(bookmark.glossaryTerm)
+                                                bookmark.docClassName != null -> onDocClick(bookmark.docClassName)
+                                                bookmark.phaseId in state.phaseTitles -> onPhaseClick(bookmark.phaseId)
                                                 else -> onDocClick(bookmark.phaseId)
                                             }
                                         },

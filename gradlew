@@ -115,6 +115,27 @@ esac
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
 
+# Auto-fallback to JDK 17/21 if JAVA_HOME points to unsupported JDK 22+
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    JAVA_VER_STR=$("$JAVA_HOME/bin/java" -version 2>&1 | head -n 1)
+    case "$JAVA_VER_STR" in
+        *'"22.'*|*'"23.'*|*'"24.'*|*'"25.'*|*'"26.'*|*'"27.'*|*'"28.'*)
+            for CANDIDATE_JBR in \
+                "/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+                "/opt/android-studio/jbr" \
+                "$HOME/android-studio/jbr" \
+                "/usr/lib/jvm/java-17-openjdk-amd64" \
+                "/usr/lib/jvm/java-21-openjdk-amd64"; do
+                if [ -x "$CANDIDATE_JBR/bin/java" ]; then
+                    JAVA_HOME="$CANDIDATE_JBR"
+                    export JAVA_HOME
+                    break
+                fi
+            done
+            ;;
+    esac
+fi
+
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then

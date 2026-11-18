@@ -3,12 +3,15 @@ package com.kadicompanion.data.repository
 import com.kadicompanion.data.content.ContentLoader
 import com.kadicompanion.domain.model.GlossaryEntry
 import com.kadicompanion.domain.repository.GlossaryRepository
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,10 +23,10 @@ class GlossaryRepositoryImpl @Inject constructor(
     private val mutex = Mutex()
     private val _cache = MutableStateFlow<List<GlossaryEntry>>(emptyList())
     private val cache = _cache.asStateFlow()
-    private var loadStarted = false
+    @Volatile private var isLoaded = false
 
-    override fun observeAll(): Flow<List<GlossaryEntry>> = cache.onEach {
-        if (!loadStarted) ensureLoaded()
+    override fun observeAll(): Flow<List<GlossaryEntry>> = cache.onStart {
+        if (!isLoaded) ensureLoaded()
     }
 
     override suspend fun get(term: String): GlossaryEntry? {
@@ -38,19 +41,24 @@ class GlossaryRepositoryImpl @Inject constructor(
 
     override suspend fun search(query: String): List<GlossaryEntry> {
         ensureLoaded()
-        val q = query.trim().lowercase()
+        val q = query.trim().lowercase(Locale.ROOT)
         if (q.isEmpty()) return _cache.value
         return _cache.value.filter { entry ->
-            entry.term.lowercase().contains(q) || entry.shortDefinition.lowercase().contains(q)
+            entry.term.lowercase(Locale.ROOT).contains(q) || entry.shortDefinition.lowercase(Locale.ROOT).contains(q)
         }
     }
 
     private suspend fun ensureLoaded() {
-        if (_cache.value.isNotEmpty()) return
-        loadStarted = true
+        if (isLoaded && _cache.value.isNotEmpty()) return
         mutex.withLock {
-            if (_cache.value.isNotEmpty()) return
-            _cache.value = contentLoader.loadGlossary()
+            if (isLoaded && _cache.value.isNotEmpty()) return
+            val loaded = withContext(NonCancellable) {
+                contentLoader.loadGlossary()
+            }
+            _cache.value = loaded
+            if (loaded.isNotEmpty()) {
+                isLoaded = true
+            }
         }
     }
 }

@@ -1,21 +1,20 @@
-# Hilt
--keep class dagger.hilt.** { *; }
--keep class * extends dagger.hilt.android.lifecycle.HiltViewModel { *; }
-
-# Kotlin Serialization
+# Kotlinx Serialization
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
--keepclassmembers class kotlinx.serialization.json.** {
+
+-keepclassmembers class com.kadicompanion.** {
     *** Companion;
 }
--keepclasseswithmembers class kotlinx.serialization.json.** {
+-keepclasseswithmembers class com.kadicompanion.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# Room
--keep class * extends androidx.room.RoomDatabase { *; }
--keep @androidx.room.Entity class * { *; }
--keep @androidx.room.Dao class * { *; }
+# Room entities & FTS tables
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-keep @androidx.room.Fts4 class *
+-dontwarn androidx.room.paging.**
 
-# Compose
--keep class androidx.compose.** { *; }
+# Hilt
+-keep class dagger.hilt.** { *; }
+-keep class javax.inject.** { *; }

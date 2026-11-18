@@ -30,6 +30,9 @@ class ProgressRepositoryImpl @Inject constructor(
     override fun observeBookmarkForPhase(phaseId: String): Flow<Bookmark?> =
         bookmarkDao.observeForPhase(phaseId).map { it?.toDomain() }
 
+    override fun observeBookmarkForDoc(className: String): Flow<Bookmark?> =
+        bookmarkDao.observeForDoc(className).map { it?.toDomain() }
+
     override fun observeBookmarkForGlossary(term: String): Flow<Bookmark?> =
         bookmarkDao.observeForGlossary(term).map { it?.toDomain() }
 
@@ -70,15 +73,26 @@ class ProgressRepositoryImpl @Inject constructor(
         lessonProgressDao.getLastOpened()?.toDomain()
 
     override suspend fun addBookmark(
-        phaseId: String, lessonId: String?, glossaryTerm: String?, note: String?
+        phaseId: String,
+        lessonId: String?,
+        docClassName: String?,
+        glossaryTerm: String?,
+        note: String?
     ) {
+        when {
+            lessonId != null -> bookmarkDao.deleteForLesson(lessonId)
+            docClassName != null -> bookmarkDao.deleteForDoc(docClassName)
+            glossaryTerm != null -> bookmarkDao.deleteForGlossary(glossaryTerm)
+            else -> bookmarkDao.deleteForPhase(phaseId)
+        }
         bookmarkDao.insert(
             BookmarkEntity(
                 phaseId = phaseId,
                 lessonId = lessonId,
+                docClassName = docClassName,
                 glossaryTerm = glossaryTerm,
                 createdAt = System.currentTimeMillis(),
-                note = note
+                note = note?.take(2000)
             )
         )
     }
@@ -86,11 +100,14 @@ class ProgressRepositoryImpl @Inject constructor(
     override suspend fun removeBookmark(id: Long) = bookmarkDao.delete(id)
     override suspend fun removeBookmarkForLesson(lessonId: String) = bookmarkDao.deleteForLesson(lessonId)
     override suspend fun removeBookmarkForPhase(phaseId: String) = bookmarkDao.deleteForPhase(phaseId)
+    override suspend fun removeBookmarkForDoc(className: String) = bookmarkDao.deleteForDoc(className)
     override suspend fun removeBookmarkForGlossary(term: String) = bookmarkDao.deleteForGlossary(term)
+    override suspend fun clearAllProgress() = lessonProgressDao.deleteAll()
+    override suspend fun clearAllBookmarks() = bookmarkDao.deleteAll()
 }
 
 private fun LessonProgressEntity.toDomain() =
     LessonProgress(lessonId, isCompleted, lastOpenedAt, completedAt)
 
 private fun BookmarkEntity.toDomain() =
-    Bookmark(id, phaseId, lessonId, glossaryTerm, createdAt, note)
+    Bookmark(id, phaseId, lessonId, docClassName, glossaryTerm, createdAt, note)

@@ -55,7 +55,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -367,7 +372,7 @@ private fun InteractiveEditorPanel(
                 color = quiet,
                 modifier = Modifier.weight(1f)
             )
-            IconButton(onClick = onReset, modifier = Modifier.size(32.dp)) {
+            IconButton(onClick = onReset, modifier = Modifier.size(40.dp)) {
                 Icon(
                     Icons.Outlined.Refresh,
                     contentDescription = "Reset code",
@@ -396,7 +401,7 @@ private fun InteractiveEditorPanel(
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
                     )
                 }
             }
@@ -407,7 +412,13 @@ private fun InteractiveEditorPanel(
             onValueChange = onCodeChange,
             modifier = Modifier
                 .fillMaxWidth()
+                .semantics { contentDescription = "GDScript code editor" }
                 .padding(horizontal = 8.dp, vertical = 4.dp),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrect = false,
+                keyboardType = KeyboardType.Ascii
+            ),
             textStyle = TextStyle(
                 fontFamily = CodeFontFamily,
                 fontSize = (13f * uiPrefs.codeFontScale).sp,

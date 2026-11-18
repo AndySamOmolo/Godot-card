@@ -1,9 +1,16 @@
 package com.kadicompanion.data.local.db.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "quiz_attempts")
+@Entity(
+    tableName = "quiz_attempts",
+    indices = [
+        Index(value = ["attemptedAt"]),
+        Index(value = ["concept"])
+    ]
+)
 data class QuizAttemptEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val questionId: String,

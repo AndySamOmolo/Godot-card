@@ -1,0 +1,506 @@
+{
+  "id": "phase_15_gdscript_patterns_coroutines",
+  "order": 15,
+  "title": "Modern GDScript 2.0 Mastery: Lambdas, Coroutines (`await`), Properties & Design Patterns",
+  "summary": "Write expressive, idiomatic GDScript 2.0 using first-class Callables, lambda pipelines (`filter`, `map`, `reduce`), validated property getters/setters, asynchronous `await` coroutines, and the classic Gang-of-Four Game Design Patterns (Command, Observer, Strategy, Object Pool).",
+  "estimatedMinutes": 65,
+  "concepts": [
+    "Callable",
+    "Signal",
+    "Tween",
+    "RefCounted",
+    "Node"
+  ],
+  "programmingConcepts": [
+    "First-Class Functions & Lambdas",
+    "Functional Pipelines (filter/map/reduce)",
+    "Property Getters & Setters",
+    "Coroutines (await)",
+    "Command, Strategy & Object Pool Patterns"
+  ],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/functional_kadi.gd",
+    "res://scripts/card_pool.gd"
+  ],
+  "sceneTreeBlueprint": "Table (Node2D) -> CardPool + MoveCommandStack + AsyncDealCoroutine",
+  "learningObjectives": [
+    "Pass functions as values using `Callable`, lambdas (`func(x):`), `.bind()`, and functional `Array` methods (`filter`, `map`, `reduce`, `any`, `all`)",
+    "Enforce data invariants automatically with GDScript 2.0 property `set(value):` and `get:` blocks",
+    "Choreograph multi-step card dealing, turn banners, and dialog popups without callback spaghetti using `await` coroutines",
+    "Implement the Command (Undo/Redo), Strategy (AI Personalities), and Object Pool patterns in Godot 4.3"
+  ],
+  "tangibleGoal": "Animate staggered card dealing with `await`, filter playable hands in one line, auto-clamp health/score properties, and pool `CardScene` nodes with zero frame spikes!",
+  "lessons": [
+    {
+      "id": "l_15_01_callables_lambdas_functional",
+      "order": 1,
+      "title": "First-Class `Callable`s, Lambdas & Functional Arrays (`filter`, `map`, `reduce`, `any`, `all`)",
+      "targetFile": "res://scripts/functional_kadi.gd",
+      "tangibleOutcome": "Replace verbose 10-line loops with expressive 1-line `filter()`, `map()`, `reduce()`, and `any()` pipelines!",
+      "beyondKadi": "In RPGs and strategy games, querying *'all living enemies within 200px that are poisoned'* or *'total weight of all equipped armor'* becomes a clean 1-line `filter()` or `reduce()` expression.",
+      "transferChallenge": "**Solo Transfer Challenge**: Given `var party_hp: Array[int] = [45, 0, 80, 12]`, use `party_hp.filter(...)` to return only living members (`hp > 0`) and `party_hp.all(...)` to check if the whole party survived.",
+      "sceneTree": "Functional Helpers (RefCounted)",
+      "editorSteps": [
+        "Open `res://scripts/functional_kadi.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# First-Class `Callable`s & Functional Array Pipelines\n\nIn GDScript 2.0, functions are **first-class values** represented by `[[Callable]]`. You can pass named functions or inline **lambdas** (`func(x): return ...`) directly into `[[Array]]` methods:\n\n| Method | What It Returns | Example in Kadi |\n| :--- | :--- | :--- |\n| **`arr.filter(fn)`** | New `Array` of elements where `fn(el)` is `true` | All playable cards in hand |\n| **`arr.map(fn)`** | New `Array` with `fn(el)` applied to each element | Convert `Array[CardData]` -> `Array[String]` names |\n| **`arr.reduce(fn, init)`** | Single accumulated value | Sum tournament penalty points |\n| **`arr.any(fn)`** | `true` if at least 1 element satisfies `fn` | Does player hold any Ace? |\n| **`arr.all(fn)`** | `true` if every element satisfies `fn` | Are all staged cards Answer cards? |",
+      "codeSnippets": [
+        {
+          "id": "snip_15_01_functional",
+          "language": "gdscript",
+          "code": "# Expressive Functional Pipelines in GDScript 2.0:\nstatic func playable_cards_in_hand(hand: Array[CardData], top: CardData) -> Array[CardData]:\n    return hand.filter(func(c: CardData) -> bool:\n        return RuleValidator.is_single_card_playable(c, top, GameState.penalty_stack, GameState.declared_suit)\n    )\n\nstatic func total_hand_points(hand: Array[CardData]) -> int:\n    return hand.reduce(func(acc: int, c: CardData) -> int:\n        return acc + TournamentRules.card_points(c), 0\n    )\n\nstatic func holds_penalty_blocker(hand: Array[CardData]) -> bool:\n    return hand.any(func(c: CardData) -> bool: return c.rank == CardTypes.Ranks.ACE)",
+          "caption": "Using `filter`, `reduce`, and `any` with typed lambdas in GDScript 2.0."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `double_all(nums: Array[int]) -> Array` that returns `nums.map(func(n: int) -> int: return n * 2)`.",
+        "hint": "Use `return nums.map(func(n: int) -> int: return n * 2)`.",
+        "starterCode": "func double_all(nums: Array[int]) -> Array:\n\t",
+        "requiredTokens": [
+          "func",
+          "double_all",
+          "return",
+          "nums.map",
+          "* 2"
+        ],
+        "expectedOutput": "Returns a new array with every integer doubled.",
+        "solutionCode": "func double_all(nums: Array[int]) -> Array:\n\treturn nums.map(func(n: int) -> int: return n * 2)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_15_01_1",
+          "prompt": "Which `Array` method returns `true` as soon as it finds **at least one** element matching a predicate lambda (and short-circuits without checking the rest)?",
+          "choices": [
+            "`arr.any(callable)`",
+            "`arr.all(callable)`",
+            "`arr.map(callable)`",
+            "`arr.reduce(callable, 0)`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Array.any()` returns `true` on the first matching element and stops iterating immediately.",
+          "concept": "Array.any Short-Circuit"
+        },
+        {
+          "id": "q_15_01_2",
+          "prompt": "What does `button.pressed.connect(_on_slot_clicked.bind(slot_index))` do?",
+          "choices": [
+            "It creates a new `Callable` that automatically passes `slot_index` as an extra argument whenever `pressed` emits",
+            "It unbinds the signal",
+            "It locks the button to position `(0, slot_index)`",
+            "It calls `_on_slot_clicked` immediately during `_ready()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Callable.bind(...)` curries/attaches additional arguments to a callback, which is ideal when connecting signals inside a loop.",
+          "concept": "Callable.bind"
+        },
+        {
+          "id": "q_15_01_3",
+          "prompt": "In `hand.reduce(func(acc, card): return acc + card.rank, 0)`, what is the second argument `0`?",
+          "choices": [
+            "The initial value of the accumulator `acc` (which also ensures an empty array safely returns `0`)",
+            "The index of the last card",
+            "The maximum number of iterations",
+            "A boolean flag"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Providing an initial accumulator value `0` seeds `acc` on the first element and prevents errors when the array is empty.",
+          "concept": "Array.reduce"
+        }
+      ]
+    },
+    {
+      "id": "l_15_02_properties_getters_setters",
+      "order": 2,
+      "title": "Encapsulation with GDScript 2.0 Property Getters & Setters (`set` / `get`)",
+      "targetFile": "res://scripts/functional_kadi.gd",
+      "tangibleOutcome": "Automatically clamp `penalty_stack` and emit UI update signals whenever a property changes using `set(value):`!",
+      "beyondKadi": "In any RPG or Shooter, a player's `hp` should never drop below `0` or exceed `max_hp`, and changing `hp` should automatically update the health bar. A property setter (`set(value): hp = clampi(value, 0, max_hp)`) enforces this in one place!",
+      "transferChallenge": "**Solo Transfer Challenge**: Create a `mana: int = 100` property with a `set(value):` block that clamps `mana` between `0` and `max_mana` and emits `mana_changed.emit(mana)`.",
+      "sceneTree": "GameState\n└── penalty_stack (Property with automatic clamping & signal emission)",
+      "editorSteps": [
+        "Open `res://scripts/functional_kadi.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Property Getters & Setters (`set` / `get`)\n\nIn GDScript 2.0, you can attach `set(value):` and `get:` blocks directly to any member variable so validation and signal emission happen automatically on assignment:\n\n```gdscript\nsignal coins_changed(new_total: int)\n\nvar coins: int = 100:\n    set(value):\n        var clamped: int = maxi(0, value)\n        if coins != clamped:\n            coins = clamped\n            coins_changed.emit(coins)\n    get:\n        return coins\n```\n\n> [!TIP]\n> **Combined `@export` + `set(value)`**: When you combine `@export` and `@tool` with a setter, dragging a slider in the Godot Inspector updates your scene visually in real time! Just guard child node access with `if is_node_ready():` because `@export` setters run **before** `_ready()` when a scene is instantiated.",
+      "codeSnippets": [
+        {
+          "id": "snip_15_02_props",
+          "language": "gdscript",
+          "code": "# Self-Validating Property Setter with Signal Emission:\nsignal health_changed(current: int, maximum: int)\nsignal defeated()\n\n@export var max_hp: int = 100\nvar hp: int = 100:\n    set(value):\n        var next_hp: int = clampi(value, 0, max_hp)\n        if next_hp == hp:\n            return\n        hp = next_hp\n        health_changed.emit(hp, max_hp)\n        if hp == 0:\n            defeated.emit()",
+          "caption": "A setter guarantees `hp` is always within `[0, max_hp]` and emits signals only when the value actually changes."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a property `var shield: int = 0:` with a `set(value):` block that assigns `shield = maxi(0, value)` so shield never becomes negative.",
+        "hint": "Indent `set(value):` under `var shield: int = 0:` and assign `shield = maxi(0, value)`.",
+        "starterCode": "var shield: int = 0:\n\t",
+        "requiredTokens": [
+          "var shield",
+          "set(value):",
+          "shield =",
+          "maxi(0, value)"
+        ],
+        "expectedOutput": "Clamps shield to >= 0 whenever assigned.",
+        "solutionCode": "var shield: int = 0:\n\tset(value):\n\t\tshield = maxi(0, value)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_15_02_1",
+          "prompt": "When Godot instantiates a scene that has `@export var title: String = \"Hi\": set(v): ...`, when does the setter run relative to `_ready()`?",
+          "choices": [
+            "The `@export` setter runs **before** `_ready()` while properties are deserialized, so any child node access inside the setter must be guarded with `if is_node_ready():`",
+            "It only runs after `_process()`",
+            "It never runs on scene load",
+            "It runs only when the game closes"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Exported properties are assigned during instantiation before the node enters the tree and runs `_ready()`, so always check `if is_node_ready():` before touching `@onready` nodes in a setter.",
+          "concept": "Setter Lifecycle & is_node_ready()"
+        },
+        {
+          "id": "q_15_02_2",
+          "prompt": "Why is it good practice to check `if next_val == current_val: return` inside a property setter before emitting a `changed` signal?",
+          "choices": [
+            "To avoid redundant UI rebuilds or infinite signal loops when the same value is assigned repeatedly",
+            "Because signals can only be emitted once per match",
+            "Because `clampi()` mutates constants",
+            "To disable static typing"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Short-circuiting when the value hasn't changed prevents unnecessary UI refreshes and cyclic signal emissions.",
+          "concept": "Idempotent Setters"
+        },
+        {
+          "id": "q_15_02_3",
+          "prompt": "How do you define a read-only computed property `is_alive` in GDScript 2.0?",
+          "choices": [
+            "`var is_alive: bool:` followed by an indented `get: return hp > 0` block",
+            "`const is_alive = hp > 0`",
+            "`signal is_alive`",
+            "`enum is_alive { TRUE, FALSE }`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "A property with a `get:` block and no `set:` block computes its value on the fly whenever read.",
+          "concept": "Computed Getters"
+        }
+      ]
+    },
+    {
+      "id": "l_15_03_coroutines_await_sequencing",
+      "order": 3,
+      "title": "Asynchronous Coroutines with `await`: Choreographing Deals, Popups & Cutscenes",
+      "targetFile": "res://scenes/table/table.gd",
+      "tangibleOutcome": "Deal cards one by one with a crisp `0.12s` stagger and await the player's `DeclareSuitDialog` choice inline using `await`!",
+      "beyondKadi": "Turn-based battle sequences (Pokémon, Slay the Spire, Persona), RPG cutscenes, and boss phase intros are 10x cleaner when written as a linear `await` coroutine instead of 8 chained timer callbacks!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write an async boss intro `play_boss_intro() -> void` that awaits `camera_tween.finished`, awaits `get_tree().create_timer(0.5).timeout`, and then awaits `dialogue_box.dialogue_finished`.",
+      "sceneTree": "Table (Node2D)\n└── deal_opening_hands_animated() [Coroutine]",
+      "editorSteps": [
+        "Open `res://scenes/table/table.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Coroutines & `await` in Godot 4.3\n\nIn Godot 4.3, **any function that uses `await` becomes a coroutine**. When execution reaches `await some_signal`, Godot pauses *only that function* (the 60 FPS game loop and UI keep running smoothly!) and resumes on the next line as soon as `some_signal` emits.\n\n## Three High-Impact Uses of `await`\n1. **Staggered Dealing / Spawning**: `await get_tree().create_timer(0.12).timeout` inside a `for` loop.\n2. **Waiting for a Tween**: `await tween.finished`.\n3. **Waiting for a Modal Choice**: `var chosen_suit: int = await declare_suit_dialog.suit_declared` — `await` even returns the signal's emitted parameter directly!",
+      "codeSnippets": [
+        {
+          "id": "snip_15_03_await",
+          "language": "gdscript",
+          "code": "# Choreographing Animated Card Dealing & Modal Input with await:\nfunc deal_opening_hands_animated(cards_each: int = 4) -> void:\n    play_button.disabled = true\n    for _round in range(cards_each):\n        for seat in range(4):\n            GameState.draw_cards(seat, 1)\n            await get_tree().create_timer(0.08).timeout\n    play_button.disabled = false\n\nfunc prompt_human_for_suit() -> int:\n    declare_suit_dialog.show()\n    # Pauses this function until suit_declared(suit) emits, then returns suit!\n    var chosen_suit: int = await declare_suit_dialog.suit_declared\n    return chosen_suit",
+          "caption": "`await` turns asynchronous signals and timers into clean top-to-bottom code."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a coroutine `wait_then_print(tree: SceneTree) -> void` that awaits `tree.create_timer(0.5).timeout` and then calls `print(\"Ready!\")`.",
+        "hint": "Use `await tree.create_timer(0.5).timeout` followed by `print(\"Ready!\")`.",
+        "starterCode": "func wait_then_print(tree: SceneTree) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "wait_then_print",
+          "await",
+          "create_timer",
+          "timeout",
+          "print"
+        ],
+        "expectedOutput": "Pauses the coroutine for 0.5s without blocking the main thread, then prints Ready!.",
+        "solutionCode": "func wait_then_print(tree: SceneTree) -> void:\n\tawait tree.create_timer(0.5).timeout\n\tprint(\"Ready!\")"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_15_03_1",
+          "prompt": "Does calling `await get_tree().create_timer(1.0).timeout` freeze the game window or stop `_process(delta)` from running on other nodes?",
+          "choices": [
+            "No — `await` only suspends that specific coroutine function; the rest of the SceneTree and UI continue running at 60 FPS",
+            "Yes — it blocks the entire OS thread like `OS.delay_msec()`",
+            "Yes — it pauses all audio",
+            "It closes the current scene"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Unlike `OS.delay_msec()`, `await` yields control back to the SceneTree loop and resumes when the signal emits.",
+          "concept": "Non-Blocking Coroutines"
+        },
+        {
+          "id": "q_15_03_2",
+          "prompt": "If `signal suit_declared(suit: int)` emits `suit_declared.emit(2)`, what is the value of `s` in `var s: int = await dialog.suit_declared`?",
+          "choices": [
+            "`2` — `await` captures and returns the argument(s) emitted by the signal",
+            "`0`",
+            "`true`",
+            "`null`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Awaiting a signal with parameters evaluates directly to the emitted argument value.",
+          "concept": "Awaiting Signal Parameters"
+        },
+        {
+          "id": "q_15_03_3",
+          "prompt": "What risk should you guard against after resuming from an `await` inside a node that might have been freed (`queue_free()`) while waiting?",
+          "choices": [
+            "Check `if not is_inside_tree(): return` (or `is_instance_valid(self)`) before touching child nodes after the `await`",
+            "Call `randomize()` after every `await`",
+            "Reload the project",
+            "There is never any risk"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Because time passes while a coroutine is suspended, the scene or node may have exited the tree; checking `if not is_inside_tree(): return` prevents dangling node errors.",
+          "concept": "Coroutine Lifetime Safety"
+        }
+      ]
+    },
+    {
+      "id": "l_15_04_design_patterns_command_strategy",
+      "order": 4,
+      "title": "Game Design Patterns I: Command (Undo/Replay) & Strategy (Pluggable AI Brains)",
+      "targetFile": "res://scripts/functional_kadi.gd",
+      "tangibleOutcome": "Decouple AI decision-making into swappable `AIStrategy` resources (`AggressiveAI`, `DefensiveAI`, `ChaosAI`) using the Strategy Pattern!",
+      "beyondKadi": "The **Strategy Pattern** lets you plug different movement/attack brains into enemies via `@export var brain: AIStrategy`, while the **Command Pattern** turns every player action into a serializable object for Undo/Redo, replays, and network lockstep!",
+      "transferChallenge": "**Solo Transfer Challenge**: Create two `AIStrategy` subclasses (`BossAggressiveStrategy` and `BossCowardStrategy`) that implement `pick_action(hp_ratio: float) -> String`.",
+      "sceneTree": "AIPlayer\n└── @export var strategy: AIStrategy (Resource)",
+      "editorSteps": [
+        "Open `res://scripts/functional_kadi.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Classic Design Patterns in Godot 4.3: Strategy & Command\n\n## 1. The Strategy Pattern (Swappable `Resource` Brains)\nInstead of hardcoding a giant `if ai_difficulty == ...` block inside `table.gd`, define a base `class_name AIStrategy extends Resource` with a virtual method `score_move(cards: Array, penalty: int, hand_size: int) -> int`. Designers can then drag-and-drop different `.tres` AI brains onto each seat in the Inspector!\n\n## 2. The Command Pattern (Actions as Objects)\nRepresent each move as a `RefCounted` object with `execute()` and `undo()` methods. This single pattern unlocks:\n- **Instant Undo / Redo** in puzzle and strategy games\n- **Deterministic Match Replays** (save the list of commands and replay them)\n- **Turn Queueing** in RPGs and auto-battlers",
+      "codeSnippets": [
+        {
+          "id": "snip_15_04_patterns",
+          "language": "gdscript",
+          "code": "# Strategy Pattern: Pluggable AI Personality Resources\nclass_name AIStrategy\nextends Resource\n\n@export var personality_name: String = \"Balanced\"\n@export var ace_conservation_bias: int = 35\n@export var penalty_aggression_bonus: int = 20\n\nfunc evaluate_move(cards: Array[CardData], active_penalty: int, hand_size: int) -> int:\n    var score: int = 0\n    for c in cards:\n        score += TournamentRules.card_points(c)\n        if c.is_penalty():\n            score += penalty_aggression_bonus\n        if c.rank == CardTypes.Ranks.ACE and active_penalty == 0 and hand_size > 2:\n            score -= ace_conservation_bias\n    return score",
+          "caption": "Extending `Resource` for the Strategy Pattern lets you tweak AI personalities right in the Godot Inspector."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a class method `evaluate_attack(base_dmg: int, aggression_mult: float) -> int` that returns `int(round(base_dmg * aggression_mult))`.",
+        "hint": "Use `return int(round(base_dmg * aggression_mult))`.",
+        "starterCode": "func evaluate_attack(base_dmg: int, aggression_mult: float) -> int:\n\t",
+        "requiredTokens": [
+          "func",
+          "evaluate_attack",
+          "return",
+          "int",
+          "base_dmg * aggression_mult"
+        ],
+        "expectedOutput": "Computes weighted strategy score from base damage and multiplier.",
+        "solutionCode": "func evaluate_attack(base_dmg: int, aggression_mult: float) -> int:\n\treturn int(round(base_dmg * aggression_mult))"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_15_04_1",
+          "prompt": "Why is implementing the **Strategy Pattern** as a custom `Resource` (`class_name AIStrategy extends Resource`) so idiomatic in Godot 4.3?",
+          "choices": [
+            "Because `.tres` strategy files can be edited in the Inspector and swapped onto different enemy/AI nodes via `@export var strategy: AIStrategy` with zero code changes",
+            "Because `Resource` nodes have built-in 3D collision",
+            "Because `Node2D` cannot call functions",
+            "Because `Resource` automatically connects to LAN servers"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Resources are lightweight, Inspector-editable assets that can encapsulate both tuning parameters (`@export`) and behavior methods.",
+          "concept": "Resource Strategy Pattern"
+        },
+        {
+          "id": "q_15_04_2",
+          "prompt": "What are the two core methods every class in the **Command Pattern** (`MoveCommand`) implements to support Undo/Redo?",
+          "choices": [
+            "`execute()` and `undo()`",
+            "`_ready()` and `_process()`",
+            "`open()` and `close()`",
+            "`shuffle()` and `sort()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`execute()` applies the forward state transition and `undo()` reverses it using the command's stored snapshot fields.",
+          "concept": "Command Pattern"
+        },
+        {
+          "id": "q_15_04_3",
+          "prompt": "Besides Undo/Redo, what other major game feature becomes trivial when every player turn is recorded as a serializable `Command`?",
+          "choices": [
+            "Match Replays and Ghost Racing (re-running the recorded list of commands from the initial seed)",
+            "3D shadow mapping",
+            "Font kerning",
+            "Audio compression"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Storing the RNG seed plus the chronological list of executed `Command`s lets you replay an entire match deterministically in a few kilobytes.",
+          "concept": "Deterministic Replays"
+        }
+      ]
+    },
+    {
+      "id": "l_15_05_design_patterns_pool_composition",
+      "order": 5,
+      "title": "Game Design Patterns II: Object Pooling & Composition over Inheritance",
+      "targetFile": "res://scripts/card_pool.gd",
+      "tangibleOutcome": "Eliminate node instantiation spikes by pooling `CardScene` instances (`acquire()` / `release_all()`) and compose modular entity behaviors!",
+      "beyondKadi": "In bullet-hell shooters, survivor games (Vampire Survivors), and particle-heavy card games, calling `instantiate()` and `queue_free()` 500 times per second causes frame hitches. **Object Pooling** reuses existing nodes in `O(1)` time!",
+      "transferChallenge": "**Solo Transfer Challenge**: Build a `DamageNumberPool` that reuses `Label` nodes for floating combat text instead of freeing them after each tween.",
+      "sceneTree": "Table (Node2D)\n└── PlayerHandContainer (Reuses pooled CardScene children)",
+      "editorSteps": [
+        "Open `res://scripts/card_pool.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Object Pooling & Composition over Inheritance\n\n## 1. The Object Pool Pattern\nInstead of destroying child nodes with `queue_free()` and recreating them with `CardScene.instantiate()` on every UI refresh:\n1. **Reuse existing child nodes** (`container.get_child(i)`) and call `setup(card_data)`.\n2. **Hide excess nodes** (`child.visible = false`) so they remain ready in memory for the next draw!\n\n## 2. Composition over Inheritance in Godot\nInstead of a fragile 6-level inheritance hierarchy (`Entity -> LivingEntity -> MovableEntity -> ArmedEntity -> FlyingArmedEnemy`), build small, single-purpose child nodes (**Components**):\n- `HealthComponent (Node)`\n- `VelocityComponent (Node)`\n- `HitboxComponent (Area2D)`\n- `DropLootComponent (Node)`\nAny scene that needs health or loot drops simply adds those child nodes!",
+      "codeSnippets": [
+        {
+          "id": "snip_15_05_pool",
+          "language": "gdscript",
+          "code": "# Object Pool Helper for Zero-Allocation UI & Projectile Reuse:\nclass_name NodePool\nextends RefCounted\n\nvar _scene: PackedScene\nvar _inactive: Array[Node] = []\n\nfunc _init(template_scene: PackedScene, prewarm_count: int = 8) -> void:\n    _scene = template_scene\n    for _i in range(prewarm_count):\n        _inactive.append(_scene.instantiate())\n\nfunc acquire(parent: Node) -> Node:\n    var instance: Node = _inactive.pop_back() if not _inactive.is_empty() else _scene.instantiate()\n    if instance.get_parent() != parent:\n        parent.add_child(instance)\n    if instance is CanvasItem:\n        instance.visible = true\n    return instance\n\nfunc release(instance: Node) -> void:\n    if instance is CanvasItem:\n        instance.visible = false\n    _inactive.push_back(instance)",
+          "caption": "Pre-warming and reusing pooled nodes eliminates mid-combat allocation spikes."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `acquire_or_create(pool: Array[Node], scene: PackedScene) -> Node` that returns `pool.pop_back()` if `not pool.is_empty()`, or `scene.instantiate()` otherwise.",
+        "hint": "Use `return pool.pop_back() if not pool.is_empty() else scene.instantiate()`.",
+        "starterCode": "func acquire_or_create(pool: Array[Node], scene: PackedScene) -> Node:\n\t",
+        "requiredTokens": [
+          "func",
+          "acquire_or_create",
+          "pop_back",
+          "is_empty",
+          "instantiate"
+        ],
+        "expectedOutput": "Reuses an existing pooled node in O(1) or instantiates a new fallback.",
+        "solutionCode": "func acquire_or_create(pool: Array[Node], scene: PackedScene) -> Node:\n\treturn pool.pop_back() if not pool.is_empty() else scene.instantiate()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_15_05_1",
+          "prompt": "Why does **Object Pooling** improve frame-time stability in games that spawn many cards, bullets, or damage numbers?",
+          "choices": [
+            "It avoids repeated memory allocation, scene deserialization (`instantiate()`), SceneTree insertion, and deletion (`queue_free()`) during active gameplay frames",
+            "It increases texture resolution",
+            "It disables physics collision",
+            "It compresses audio streams"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Reusing pre-instantiated nodes keeps memory allocation flat and eliminates frame-time spikes.",
+          "concept": "Object Pooling"
+        },
+        {
+          "id": "q_15_05_2",
+          "prompt": "What must you always reset when acquiring a recycled node from an Object Pool?",
+          "choices": [
+            "Its transient state (such as `visible = true`, `modulate`, `scale`, `velocity`, or `is_selected = false`) so leftover values from its previous life don't leak",
+            "The computer's clock",
+            "The `project.godot` file",
+            "Nothing — pooled nodes reset themselves magically"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "A pooled object retains whatever properties it had when released unless `setup()` explicitly resets them.",
+          "concept": "Pool State Reset"
+        },
+        {
+          "id": "q_15_05_3",
+          "prompt": "In **Composition over Inheritance**, how do you make both a `WoodenCrate` and an `OrcWarrior` destructible without forcing them to inherit from the same base script?",
+          "choices": [
+            "Attach a reusable `HealthComponent` + `Hurtbox` child scene to both `WoodenCrate.tscn` and `OrcWarrior.tscn`",
+            "Copy and paste 200 lines of health code into both scripts",
+            "Make `WoodenCrate` extend `CharacterBody2D`",
+            "Use a global variable for crate HP"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Child component scenes let any node (`StaticBody2D` crate or `CharacterBody2D` enemy) share modular behavior without rigid inheritance chains.",
+          "concept": "Composition over Inheritance"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_15_export_setter_before_ready",
+    "brokenCode": "extends Control\n@onready var title_label: Label = $TitleLabel\n\n@export var card_title: String = \"Ace of Spades\":\n\tset(value):\n\t\tcard_title = value\n\t\ttitle_label.text = card_title\n\nfunc _ready() -> void:\n\ttitle_label.text = card_title",
+    "bugDescription": "When another scene instantiates this `Control` and sets `card_title` in the Inspector, the game crashes on startup with `Invalid set index 'text' (on base: 'Nil')` inside `set(value):`! Tap the buggy line.",
+    "fixedCode": "extends Control\n@onready var title_label: Label = $TitleLabel\n\n@export var card_title: String = \"Ace of Spades\":\n\tset(value):\n\t\tcard_title = value\n\t\tif is_node_ready():\n\t\t\ttitle_label.text = card_title\n\nfunc _ready() -> void:\n\ttitle_label.text = card_title",
+    "explanation": "Godot assigns `@export` inspector values *during instantiation*—before the node enters the SceneTree and initializes `@onready var title_label`. Therefore `title_label` is still `null` when the setter first runs! Always guard `@onready` node access inside setters with `if is_node_ready():`.",
+    "buggyLineNumber": 7,
+    "hint": "When `@export var card_title` is set during scene loading, has `_ready()` initialized `@onready var title_label` yet?"
+  }
+}

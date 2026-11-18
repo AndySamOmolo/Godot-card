@@ -125,8 +125,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Create `RuleValidator` (`res://scripts/rule_validator.gd`) so clicking 'Play Selected' checks if your card matches the discard pile's suit or rank (or is a wild Ace/Joker).",
-      "beyondKadi": "How **Static Rule Engines (`RuleValidator`) & `match` Pattern Matching** transfer to any game:\n- Separating pure rules (`RuleValidator`) from visual nodes (`Table.gd`) is **Model-View-Controller (MVC)** architecture. In a **Chess, Puzzle, or Strategy game**, keeping board validation in a static class lets AI opponents test 100 candidate moves in memory without moving a single sprite on screen!\n- `match` statements cleanly route input actions, item IDs, or state machine states without deep `if/elif` chains.",
-      "transferChallenge": "**Your Solo Challenge**: Add a static helper `static func get_playable_cards_in_hand(hand: Array, top: CardData, penalty: int, suit_demand: int) -> Array[CardData]:` to `rule_validator.gd` that returns all cards in `hand` where `is_single_card_playable()` is `true`, and use it in `table.gd` to subtly glow legal cards in Player 0's hand!"
+      "beyondKadi": "Pure `static func` validators in a `RefCounted` class (`CombatRules`, `CraftingValidator`, `PlacementValidator`) make unit testing effortless because you can pass mock inputs and `assert()` outputs without spawning a single `Node` in the SceneTree.",
+      "transferChallenge": "**Solo Transfer Challenge**: Create `class_name CraftingValidator extends RefCounted` with `static func can_craft(inventory: Dictionary, recipe: Dictionary) -> bool` that returns `true` only if `inventory.get(item, 0) >= required_count` for every key in `recipe`."
     },
     {
       "id": "l_04_02_drawing_invalid",
@@ -221,8 +221,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Try playing a non-matching card on purpose — watch `Table.gd` reject the move, deal you +1 penalty card into your hand, and announce the penalty on `FeedbackLabel`!",
-      "beyondKadi": "How **Static Rule Engines (`RuleValidator`) & `match` Pattern Matching** transfer to any game:\n- Separating pure rules (`RuleValidator`) from visual nodes (`Table.gd`) is **Model-View-Controller (MVC)** architecture. In a **Chess, Puzzle, or Strategy game**, keeping board validation in a static class lets AI opponents test 100 candidate moves in memory without moving a single sprite on screen!\n- `match` statements cleanly route input actions, item IDs, or state machine states without deep `if/elif` chains.",
-      "transferChallenge": "**Your Solo Challenge**: Add a static helper `static func get_playable_cards_in_hand(hand: Array, top: CardData, penalty: int, suit_demand: int) -> Array[CardData]:` to `rule_validator.gd` that returns all cards in `hand` where `is_single_card_playable()` is `true`, and use it in `table.gd` to subtly glow legal cards in Player 0's hand!"
+      "beyondKadi": "Validating an action first, mutating state on success, or applying a feedback penalty/cooldown on failure is the core loop of active-reload mechanics (Gears of War), rhythm game beat checks, and lockpicking minigames.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `attempt_active_reload(cursor_pos: float, sweet_spot_min: float, sweet_spot_max: float) -> String` that returns `\"INSTANT_RELOAD\"` if `cursor_pos` is inside the range, or applies a `+1.5s` jam penalty and returns `\"JAMMED\"` otherwise."
     },
     {
       "id": "l_04_03_multi_card_combos",
@@ -314,8 +314,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Stage two or three cards of the same rank (e.g. `7♥` + `7♠`) in your hand and play them together in a single explosive combo move!",
-      "beyondKadi": "How **Static Rule Engines (`RuleValidator`) & `match` Pattern Matching** transfer to any game:\n- Separating pure rules (`RuleValidator`) from visual nodes (`Table.gd`) is **Model-View-Controller (MVC)** architecture. In a **Chess, Puzzle, or Strategy game**, keeping board validation in a static class lets AI opponents test 100 candidate moves in memory without moving a single sprite on screen!\n- `match` statements cleanly route input actions, item IDs, or state machine states without deep `if/elif` chains.",
-      "transferChallenge": "**Your Solo Challenge**: Add a static helper `static func get_playable_cards_in_hand(hand: Array, top: CardData, penalty: int, suit_demand: int) -> Array[CardData]:` to `rule_validator.gd` that returns all cards in `hand` where `is_single_card_playable()` is `true`, and use it in `table.gd` to subtly glow legal cards in Player 0's hand!"
+      "beyondKadi": "Validating that all items in a staged batch share a property (`cur.rank == nxt.rank`) is used in Mahjong/Rummy meld checks, Match-3 line clears, and batch-crafting identical tier gems.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `can_fuse_gems(gems: Array[Dictionary]) -> bool` that returns `true` only if `gems.size() >= 3` and every gem dictionary in the array has the exact same `\"element\"` and `\"tier\"` values as `gems[0]`."
     }
   ],
   "debugChallenge": {

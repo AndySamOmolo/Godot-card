@@ -1,26 +1,26 @@
-# Build artifacts
-build/
-*/build/
-.gradle/
-.idea/
-local.properties
 *.iml
-
-# Built Android packages & binaries
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+app/build/
+build/
 *.apk
 *.aab
 *.ap_
 *.dex
-app/release/
-app/debug/
-
-# Gradle wrapper JAR is REQUIRED (don't ignore it)
-!gradle/wrapper/gradle-wrapper.jar
-
-# Keystore
+*.class
+bin/
+gen/
+out/
+release/
 *.keystore
 *.jks
-
-# OS
-.DS_Store
-Thumbs.db
+*.log
+*.tmp
+.godot/

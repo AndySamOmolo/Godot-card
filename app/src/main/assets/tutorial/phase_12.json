@@ -69,7 +69,7 @@
         {
           "id": "snip_12_01_save",
           "language": "gdscript",
-          "code": "# File: res://scripts/save_manager.gd\n# Autoload Singleton: SaveManager\nextends Node\n\nsignal profile_updated(profile: Dictionary)\n\nconst SAVE_PATH: String = \"user://kadi_profile.json\"\n\nvar profile: Dictionary = {\n\t\"wins\": 0,\n\t\"matches\": 0,\n\t\"streak\": 0,\n\t\"high_score_streak\": 0,\n\t\"coins\": 100\n}\n\nfunc _ready() -> void:\n\tload_profile()\n\nfunc save_profile() -> void:\n\tvar file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify(profile, \"\t\"))\n\t\tprofile_updated.emit(profile)\n\nfunc load_profile() -> void:\n\tif not FileAccess.file_exists(SAVE_PATH):\n\t\treturn\n\tvar raw_text: String = FileAccess.get_file_as_string(SAVE_PATH)\n\tvar parsed: Variant = JSON.parse_string(raw_text)\n\tif parsed is Dictionary:\n\t\tprofile.merge(parsed, true)\n\t\tprofile_updated.emit(profile)\n\nfunc record_match_result(human_won: bool) -> void:\n\tprofile[\"matches\"] = int(profile.get(\"matches\", 0)) + 1\n\tif human_won:\n\t\tprofile[\"wins\"] = int(profile.get(\"wins\", 0)) + 1\n\t\tprofile[\"streak\"] = int(profile.get(\"streak\", 0)) + 1\n\t\tprofile[\"coins\"] = int(profile.get(\"coins\", 100)) + 50\n\t\tif int(profile[\"streak\"]) > int(profile.get(\"high_score_streak\", 0)):\n\t\t\tprofile[\"high_score_streak\"] = profile[\"streak\"]\n\telse:\n\t\tprofile[\"streak\"] = 0\n\tsave_profile()\n\nfunc get_summary_text() -> String:\n\treturn \"Wins: %d/%d | Streak: %d | Coins: %d\" % [\n\t\tint(profile.get(\"wins\", 0)),\n\t\tint(profile.get(\"matches\", 0)),\n\t\tint(profile.get(\"streak\", 0)),\n\t\tint(profile.get(\"coins\", 100))\n\t]",
+          "code": "# File: res://scripts/save_manager.gd (Autoload: SaveManager)\nextends Node\n\nconst SAVE_PATH: String = \"user://kadi_profile.json\"\nconst TMP_PATH: String = \"user://kadi_profile.json.tmp\"\nconst ALLOWED_KEYS: Array[String] = [\"wins\", \"matches\", \"streak\", \"high_score_streak\", \"coins\"]\n\nvar profile: Dictionary = {\n    \"wins\": 0,\n    \"matches\": 0,\n    \"streak\": 0,\n    \"high_score_streak\": 0,\n    \"coins\": 100\n}\n\nfunc save_profile() -> void:\n    var file := FileAccess.open(TMP_PATH, FileAccess.WRITE)\n    if file != null:\n        file.store_string(JSON.stringify(profile, \"\\t\"))\n        file.close()\n        DirAccess.rename_absolute(TMP_PATH, SAVE_PATH)\n\nfunc load_profile() -> void:\n    if not FileAccess.file_exists(SAVE_PATH):\n        return\n    var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))\n    if parsed is Dictionary:\n        for key in ALLOWED_KEYS:\n            var v: Variant = parsed.get(key)\n            if v is int or v is float:\n                profile[key] = maxi(0, int(v))",
           "caption": "Complete SaveManager Autoload singleton (`res://scripts/save_manager.gd`)."
         }
       ],
@@ -115,6 +115,19 @@
           "correctChoiceIndex": 0,
           "explanation": "`Dictionary.merge(other, true)` overwrites matching keys with saved values while preserving any new default keys that didn't exist when the older save file was created.",
           "concept": "Dictionary.merge"
+        },
+        {
+          "id": "q_12_01_3",
+          "prompt": "Why should `SaveManager.save_profile()` write to `user://kadi_profile.json.tmp` and call `DirAccess.rename_absolute()` instead of overwriting `user://kadi_profile.json` directly?",
+          "choices": [
+            "So an unexpected battery loss or crash mid-write never leaves a half-written, corrupted main save file",
+            "Because `FileAccess.WRITE` cannot overwrite existing files in Godot 4.3",
+            "Because `JSON.stringify()` requires a `.tmp` extension",
+            "To compress the file into binary format automatically"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Writing to a temporary file first and renaming it atomically ensures that either the old valid save or the complete new save exists on disk.",
+          "concept": "Atomic Save Writes"
         }
       ]
     },
@@ -183,6 +196,32 @@
           "correctChoiceIndex": 0,
           "explanation": "`Control.get_global_rect()` returns the control's global `Rect2`, and `.has_point(point)` checks if a global `Vector2` coordinate lies inside it.",
           "concept": "Rect2.has_point"
+        },
+        {
+          "id": "q_12_02_2",
+          "prompt": "Why do we set `z_index = 20` on a `Card` node when `is_dragging` becomes `true`?",
+          "choices": [
+            "So the dragged card renders on top of sibling cards and table UI while moving across the screen",
+            "To make the card 20 times larger",
+            "To enable 3D physics on the card",
+            "To speed up `create_tween()` by 20%"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`CanvasItem.z_index` controls 2D draw order; raising it while dragging ensures the card never slides underneath neighbouring cards.",
+          "concept": "CanvasItem.z_index"
+        },
+        {
+          "id": "q_12_02_3",
+          "prompt": "Which `Rect2` method checks whether the mouse release position (`get_global_mouse_position()`) landed inside `discard_slot.get_global_rect()`?",
+          "choices": [
+            "`has_point(point)`",
+            "`intersects_ray(point)`",
+            "`overlaps_area(point)`",
+            "`clamp_point(point)`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Rect2.has_point(Vector2)` returns `true` when the given 2D coordinate lies inside the rectangle's bounds.",
+          "concept": "Rect2.has_point"
         }
       ]
     },
@@ -249,6 +288,32 @@
           "correctChoiceIndex": 0,
           "explanation": "Autoloads are siblings of the current scene under `get_tree().root`, so changing the current scene leaves Autoload singletons intact.",
           "concept": "SceneTree & Autoloads"
+        },
+        {
+          "id": "q_12_03_2",
+          "prompt": "In Kenyan Kadi 100-Point Tournament Elimination, how many penalty points does a remaining Joker (`CardTypes.Ranks.JOKER`) add to a player's score when someone else wins the round?",
+          "choices": [
+            "50 points",
+            "5 points",
+            "15 points",
+            "100 points"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "While a Joker adds +5 cards to `penalty_stack` during play, holding an unplayed Joker when an opponent goes out costs 50 tournament points!",
+          "concept": "Tournament Scoring"
+        },
+        {
+          "id": "q_12_03_3",
+          "prompt": "Why does `TournamentRules.score_ai_move()` subtract `-35` points when considering playing an `ACE` while `penalty_stack == 0` and `hand_size > 2`?",
+          "choices": [
+            "So the AI conserves its Ace as a defensive shield against future `+2`, `+3`, or `+5` Joker penalties",
+            "Because Aces are illegal when `penalty_stack == 0`",
+            "Because Aces are worth `-35` points at the end of a round",
+            "To force the AI to draw a card every turn"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Penalizing early non-emergency Ace plays in the heuristic scorer teaches the AI to hold an Ace in reserve to block incoming penalty stacks.",
+          "concept": "Heuristic AI Scoring"
         }
       ]
     },
@@ -281,7 +346,7 @@
         {
           "id": "snip_12_04_rpc",
           "language": "gdscript",
-          "code": "# Hosting & Joining LAN Kadi + Syncing Moves via @rpc:\nconst PORT: int = 8910\n\nfunc host_lan_game() -> void:\n\tvar peer := ENetMultiplayerPeer.new()\n\tpeer.create_server(PORT, 4)\n\tmultiplayer.multiplayer_peer = peer\n\nfunc join_lan_game(host_ip: String = \"127.0.0.1\") -> void:\n\tvar peer := ENetMultiplayerPeer.new()\n\tpeer.create_client(host_ip, PORT)\n\tmultiplayer.multiplayer_peer = peer\n\n@rpc(\"any_peer\", \"call_local\", \"reliable\")\nfunc rpc_commit_card_play(seat: int, suit: int, rank: int) -> void:\n\tvar played := CardData.make(suit as CardTypes.Suits, rank)\n\tGameState.discard_pile.append(played)\n\tGameState.state_updated.emit()\n\tTurnManager.advance_turn()",
+          "code": "# Server-Authoritative LAN Multiplayer in Godot 4.3:\nvar peer_to_seat: Dictionary = {1: 0}\n\nfunc host_lan_game(port: int = 8910) -> void:\n    var peer := ENetMultiplayerPeer.new()\n    peer.create_server(port, 4)\n    multiplayer.multiplayer_peer = peer\n\nfunc join_lan_game(host_ip: String, port: int = 8910) -> void:\n    var peer := ENetMultiplayerPeer.new()\n    peer.create_client(host_ip, port)\n    multiplayer.multiplayer_peer = peer\n\n@rpc(\"any_peer\", \"call_local\", \"reliable\")\nfunc request_card_play(suit: int, rank: int) -> void:\n    if not multiplayer.is_server():\n        return\n    var sender_id: int = multiplayer.get_remote_sender_id()\n    var seat: int = int(peer_to_seat.get(sender_id, -1))\n    if seat != TurnManager.current_player_index:\n        return\n    var card := CardData.make(suit as CardTypes.Suits, rank)\n    if RuleValidator.is_single_card_playable(card, GameState.top_discard(), GameState.penalty_stack, GameState.declared_suit):\n        commit_card_play.rpc(seat, suit, rank)\n\n@rpc(\"authority\", \"call_local\", \"reliable\")\nfunc commit_card_play(seat: int, suit: int, rank: int) -> void:\n    var card := CardData.make(suit as CardTypes.Suits, rank)\n    GameState.discard_pile.append(card)\n    GameState.state_updated.emit()",
           "caption": "Godot 4.3 LAN host/join and `@rpc` move synchronization."
         }
       ],
@@ -315,13 +380,39 @@
           "correctChoiceIndex": 0,
           "explanation": "Without `\"call_local\"`, `.rpc()` only executes on remote peers; adding `\"call_local\"` runs the exact same state update on both the local sender and remote peers.",
           "concept": "@rpc & Multiplayer"
+        },
+        {
+          "id": "q_12_04_2",
+          "prompt": "What is the difference between `@rpc(\"any_peer\")` and `@rpc(\"authority\")` in Godot 4.3?",
+          "choices": [
+            "`\"any_peer\"` allows clients to call the RPC on the server; `\"authority\"` restricts the RPC so only the node's multiplayer authority (typically the server, peer ID 1) can invoke it on clients",
+            "`\"authority\"` uses UDP while `\"any_peer\"` uses TCP",
+            "`\"any_peer\"` only works in 3D games",
+            "There is no difference"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Use `@rpc(\"any_peer\")` for client-to-server action requests (validated by `if not multiplayer.is_server(): return`) and `@rpc(\"authority\")` for server-to-client state broadcasts.",
+          "concept": "@rpc Authority Modes"
+        },
+        {
+          "id": "q_12_04_3",
+          "prompt": "In a server-authoritative multiplayer card game, how does the host verify which peer sent an `@rpc(\"any_peer\")` move request?",
+          "choices": [
+            "By calling `multiplayer.get_remote_sender_id()` on the server and looking up that peer ID's assigned seat",
+            "By trusting a `player_seat` integer passed by the client",
+            "By reading `OS.get_unique_id()`",
+            "By checking `Engine.get_frames_drawn()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`multiplayer.get_remote_sender_id()` returns the authenticated network peer ID of the caller, preventing a client from spoofing another player's seat.",
+          "concept": "Server-Authoritative RPC"
         }
       ]
     }
   ],
   "debugChallenge": {
     "id": "dbg_12_save_res_vs_user",
-    "brokenCode": "func save_player_stats(wins: int, coins: int) -> void:\n\tvar data: Dictionary = {\"wins\": wins, \"coins\": coins}\n\t# BUG: Works in editor, but fails silently in exported Windows/Android builds!\n\tvar file := FileAccess.open(\"res://kadi_save.json\", FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify(data))",
+    "brokenCode": "func save_player_stats(wins: int, coins: int) -> void:\n\tvar data: Dictionary = {\"wins\": wins, \"coins\": coins}\n\t# Open the save file on disk for writing:\n\tvar file := FileAccess.open(\"res://kadi_save.json\", FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify(data))",
     "bugDescription": "Saving works inside the Godot Editor, but as soon as you export the game to Windows `.exe` or Android `.apk`, `FileAccess.open()` returns `null` and player progress is never saved! Tap the buggy line.",
     "fixedCode": "func save_player_stats(wins: int, coins: int) -> void:\n\tvar data: Dictionary = {\"wins\": wins, \"coins\": coins}\n\t# FIX: Always use user:// for writable runtime save files!\n\tvar file := FileAccess.open(\"user://kadi_save.json\", FileAccess.WRITE)\n\tif file != null:\n\t\tfile.store_string(JSON.stringify(data))",
     "explanation": "In exported builds, `res://` is packed inside a read-only archive (`.pck` or `.apk`), so `FileAccess.open(\"res://...\", FileAccess.WRITE)` fails and returns `null`. Always save runtime files to `user://`!",

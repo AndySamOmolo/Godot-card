@@ -8,23 +8,29 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.catch
 import com.kadicompanion.domain.model.LearnerTrack
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "kadi_prefs")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "kadi_prefs",
+    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
+)
 
 enum class ThemePref { DARK, AMOLED, LIGHT, SYSTEM }
 
 enum class AccentPreset(val label: String, val description: String) {
     GODOT_SAPPHIRE("Godot Sapphire", "Sky blue #38BDF8 & emerald mint"),
-    NAIROBI_GOLD("Nairobi Kadi Gold", "Warm Kenyan gold #F59E0B & crimson"),
+    NAIROBI_GOLD("Nairobi Kadi Gold", "Warm Kenyan gold #FBBF24 & crimson"),
     EMERALD_FELT("Emerald Card Table", "Casino felt green #10B981 & gold"),
-    CYBER_VIOLET("Cyber Violet", "Electric purple #A855F7 & cyan"),
-    CRIMSON_ACE("Crimson Ace", "Ruby red #F43F5E & warm amber"),
+    CYBER_VIOLET("Cyber Violet", "Electric purple #C084FC & cyan"),
+    CRIMSON_ACE("Crimson Ace", "Ruby red #FB7185 & warm amber"),
     SUNSET_ORANGE("Savannah Sunset", "Tangerine #FB923C & ocean teal"),
     MONOCHROME_SLATE("Monochrome Ink", "Minimalist high-contrast silver & slate")
 }
@@ -183,7 +189,15 @@ data class UiPreferences(
 class PreferencesRepository @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) {
-    fun observeUiPreferences(): Flow<UiPreferences> = context.dataStore.data.map { prefs ->
+    private val safeData: Flow<Preferences>
+        get() = context.dataStore.data.catch { e ->
+            if (e is java.io.IOException) {
+                android.util.Log.e("PreferencesRepository", "DataStore read error, recovering with defaults", e)
+                emit(emptyPreferences())
+            } else throw e
+        }
+
+    fun observeUiPreferences(): Flow<UiPreferences> = safeData.map { prefs ->
         UiPreferences(
             theme = prefs[KEY_THEME]?.let { runCatching { ThemePref.valueOf(it) }.getOrNull() } ?: ThemePref.DARK,
             accentPreset = prefs[KEY_ACCENT]?.let { runCatching { AccentPreset.valueOf(it) }.getOrNull() } ?: AccentPreset.GODOT_SAPPHIRE,
@@ -271,19 +285,19 @@ class PreferencesRepository @Inject constructor(
     suspend fun setShowHeroBadge(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_HERO_BADGE] = show } }
     suspend fun setShowHeroProgressRing(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_HERO_RING] = show } }
     suspend fun setShowHeroSecondaryBtn(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_HERO_SEC_BTN] = show } }
-    suspend fun setCustomHeroBadge(badge: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_BADGE] = badge } }
-    suspend fun setCustomHeroTitle(title: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_TITLE] = title } }
-    suspend fun setCustomHeroSubtitle(subtitle: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_SUBTITLE] = subtitle } }
-    suspend fun setCustomHeroPrimaryBtn(label: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_PRI_BTN] = label } }
-    suspend fun setCustomHeroSecondaryBtn(label: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_SEC_BTN] = label } }
+    suspend fun setCustomHeroBadge(badge: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_BADGE] = badge.take(120) } }
+    suspend fun setCustomHeroTitle(title: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_TITLE] = title.take(120) } }
+    suspend fun setCustomHeroSubtitle(subtitle: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_SUBTITLE] = subtitle.take(200) } }
+    suspend fun setCustomHeroPrimaryBtn(label: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_PRI_BTN] = label.take(60) } }
+    suspend fun setCustomHeroSecondaryBtn(label: String) { context.dataStore.edit { it[KEY_CUSTOM_HERO_SEC_BTN] = label.take(60) } }
 
     suspend fun setShowHomeStats(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_HOME_STATS] = show } }
     suspend fun setShowHomeQuickLaunch(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_HOME_QUICK_LAUNCH] = show } }
     suspend fun setShowHomePhaseStrip(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_HOME_PHASE_STRIP] = show } }
     suspend fun setShowDailyTip(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_DAILY_TIP] = show } }
     suspend fun setShowReviewQueue(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_REVIEW_QUEUE] = show } }
-    suspend fun setCustomGreeting(greeting: String) { context.dataStore.edit { it[KEY_CUSTOM_GREETING] = greeting } }
-    suspend fun setCustomSubtitle(subtitle: String) { context.dataStore.edit { it[KEY_CUSTOM_SUBTITLE] = subtitle } }
+    suspend fun setCustomGreeting(greeting: String) { context.dataStore.edit { it[KEY_CUSTOM_GREETING] = greeting.take(120) } }
+    suspend fun setCustomSubtitle(subtitle: String) { context.dataStore.edit { it[KEY_CUSTOM_SUBTITLE] = subtitle.take(160) } }
 
     suspend fun resetUiPreferencesToDefault() {
         context.dataStore.edit { prefs ->
@@ -295,13 +309,30 @@ class PreferencesRepository @Inject constructor(
         }
     }
 
-    fun observeContentVersion(): Flow<String?> = context.dataStore.data.map { it[KEY_CONTENT_VERSION] }
+    fun observeContentVersion(): Flow<String?> = safeData.map { it[KEY_CONTENT_VERSION] }
     suspend fun setContentVersion(version: String) { context.dataStore.edit { it[KEY_CONTENT_VERSION] = version } }
 
-    fun observeLearnerTrack(): Flow<LearnerTrack?> = context.dataStore.data.map {
+    fun observeLearnerTrack(): Flow<LearnerTrack?> = safeData.map {
         it[KEY_TRACK]?.let { name -> runCatching { LearnerTrack.valueOf(name) }.getOrNull() }
     }
     suspend fun setLearnerTrack(track: LearnerTrack) { context.dataStore.edit { it[KEY_TRACK] = track.name } }
+    suspend fun clearLearnerTrack() { context.dataStore.edit { it.remove(KEY_TRACK) } }
+
+    suspend fun resetHomeHeroCardToDefault() {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_SHOW_HOME_HERO] = true
+            prefs[KEY_HOME_HERO_LAYOUT] = HomeHeroLayout.FULL_WITH_RING.name
+            prefs[KEY_HOME_HERO_PALETTE] = HomeHeroPalette.FOLLOW_ACCENT.name
+            prefs[KEY_SHOW_HERO_BADGE] = true
+            prefs[KEY_SHOW_HERO_RING] = true
+            prefs[KEY_SHOW_HERO_SEC_BTN] = true
+            prefs[KEY_CUSTOM_HERO_BADGE] = ""
+            prefs[KEY_CUSTOM_HERO_TITLE] = ""
+            prefs[KEY_CUSTOM_HERO_SUBTITLE] = ""
+            prefs[KEY_CUSTOM_HERO_PRI_BTN] = ""
+            prefs[KEY_CUSTOM_HERO_SEC_BTN] = ""
+        }
+    }
 
     companion object {
         private val KEY_THEME = stringPreferencesKey("theme")

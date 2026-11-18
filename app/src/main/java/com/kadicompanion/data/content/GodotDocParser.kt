@@ -6,6 +6,7 @@ import com.kadicompanion.domain.model.GodotDocEntry
 object GodotDocParser {
     // Match YAML frontmatter: --- ... --- then body. The body keeps newlines.
     private val frontMatterRegex = Regex("^---\\s*\\n(.*?)\\n---\\s*\\n(.*)", RegexOption.DOT_MATCHES_ALL)
+    private val signatureRegex = Regex("(?:([A-Za-z_][\\w<>]*)\\s+)?([A-Za-z_]\\w*)\\s*\\(")
 
     fun parse(source: GodotDocSource, defaultVerified: String): GodotDocEntry {
         val match = frontMatterRegex.find(source.markdown)
@@ -94,7 +95,7 @@ object GodotDocParser {
         return if (colonIdx != -1) {
             sig.substring(0, colonIdx).trim() to sig.substring(colonIdx + 1).trim().ifBlank { null }
         } else {
-            val match = Regex("(?:([A-Za-z_][\\w<>]*)\\s+)?([A-Za-z_]\\w*)\\s*\\(").find(sig)
+            val match = signatureRegex.find(sig)
             if (match != null) {
                 val retType = match.groupValues[1]
                 val name = match.groupValues[2]

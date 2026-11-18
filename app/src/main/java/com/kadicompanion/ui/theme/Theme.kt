@@ -11,6 +11,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
@@ -140,11 +141,11 @@ private fun paletteFor(preset: AccentPreset): AccentPaletteTriplet = when (prese
         darkSecondary = Color(0xFF10B981),
         darkTertiary = Color(0xFFF59E0B),
         lightPrimary = Color(0xFF2563EB),
-        lightSecondary = Color(0xFF059669),
-        lightTertiary = Color(0xFFD97706),
+        lightSecondary = Color(0xFF047857),
+        lightTertiary = Color(0xFFB45309),
         heroStart = Color(0xFF0F172A),
         heroMid = Color(0xFF1E3A8A),
-        heroEnd = Color(0xFF0284C7)
+        heroEnd = Color(0xFF0369A1)
     )
     AccentPreset.NAIROBI_GOLD -> AccentPaletteTriplet(
         darkPrimary = Color(0xFFFBBF24),
@@ -161,9 +162,9 @@ private fun paletteFor(preset: AccentPreset): AccentPaletteTriplet = when (prese
         darkPrimary = Color(0xFF34D399),
         darkSecondary = Color(0xFFFBBF24),
         darkTertiary = Color(0xFF38BDF8),
-        lightPrimary = Color(0xFF059669),
+        lightPrimary = Color(0xFF047857),
         lightSecondary = Color(0xFFD97706),
-        lightTertiary = Color(0xFF0284C7),
+        lightTertiary = Color(0xFF0369A1),
         heroStart = Color(0xFF042F2E),
         heroMid = Color(0xFF065F46),
         heroEnd = Color(0xFF059669)
@@ -173,7 +174,7 @@ private fun paletteFor(preset: AccentPreset): AccentPaletteTriplet = when (prese
         darkSecondary = Color(0xFF22D3EE),
         darkTertiary = Color(0xFFF472B6),
         lightPrimary = Color(0xFF7C3AED),
-        lightSecondary = Color(0xFF0891B2),
+        lightSecondary = Color(0xFF0E7490),
         lightTertiary = Color(0xFFDB2777),
         heroStart = Color(0xFF1E1B4B),
         heroMid = Color(0xFF4C1D95),
@@ -194,9 +195,9 @@ private fun paletteFor(preset: AccentPreset): AccentPaletteTriplet = when (prese
         darkPrimary = Color(0xFFFB923C),
         darkSecondary = Color(0xFF2DD4BF),
         darkTertiary = Color(0xFFFACC15),
-        lightPrimary = Color(0xFFEA580C),
+        lightPrimary = Color(0xFFC2410C),
         lightSecondary = Color(0xFF0D9488),
-        lightTertiary = Color(0xFFCA8A04),
+        lightTertiary = Color(0xFFA16207),
         heroStart = Color(0xFF271206),
         heroMid = Color(0xFF7C2D12),
         heroEnd = Color(0xFFEA580C)
@@ -269,9 +270,20 @@ fun isDarkScheme(): Boolean {
     return (0.299f * bg.red + 0.587f * bg.green + 0.114f * bg.blue) < 0.5f
 }
 
-@Composable fun heroTextPrimary(): Color = HeroTextPrimary
-@Composable fun heroTextSecondary(): Color = HeroTextSecondary
-@Composable fun heroTextTertiary(): Color = HeroTextTertiary
+@Composable fun heroTextPrimary(): Color =
+    if (LocalUiPreferences.current.heroStyle == com.kadicompanion.data.local.datastore.HeroStyle.SURFACE_FLAT && !isDarkScheme())
+        MaterialTheme.colorScheme.onSurface
+    else HeroTextPrimary
+
+@Composable fun heroTextSecondary(): Color =
+    if (LocalUiPreferences.current.heroStyle == com.kadicompanion.data.local.datastore.HeroStyle.SURFACE_FLAT && !isDarkScheme())
+        MaterialTheme.colorScheme.onSurfaceVariant
+    else HeroTextSecondary
+
+@Composable fun heroTextTertiary(): Color =
+    if (LocalUiPreferences.current.heroStyle == com.kadicompanion.data.local.datastore.HeroStyle.SURFACE_FLAT && !isDarkScheme())
+        MaterialTheme.colorScheme.onSurfaceVariant
+    else HeroTextTertiary
 
 @Composable
 fun brandGradient(): Brush {
@@ -361,14 +373,22 @@ fun KadiTheme(
         else -> applyPresetAndMode(LightColors, uiPrefs.accentPreset, darkTheme = false, amoled = false)
     }
 
-    val typography = buildCustomizableTypography(
-        fontScale = uiPrefs.fontScale,
-        fontFamilyPreset = uiPrefs.fontFamilyPreset,
-        headingWeightPreset = uiPrefs.headingWeightPreset,
-        lineSpacingPreset = uiPrefs.lineSpacingPreset,
-        dyslexiaFont = uiPrefs.dyslexiaFont
-    )
-    val shapes = buildCustomizableShapes(uiPrefs.cornerRadiusDp)
+    val typography = remember(
+        uiPrefs.fontScale,
+        uiPrefs.fontFamilyPreset,
+        uiPrefs.headingWeightPreset,
+        uiPrefs.lineSpacingPreset,
+        uiPrefs.dyslexiaFont
+    ) {
+        buildCustomizableTypography(
+            fontScale = uiPrefs.fontScale,
+            fontFamilyPreset = uiPrefs.fontFamilyPreset,
+            headingWeightPreset = uiPrefs.headingWeightPreset,
+            lineSpacingPreset = uiPrefs.lineSpacingPreset,
+            dyslexiaFont = uiPrefs.dyslexiaFont
+        )
+    }
+    val shapes = remember(uiPrefs.cornerRadiusDp) { buildCustomizableShapes(uiPrefs.cornerRadiusDp) }
 
     CompositionLocalProvider(
         LocalReduceMotion provides uiPrefs.reduceMotion,

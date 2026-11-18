@@ -35,6 +35,8 @@ static func validate_question_chain(cards: Array) -> bool:
 			return false
 		var next_card: CardData = cards[i + 1]
 		if is_question_card(next_card.rank):
+			if next_card.suit != card.suit and next_card.rank != card.rank:
+				return false
 			continue
 		if not is_answer_card(next_card.rank):
 			return false

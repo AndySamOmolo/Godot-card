@@ -8,6 +8,7 @@ import com.kadicompanion.domain.repository.TutorialRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
@@ -45,7 +46,7 @@ class LessonDetailViewModel @Inject constructor(
     savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
-    private val lessonId: String = checkNotNull(savedStateHandle["lessonId"])
+    private val lessonId: String = android.net.Uri.decode(checkNotNull(savedStateHandle["lessonId"]))
 
     val uiState: StateFlow<LessonDetailUiState> = combine(
         flow {
@@ -82,6 +83,8 @@ class LessonDetailViewModel @Inject constructor(
             isBookmarked = bookmark != null,
             isLoading = false
         )
+    }.catch { e ->
+        emit(LessonDetailUiState(isLoading = false, error = e.localizedMessage ?: "Failed to load lesson"))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LessonDetailUiState())
 
     init { viewModelScope.launch { progressRepository.markLessonOpened(lessonId) } }

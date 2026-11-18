@@ -15,15 +15,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class RootUiState(
+    val isReady: Boolean = false,
     val isOnboarded: Boolean = false,
     val uiPrefs: UiPreferences = UiPreferences()
 ) {
-    val darkTheme: Boolean
-        get() = when (uiPrefs.theme) {
-            ThemePref.DARK, ThemePref.AMOLED -> true
-            ThemePref.LIGHT -> false
-            ThemePref.SYSTEM -> false
-        }
+    fun resolveDarkTheme(systemDark: Boolean): Boolean = when (uiPrefs.theme) {
+        ThemePref.DARK, ThemePref.AMOLED -> true
+        ThemePref.LIGHT -> false
+        ThemePref.SYSTEM -> systemDark
+    }
     val dynamicColor: Boolean get() = uiPrefs.dynamicColor
     val reduceMotion: Boolean get() = uiPrefs.reduceMotion
     val dyslexiaFont: Boolean get() = uiPrefs.dyslexiaFont
@@ -40,6 +40,7 @@ class RootViewModel @Inject constructor(
         learnerProfile.observeTrack()
     ) { uiPrefs, track ->
         RootUiState(
+            isReady = true,
             isOnboarded = track != null,
             uiPrefs = uiPrefs
         )

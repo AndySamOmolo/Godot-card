@@ -119,8 +119,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Playing a `2`, `3`, or `Joker` increments `GameState.penalty_stack` by `+2`, `+3`, or `+5` and displays `Penalty: +N` live in `StatusLabel`!",
-      "beyondKadi": "How **The Accumulator Pattern (`penalty_stack`) & Counter-Moves** transfer across genres:\n- **Action / Fighting Games**: Combo hit counters (`combo_damage += hit_value`) and parry/block counters (pressing Parry cancels incoming damage just like an Ace cancels a Kadi penalty stack!).\n- **Roguelike Status Stacks**: Poison, Burn, or Bleed stacks that accumulate each turn unless cleansed by a potion.",
-      "transferChallenge": "**Your Solo Challenge**: Add a visual warning tint on `Table.tscn`: whenever `GameState.penalty_stack > 0`, tint `status_label.modulate = Color(1.0, 0.45, 0.45)` (coral red) so the player immediately sees danger; reset it to `Color.WHITE` when `penalty_stack == 0`!"
+      "beyondKadi": "Accumulating a stack counter (`penalty_stack += value`) that can either be parried/forwarded or absorbed all at once models combo meters in fighting games, poise/stagger bars in Soulslikes, and chained status effects in RPGs.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a parry-or-absorb function `resolve_incoming_combo(combo_damage: int, has_parry_shield: bool, reflect_bonus: int) -> Dictionary` that either forwards `combo_damage + reflect_bonus` back to the attacker if `has_parry_shield` is `true`, or applies `combo_damage` to the defender and resets the stack to `0`."
     },
     {
       "id": "l_05_02_countering",
@@ -212,8 +212,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "When facing an active penalty stack, play a same-rank Penalty Card to forward the stack (`+2 -> +4`) or play an Ace (`A`) to cancel the penalty back to `0`!",
-      "beyondKadi": "How **The Accumulator Pattern (`penalty_stack`) & Counter-Moves** transfer across genres:\n- **Action / Fighting Games**: Combo hit counters (`combo_damage += hit_value`) and parry/block counters (pressing Parry cancels incoming damage just like an Ace cancels a Kadi penalty stack!).\n- **Roguelike Status Stacks**: Poison, Burn, or Bleed stacks that accumulate each turn unless cleansed by a potion.",
-      "transferChallenge": "**Your Solo Challenge**: Add a visual warning tint on `Table.tscn`: whenever `GameState.penalty_stack > 0`, tint `status_label.modulate = Color(1.0, 0.45, 0.45)` (coral red) so the player immediately sees danger; reset it to `Color.WHITE` when `penalty_stack == 0`!"
+      "beyondKadi": "Context-sensitive items—where an `Ace` acts as a suit-changer in normal play but as a defensive shield when `penalty_stack > 0`—mirror dual-purpose mechanics like Zelda's shield bash/surf or Slay the Spire cards that change effect when frail/attacked.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `use_magic_scroll(player_hp: int, max_hp: int, incoming_curse: int) -> Dictionary` where the scroll cleanses `incoming_curse` to `0` if a curse is active, or heals `min(max_hp, player_hp + 25)` if no curse is active."
     },
     {
       "id": "l_05_03_penalty_ui_ai",
@@ -306,8 +306,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Watch AI opponents automatically counter your Penalty Cards with their own matching Penalty Card or Ace, or pick up the full penalty stack when they cannot counter!",
-      "beyondKadi": "How **The Accumulator Pattern (`penalty_stack`) & Counter-Moves** transfer across genres:\n- **Action / Fighting Games**: Combo hit counters (`combo_damage += hit_value`) and parry/block counters (pressing Parry cancels incoming damage just like an Ace cancels a Kadi penalty stack!).\n- **Roguelike Status Stacks**: Poison, Burn, or Bleed stacks that accumulate each turn unless cleansed by a potion.",
-      "transferChallenge": "**Your Solo Challenge**: Add a visual warning tint on `Table.tscn`: whenever `GameState.penalty_stack > 0`, tint `status_label.modulate = Color(1.0, 0.45, 0.45)` (coral red) so the player immediately sees danger; reset it to `Color.WHITE` when `penalty_stack == 0`!"
+      "beyondKadi": "Updating button labels dynamically (`\"Accept Penalty (+%d)\" % penalty_stack`) and teaching AI agents to prioritize defensive counters when threatened is how strategy games surface urgent threats on the HUD.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `get_shield_button_label(incoming_damage: int) -> String` that returns `\"Parry Incoming (%d DMG)\" % incoming_damage` when `incoming_damage > 0` or `\"Guard Stance\"` when `0`."
     }
   ],
   "debugChallenge": {

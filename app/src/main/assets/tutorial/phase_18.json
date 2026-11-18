@@ -1,0 +1,415 @@
+{
+  "id": "phase_18_production_shipping_mastery",
+  "order": 18,
+  "title": "Production Game Engineering: `@tool` Scripts, Audio Buses, Input Remapping, Localization & Profiling",
+  "summary": "Ship commercial-grade Godot 4.3 games! Master live in-editor `@tool` scripts, `AudioServer` decibel buses, `ConfigFile` & `InputMap` key/gamepad remapping, `TranslationServer` (`tr()`) English/Swahili localization, background threaded loading (`ResourceLoader`), and the Godot Profiler.",
+  "estimatedMinutes": 60,
+  "concepts": [
+    "Engine",
+    "AudioServer",
+    "ConfigFile",
+    "InputMap",
+    "TranslationServer",
+    "HTTPRequest",
+    "ResourceLoader",
+    "Time"
+  ],
+  "programmingConcepts": [
+    "Editor Tooling (@tool)",
+    "Decibel Audio Mixing",
+    "Runtime Keybinding Serialization",
+    "Internationalization (i18n)",
+    "Frame-Time Profiling & Async Loading"
+  ],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/settings_manager.gd",
+    "res://scenes/card/card_scene.gd"
+  ],
+  "sceneTreeBlueprint": "OptionsMenu (Control) -> AudioServer + InputMap + ConfigFile + TranslationServer",
+  "learningObjectives": [
+    "Write live in-editor `@tool` scripts guarded with `Engine.is_editor_hint()` so custom cards and levels preview changes directly inside the Godot Editor",
+    "Build a complete Options Menu with `AudioServer` volume sliders (`linear_to_db`), `InputMap` key/gamepad rebinding, and `ConfigFile` (`user://settings.cfg`)",
+    "Localize your game into multiple languages (English & Kiswahili) using `TranslationServer.set_locale()` and `tr()`",
+    "Eliminate frame stutters using Godot's Debugger -> Profiler, `Time.get_ticks_usec()` micro-benchmarks, and `ResourceLoader.load_threaded_request()`"
+  ],
+  "tangibleGoal": "Add a commercial Options & Localization system (Master/SFX volume buses, custom keybinds saved to `user://settings.cfg`, English/Swahili language toggle, and `@tool` editor previews)!",
+  "lessons": [
+    {
+      "id": "l_18_01_tool_scripts_editor_preview",
+      "order": 1,
+      "title": "Live In-Editor Previews with `@tool` Scripts & `Engine.is_editor_hint()`",
+      "targetFile": "res://scenes/card/card_scene.gd",
+      "tangibleOutcome": "Add `@tool` to `card_scene.gd` so changing a card's Suit or Rank in the Inspector updates the card's visuals live inside the 2D Editor viewport without pressing F5!",
+      "beyondKadi": "Studio tools teams use `@tool` scripts to auto-snap puzzle tiles in the editor, draw custom gizmo radii for tower-defense range circles, and preview procedural dungeons live while designing levels!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a `@tool` script for a `Turret` `Node2D` that calls `queue_redraw()` when `@export var attack_radius: float = 160.0` changes and draws the circle in `_draw()` using `draw_arc()`.",
+      "sceneTree": "Card (Control) [@tool enabled]",
+      "editorSteps": [
+        "Open `res://scenes/card/card_scene.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Authoring Live Editor Tools with `@tool`\n\nPlacing `@tool` on Line 1 of a GDScript file tells Godot 4.3 to execute that script **inside the Godot Editor** as well as in the running game!\n\n> [!WARNING]\n> **Always Guard Gameplay Code with `if Engine.is_editor_hint():`**: Because `_ready()` and `_process(delta)` run inside the Editor when `@tool` is active, always guard gameplay-only logic (like AI timers, `GameState` mutations, or physics movement) with `if not [[Engine]].is_editor_hint():`!",
+      "codeSnippets": [
+        {
+          "id": "snip_18_01_tool",
+          "language": "gdscript",
+          "code": "@tool\nextends Control\n\n@export var preview_suit: CardTypes.Suits = CardTypes.Suits.SPADES:\n    set(value):\n        preview_suit = value\n        if is_node_ready():\n            _update_editor_preview()\n\n@export_range(2, 15) var preview_rank: int = 14:\n    set(value):\n        preview_rank = value\n        if is_node_ready():\n            _update_editor_preview()\n\nfunc _process(_delta: float) -> void:\n    if Engine.is_editor_hint():\n        return # Never run live match logic while editing in the viewport!\n\nfunc _update_editor_preview() -> void:\n    $TopRankLabel.text = \"%d\" % preview_rank",
+          "caption": "Using `@tool` + `Engine.is_editor_hint()` for live Inspector previews."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `should_run_gameplay() -> bool` that returns `not Engine.is_editor_hint()`.",
+        "hint": "Use `return not Engine.is_editor_hint()`.",
+        "starterCode": "func should_run_gameplay() -> bool:\n\t",
+        "requiredTokens": [
+          "func",
+          "should_run_gameplay",
+          "return",
+          "not",
+          "Engine.is_editor_hint()"
+        ],
+        "expectedOutput": "Returns true only during actual game execution, false inside the Godot Editor.",
+        "solutionCode": "func should_run_gameplay() -> bool:\n\treturn not Engine.is_editor_hint()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_18_01_1",
+          "prompt": "Where must the `@tool` annotation be placed in a GDScript file so the script runs inside the Godot Editor?",
+          "choices": [
+            "At the very top of the script file (before `extends ...`)",
+            "Inside `_ready()`",
+            "At the bottom of the file",
+            "Inside `project.godot`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`@tool` is a file-level annotation placed at the top of the `.gd` script.",
+          "concept": "@tool Placement"
+        },
+        {
+          "id": "q_18_01_2",
+          "prompt": "Why must you check `if Engine.is_editor_hint(): return` inside `_process(delta)` or `_physics_process(delta)` on a `@tool` script?",
+          "choices": [
+            "So characters, bullets, or cards don't wander around and modify your saved `.tscn` scene file while you are editing it in the Godot Editor!",
+            "Because `_process()` is disabled in exported builds",
+            "To enable 3D shadows",
+            "Because `Engine` is a `Control` node"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Any node property modified by a `@tool` script in the editor can be saved into the `.tscn` file if you press Ctrl+S!",
+          "concept": "Engine.is_editor_hint() Guard"
+        },
+        {
+          "id": "q_18_01_3",
+          "prompt": "After adding `@tool` to an already-open scene's script for the first time, what is the quickest way to activate it in the Editor?",
+          "choices": [
+            "Save the script (**Ctrl+S**) and click **Scene -> Reload Saved Scene**",
+            "Reinstall Godot",
+            "Delete the `.tscn` file",
+            "Export to Android"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Reloading the saved scene re-instantiates the root node with its newly marked `@tool` script active.",
+          "concept": "Reloading @tool Scenes"
+        }
+      ]
+    },
+    {
+      "id": "l_18_02_audio_buses_configfile_inputmap",
+      "order": 2,
+      "title": "Commercial Options Menu: `AudioServer` Buses, `InputMap` Rebinding & `ConfigFile`",
+      "targetFile": "res://scripts/settings_manager.gd",
+      "tangibleOutcome": "Wire UI volume sliders (`0.0..1.0`) to `AudioServer` decibel buses (`Master`, `Music`, `SFX`), support runtime key/gamepad rebinding via `InputMap`, and save settings to `user://settings.cfg` with `ConfigFile`!",
+      "beyondKadi": "Every PC, console, and mobile player expects three things in an Options menu: separate **Music / SFX volume sliders**, **remappable controls**, and persistent settings saved in an INI-style `[[ConfigFile]]`!",
+      "transferChallenge": "**Solo Transfer Challenge**: Add a `\"display\"` section to `ConfigFile` that saves and restores `DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)`.",
+      "sceneTree": "SettingsManager (Autoload)\n├── AudioServer (Master / Music / SFX Buses)\n├── InputMap (Action Rebinding)\n└── ConfigFile (user://settings.cfg)",
+      "editorSteps": [
+        "Open `res://scripts/settings_manager.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Building a Pro Settings Manager (`AudioServer`, `InputMap`, `ConfigFile`)\n\n## 1. Why Volume Sliders Must Use `linear_to_db()`\nHuman hearing is logarithmic, so Godot's `[[AudioServer]]` measures bus volume in **decibels (`dB`)** where `0.0 dB` is full volume and `-80.0 dB` is silent. Never set a `0.0..1.0` slider directly into `set_bus_volume_db()`—always convert with `linear_to_db(slider_val)` and mute when `slider_val <= 0.001`!\n\n## 2. Saving Settings with `[[ConfigFile]]`\nWhile `JSON` is great for player profiles, Godot provides `ConfigFile` (`user://settings.cfg`) specifically for structured `[audio]`, `[video]`, and `[input]` sections (`config.set_value(\"audio\", \"sfx_vol\", 0.8)`).",
+      "codeSnippets": [
+        {
+          "id": "snip_18_02_settings",
+          "language": "gdscript",
+          "code": "# File: res://scripts/settings_manager.gd\nextends Node\n\nconst SETTINGS_PATH: String = \"user://settings.cfg\"\nvar config := ConfigFile.new()\n\nfunc set_bus_linear_volume(bus_name: String, linear: float) -> void:\n    var idx: int = AudioServer.get_bus_index(bus_name)\n    if idx == -1:\n        return\n    var clamped: float = clampf(linear, 0.0, 1.0)\n    AudioServer.set_bus_mute(idx, clamped <= 0.001)\n    AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(clamped, 0.001)))\n    config.set_value(\"audio\", bus_name, clamped)\n    config.save(SETTINGS_PATH)",
+          "caption": "Converting a `0.0..1.0` UI slider to decibels via `linear_to_db()` and persisting with `ConfigFile`."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `apply_bus_volume(bus_idx: int, linear: float) -> void` that calls `AudioServer.set_bus_volume_db(bus_idx, linear_to_db(maxf(linear, 0.001)))`.",
+        "hint": "Call `AudioServer.set_bus_volume_db(bus_idx, linear_to_db(maxf(linear, 0.001)))`.",
+        "starterCode": "func apply_bus_volume(bus_idx: int, linear: float) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "apply_bus_volume",
+          "AudioServer.set_bus_volume_db",
+          "linear_to_db"
+        ],
+        "expectedOutput": "Converts linear 0..1 slider value to decibels and updates the audio bus.",
+        "solutionCode": "func apply_bus_volume(bus_idx: int, linear: float) -> void:\n\tAudioServer.set_bus_volume_db(bus_idx, linear_to_db(maxf(linear, 0.001)))"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_18_02_1",
+          "prompt": "What happens if you pass a `0.0` linear slider value directly into `linear_to_db(0.0)` without clamping or muting?",
+          "choices": [
+            "`linear_to_db(0.0)` returns `-INF` (negative infinity); clamping to `0.001` and calling `AudioServer.set_bus_mute(idx, true)` cleanly silences the bus",
+            "It sets the volume to maximum (`+100 dB`)",
+            "It deletes the audio stream",
+            "It crashes the GPU"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`log(0)` is `-INF`, so muting the bus at `<= 0.001` and clamping the input to `linear_to_db()` is best practice.",
+          "concept": "linear_to_db & Bus Muting"
+        },
+        {
+          "id": "q_18_02_2",
+          "prompt": "Which two `InputMap` methods let you replace an action's current keybinding with a new `InputEvent` at runtime?",
+          "choices": [
+            "`InputMap.action_erase_events(action)` followed by `InputMap.action_add_event(action, new_event)`",
+            "`Input.get_vector()` and `Input.get_axis()`",
+            "`FileAccess.open()` and `JSON.parse_string()`",
+            "`SceneTree.quit()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`InputMap` modifies the live input action bindings in memory at runtime.",
+          "concept": "Runtime InputMap Rebinding"
+        },
+        {
+          "id": "q_18_02_3",
+          "prompt": "Which built-in Godot class reads and writes structured `.cfg` / `.ini` files with `(section, key, value)` pairs?",
+          "choices": [
+            "`ConfigFile`",
+            "`TileSet`",
+            "`AnimationTree`",
+            "`Polygon2D`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`ConfigFile` serializes typed Variant values organized by `[section]` and `key = value`.",
+          "concept": "ConfigFile"
+        }
+      ]
+    },
+    {
+      "id": "l_18_03_localization_translation_server",
+      "order": 3,
+      "title": "Multi-Language Localization (`TranslationServer` & `tr()`) — English & Kiswahili",
+      "targetFile": "res://scripts/settings_manager.gd",
+      "tangibleOutcome": "Switch your game's entire UI dynamically between English (`en`) and Kiswahili (`sw`) using `TranslationServer.set_locale()` and `tr()`!",
+      "beyondKadi": "Localizing your game into multiple languages (`en`, `sw`, `fr`, `es`, `ja`) opens your game to global players on Steam and Google Play without touching your scene layouts!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a formatted translation helper `get_turn_banner(player_num: int) -> String` that returns `tr(\"TURN_BANNER\") % player_num`.",
+      "sceneTree": "HUD (CanvasLayer)\n└── Uses tr(\"KEY\") for all localized labels",
+      "editorSteps": [
+        "Open `res://scripts/settings_manager.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Internationalization (i18n) with `TranslationServer` & `tr()`\n\n1. Create a UTF-8 `.csv` spreadsheet (`res://assets/i18n/translations.csv`) with column headers `keys,en,sw`:\n   - `UI_PLAY,Play Selected,Cheza Kadi`\n   - `UI_DRAW,Draw Card,Vuta Kadi`\n   - `UI_NIKO,Niko Kadi!,Niko Kadi!`\n2. Godot automatically imports the CSV into compressed `.translation` files! Add them under **Project -> Project Settings -> Localization -> Translations**.\n3. In GDScript, call `tr(\"UI_PLAY\")` (inherited from `[[Object]]`) and switch languages anytime with `[[TranslationServer]].set_locale(\"sw\")`!",
+      "codeSnippets": [
+        {
+          "id": "snip_18_03_i18n",
+          "language": "gdscript",
+          "code": "# Switching Languages Live with TranslationServer & tr():\nfunc set_game_language(locale_code: String) -> void:\n    TranslationServer.set_locale(locale_code) # e.g. \"en\" or \"sw\"\n\nfunc refresh_localized_hud(play_btn: Button, draw_btn: Button, staged_count: int) -> void:\n    play_btn.text = \"%s (%d)\" % [tr(\"UI_PLAY\"), staged_count]\n    draw_btn.text = tr(\"UI_DRAW\")",
+          "caption": "Using `TranslationServer.set_locale()` and `tr()` for instant runtime language switching."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `switch_to_swahili() -> void` that calls `TranslationServer.set_locale(\"sw\")`.",
+        "hint": "Call `TranslationServer.set_locale(\"sw\")`.",
+        "starterCode": "func switch_to_swahili() -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "switch_to_swahili",
+          "TranslationServer.set_locale",
+          "\"sw\""
+        ],
+        "expectedOutput": "Switches the active game locale to Kiswahili (sw).",
+        "solutionCode": "func switch_to_swahili() -> void:\n\tTranslationServer.set_locale(\"sw\")"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_18_03_1",
+          "prompt": "Which built-in method (available on every `Object` and `Node` in GDScript) looks up a localization key in the active `TranslationServer` locale?",
+          "choices": [
+            "`tr(\"KEY_NAME\")`",
+            "`load(\"KEY_NAME\")`",
+            "`str(\"KEY_NAME\")`",
+            "`print(\"KEY_NAME\")`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Object.tr(message)` translates a key using the current locale configured in `TranslationServer`.",
+          "concept": "tr() Localization Lookup"
+        },
+        {
+          "id": "q_18_03_2",
+          "prompt": "What happens if `tr(\"UI_WELCOME\")` is called when the key `\"UI_WELCOME\"` is missing from the translation table?",
+          "choices": [
+            "`tr()` safely returns the key string `\"UI_WELCOME\"` itself without crashing",
+            "The game crashes immediately",
+            "It returns `null`",
+            "It deletes the Label node"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "If a translation key is not found, `tr()` falls back to returning the untranslated key string.",
+          "concept": "Translation Fallback"
+        },
+        {
+          "id": "q_18_03_3",
+          "prompt": "How can a `Button` or `Label` translate its `text` property automatically without calling `tr()` in GDScript?",
+          "choices": [
+            "Set the Label/Button's `text` in the Inspector to the translation key (e.g. `UI_DRAW`) while `auto_translate_mode` is enabled on the node",
+            "Set `modulate = Color.RED`",
+            "Rename the scene file",
+            "Use a `CollisionShape2D`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Control nodes have automatic translation enabled by default and translate matching keys in their `text` property whenever the locale changes.",
+          "concept": "Control Auto-Translation"
+        }
+      ]
+    },
+    {
+      "id": "l_18_04_profiling_async_loading_shipping",
+      "order": 4,
+      "title": "Profiling (`Time.get_ticks_usec`), Threaded Scene Loading (`ResourceLoader`) & Web/HTTP APIs",
+      "targetFile": "res://scripts/settings_manager.gd",
+      "tangibleOutcome": "Micro-benchmark GDScript functions in microseconds with `Time.get_ticks_usec()` and load large scenes asynchronously with a smooth progress bar!",
+      "beyondKadi": "Before shipping to Steam, Google Play, or itch.io, pro solo devs profile their frame time in Godot's **Debugger -> Profiler** tab, load heavy scenes with `[[ResourceLoader]].load_threaded_request()`, and optionally fetch daily challenges or leaderboards with `[[HTTPRequest]]`!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a micro-benchmark wrapper `measure_usec(fn: Callable) -> int` that records `var t0: int = Time.get_ticks_usec()`, calls `fn.call()`, and returns `Time.get_ticks_usec() - t0`.",
+      "sceneTree": "LoadingScreen (Control)\n├── ProgressBar\n└── ResourceLoader (Threaded Background Loader)",
+      "editorSteps": [
+        "Open `res://scripts/settings_manager.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Profiling, Threaded Loading & Shipping Polish\n\n## 1. Measuring Exact Execution Time with `[[Time]].get_ticks_usec()`\nWant to prove that your `O(1)` `Dictionary` lookup is faster than an `O(n)` `Array` scan? Measure the elapsed microseconds (`1,000,000 usec = 1 second`):\n```gdscript\nvar start_usec: int = Time.get_ticks_usec()\n_run_algorithm()\nvar elapsed_ms: float = (Time.get_ticks_usec() - start_usec) / 1000.0\nprint(\"Took %.3f ms\" % elapsed_ms)\n```\n\n## 2. Background Scene Loading (`ResourceLoader.load_threaded_request`)\nCalling `load(\"res://huge_3d_world.tscn\")` on the main thread freezes the screen until disk I/O finishes. Use `ResourceLoader.load_threaded_request(path)` to load on background worker threads while animating a `ProgressBar`!",
+      "codeSnippets": [
+        {
+          "id": "snip_18_04_profile",
+          "language": "gdscript",
+          "code": "# Micro-Benchmarking & Background Threaded Scene Loading:\nstatic func benchmark_callable_ms(task: Callable) -> float:\n    var start_usec: int = Time.get_ticks_usec()\n    task.call()\n    var end_usec: int = Time.get_ticks_usec()\n    return float(end_usec - start_usec) / 1000.0\n\nfunc poll_threaded_load(path: String, bar: ProgressBar) -> PackedScene:\n    var progress: Array = []\n    var status := ResourceLoader.load_threaded_get_status(path, progress)\n    if not progress.is_empty():\n        bar.value = float(progress[0]) * 100.0\n    if status == ResourceLoader.THREAD_LOAD_LOADED:\n        return ResourceLoader.load_threaded_get(path) as PackedScene\n    return null",
+          "caption": "Micro-benchmarking with `Time.get_ticks_usec()` and non-blocking loading with `ResourceLoader`."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `elapsed_usec(start_usec: int) -> int` that returns `Time.get_ticks_usec() - start_usec`.",
+        "hint": "Use `return Time.get_ticks_usec() - start_usec`.",
+        "starterCode": "func elapsed_usec(start_usec: int) -> int:\n\t",
+        "requiredTokens": [
+          "func",
+          "elapsed_usec",
+          "return",
+          "Time.get_ticks_usec()",
+          "- start_usec"
+        ],
+        "expectedOutput": "Returns the elapsed microseconds since start_usec.",
+        "solutionCode": "func elapsed_usec(start_usec: int) -> int:\n\treturn Time.get_ticks_usec() - start_usec"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_18_04_1",
+          "prompt": "Which `Time` method returns a high-precision monotonic timestamp in **microseconds** since the engine started, ideal for benchmarking code blocks?",
+          "choices": [
+            "`Time.get_ticks_usec()`",
+            "`Time.get_date_string_from_system()`",
+            "`Timer.start()`",
+            "`OS.get_Name()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Time.get_ticks_usec()` provides microsecond resolution (`1/1,000,000` of a second) unaffected by system clock adjustments.",
+          "concept": "Time.get_ticks_usec Profiling"
+        },
+        {
+          "id": "q_18_04_2",
+          "prompt": "Why does `ResourceLoader.load_threaded_request(path)` prevent screen freezes when transitioning to a large 2D/3D level?",
+          "choices": [
+            "It reads and parses the `.tscn` and its textures on background worker threads while the main thread continues rendering the loading screen `ProgressBar` at 60 FPS",
+            "It deletes all textures in the scene",
+            "It skips `_ready()` on all nodes",
+            "It reduces the window size to 1x1"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Threaded loading offloads disk I/O and resource parsing from the main UI/rendering thread.",
+          "concept": "Threaded Resource Loading"
+        },
+        {
+          "id": "q_18_04_3",
+          "prompt": "Which built-in Godot 4.3 node lets your game fetch JSON daily challenges or submit scores to an HTTPS web API?",
+          "choices": [
+            "`HTTPRequest` (emitting `request_completed(result, response_code, headers, body)`)",
+            "`Line2D`",
+            "`StaticBody2D`",
+            "`StyleBoxFlat`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`HTTPRequest` performs non-blocking HTTP/HTTPS requests and returns the response payload via its `request_completed` signal.",
+          "concept": "HTTPRequest Node"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_18_audio_slider_raw_db",
+    "brokenCode": "func _on_sfx_volume_slider_value_changed(slider_val: float) -> void:\n\t# slider_val ranges from 0.0 (silent) to 1.0 (full volume):\n\tvar sfx_bus: int = AudioServer.get_bus_index(\"SFX\")\n\tAudioServer.set_bus_volume_db(sfx_bus, slider_val)",
+    "bugDescription": "You wired a `0.0` to `1.0` volume `Slider` to `_on_sfx_volume_slider_value_changed()`, but dragging the slider all the way down to `0.0` leaves the sound playing at full volume (`0.0 dB`)! Tap the buggy line.",
+    "fixedCode": "func _on_sfx_volume_slider_value_changed(slider_val: float) -> void:\n\t# slider_val ranges from 0.0 (silent) to 1.0 (full volume):\n\tvar sfx_bus: int = AudioServer.get_bus_index(\"SFX\")\n\t# FIX: Convert linear 0..1 slider value to logarithmic decibels with linear_to_db()!\n\tAudioServer.set_bus_mute(sfx_bus, slider_val <= 0.001)\n\tAudioServer.set_bus_volume_db(sfx_bus, linear_to_db(maxf(slider_val, 0.001)))",
+    "explanation": "`AudioServer.set_bus_volume_db()` expects **decibels (`dB`)**, where `0.0 dB` means 100% full volume (`1.0` linear)! Passing a `0.0..1.0` linear slider directly into `set_bus_volume_db()` only varies volume between `0 dB` (100%) and `+1 dB` (112%). Always convert linear slider values with `linear_to_db()`!",
+    "buggyLineNumber": 4,
+    "hint": "What unit does `AudioServer.set_bus_volume_db()` expect (`0.0 dB` = full volume), and which built-in math function converts a `0.0..1.0` linear value into decibels?"
+  }
+}

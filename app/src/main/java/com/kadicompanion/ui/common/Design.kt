@@ -37,6 +37,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.kadicompanion.ui.theme.LocalReduceMotion
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -230,12 +233,11 @@ fun HeroPanel(
         uiPrefs.uiDensity == UiDensity.SPACIOUS -> PaddingValues(20.dp)
         else -> PaddingValues(16.dp)
     }
+    val surfaceHigh = MaterialTheme.colorScheme.surfaceContainerHigh
+    val surfaceStd = MaterialTheme.colorScheme.surfaceContainer
     val effectiveBrush = when (uiPrefs.heroStyle) {
         HeroStyle.SURFACE_FLAT -> Brush.linearGradient(
-            colors = listOf(
-                Color(0xFF0F172A),
-                Color(0xFF1E293B)
-            )
+            colors = listOf(surfaceHigh, surfaceStd)
         )
         else -> gradient
     }
@@ -508,16 +510,22 @@ fun IconBubble(
 /** Shimmer loading skeleton. */
 @Composable
 fun LoadingSkeleton(lines: Int = 5, modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "skeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.08f,
-        targetValue = 0.22f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(750),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "skeletonAlpha"
-    )
+    val reduceMotion = LocalReduceMotion.current
+    val alpha = if (reduceMotion) {
+        0.15f
+    } else {
+        val transition = rememberInfiniteTransition(label = "skeleton")
+        val anim by transition.animateFloat(
+            initialValue = 0.08f,
+            targetValue = 0.22f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(750),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "skeletonAlpha"
+        )
+        anim
+    }
     Column(
         modifier = modifier
             .fillMaxWidth()

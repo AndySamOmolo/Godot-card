@@ -120,8 +120,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Your table HUD (`StatusLabel`, `FeedbackLabel`) updates automatically whenever `turn_changed` or `state_updated` emits — without tight coupling!",
-      "beyondKadi": "How **Typed Signals, `TurnManager` Modulo Math & `Timer` Nodes** transfer to other games:\n- **Circular Modulo `(idx + dir + size) % size`**: Used whenever a player cycles through weapon slots (`Q`/`E` keys), character select carousels, or patrol waypoints that wrap around.\n- **`Timer` Nodes (`AITurnTimer`)**: Used in action games for attack cooldowns, invincibility frames (`0.8s` after taking damage), enemy wave spawners, and boss phase transitions.",
-      "transferChallenge": "**Your Solo Challenge**: Add a `var turn_count: int = 1` counter inside `turn_manager.gd` that increments every time `advance_turn()` runs, emit a new signal `signal turn_number_updated(turn_num: int)`, and display `\"Turn #%d\"` in `Table.tscn`'s `StatusLabel`!"
+      "beyondKadi": "The Observer pattern via Godot `signal`s (`health_changed(new_hp, max_hp)`, `quest_completed(quest_id)`, `ammo_updated(current, reserve)`) lets gameplay nodes run even in headless tests without ever knowing which HUD labels or progress bars exist.",
+      "transferChallenge": "**Solo Transfer Challenge**: Create a `HealthComponent` (`extends Node`) that declares `signal health_changed(current: int, maximum: int)` and `signal died()`, and write `take_damage(amount: int) -> void` that clamps HP with `maxi(0, hp - amount)` and emits both signals appropriately."
     },
     {
       "id": "l_03_02_turn_manager",
@@ -212,8 +212,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Register `TurnManager` in Project Settings -> Autoload so `TurnManager.advance_turn()` smoothly cycles turns `P1 -> P2 -> P3 -> P4 -> P1` in both clockwise and counter-clockwise directions.",
-      "beyondKadi": "How **Typed Signals, `TurnManager` Modulo Math & `Timer` Nodes** transfer to other games:\n- **Circular Modulo `(idx + dir + size) % size`**: Used whenever a player cycles through weapon slots (`Q`/`E` keys), character select carousels, or patrol waypoints that wrap around.\n- **`Timer` Nodes (`AITurnTimer`)**: Used in action games for attack cooldowns, invincibility frames (`0.8s` after taking damage), enemy wave spawners, and boss phase transitions.",
-      "transferChallenge": "**Your Solo Challenge**: Add a `var turn_count: int = 1` counter inside `turn_manager.gd` that increments every time `advance_turn()` runs, emit a new signal `signal turn_number_updated(turn_num: int)`, and display `\"Turn #%d\"` in `Table.tscn`'s `StatusLabel`!"
+      "beyondKadi": "Modular arithmetic (`posmod(index + step, count)`) is used everywhere in game programming: cycling weapon wheels forward/backward with shoulder buttons, wrapping character carousel selectors on a title screen, and rotating 2D/3D puzzle rings.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a weapon-wheel cycler `cycle_weapon(current_slot: int, wheel_dir: int, total_slots: int) -> int` using `posmod()` so pressing Previous (`wheel_dir = -1`) at slot `0` wraps cleanly to `total_slots - 1`."
     },
     {
       "id": "l_03_03_ai_opponents",
@@ -308,8 +308,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "After you play or draw a card, watch `AITurnTimer` pause 0.75s per seat as AI Players 2, 3, and 4 play cards or draw automatically before returning the turn to you!",
-      "beyondKadi": "How **Typed Signals, `TurnManager` Modulo Math & `Timer` Nodes** transfer to other games:\n- **Circular Modulo `(idx + dir + size) % size`**: Used whenever a player cycles through weapon slots (`Q`/`E` keys), character select carousels, or patrol waypoints that wrap around.\n- **`Timer` Nodes (`AITurnTimer`)**: Used in action games for attack cooldowns, invincibility frames (`0.8s` after taking damage), enemy wave spawners, and boss phase transitions.",
-      "transferChallenge": "**Your Solo Challenge**: Add a `var turn_count: int = 1` counter inside `turn_manager.gd` that increments every time `advance_turn()` runs, emit a new signal `signal turn_number_updated(turn_num: int)`, and display `\"Turn #%d\"` in `Table.tscn`'s `StatusLabel`!"
+      "beyondKadi": "Pacing AI turns with a one-shot `Timer` (`ai_turn_timer.start(0.75)`) and disabling human buttons while `current_player_index != 0` is essential in tactical RPGs, board games, and card battlers so players can read each opponent's move.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `begin_enemy_turn(ai_timer: Timer, action_buttons: Array[Button]) -> void` that disables every button in `action_buttons` and starts a `0.6s` one-shot `ai_timer`."
     }
   ],
   "debugChallenge": {

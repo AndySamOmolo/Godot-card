@@ -16,7 +16,8 @@ func _ready() -> void:
 	click_button.pressed.connect(_on_click_button_pressed)
 	if data != null:
 		_refresh_visuals()
-	else:
+	elif get_parent() == get_tree().root:
+		# Standalone F6 scene preview fallback only
 		setup(CardData.make(CardTypes.Suits.HEARTS, 7))
 
 func setup(card_data: CardData) -> void:
@@ -39,7 +40,7 @@ func _refresh_visuals() -> void:
 		center_suit_label.visible = true
 		top_rank_label.text = data.display_name
 		center_suit_label.text = data.suit_symbol()
-		var suit_color: Color = Color("#FF5A67") if data.is_red_suit() else Color("#ECF2F8")
+		var suit_color: Color = Color("#FF6B78") if data.is_red_suit() else Color("#ECF2F8")
 		top_rank_label.modulate = suit_color
 		center_suit_label.modulate = suit_color
 

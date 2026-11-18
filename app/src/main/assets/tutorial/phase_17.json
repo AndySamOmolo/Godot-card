@@ -1,0 +1,516 @@
+{
+  "id": "phase_17_3d_godot_foundations",
+  "order": 17,
+  "title": "3D Godot 4.3 Foundations: Node3D, Vector3, Basis, Lighting, CharacterBody3D & 3D Kadi Tabletop",
+  "summary": "Graduate from 2D to full 3D game development in Godot 4.3! Master 3D coordinate space (`Vector3`, `Transform3D`, `Basis`), 3D meshes & PBR materials (`MeshInstance3D`, `StandardMaterial3D`), lighting (`DirectionalLight3D`, `WorldEnvironment`), 3D character physics (`CharacterBody3D`, `SpringArm3D`, `RayCast3D`), and build a 3D Kadi Tabletop!",
+  "estimatedMinutes": 75,
+  "concepts": [
+    "Node3D",
+    "Vector3",
+    "Basis",
+    "Transform3D",
+    "MeshInstance3D",
+    "Camera3D",
+    "DirectionalLight3D",
+    "WorldEnvironment",
+    "CharacterBody3D",
+    "SpringArm3D",
+    "RayCast3D",
+    "Area3D"
+  ],
+  "programmingConcepts": [
+    "3D Right-Handed Coordinate Math",
+    "Orthonormal Basis & Gimbal Lock Prevention",
+    "PBR Materials & Environment Tonemapping",
+    "3D Camera Ray-Picking",
+    "2D-to-3D Architecture Bridge"
+  ],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scenes/table_3d/table_3d.gd",
+    "res://scenes/table_3d/card_3d.gd"
+  ],
+  "sceneTreeBlueprint": "Table3D (Node3D) -> WorldEnvironment + DirectionalLight3D + Camera3D + TableMesh + HandArcRoot3D (Card3D instances) + HUD (CanvasLayer)",
+  "learningObjectives": [
+    "Navigate Godot 4.3's right-handed Y-Up 3D coordinate system (`-Z` is forward, `+Y` is up, `+X` is right) using `Vector3`, `Basis`, and `Transform3D`",
+    "Render 3D meshes (`MeshInstance3D`, `StandardMaterial3D`), import `.glb`/`.gltf` models, and light scenes with `WorldEnvironment` and `DirectionalLight3D`",
+    "Build a 3D character controller (`CharacterBody3D` + `SpringArm3D` + `Camera3D`) with camera-relative movement",
+    "Pick 3D cards on a 3D mahogany table using `Camera3D.project_ray_origin()` and `Area3D` while reusing 100% of `GameState` and `RuleValidator`!"
+  ],
+  "tangibleGoal": "Build a 3D Kadi Tabletop (`Table3D.tscn`) where 3D cards fan in a spatial arc, lift toward `Camera3D` on hover, and arc onto the 3D discard pile — powered by the exact same `GameState` and `RuleValidator`!",
+  "lessons": [
+    {
+      "id": "l_17_01_node3d_vector3_basis",
+      "order": 1,
+      "title": "3D Coordinate Space in Godot 4.3: `Node3D`, `Vector3`, `Basis` & `Transform3D`",
+      "targetFile": "res://scenes/table_3d/card_3d.gd",
+      "tangibleOutcome": "Position, rotate, and move 3D nodes along their local forward axis (`-global_transform.basis.z`) without gimbal lock!",
+      "beyondKadi": "Every 3D game in Godot 4.3—from first-person adventures and 3D platformers to 3D card tables like *Inscryption*—uses the exact same 2D-to-3D node mapping: `Node2D -> Node3D`, `Vector2 -> Vector3`, `Transform2D -> Transform3D`!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `move_forward_3d(node: Node3D, speed: float, delta: float) -> void` that advances `node.global_position += -node.global_transform.basis.z * speed * delta`.",
+      "sceneTree": "Card3D (Node3D)\n└── MeshInstance3D",
+      "editorSteps": [
+        "Open `res://scenes/table_3d/card_3d.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# The 2D-to-3D Bridge in Godot 4.3\n\nEverything you learned in 2D has a direct 1-to-1 counterpart in 3D:\n\n| 2D Node / Type | 3D Counterpart | Key Difference |\n| :--- | :--- | :--- |\n| `[[Node2D]]` / `[[Vector2]]` | `[[Node3D]]` / `[[Vector3]]` | Adds the `Z` depth axis (`Vector3(x, y, z)`) |\n| `[[Sprite2D]]` | `[[MeshInstance3D]]` / `Sprite3D` | Renders 3D geometry (`BoxMesh`, `QuadMesh`, `.glb`) with PBR materials |\n| `[[Camera2D]]` | `[[Camera3D]]` | Perspective (FOV) or Orthographic 3D projection |\n| `[[Area2D]]` / `[[CharacterBody2D]]` | `[[Area3D]]` / `[[CharacterBody3D]]` | Uses `[[CollisionShape3D]]` (`BoxShape3D`, `CapsuleShape3D`) |\n\n## Godot's Right-Handed Y-Up Coordinate System\n- **`+X` (`Vector3.RIGHT`)**: Right\n- **`+Y` (`Vector3.UP`)**: Up (Gravity pulls along `-Y`)\n- **`-Z` (`Vector3.FORWARD = Vector3(0, 0, -1)`)**: **Forward!** When a `Camera3D` or character looks forward in Godot, it faces down the **negative Z axis (`-global_transform.basis.z`)**!",
+      "codeSnippets": [
+        {
+          "id": "snip_17_01_basis",
+          "language": "gdscript",
+          "code": "# Moving and Aiming a Node3D in 3D World Space:\nextends Node3D\n\nfunc step_forward_local(distance: float) -> void:\n    # In Godot 3D, local forward is ALWAYS -transform.basis.z:\n    var forward_dir: Vector3 = -global_transform.basis.z\n    global_position += forward_dir * distance\n\nfunc aim_at_point(target_world_pos: Vector3) -> void:\n    look_at(target_world_pos, Vector3.UP)",
+          "caption": "Using `-global_transform.basis.z` to move along a `Node3D`'s forward heading."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `get_forward_vector(t: Transform3D) -> Vector3` that returns `-t.basis.z`.",
+        "hint": "Use `return -t.basis.z`.",
+        "starterCode": "func get_forward_vector(t: Transform3D) -> Vector3:\n\t",
+        "requiredTokens": [
+          "func",
+          "get_forward_vector",
+          "Transform3D",
+          "Vector3",
+          "return",
+          "-t.basis.z"
+        ],
+        "expectedOutput": "Returns the unit forward vector (-Z) from a Transform3D's Basis.",
+        "solutionCode": "func get_forward_vector(t: Transform3D) -> Vector3:\n\treturn -t.basis.z"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_17_01_1",
+          "prompt": "In Godot 4.3's right-handed Y-Up 3D coordinate system, what is `Vector3.FORWARD`?",
+          "choices": [
+            "`Vector3(0, 0, -1)` (negative Z axis)",
+            "`Vector3(0, 0, 1)`",
+            "`Vector3(1, 0, 0)`",
+            "`Vector3(0, 1, 0)`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Godot uses a right-handed Y-Up coordinate system where `+X` is Right, `+Y` is Up, and `-Z` is Forward.",
+          "concept": "3D Coordinate System (-Z Forward)"
+        },
+        {
+          "id": "q_17_01_2",
+          "prompt": "What are the two components stored inside a `Transform3D`?",
+          "choices": [
+            "`basis` (a 3x3 `Basis` matrix encoding 3D rotation and scale) and `origin` (a `Vector3` encoding 3D position)",
+            "`width` and `height`",
+            "`color` and `alpha`",
+            "`suit` and `rank`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`Transform3D.basis` stores the X, Y, Z orientation/scale axes and `Transform3D.origin` stores the 3D translation.",
+          "concept": "Transform3D & Basis"
+        },
+        {
+          "id": "q_17_01_3",
+          "prompt": "Why does interpolating 3D rotations with `Quaternion` (`slerp`) or `Basis` avoid 'Gimbal Lock' compared to raw Euler angles?",
+          "choices": [
+            "Because Euler angles apply 3 sequential axis rotations that can align two axes at 90 degrees (losing a degree of freedom), whereas Quaternions/Basis represent orientation smoothly in 3D space",
+            "Because Euler angles only work in 2D",
+            "Because Quaternions disable gravity",
+            "Because `rotation_degrees` is read-only"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "When pitch reaches ±90°, Euler yaw and roll axes align (gimbal lock); `Quaternion` and `Basis` interpolate smoothly across any orientation.",
+          "concept": "Gimbal Lock & Quaternions"
+        }
+      ]
+    },
+    {
+      "id": "l_17_02_meshes_materials_lighting_3d",
+      "order": 2,
+      "title": "3D Meshes (`MeshInstance3D`), PBR Materials, `DirectionalLight3D` & `WorldEnvironment`",
+      "targetFile": "res://scenes/table_3d/card_3d.gd",
+      "tangibleOutcome": "Render a 3D playing card mesh (`QuadMesh` / `BoxMesh`) with your downloaded `Texture2D` card face and realistic tabletop shadows!",
+      "beyondKadi": "Every 3D environment in Godot 4.3 needs 3 things to look great: geometry (`[[MeshInstance3D]]` or imported `.glb`), a PBR `StandardMaterial3D` (`albedo_texture`, `roughness`, `metallic`), and lighting (`[[WorldEnvironment]]` + `[[DirectionalLight3D]]`).",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `apply_foil_metallic(mesh_inst: MeshInstance3D, tex: Texture2D) -> void` that creates a `StandardMaterial3D`, sets `albedo_texture = tex`, `metallic = 0.7`, `roughness = 0.2`, and assigns `mesh_inst.material_override`.",
+      "sceneTree": "Table3D (Node3D)\n├── WorldEnvironment (ProceduralSkyMaterial + ACES Tonemap)\n├── DirectionalLight3D (shadow_enabled = true)\n└── Card3D (MeshInstance3D)",
+      "editorSteps": [
+        "Open `res://scenes/table_3d/card_3d.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# 3D Meshes, PBR Materials & Lighting\n\n## 1. Applying a 2D Card `Texture2D` onto a 3D Card Mesh\nYour `CardData.resolve_downloaded_texture()` returns a `[[Texture2D]]`. You can apply that exact same texture onto a 3D `[[MeshInstance3D]]` (`QuadMesh` or thin `BoxMesh`) using a `StandardMaterial3D`:\n\n```gdscript\nvar mat := StandardMaterial3D.new()\nmat.albedo_texture = card_data.resolve_downloaded_texture()\nmat.roughness = 0.35\nmesh_instance_3d.material_override = mat\n```\n\n## 2. Why a New 3D Scene Looks Dark Until You Add `WorldEnvironment` + `DirectionalLight3D`\nIn the 3D viewport toolbar, click the **Sun / Environment icon** to add a `[[DirectionalLight3D]]` (with `shadow_enabled = true`) and a `[[WorldEnvironment]]` (with `Tonemap Mode = ACES` or `Filmic`).",
+      "codeSnippets": [
+        {
+          "id": "snip_17_02_mesh3d",
+          "language": "gdscript",
+          "code": "# Applying a CardData Texture2D to a 3D MeshInstance3D:\nextends Node3D\n\n@onready var mesh_instance: MeshInstance3D = $MeshInstance3D\n\nfunc apply_card_surface_3d(data: CardData) -> void:\n    var mat := StandardMaterial3D.new()\n    var tex: Texture2D = data.resolve_downloaded_texture()\n    if tex != null:\n        mat.albedo_texture = tex\n    else:\n        mat.albedo_color = Color(\"#FF6B78\") if data.is_red_suit() else Color(\"#ECF2F8\")\n    mat.roughness = 0.35\n    mesh_instance.material_override = mat",
+          "caption": "Binding a 2D `Texture2D` to a 3D `MeshInstance3D` via `StandardMaterial3D`."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `make_pbr_material(color: Color, rough: float) -> StandardMaterial3D` that creates `var mat := StandardMaterial3D.new()`, sets `mat.albedo_color = color` and `mat.roughness = rough`, and returns `mat`.",
+        "hint": "Instantiate `StandardMaterial3D.new()`, set `albedo_color` and `roughness`, and return `mat`.",
+        "starterCode": "func make_pbr_material(color: Color, rough: float) -> StandardMaterial3D:\n\t",
+        "requiredTokens": [
+          "func",
+          "make_pbr_material",
+          "StandardMaterial3D.new()",
+          "albedo_color",
+          "roughness",
+          "return"
+        ],
+        "expectedOutput": "Creates and configures a 3D PBR material.",
+        "solutionCode": "func make_pbr_material(color: Color, rough: float) -> StandardMaterial3D:\n\tvar mat := StandardMaterial3D.new()\n\tmat.albedo_color = color\n\tmat.roughness = rough\n\treturn mat"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_17_02_1",
+          "prompt": "Which property on `StandardMaterial3D` holds the main base color or diffuse `Texture2D` of a 3D surface?",
+          "choices": [
+            "`albedo_color` / `albedo_texture`",
+            "`gravity_scale`",
+            "`wait_time`",
+            "`collision_mask`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "In Physically Based Rendering (PBR), 'Albedo' is the base surface color (`albedo_color`) or texture (`albedo_texture`).",
+          "concept": "PBR Albedo"
+        },
+        {
+          "id": "q_17_02_2",
+          "prompt": "What is the recommended 3D model file format to export from Blender and drop into Godot 4.3's `res://assets/` folder?",
+          "choices": [
+            "`.glb` / `.gltf` (GL Transmission Format — open standard with full mesh, PBR material, and skeletal animation support)",
+            "`.bmp`",
+            "`.mp3`",
+            "`.docx`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Godot 4.3 has first-class native support for `.glb` / `.gltf` 3D scenes, materials, and animations.",
+          "concept": "glTF 2.0 (.glb) Workflow"
+        },
+        {
+          "id": "q_17_02_3",
+          "prompt": "Which two nodes provide sky ambient lighting, tonemapping/glow, and sun shadows in an outdoor or tabletop 3D scene?",
+          "choices": [
+            "`WorldEnvironment` and `DirectionalLight3D`",
+            "`CanvasModulate` and `PointLight2D`",
+            "`HBoxContainer` and `Panel`",
+            "`Timer` and `Tween`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`WorldEnvironment` configures sky/ambient light and post-processing (Tonemap, Glow, SSAO), while `DirectionalLight3D` casts parallel sun/lamp light and shadows.",
+          "concept": "WorldEnvironment & DirectionalLight3D"
+        }
+      ]
+    },
+    {
+      "id": "l_17_03_characterbody3d_springarm_camera",
+      "order": 3,
+      "title": "3D Character Physics: `CharacterBody3D`, `SpringArm3D` & Third/First-Person `Camera3D`",
+      "targetFile": "res://scenes/table_3d/table_3d.gd",
+      "tangibleOutcome": "Build a 3D character controller with camera-relative movement, mouse-look rotation, and a wall-clipping-proof `SpringArm3D` camera rig!",
+      "beyondKadi": "Whether you build a 3D platformer (Mario 64 / Astro Bot), a 3D action RPG (Zelda / Dark Souls), or a first-person puzzle game, `[[CharacterBody3D]]` + `[[SpringArm3D]]` + `[[Camera3D]]` is the universal 3D player rig!",
+      "transferChallenge": "**Solo Transfer Challenge**: Add mouse-look pitch clamping `camera_pivot.rotation_degrees.x = clampf(camera_pivot.rotation_degrees.x - event.relative.y * 0.15, -75.0, 75.0)` inside `_unhandled_input(event)`.",
+      "sceneTree": "Player3D (CharacterBody3D)\n├── MeshInstance3D\n├── CollisionShape3D (CapsuleShape3D)\n└── SpringArm3D (spring_length = 4.5)\n    └── Camera3D",
+      "editorSteps": [
+        "Open `res://scenes/table_3d/table_3d.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# 3D Player Movement (`CharacterBody3D` & `SpringArm3D`)\n\nLook how closely `[[CharacterBody3D]]` mirrors `CharacterBody2D`:\n1. Read 2D input with `var input_2d: Vector2 = Input.get_vector(\"move_left\", \"move_right\", \"move_forward\", \"move_back\")`.\n2. Convert that 2D vector into the character's 3D horizontal `Basis` with `var dir: Vector3 = (transform.basis * Vector3(input_2d.x, 0.0, input_2d.y)).normalized()`.\n3. Apply gravity along `-Y` (`velocity.y -= gravity * delta`) when `not is_on_floor()`.\n4. Call `move_and_slide()`!\n\n## Preventing 3D Cameras from Clipping Inside Walls (`SpringArm3D`)\nParent your `[[Camera3D]]` under a `[[SpringArm3D]]` node. `SpringArm3D` casts a shape backward from the character's shoulders and automatically pulls the camera closer whenever a wall is behind the player!",
+      "codeSnippets": [
+        {
+          "id": "snip_17_03_char3d",
+          "language": "gdscript",
+          "code": "# Complete 3D Character Controller in Godot 4.3:\nextends CharacterBody3D\n\n@export var speed: float = 6.0\n@export var jump_velocity: float = 7.5\n@export var gravity: float = 18.0\n\nfunc _physics_process(delta: float) -> void:\n    if not is_on_floor():\n        velocity.y -= gravity * delta\n    elif Input.is_action_just_pressed(\"jump\"):\n        velocity.y = jump_velocity\n\n    var input_2d: Vector2 = Input.get_vector(\"move_left\", \"move_right\", \"move_forward\", \"move_back\")\n    var move_dir: Vector3 = (transform.basis * Vector3(input_2d.x, 0.0, input_2d.y)).normalized()\n    if move_dir != Vector3.ZERO:\n        velocity.x = move_dir.x * speed\n        velocity.z = move_dir.z * speed\n    else:\n        velocity.x = move_toward(velocity.x, 0.0, speed)\n        velocity.z = move_toward(velocity.z, 0.0, speed)\n    move_and_slide()",
+          "caption": "`CharacterBody3D` movement uses the exact same `Input.get_vector()` and `move_and_slide()` workflow as 2D!"
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `input_to_world_3d(basis: Basis, input_2d: Vector2) -> Vector3` that returns `(basis * Vector3(input_2d.x, 0.0, input_2d.y)).normalized()`.",
+        "hint": "Use `return (basis * Vector3(input_2d.x, 0.0, input_2d.y)).normalized()`.",
+        "starterCode": "func input_to_world_3d(basis: Basis, input_2d: Vector2) -> Vector3:\n\t",
+        "requiredTokens": [
+          "func",
+          "input_to_world_3d",
+          "Basis",
+          "Vector3",
+          "normalized()"
+        ],
+        "expectedOutput": "Transforms a 2D input vector into a normalized 3D horizontal movement vector.",
+        "solutionCode": "func input_to_world_3d(basis: Basis, input_2d: Vector2) -> Vector3:\n\treturn (basis * Vector3(input_2d.x, 0.0, input_2d.y)).normalized()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_17_03_1",
+          "prompt": "In 2D, downward gravity adds to `+Y` (`velocity.y += gravity * delta`). In 3D (`CharacterBody3D`), which way does downward gravity pull?",
+          "choices": [
+            "Negative Y (`velocity.y -= gravity * delta`) because `+Y` points Up in Godot 3D",
+            "Positive Z (`velocity.z += gravity * delta`)",
+            "Positive X",
+            "Positive Y"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "In 2D screen space `+Y` points down, whereas in 3D world space `+Y` points up (`Vector3.UP = Vector3(0, 1, 0)`), so gravity subtracts from `velocity.y`.",
+          "concept": "2D vs 3D Y-Axis Direction"
+        },
+        {
+          "id": "q_17_03_2",
+          "prompt": "What problem does parenting a `Camera3D` under a `SpringArm3D` solve in a 3rd-person 3D game?",
+          "choices": [
+            "It automatically shortens the camera arm when a wall or obstacle is behind the player so the camera never clips inside solid walls",
+            "It makes the player jump higher",
+            "It converts 3D meshes into 2D sprites",
+            "It saves the game to disk"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`SpringArm3D` performs a physics shape cast along its length and retracts its children before penetrating geometry.",
+          "concept": "SpringArm3D Camera Collision"
+        },
+        {
+          "id": "q_17_03_3",
+          "prompt": "Why do we multiply `transform.basis * Vector3(input_2d.x, 0.0, input_2d.y)` when calculating 3D player movement?",
+          "choices": [
+            "So pressing Forward (`input_2d.y = -1`) moves the character along the direction the character/camera is currently facing (`-basis.z`), not fixed world north",
+            "To set `velocity.y` to `100`",
+            "To disable collisions",
+            "Because `Basis` is an integer"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Multiplying a local movement vector by `transform.basis` rotates it into the character's current world orientation.",
+          "concept": "Basis Vector Transformation"
+        }
+      ]
+    },
+    {
+      "id": "l_17_04_3d_ray_picking_spatial_audio",
+      "order": 4,
+      "title": "Clicking 3D Objects (`Camera3D` Ray Picking, `Area3D`, `RayCast3D` & `AudioStreamPlayer3D`)",
+      "targetFile": "res://scenes/table_3d/card_3d.gd",
+      "tangibleOutcome": "Click and hover 3D playing cards on a 3D table using `Area3D.input_event` and `Camera3D` ray projection, with 3D spatial card-slap audio!",
+      "beyondKadi": "In 3D strategy games (XCOM, Civilization), 3D deckbuilders (*Inscryption*), and point-and-click adventures, players click 3D objects with a 2D mouse or finger. Godot 4.3 gives you two clean ways to do this: `[[Area3D]].input_event` and `[[Camera3D]].project_ray_origin()`!",
+      "transferChallenge": "**Solo Transfer Challenge**: Connect `mouse_entered` and `mouse_exited` on `Card3D (Area3D)` to Tween `position.y` between `0.15` (hover lift) and `0.0` (resting on table).",
+      "sceneTree": "Card3D (Area3D)\n├── MeshInstance3D (QuadMesh)\n├── CollisionShape3D (BoxShape3D)\n└── SlapSound3D (AudioStreamPlayer3D)",
+      "editorSteps": [
+        "Open `res://scenes/table_3d/card_3d.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Interacting with 3D Objects & 3D Spatial Audio\n\n## Method 1: Built-in `Area3D` Mouse Signals (Zero Math!)\nWhen a `[[CollisionObject3D]]` (`[[Area3D]]`, `StaticBody3D`, `RigidBody3D`) has `input_ray_pickable = true` (the default!), Godot automatically casts a ray from the active `[[Camera3D]]` and emits:\n- `mouse_entered()` / `mouse_exited()`\n- `input_event(camera, event, event_position, normal, shape_idx)`\n\n## Method 2: Manual `Camera3D` Ray Projection\nNeed to cast a custom 3D ray from screen coordinates `mouse_pos`?\n- `var origin: Vector3 = camera.project_ray_origin(mouse_pos)`\n- `var dir: Vector3 = camera.project_ray_normal(mouse_pos)`",
+      "codeSnippets": [
+        {
+          "id": "snip_17_04_pick3d",
+          "language": "gdscript",
+          "code": "# Clickable & Hoverable 3D Playing Card (Area3D):\nextends Area3D\nsignal card_3d_clicked(card_node: Node3D)\n\nvar is_selected: bool = false\n\nfunc _ready() -> void:\n    mouse_entered.connect(_on_mouse_entered)\n    mouse_exited.connect(_on_mouse_exited)\n    input_event.connect(_on_input_event)\n\nfunc _on_mouse_entered() -> void:\n    if not is_selected:\n        create_tween().tween_property(self, \"position:y\", 0.08, 0.10)\n\nfunc _on_mouse_exited() -> void:\n    if not is_selected:\n        create_tween().tween_property(self, \"position:y\", 0.0, 0.10)\n\nfunc _on_input_event(_cam: Node, event: InputEvent, _pos: Vector3, _norm: Vector3, _idx: int) -> void:\n    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:\n        card_3d_clicked.emit(self)",
+          "caption": "`Area3D` emits `mouse_entered`, `mouse_exited`, and `input_event` automatically in 3D space!"
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `compute_ray_end(cam: Camera3D, screen_pos: Vector2, length: float) -> Vector3` that returns `cam.project_ray_origin(screen_pos) + cam.project_ray_normal(screen_pos) * length`.",
+        "hint": "Combine `cam.project_ray_origin(screen_pos)` and `cam.project_ray_normal(screen_pos) * length`.",
+        "starterCode": "func compute_ray_end(cam: Camera3D, screen_pos: Vector2, length: float) -> Vector3:\n\t",
+        "requiredTokens": [
+          "func",
+          "compute_ray_end",
+          "Camera3D",
+          "project_ray_origin",
+          "project_ray_normal",
+          "* length"
+        ],
+        "expectedOutput": "Computes the 3D world endpoint of a ray projected through a 2D screen point.",
+        "solutionCode": "func compute_ray_end(cam: Camera3D, screen_pos: Vector2, length: float) -> Vector3:\n\treturn cam.project_ray_origin(screen_pos) + cam.project_ray_normal(screen_pos) * length"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_17_04_1",
+          "prompt": "Which property on `Area3D` (enabled by default) allows it to receive `mouse_entered`, `mouse_exited`, and `input_event` signals when clicked through a `Camera3D`?",
+          "choices": [
+            "`input_ray_pickable = true` (paired with a valid `CollisionShape3D` child)",
+            "`y_sort_enabled = true`",
+            "`clip_contents = true`",
+            "`one_shot = true`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "With `input_ray_pickable = true` and a `CollisionShape3D`, Godot's viewport automatically ray-picks the `Area3D` under the cursor.",
+          "concept": "Area3D Ray Picking"
+        },
+        {
+          "id": "q_17_04_2",
+          "prompt": "How does `AudioStreamPlayer3D` differ from `AudioStreamPlayer`?",
+          "choices": [
+            "`AudioStreamPlayer3D` is a `Node3D` that attenuates volume with 3D distance and pans stereo/surround audio based on where the sound is relative to the active `Camera3D`",
+            "`AudioStreamPlayer3D` only plays MIDI files",
+            "`AudioStreamPlayer3D` cannot be paused",
+            "There is no difference"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`AudioStreamPlayer3D` spatializes audio in 3D world space with distance attenuation and Doppler/panning effects.",
+          "concept": "3D Spatial Audio"
+        },
+        {
+          "id": "q_17_04_3",
+          "prompt": "Which two `Camera3D` methods convert a 2D mouse coordinate (`Vector2`) into a 3D ray origin and unit direction vector?",
+          "choices": [
+            "`project_ray_origin(screen_point)` and `project_ray_normal(screen_point)`",
+            "`local_to_map()` and `map_to_local()`",
+            "`move_and_slide()` and `look_at()`",
+            "`push_back()` and `pop_back()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`project_ray_origin()` gives the 3D start point on the near plane and `project_ray_normal()` gives the normalized 3D ray direction.",
+          "concept": "Camera3D Ray Projection"
+        }
+      ]
+    },
+    {
+      "id": "l_17_05_3d_kadi_tabletop_bridge",
+      "order": 5,
+      "title": "Capstone Bridge: Building a 3D Kadi Tabletop Using the Exact Same `GameState` & `RuleValidator`!",
+      "targetFile": "res://scenes/table_3d/table_3d.gd",
+      "tangibleOutcome": "Connect your 2D `GameState`, `TurnManager`, and `RuleValidator` to a 3D `Table3D.tscn` scene with zero changes to the rule scripts!",
+      "beyondKadi": "This is the ultimate proof of **Model-View-Controller (MVC) / Decoupled Architecture**: because `CardData`, `GameState`, `TurnManager`, and `RuleValidator` have zero dependencies on 2D nodes, they can drive a 2D mobile UI (`Table.tscn`) OR a 3D spatial tabletop (`Table3D.tscn`) simultaneously!",
+      "transferChallenge": "**Solo Transfer Challenge**: Add a parabolic 3D card throw Tween (`animate_card_arc_3d`) that arcs a played `Card3D` from the player's 3D hand to `DiscardAnchor3D` while flipping `rotation_degrees.z` by `180.0` degrees.",
+      "sceneTree": "Table3D (Node3D)\n├── Camera3D\n├── HandArcRoot3D (Node3D)\n├── DiscardAnchor3D (Node3D)\n└── HUD (CanvasLayer — reuses the exact same 2D HUD!)",
+      "editorSteps": [
+        "Open `res://scenes/table_3d/table_3d.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Why Decoupled Architecture Lets You Swap 2D for 3D Effortlessly\n\nLook at the files we built across Phases 2–10:\n- `CardData` (`extends Resource`) — Pure data.\n- `GameState` (`extends Node`) — Pure state arrays and signals.\n- `TurnManager` (`extends Node`) — Pure seat index and direction math.\n- `RuleValidator` (`extends RefCounted`) — Pure static rule functions.\n\n**Not a single line of `GameState`, `TurnManager`, or `RuleValidator` mentions `Node2D` or `Control`!** That means `Table3D.gd` (`extends Node3D`) can listen to `GameState.state_updated`, spawn `Card3D.tscn` meshes in a 3D arc, and call `RuleValidator.validate_move(...)` without changing a single line of your rule engine!",
+      "codeSnippets": [
+        {
+          "id": "snip_17_05_table3d",
+          "language": "gdscript",
+          "code": "# 3D Kadi Tabletop Controller Reusing 100% of GameState & RuleValidator:\nextends Node3D\n\n@onready var hand_root_3d: Node3D = $HandArcRoot3D\n@onready var discard_anchor_3d: Node3D = $DiscardAnchor3D\n\nfunc layout_human_hand_3d(cards_3d: Array[Node3D]) -> void:\n    var n: int = cards_3d.size()\n    for i in range(n):\n        var offset: float = float(i) - float(n - 1) * 0.5\n        cards_3d[i].position = Vector3(offset * 0.22, 0.10, 0.65 + absf(offset) * 0.025)\n        cards_3d[i].rotation_degrees = Vector3(-28.0, -offset * 4.5, -offset * 3.0)",
+          "caption": "Fanning 3D card nodes in a spatial arc while reusing `GameState` and `RuleValidator`."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `card_arc_position(index: int, total: int, spacing: float) -> Vector3` that computes `var offset: float = float(index) - float(total - 1) * 0.5` and returns `Vector3(offset * spacing, 0.1, 0.6)`.",
+        "hint": "Calculate `offset` and return `Vector3(offset * spacing, 0.1, 0.6)`.",
+        "starterCode": "func card_arc_position(index: int, total: int, spacing: float) -> Vector3:\n\t",
+        "requiredTokens": [
+          "func",
+          "card_arc_position",
+          "Vector3",
+          "offset",
+          "spacing"
+        ],
+        "expectedOutput": "Computes centered 3D X-axis spacing for a card in a 3D hand arc.",
+        "solutionCode": "func card_arc_position(index: int, total: int, spacing: float) -> Vector3:\n\tvar offset: float = float(index) - float(total - 1) * 0.5\n\treturn Vector3(offset * spacing, 0.1, 0.6)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_17_05_1",
+          "prompt": "Why can `Table3D.gd` (`extends Node3D`) reuse `GameState`, `TurnManager`, and `RuleValidator` without modifying a single line of those three scripts?",
+          "choices": [
+            "Because we decoupled our data (`CardData`), state (`GameState`), and rules (`RuleValidator`) from the 2D view (`Table.gd` / `CardScene.gd`)",
+            "Because `Node3D` inherits from `Control`",
+            "Because Godot automatically converts `HBoxContainer` into 3D meshes",
+            "Because `RuleValidator` is a shader"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Separating domain data and rules from presentation nodes lets you swap or add a 3D view without touching game logic.",
+          "concept": "View-Independent Game Logic"
+        },
+        {
+          "id": "q_17_05_2",
+          "prompt": "How do you display a crisp 2D HUD (`StatusLabel`, `PlaySelectedButton`, `DeclareSuitDialog`) on top of a 3D `Node3D` game world?",
+          "choices": [
+            "Add a `CanvasLayer` child (or standard `Control` root) to the `Node3D` scene — 2D UI inside a `CanvasLayer` renders cleanly over the 3D viewport!",
+            "Convert every `Button` into a 10,000-polygon 3D mesh",
+            "Disable the `Camera3D`",
+            "You cannot mix 2D UI and 3D scenes in Godot"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "In Godot 4.3, 2D `CanvasLayer` and `Control` nodes overlay directly on top of 3D viewports, which is how almost all 3D games build their HUDs and menus.",
+          "concept": "2D CanvasLayer HUD over 3D World"
+        },
+        {
+          "id": "q_17_05_3",
+          "prompt": "In `layout_human_hand_3d()`, why do we compute `var offset: float = float(i) - float(n - 1) * 0.5`?",
+          "choices": [
+            "So the hand is symmetrically centered around `X = 0.0` regardless of whether the player holds 2 cards or 9 cards",
+            "To sort the cards by suit",
+            "To delete the last card",
+            "To set gravity to zero"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Subtracting `(n - 1) * 0.5` centers index `i` around `0.0` (e.g. for 3 cards: `-1.0, 0.0, +1.0`).",
+          "concept": "Centered Arc Math"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_17_3d_gravity_sign_inverted",
+    "brokenCode": "extends CharacterBody3D\nconst GRAVITY: float = 18.0\n\nfunc _physics_process(delta: float) -> void:\n\tif not is_on_floor():\n\t\tvelocity.y += GRAVITY * delta\n\tmove_and_slide()",
+    "bugDescription": "You created a `CharacterBody3D` player in a 3D level, but as soon as the player steps off a ledge, they float **upward into the sky** instead of falling toward the ground! Tap the buggy line.",
+    "fixedCode": "extends CharacterBody3D\nconst GRAVITY: float = 18.0\n\nfunc _physics_process(delta: float) -> void:\n\tif not is_on_floor():\n\t\t# FIX: In Godot 3D, +Y is UP, so downward gravity must SUBTRACT from velocity.y!\n\t\tvelocity.y -= GRAVITY * delta\n\tmove_and_slide()",
+    "explanation": "In 2D (`Node2D`), `+Y` points down the screen so gravity is `velocity.y += GRAVITY * delta`. In 3D (`Node3D`), Godot uses a Y-Up coordinate system (`Vector3.UP = Vector3(0, 1, 0)`), so downward gravity pulls along `-Y` (`velocity.y -= GRAVITY * delta`)!",
+    "buggyLineNumber": 6,
+    "hint": "Which direction does `+Y` point in Godot 3D (`Vector3.UP`), and should gravity add or subtract from `velocity.y`?"
+  }
+}

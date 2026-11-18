@@ -38,7 +38,7 @@ class QuizViewModel @Inject constructor(
     savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
-    private val lessonId: String = checkNotNull(savedStateHandle["lessonId"])
+    private val lessonId: String = android.net.Uri.decode(checkNotNull(savedStateHandle["lessonId"]))
 
     private val _ui = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _ui.asStateFlow()

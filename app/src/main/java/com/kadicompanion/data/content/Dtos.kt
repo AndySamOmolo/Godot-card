@@ -77,6 +77,7 @@ data class DebugChallengeDto(
     val fixedCode: String,
     val explanation: String,
     val buggyLineNumber: Int? = null,
+    val buggyLineNumbers: List<Int> = emptyList(),
     val hint: String? = null
 )
 

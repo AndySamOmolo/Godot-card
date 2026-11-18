@@ -1,0 +1,509 @@
+{
+  "id": "phase_16_2d_engine_mastery",
+  "order": 16,
+  "title": "Complete 2D Engine Mastery: TileMapLayer, RayCasts, NavigationAgent2D, AnimationTree & 2D Lighting",
+  "summary": "Master every major 2D subsystem in Godot 4.3 beyond UI cards: `TileMapLayer` & `TileSet` custom data layers, `RayCast2D` & `ShapeCast2D` collision queries, `NavigationRegion2D` & `NavigationAgent2D` pathfinding, `AnimationTree` state machines, and `PointLight2D` / `CanvasModulate` / `Parallax2D` atmosphere.",
+  "estimatedMinutes": 70,
+  "concepts": [
+    "TileMapLayer",
+    "TileSet",
+    "RayCast2D",
+    "ShapeCast2D",
+    "NavigationAgent2D",
+    "NavigationRegion2D",
+    "AnimationTree",
+    "PointLight2D",
+    "CanvasModulate",
+    "Parallax2D"
+  ],
+  "programmingConcepts": [
+    "Grid-to-World Coordinate Transforms",
+    "Collision Layer & Mask Bitmasks",
+    "Raycast Line-of-Sight Queries",
+    "NavMesh Steering & Avoidance",
+    "BlendSpace2D State Machines"
+  ],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scenes/world_2d/overworld_map.gd",
+    "res://scenes/world_2d/nav_enemy.gd"
+  ],
+  "sceneTreeBlueprint": "Overworld2D (Node2D) -> Parallax2D + TileMapLayer + NavigationRegion2D + CharacterBody2D (AnimationTree + RayCast2D) + CanvasModulate + PointLight2D",
+  "learningObjectives": [
+    "Build 2D worlds with Godot 4.3's new `TileMapLayer` node (replacing the deprecated `TileMap`), paint physics/navigation layers, and query custom tile metadata at runtime",
+    "Configure `collision_layer` (what I am) vs `collision_mask` (what I scan for) and cast rays/shapes with `RayCast2D` and `ShapeCast2D`",
+    "Steer AI agents smoothly around obstacles using `NavigationRegion2D` and `NavigationAgent2D`",
+    "Blend 8-directional character animations with `AnimationTree` (`BlendSpace2D`) and light 2D scenes with `CanvasModulate`, `PointLight2D`, and `Parallax2D`"
+  ],
+  "tangibleGoal": "Build a playable 2D Kadi Tournament Overworld where your character walks across a `TileMapLayer` town between card tables, with torch lighting, line-of-sight NPC detection, and pathfinding rivals!",
+  "lessons": [
+    {
+      "id": "l_16_01_tilemaplayer_tileset",
+      "order": 1,
+      "title": "Godot 4.3 `TileMapLayer` & `TileSet`: Autotiling, Physics & Custom Data Layers",
+      "targetFile": "res://scenes/world_2d/overworld_map.gd",
+      "tangibleOutcome": "Build a 2D map with `TileMapLayer` and read custom per-tile metadata (`\"surface_type\"`, `\"move_cost\"`) under the player's feet!",
+      "beyondKadi": "In Godot 4.3, the old monolithic `TileMap` node was superseded by individual `[[TileMapLayer]]` nodes (`GroundLayer`, `WallsLayer`, `PropsLayer`). Every 2D platformer, RPG overworld, tactics grid, and roguelike dungeon uses `TileMapLayer`!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `is_water_tile(layer: TileMapLayer, world_pos: Vector2) -> bool` that converts `world_pos` via `layer.local_to_map(layer.to_local(world_pos))` and checks `tile_data.get_custom_data(\"is_water\")`.",
+      "sceneTree": "Overworld2D (Node2D)\n├── GroundLayer (TileMapLayer)\n└── WallsLayer (TileMapLayer)",
+      "editorSteps": [
+        "Open `res://scenes/world_2d/overworld_map.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Building 2D Worlds with Godot 4.3 `TileMapLayer`\n\n> [!IMPORTANT]\n> **Godot 4.3 Upgrade (`TileMapLayer`):** In Godot 4.3, each layer of your map is its own `[[TileMapLayer]]` node sharing a `[[TileSet]]` resource. This lets you reorder layers in the SceneTree, Y-sort characters between trees/buildings, and toggle layers independently!\n\n## Converting Between World Pixels and Grid Coordinates\n- **World (`Vector2`) -> Grid (`Vector2i`)**: `var cell: Vector2i = layer.local_to_map(layer.to_local(global_pos))`\n- **Grid (`Vector2i`) -> World (`Vector2`)**: `var world_pos: Vector2 = layer.to_global(layer.map_to_local(cell))`\n- **Reading Custom Data**: Add a Custom Data Layer named `\"surface\"` (type `String`) in your `TileSet`, then call `tile_data.get_custom_data(\"surface\")` to play grass vs. stone footsteps or apply ice friction!",
+      "codeSnippets": [
+        {
+          "id": "snip_16_01_tilemap",
+          "language": "gdscript",
+          "code": "# Querying Custom Tile Data under the Player in Godot 4.3 TileMapLayer:\nextends Node2D\n\n@onready var ground_layer: TileMapLayer = $GroundLayer\n\nfunc get_tile_surface_at(world_pos: Vector2) -> String:\n    var local_pos: Vector2 = ground_layer.to_local(world_pos)\n    var cell: Vector2i = ground_layer.local_to_map(local_pos)\n    var data: TileData = ground_layer.get_cell_tile_data(cell)\n    if data == null:\n        return \"void\"\n    return str(data.get_custom_data(\"surface\"))",
+          "caption": "Converting world coordinates to `TileMapLayer` grid cells and reading custom metadata."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `world_to_cell(layer: TileMapLayer, local_pos: Vector2) -> Vector2i` that returns `layer.local_to_map(local_pos)`.",
+        "hint": "Call `return layer.local_to_map(local_pos)`.",
+        "starterCode": "func world_to_cell(layer: TileMapLayer, local_pos: Vector2) -> Vector2i:\n\t",
+        "requiredTokens": [
+          "func",
+          "world_to_cell",
+          "TileMapLayer",
+          "Vector2i",
+          "return",
+          "layer.local_to_map"
+        ],
+        "expectedOutput": "Converts a 2D pixel position into integer tile coordinates.",
+        "solutionCode": "func world_to_cell(layer: TileMapLayer, local_pos: Vector2) -> Vector2i:\n\treturn layer.local_to_map(local_pos)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_16_01_1",
+          "prompt": "In Godot 4.3, which node replaces the older multi-layer `TileMap` node as the recommended way to build 2D tile layers?",
+          "choices": [
+            "`TileMapLayer` (one node per layer, sharing a `TileSet` resource)",
+            "`GridContainer`",
+            "`Sprite3D`",
+            "`PanelContainer`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Godot 4.3 introduced `TileMapLayer` as a first-class node so each map layer is a standard SceneTree node.",
+          "concept": "TileMapLayer in Godot 4.3"
+        },
+        {
+          "id": "q_16_01_2",
+          "prompt": "Which `TileMapLayer` method converts a local pixel `Vector2` into `Vector2i` grid coordinates `(col, row)`?",
+          "choices": [
+            "`local_to_map(local_position)`",
+            "`map_to_local(cell)`",
+            "`get_global_rect()`",
+            "`move_and_slide()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`local_to_map()` converts local pixel coordinates into integer map cell coordinates; `map_to_local()` does the reverse.",
+          "concept": "Coordinate Conversion"
+        },
+        {
+          "id": "q_16_01_3",
+          "prompt": "How do you make characters and trees overlap naturally by vertical screen position in a top-down 2D RPG?",
+          "choices": [
+            "Enable `y_sort_enabled = true` on both the parent `Node2D` container and the `TileMapLayer` (and place sprite origins at each character's feet)",
+            "Set `z_index = 999` on every node",
+            "Use a `VBoxContainer`",
+            "Disable `CanvasItem` visibility"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`y_sort_enabled = true` draws nodes with a higher Y coordinate (lower on screen) in front of nodes with a lower Y coordinate.",
+          "concept": "2D Y-Sorting"
+        }
+      ]
+    },
+    {
+      "id": "l_16_02_collision_layers_raycasts",
+      "order": 2,
+      "title": "Collision Layers vs. Masks, `RayCast2D` & `ShapeCast2D`",
+      "targetFile": "res://scenes/world_2d/nav_enemy.gd",
+      "tangibleOutcome": "Configure bitmask Collision Layers/Masks cleanly and use `RayCast2D` for instant line-of-sight and ledge detection!",
+      "beyondKadi": "Every stealth game (Metal Gear, Dishonored) uses `RayCast2D` to check if a wall blocks an enemy's vision cone, every platformer uses downward raycasts to stop enemies from walking off ledges, and hitscan weapons use raycasts for instant lasers!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `is_ledge_ahead(floor_ray: RayCast2D, move_dir: float) -> bool` that positions `floor_ray.position.x = 18.0 * signf(move_dir)` and returns `not floor_ray.is_colliding()`.",
+      "sceneTree": "EnemyGuard (CharacterBody2D)\n├── VisionRay (RayCast2D)\n└── LedgeRay (RayCast2D)",
+      "editorSteps": [
+        "Open `res://scenes/world_2d/nav_enemy.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Collision Layers vs. Masks & Raycasting (`RayCast2D`)\n\n## 1. The Golden Rule of `collision_layer` vs. `collision_mask`\n| Property | Question It Answers | Example Setup |\n| :--- | :--- | :--- |\n| **`collision_layer`** | **\"What am I?\"** (Which bit layers does this object exist on?) | Layer 1 = `World`, Layer 2 = `Player`, Layer 3 = `Enemy`, Layer 4 = `PlayerBullet` |\n| **`collision_mask`** | **\"What do I collide with / scan for?\"** | `PlayerBullet` has Layer = `4`, Mask = `1 (World) + 3 (Enemy)` so it never hits the `Player` (`2`)! |\n\n## 2. `[[RayCast2D]]` & `[[ShapeCast2D]]`\n- `RayCast2D` projects a thin line from `position` to `target_position`.\n- Need to update `target_position` and read the result on the **exact same frame**? Call `ray.force_raycast_update()` before `ray.is_colliding()`!\n- Need a **thick** beam (like a wide laser or checking if a character capsule fits through a doorway)? Use `[[ShapeCast2D]]`!",
+      "codeSnippets": [
+        {
+          "id": "snip_16_02_raycast",
+          "language": "gdscript",
+          "code": "# Same-Frame Line-of-Sight Check with RayCast2D:\nextends CharacterBody2D\n\n@onready var sight_ray: RayCast2D = $SightRay\n\nfunc can_see_target(target: Node2D, max_distance: float = 320.0) -> bool:\n    if global_position.distance_to(target.global_position) > max_distance:\n        return false\n    sight_ray.target_position = to_local(target.global_position)\n    sight_ray.force_raycast_update()\n    return sight_ray.is_colliding() and sight_ray.get_collider() == target",
+          "caption": "Aiming `RayCast2D` in local space and calling `force_raycast_update()` for immediate line-of-sight verification."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `check_hit(ray: RayCast2D) -> Object` that calls `ray.force_raycast_update()` and returns `ray.get_collider() if ray.is_colliding() else null`.",
+        "hint": "Call `ray.force_raycast_update()` then `return ray.get_collider() if ray.is_colliding() else null`.",
+        "starterCode": "func check_hit(ray: RayCast2D) -> Object:\n\t",
+        "requiredTokens": [
+          "func",
+          "check_hit",
+          "force_raycast_update",
+          "is_colliding",
+          "get_collider"
+        ],
+        "expectedOutput": "Forces an immediate raycast check and returns the hit collider or null.",
+        "solutionCode": "func check_hit(ray: RayCast2D) -> Object:\n\tray.force_raycast_update()\n\treturn ray.get_collider() if ray.is_colliding() else null"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_16_02_1",
+          "prompt": "What is the difference between `collision_layer` and `collision_mask` in Godot 4.3?",
+          "choices": [
+            "`collision_layer` defines the layer(s) the object **is on** ('What am I?'); `collision_mask` defines the layer(s) the object **scans/collides with** ('What do I look for?')",
+            "`collision_layer` is for 2D and `collision_mask` is for 3D",
+            "`collision_mask` changes the sprite's alpha channel",
+            "They are identical"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Separating 'what I am' (`collision_layer`) from 'what I detect' (`collision_mask`) lets player bullets ignore the player while hitting enemies and walls.",
+          "concept": "Collision Layer vs Mask"
+        },
+        {
+          "id": "q_16_02_2",
+          "prompt": "If you change `sight_ray.target_position` in code and want to check `sight_ray.is_colliding()` on the **very next line** without waiting for the next physics tick, what must you call?",
+          "choices": [
+            "`sight_ray.force_raycast_update()`",
+            "`sight_ray.queue_free()`",
+            "`sight_ray.show()`",
+            "`get_tree().reload_current_scene()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`RayCast2D` normally updates once per physics tick; `force_raycast_update()` recalculates collisions immediately.",
+          "concept": "RayCast2D.force_raycast_update"
+        },
+        {
+          "id": "q_16_02_3",
+          "prompt": "Why do we set `sight_ray.target_position = to_local(target.global_position)` instead of `target.global_position` directly?",
+          "choices": [
+            "Because `RayCast2D.target_position` is relative to the `RayCast2D` node's local origin, not world `(0, 0)`",
+            "Because `global_position` is a `Vector3`",
+            "Because `to_local()` normalizes the vector to length 1",
+            "Because `RayCast2D` only points upward"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`target_position` is a local offset vector from the raycast's origin.",
+          "concept": "Local vs Global Coordinates"
+        }
+      ]
+    },
+    {
+      "id": "l_16_03_navigation_agent_2d",
+      "order": 3,
+      "title": "2D Pathfinding & Crowd Avoidance with `NavigationRegion2D` & `NavigationAgent2D`",
+      "targetFile": "res://scenes/world_2d/nav_enemy.gd",
+      "tangibleOutcome": "Make AI opponents navigate smoothly around tables, walls, and each other using `NavigationAgent2D`!",
+      "beyondKadi": "In top-down RPGs, RTS games, tower defense, and survival games, moving directly toward `player.global_position` gets enemies stuck on the first wall corner. `[[NavigationAgent2D]]` computes paths around obstacles automatically!",
+      "transferChallenge": "**Solo Transfer Challenge**: Connect `nav_agent.velocity_computed` to `_on_velocity_computed(safe_velocity: Vector2)` so multiple chasing enemies steer around each other using RVO avoidance without overlapping.",
+      "sceneTree": "Arena (Node2D)\n├── NavigationRegion2D\n└── ChaserEnemy (CharacterBody2D)\n    └── NavigationAgent2D",
+      "editorSteps": [
+        "Open `res://scenes/world_2d/nav_enemy.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Smart 2D Pathfinding (`NavigationRegion2D` + `NavigationAgent2D`)\n\n1. Add a `[[NavigationRegion2D]]` node to your level, assign a `NavigationPolygon` resource, and click **Bake NavigationPolygon** in the top toolbar so Godot carves walkable floor around your static obstacles.\n2. Add a `[[NavigationAgent2D]]` child to your `CharacterBody2D` enemy.\n3. Update `nav_agent.target_position = player.global_position` on a `0.2s` timer (no need to re-path every single frame!).\n4. In `_physics_process(delta)`, steer toward `var next_pt: Vector2 = nav_agent.get_next_path_position()`!",
+      "codeSnippets": [
+        {
+          "id": "snip_16_03_nav2d",
+          "language": "gdscript",
+          "code": "# Obstacle-Avoiding AI Movement with NavigationAgent2D:\nextends CharacterBody2D\n\n@export var move_speed: float = 140.0\n@onready var nav_agent: NavigationAgent2D = $NavigationAgent2D\n\nfunc update_target(world_target: Vector2) -> void:\n    nav_agent.target_position = world_target\n\nfunc _physics_process(_delta: float) -> void:\n    if nav_agent.is_navigation_finished():\n        velocity = Vector2.ZERO\n        return\n    var next_wp: Vector2 = nav_agent.get_next_path_position()\n    velocity = global_position.direction_to(next_wp) * move_speed\n    move_and_slide()",
+          "caption": "Steering a `CharacterBody2D` along waypoints from `NavigationAgent2D`."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `steer_toward_waypoint(current_pos: Vector2, next_waypoint: Vector2, speed: float) -> Vector2` that returns `current_pos.direction_to(next_waypoint) * speed`.",
+        "hint": "Use `return current_pos.direction_to(next_waypoint) * speed`.",
+        "starterCode": "func steer_toward_waypoint(current_pos: Vector2, next_waypoint: Vector2, speed: float) -> Vector2:\n\t",
+        "requiredTokens": [
+          "func",
+          "steer_toward_waypoint",
+          "return",
+          "direction_to",
+          "* speed"
+        ],
+        "expectedOutput": "Computes the velocity vector toward the next navigation waypoint.",
+        "solutionCode": "func steer_toward_waypoint(current_pos: Vector2, next_waypoint: Vector2, speed: float) -> Vector2:\n\treturn current_pos.direction_to(next_waypoint) * speed"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_16_03_1",
+          "prompt": "Which two nodes work together to provide polygon-based 2D pathfinding in Godot 4.3?",
+          "choices": [
+            "`NavigationRegion2D` (defines the walkable navmesh) and `NavigationAgent2D` (queries paths and steers a character)",
+            "`Camera2D` and `CanvasLayer`",
+            "`HBoxContainer` and `VBoxContainer`",
+            "`AudioStreamPlayer2D` and `Timer`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`NavigationRegion2D` holds the baked navigation mesh, and `NavigationAgent2D` queries the NavigationServer2D for waypoints.",
+          "concept": "NavigationRegion2D & NavigationAgent2D"
+        },
+        {
+          "id": "q_16_03_2",
+          "prompt": "Why is it better to update `nav_agent.target_position = player.global_position` on a `0.15s–0.25s` `Timer` rather than inside `_physics_process()` for 50 enemies?",
+          "choices": [
+            "Because recalculating 50 A*/funnel paths 60 times per second wastes CPU when the player's position barely changes between frames",
+            "Because `target_position` can only be set once per minute",
+            "Because `_physics_process()` cannot access `Vector2`",
+            "Because timers run on the GPU"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Throttling path recalculation to 4–6 times per second keeps CPU usage tiny while `get_next_path_position()` still steers smoothly at 60 FPS.",
+          "concept": "Pathfinding Throttle Optimization"
+        },
+        {
+          "id": "q_16_03_3",
+          "prompt": "Which `NavigationAgent2D` method returns `true` once the character has arrived within `target_desired_distance` of `target_position`?",
+          "choices": [
+            "`is_navigation_finished()`",
+            "`is_on_floor()`",
+            "`has_point()`",
+            "`is_stopped()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`is_navigation_finished()` tells you when the path has been completed so you can stop moving or transition to an Attack state.",
+          "concept": "NavigationAgent2D.is_navigation_finished"
+        }
+      ]
+    },
+    {
+      "id": "l_16_04_animation_tree_blendspace",
+      "order": 4,
+      "title": "Skeletal & Sprite Animation State Machines (`AnimatedSprite2D`, `AnimationPlayer` & `AnimationTree`)",
+      "targetFile": "res://scenes/world_2d/overworld_map.gd",
+      "tangibleOutcome": "Drive 4-way/8-way character animations and attack transitions cleanly with `AnimationTree` (`AnimationNodeStateMachine` + `BlendSpace2D`)!",
+      "beyondKadi": "When a character has `Idle`, `Walk`, `Run`, and `Attack` animations in 4 directions (`Up`, `Down`, `Left`, `Right`), writing `if/elif` chains for 16 clips is a nightmare. `[[AnimationTree]]`'s `BlendSpace2D` picks the right directional clip from a single `Vector2`!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `trigger_attack_anim(anim_tree: AnimationTree, aim_dir: Vector2) -> void` that sets `\"parameters/Attack/blend_position\"` to `aim_dir` and calls `playback.travel(\"Attack\")`.",
+      "sceneTree": "Player (CharacterBody2D)\n├── Sprite2D\n├── AnimationPlayer\n└── AnimationTree (StateMachine -> Idle/Walk BlendSpace2D)",
+      "editorSteps": [
+        "Open `res://scenes/world_2d/overworld_map.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Choosing the Right 2D Animation Node in Godot 4.3\n\n| Node | Best Use Case |\n| :--- | :--- |\n| **`[[Tween]]`** | Procedural UI pops, card slides, screen shake, damage flashes (`create_tween()`) |\n| **`[[AnimatedSprite2D]]`** | Simple frame-by-frame sprite sheets (spinning coins, torches, simple retro enemies) |\n| **`[[AnimationPlayer]]`** | Keyframing multiple properties at once (sprite frame + hitbox `disabled` toggle + audio trigger + particle burst) |\n| **`[[AnimationTree]]`** | Blending directional `BlendSpace2D` animations (`Idle`/`Walk`/`Attack` across `(x, y)` vectors) and state transitions |",
+      "codeSnippets": [
+        {
+          "id": "snip_16_04_animtree",
+          "language": "gdscript",
+          "code": "# Controlling an AnimationTree StateMachine + BlendSpace2D:\nextends CharacterBody2D\n\n@onready var anim_tree: AnimationTree = $AnimationTree\n@onready var state_machine: AnimationNodeStateMachinePlayback = anim_tree.get(\"parameters/playback\")\n\nfunc update_character_animation(move_dir: Vector2) -> void:\n    if move_dir != Vector2.ZERO:\n        # Update facing direction on both Idle and Walk BlendSpace2D nodes:\n        anim_tree.set(\"parameters/Idle/blend_position\", move_dir)\n        anim_tree.set(\"parameters/Walk/blend_position\", move_dir)\n        state_machine.travel(\"Walk\")\n    else:\n        state_machine.travel(\"Idle\")",
+          "caption": "Updating `BlendSpace2D` coordinates only when `move_dir != Vector2.ZERO` preserves the character's last facing direction when idle."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `travel_to_state(playback: AnimationNodeStateMachinePlayback, state_name: String) -> void` that calls `playback.travel(state_name)`.",
+        "hint": "Call `playback.travel(state_name)`.",
+        "starterCode": "func travel_to_state(playback: AnimationNodeStateMachinePlayback, state_name: String) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "travel_to_state",
+          "playback.travel(state_name)"
+        ],
+        "expectedOutput": "Transitions the AnimationTree state machine to state_name.",
+        "solutionCode": "func travel_to_state(playback: AnimationNodeStateMachinePlayback, state_name: String) -> void:\n\tplayback.travel(state_name)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_16_04_1",
+          "prompt": "Why do we only update `anim_tree.set(\"parameters/Idle/blend_position\", move_dir)` when `move_dir != Vector2.ZERO`?",
+          "choices": [
+            "So when the player releases the movement keys (`move_dir == Vector2.ZERO`), the character stays facing the direction they were last walking instead of snapping to `(0, 0)`",
+            "Because `Vector2.ZERO` crashes `AnimationTree`",
+            "Because `Idle` cannot have a `BlendSpace2D`",
+            "To double the frame rate"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Preserving the last non-zero input vector in `Idle/blend_position` keeps the character facing Left/Right/Up/Down when they stop moving.",
+          "concept": "BlendSpace2D Facing Memory"
+        },
+        {
+          "id": "q_16_04_2",
+          "prompt": "What huge advantage does `AnimationPlayer` have over `AnimatedSprite2D` for a melee sword attack?",
+          "choices": [
+            "`AnimationPlayer` can keyframe **any property or method call** on the timeline — enabling `$SwordHitbox/CollisionShape2D.disabled = false` on frame 3, playing a swing sound, and disabling the hitbox on frame 6",
+            "`AnimatedSprite2D` cannot display PNG files",
+            "`AnimationPlayer` does not require a SceneTree",
+            "`AnimatedSprite2D` only works in 3D"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Multi-track keyframing in `AnimationPlayer` synchronizes sprite frames, hitbox active windows, audio, and particles on a single timeline.",
+          "concept": "AnimationPlayer Call & Property Tracks"
+        },
+        {
+          "id": "q_16_04_3",
+          "prompt": "How do you retrieve the state machine controller from an `AnimationTree` whose root is an `AnimationNodeStateMachine`?",
+          "choices": [
+            "`anim_tree.get(\"parameters/playback\")`",
+            "`anim_tree.get_child(0)`",
+            "`anim_tree.get_tree()`",
+            "`AnimationTree.new()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`anim_tree.get(\"parameters/playback\")` returns the `AnimationNodeStateMachinePlayback` object used to call `.travel(\"StateName\")`.",
+          "concept": "AnimationNodeStateMachinePlayback"
+        }
+      ]
+    },
+    {
+      "id": "l_16_05_2d_lighting_parallax_camera",
+      "order": 5,
+      "title": "2D Atmosphere: `PointLight2D`, `CanvasModulate`, `Parallax2D` & `SubViewport`",
+      "targetFile": "res://scenes/world_2d/overworld_map.gd",
+      "tangibleOutcome": "Add warm tabletop lamp lighting (`CanvasModulate` + `PointLight2D`), multi-layer `Parallax2D` backgrounds, and a `SubViewport` minimap!",
+      "beyondKadi": "Atmosphere is what makes indie 2D games (Hollow Knight, Dead Cells, Inscryption, Balatro) look like $30 studio releases: `[[CanvasModulate]]` dims the ambient scene, `[[PointLight2D]]` casts warm pools of light with 2D shadows, and `[[Parallax2D]]` scrolls depth layers!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a day-night cycle helper `update_day_night(modulate_node: CanvasModulate, time_0_to_1: float, gradient: Gradient) -> void` that sets `modulate_node.color = gradient.sample(time_0_to_1)`.",
+      "sceneTree": "Table / Level2D (Node2D)\n├── Parallax2D (scroll_scale = Vector2(0.3, 0.3))\n├── CanvasModulate (Night / Moody Ambient Tint)\n└── TableLamp (PointLight2D, shadow_enabled = true)",
+      "editorSteps": [
+        "Open `res://scenes/world_2d/overworld_map.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# 2D Lighting, Parallax & SubViewports in Godot 4.3\n\n## 1. 2D Dynamic Lighting (`CanvasModulate` + `PointLight2D`)\n- Add ONE `[[CanvasModulate]]` node to tint the entire 2D canvas dark (e.g., `Color(0.18, 0.20, 0.28)` for night or a moody tavern).\n- Add `[[PointLight2D]]` nodes with a radial gradient texture (`GradientTexture2D`) for torches, cards, explosions, or spotlights. Enable `shadow_enabled = true` and add `LightOccluder2D` polygons to walls for real-time 2D shadows!\n- **Why your HUD stays bright**: Because `HUD` is inside a `[[CanvasLayer]]`, `CanvasModulate` in the world layer does NOT darken your HUD buttons!\n\n## 2. `[[Parallax2D]]` (New in Godot 4.3!)\nGodot 4.3 introduced the streamlined `Parallax2D` node (replacing the old `ParallaxBackground` + `ParallaxLayer` pair). Just set `scroll_scale = Vector2(0.4, 0.4)` and `repeat_size`!",
+      "codeSnippets": [
+        {
+          "id": "snip_16_05_lighting",
+          "language": "gdscript",
+          "code": "# Pulsing 2D Torch / Tabletop Spotlight with PointLight2D:\nextends PointLight2D\n\n@export var base_energy: float = 1.15\n@export var flicker_amount: float = 0.12\nvar _time: float = 0.0\n\nfunc _process(delta: float) -> void:\n    _time += delta * 7.5\n    energy = base_energy + sin(_time) * flicker_amount",
+          "caption": "A subtle sine-wave `energy` pulse brings 2D `PointLight2D` torches and table lamps to life."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `set_ambient_tint(canvas_mod: CanvasModulate, tint: Color) -> void` that assigns `canvas_mod.color = tint`.",
+        "hint": "Assign `canvas_mod.color = tint`.",
+        "starterCode": "func set_ambient_tint(canvas_mod: CanvasModulate, tint: Color) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "set_ambient_tint",
+          "CanvasModulate",
+          "canvas_mod.color = tint"
+        ],
+        "expectedOutput": "Updates the global 2D ambient lighting color via CanvasModulate.",
+        "solutionCode": "func set_ambient_tint(canvas_mod: CanvasModulate, tint: Color) -> void:\n\tcanvas_mod.color = tint"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_16_05_1",
+          "prompt": "When you darken a 2D level with `CanvasModulate`, why do your `HUD` labels and buttons remain at full brightness?",
+          "choices": [
+            "Because `HUD` is inside a separate `CanvasLayer`, and `CanvasModulate` only tints the canvas layer it belongs to",
+            "Because `Label` nodes ignore all colors",
+            "Because `CanvasModulate` only affects 3D meshes",
+            "Because `Button` has a built-in `PointLight2D`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Each `CanvasLayer` has its own rendering canvas, so placing `CanvasModulate` in the world leaves the `HUD` `CanvasLayer` untouched.",
+          "concept": "CanvasModulate & CanvasLayer Isolation"
+        },
+        {
+          "id": "q_16_05_2",
+          "prompt": "Which new node did Godot 4.3 introduce to simplify 2D parallax scrolling backgrounds into a single node?",
+          "choices": [
+            "`Parallax2D` (with `scroll_scale` and `repeat_size` properties)",
+            "`Camera3D`",
+            "`ScrollContainer`",
+            "`TabContainer`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Godot 4.3 added `Parallax2D` as a clean single-node replacement for the legacy `ParallaxBackground`/`ParallaxLayer` setup.",
+          "concept": "Parallax2D in Godot 4.3"
+        },
+        {
+          "id": "q_16_05_3",
+          "prompt": "How do you render a live 2D minimap or a 3D spinning card preview inside a 2D UI `Control` panel?",
+          "choices": [
+            "Place the secondary camera/world inside a `SubViewportContainer` -> `SubViewport` (or bind a `ViewportTexture` to a `TextureRect`)",
+            "Use a `LineEdit`",
+            "Call `OS.execute()`",
+            "It is impossible in Godot 4.3"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`SubViewport` renders its own 2D or 3D scene tree to an offscreen texture that can be displayed anywhere in UI.",
+          "concept": "SubViewport Rendering"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_16_raycast_global_vs_local",
+    "brokenCode": "extends CharacterBody2D\n@onready var sight_ray: RayCast2D = $SightRay\n\nfunc has_clear_shot(player: Node2D) -> bool:\n\t# Point ray at the player and check collision immediately:\n\tsight_ray.target_position = player.global_position\n\tsight_ray.force_raycast_update()\n\treturn sight_ray.is_colliding() and sight_ray.get_collider() == player",
+    "bugDescription": "Whenever the enemy moves away from world origin `(0, 0)`, `sight_ray` points in completely the wrong direction instead of aiming at `player`! Tap the buggy line.",
+    "fixedCode": "extends CharacterBody2D\n@onready var sight_ray: RayCast2D = $SightRay\n\nfunc has_clear_shot(player: Node2D) -> bool:\n\t# FIX: Convert player.global_position into sight_ray's local coordinate space!\n\tsight_ray.target_position = sight_ray.to_local(player.global_position)\n\tsight_ray.force_raycast_update()\n\treturn sight_ray.is_colliding() and sight_ray.get_collider() == player",
+    "explanation": "`RayCast2D.target_position` is an offset in the ray's **local** coordinate space, not world coordinates! Assigning `player.global_position` directly adds the enemy's own world position to the target vector. Always convert world points with `sight_ray.to_local(player.global_position)`.",
+    "buggyLineNumber": 6,
+    "hint": "Is `sight_ray.target_position` measured in global world coordinates or local coordinates relative to `sight_ray`?"
+  }
+}

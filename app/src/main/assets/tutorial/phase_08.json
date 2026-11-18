@@ -124,8 +124,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Build `res://scenes/ui/declare_suit_dialog.tscn` and preview the modal suit-picker dialog on screen with **F6**!",
-      "beyondKadi": "How **Modal Dialogs (`DeclareSuitDialog`) & 3-Stage State Lifecycles (`Set -> Enforce -> Clear`)** transfer to any game:\n- **RPG Level-Up / Shop Modal**: Popup emits `upgrade_chosen(upgrade_id: int)` upward to the game controller.\n- **Temporary Buffs / Debuffs**: Setting a state modifier (`declared_suit = HEARTS` or `active_buff = DOUBLE_DAMAGE`), enforcing it on the next action, and clearing it (`-1`) once consumed.",
-      "transferChallenge": "**Your Solo Challenge**: Enhance `declare_suit_dialog.gd` so each suit item in `OptionButton` also displays how many cards of that suit Player 0 currently holds in `GameState.hands[0]` (e.g., `\"♥ Hearts (2 in hand)\"`), helping the player pick their strongest suit!"
+      "beyondKadi": "Pausing turn progression until a modal popup emits a choice signal (`suit_declared.emit(chosen_suit)`) is the exact architecture used for roguelike level-up upgrade drafts (Vampire Survivors), RPG dialogue branches, and chest reward pickers.",
+      "transferChallenge": "**Solo Transfer Challenge**: Create a `LevelUpDraftDialog` (`extends Control`) with `signal upgrade_picked(upgrade_id: int)` that populates an `OptionButton` with 3 perks (`+20 Max HP`, `+15% Move Speed`, `+1 Projectile`), hides itself on confirm, and emits `upgrade_picked`."
     },
     {
       "id": "l_08_02_declared_suit",
@@ -218,8 +218,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Play an Ace (`A`) from your hand — the Suit-Declaration Popup appears over the table, sets `Demand: Hearts` on the HUD, and blocks non-matching suits until satisfied!",
-      "beyondKadi": "How **Modal Dialogs (`DeclareSuitDialog`) & 3-Stage State Lifecycles (`Set -> Enforce -> Clear`)** transfer to any game:\n- **RPG Level-Up / Shop Modal**: Popup emits `upgrade_chosen(upgrade_id: int)` upward to the game controller.\n- **Temporary Buffs / Debuffs**: Setting a state modifier (`declared_suit = HEARTS` or `active_buff = DOUBLE_DAMAGE`), enforcing it on the next action, and clearing it (`-1`) once consumed.",
-      "transferChallenge": "**Your Solo Challenge**: Enhance `declare_suit_dialog.gd` so each suit item in `OptionButton` also displays how many cards of that suit Player 0 currently holds in `GameState.hands[0]` (e.g., `\"♥ Hearts (2 in hand)\"`), helping the player pick their strongest suit!"
+      "beyondKadi": "Using `-1` as a sentinel value for 'no active override' (`declared_suit = -1`) and clearing it as soon as the condition is satisfied is a clean way to track temporary weather overrides, active bounty targets, or one-shot buff auras.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a `WeatherManager` snippet with `var forced_weather_id: int = -1` and `get_effective_weather(biome_default: int) -> int` that returns `forced_weather_id` when `!= -1` and resets `forced_weather_id = -1` once `clear_override()` is called."
     },
     {
       "id": "l_08_03_ai_ace_suit_picker",
@@ -311,8 +311,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "When an AI opponent plays an Ace, it counts the suits in its remaining hand and automatically demands its strongest suit on the HUD!",
-      "beyondKadi": "How **Modal Dialogs (`DeclareSuitDialog`) & 3-Stage State Lifecycles (`Set -> Enforce -> Clear`)** transfer to any game:\n- **RPG Level-Up / Shop Modal**: Popup emits `upgrade_chosen(upgrade_id: int)` upward to the game controller.\n- **Temporary Buffs / Debuffs**: Setting a state modifier (`declared_suit = HEARTS` or `active_buff = DOUBLE_DAMAGE`), enforcing it on the next action, and clearing it (`-1`) once consumed.",
-      "transferChallenge": "**Your Solo Challenge**: Enhance `declare_suit_dialog.gd` so each suit item in `OptionButton` also displays how many cards of that suit Player 0 currently holds in `GameState.hands[0]` (e.g., `\"♥ Hearts (2 in hand)\"`), helping the player pick their strongest suit!"
+      "beyondKadi": "Counting frequencies in a `Dictionary` (`counts[key] += 1`) and finding the argmax key (`counts[s] > counts[best]`) is a fundamental CS histogram algorithm used in AI threat assessment, inventory auto-sorting, and procedural biome weighting.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `most_common_damage_type(recent_hits: Array[String]) -> String` that tallies each string in a `Dictionary` histogram and returns the damage type string that occurred most frequently (so a Boss AI can activate the matching elemental shield!)."
     }
   ],
   "debugChallenge": {
@@ -322,7 +322,11 @@
     "fixedCode": "func on_card_played(card: CardData) -> void:\n    GameState.discard_pile.append(card)\n    if card.rank == CardTypes.Ranks.ACE:\n        declare_suit_dialog.show()\n    elif GameState.declared_suit != -1 and card.suit == GameState.declared_suit:\n        GameState.declared_suit = -1",
     "explanation": "`on_card_played()` handled **setting** the declaration when an Ace was played (lines 3–4), but completely forgot the **clearing** stage when a subsequent card satisfied `GameState.declared_suit`! Adding `elif GameState.declared_suit != -1 and card.suit == GameState.declared_suit: GameState.declared_suit = -1` clears the demand as soon as it is met.",
     "buggyLineNumber": 3,
-    "hint": "Look at lines 3–4: what happens when `card.rank` is NOT an Ace, and `GameState.declared_suit` was active from the previous turn?"
+    "hint": "Look at lines 3–4: what happens when `card.rank` is NOT an Ace, and `GameState.declared_suit` was active from the previous turn?",
+    "buggyLineNumbers": [
+      3,
+      4
+    ]
   },
   "tangibleGoal": "Playing a non-canceling Ace opens a modal Suit-Declaration Popup (`♥ Hearts`, `♦ Diamonds`, `♣ Clubs`, `♠ Spades`) and enforces your demanded suit on the HUD!"
 }

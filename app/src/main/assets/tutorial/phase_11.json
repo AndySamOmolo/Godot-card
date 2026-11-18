@@ -122,8 +122,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Clicking cards and playing moves now animate with silky-smooth cubic `Tween` transitions and HUD scale pulses!",
-      "beyondKadi": "How **Godot 4 `Tween`s, `AudioStreamPlayer`s & Export Presets** apply to every game you ever ship:\n- **Game Feel ('Juice')**: Every great indie game uses 0.12s–0.20s `TRANS_BACK` / `EASE_OUT` scale and position Tweens plus pitch-varied sound effects (`audio.pitch_scale = randf_range(0.92, 1.08)`) so actions feel snappy and alive.\n- **Exporting**: The exact same **Project -> Export** workflow packages your future Platformer, RPG, or Deckbuilder for Windows, Android, and Web (itch.io)!",
-      "transferChallenge": "**Your Solo Challenge**: Randomize `slap_sound.pitch_scale = randf_range(0.92, 1.08)` right before calling `slap_sound.play()` in `table.gd` so playing a 3-card combo sounds natural and organic rather than robotic!"
+      "beyondKadi": "Procedural `create_tween()` animations with `TRANS_BACK` and `EASE_OUT` make every UI popup, damage number float, chest opening, and health bar drain feel responsive without authoring dozens of static keyframe files.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `pop_damage_label(label: Label) -> void` that starts `label.scale = Vector2(0.4, 0.4)`, tweens `scale` to `Vector2.ONE` over `0.18s` with `Tween.TRANS_BACK`, and tweens `position:y` upward by `-32.0` pixels in parallel."
     },
     {
       "id": "l_11_02_sound_feedback",
@@ -221,8 +221,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Wire `SlapSound`, `ShuffleSound`, and `NikoSound` (`AudioStreamPlayer`) plus the complete master `table.gd` script!",
-      "beyondKadi": "How **Godot 4 `Tween`s, `AudioStreamPlayer`s & Export Presets** apply to every game you ever ship:\n- **Game Feel ('Juice')**: Every great indie game uses 0.12s–0.20s `TRANS_BACK` / `EASE_OUT` scale and position Tweens plus pitch-varied sound effects (`audio.pitch_scale = randf_range(0.92, 1.08)`) so actions feel snappy and alive.\n- **Exporting**: The exact same **Project -> Export** workflow packages your future Platformer, RPG, or Deckbuilder for Windows, Android, and Web (itch.io)!",
-      "transferChallenge": "**Your Solo Challenge**: Randomize `slap_sound.pitch_scale = randf_range(0.92, 1.08)` right before calling `slap_sound.play()` in `table.gd` so playing a 3-card combo sounds natural and organic rather than robotic!"
+      "beyondKadi": "Randomizing `pitch_scale = randf_range(0.92, 1.08)` on `AudioStreamPlayer` before calling `play()` prevents ear fatigue on repetitive sound effects like footsteps, sword swings, coin pickups, and card slaps!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `play_varied_sfx(player: AudioStreamPlayer, min_pitch: float = 0.9, max_pitch: float = 1.1) -> void` that checks `if player.stream != null:`, randomizes `player.pitch_scale`, and calls `player.play()`."
     },
     {
       "id": "l_11_03_exporting",
@@ -320,8 +320,8 @@
         "**Nothing happens when clicking a button or card**: Check two things: (1) `.pressed.connect(...)` is called inside `_ready()`, and (2) no full-screen `ColorRect` (like `FlashRect`) is sitting above your buttons with `Mouse -> Filter` set to `Stop` instead of `Ignore`."
       ],
       "tangibleOutcome": "Package your finished Godot 4.3 Kadi game into a standalone Windows `.exe`, installable Android `.apk`, or playable HTML5 Web build!",
-      "beyondKadi": "How **Godot 4 `Tween`s, `AudioStreamPlayer`s & Export Presets** apply to every game you ever ship:\n- **Game Feel ('Juice')**: Every great indie game uses 0.12s–0.20s `TRANS_BACK` / `EASE_OUT` scale and position Tweens plus pitch-varied sound effects (`audio.pitch_scale = randf_range(0.92, 1.08)`) so actions feel snappy and alive.\n- **Exporting**: The exact same **Project -> Export** workflow packages your future Platformer, RPG, or Deckbuilder for Windows, Android, and Web (itch.io)!",
-      "transferChallenge": "**Your Solo Challenge**: Randomize `slap_sound.pitch_scale = randf_range(0.92, 1.08)` right before calling `slap_sound.play()` in `table.gd` so playing a 3-card combo sounds natural and organic rather than robotic!"
+      "beyondKadi": "Understanding `res://` (read-only packed game assets) vs `user://` (writable persistent storage) and configuring `canvas_items` + `keep` stretch scaling is mandatory for shipping any 2D or 3D Godot 4.3 game to Android, iOS, Steam, or Web.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write a helper `get_safe_save_path(slot_index: int) -> String` that asserts `slot_index >= 0` and returns a `user://save_slot_%d.json` path, never a `res://` path."
     }
   ],
   "debugChallenge": {

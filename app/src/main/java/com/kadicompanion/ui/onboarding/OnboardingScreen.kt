@@ -44,6 +44,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -99,7 +103,7 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
                 title = "Yes, I've coded before",
                 description = "I know variables, loops, and functions in at least one language.",
                 selected = state.programmedBefore == true,
-                enabled = state.programmedBefore != true,
+                enabled = true,
                 onClick = { vm.setProgrammedBefore(true) }
             )
             ChoiceCard(
@@ -107,7 +111,7 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
                 title = "No, I'm brand new to coding",
                 description = "Teach me programming fundamentals from scratch using Kadi examples.",
                 selected = state.programmedBefore == false,
-                enabled = state.programmedBefore != false,
+                enabled = true,
                 onClick = { vm.setProgrammedBefore(false) }
             )
 
@@ -121,7 +125,7 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
                 title = "Yes, I've used Godot",
                 description = "I have opened the Godot editor and worked with Scenes and Nodes.",
                 selected = state.usedGodotBefore == true,
-                enabled = state.usedGodotBefore != true,
+                enabled = true,
                 onClick = { vm.setUsedGodotBefore(true) }
             )
             ChoiceCard(
@@ -129,7 +133,7 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
                 title = "No, Godot is new to me",
                 description = "Walk me through every click, node, and Inspector setting in Godot 4.3.",
                 selected = state.usedGodotBefore == false,
-                enabled = state.usedGodotBefore != false,
+                enabled = true,
                 onClick = { vm.setUsedGodotBefore(false) }
             )
 
@@ -160,7 +164,7 @@ fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewM
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Button(
-                        onClick = { vm.finish(); onFinished() },
+                        onClick = { vm.finish(onFinished) },
                         enabled = state.canFinish,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -302,7 +306,7 @@ private fun ChoiceCard(
     Card(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().semantics { role = Role.RadioButton; this.selected = selected },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = container, disabledContainerColor = container),
         border = BorderStroke(borderWidth, borderColor),

@@ -11,6 +11,9 @@ import com.kadicompanion.domain.model.QuizQuestion
 import com.kadicompanion.domain.model.TutorialPhase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -22,16 +25,20 @@ class ContentLoader @Inject constructor(
     private val json: Json
 ) {
     suspend fun loadPhases(): List<TutorialPhase> = withContext(Dispatchers.IO) {
-        val paths = context.assets.list("tutorial")?.filter { it.endsWith(".json") } ?: emptyList()
-        paths.sorted().mapNotNull { path ->
-            runCatching {
-                val text = context.assets.open("tutorial/$path").bufferedReader().use { it.readText() }
-                val dto = json.decodeFromString<PhaseDto>(text)
-                dto.toDomain()
-            }.getOrElse { e ->
-                android.util.Log.w("ContentLoader", "Failed to load phase $path", e)
-                null
-            }
+        val paths = context.assets.list("tutorial")?.filter { it.endsWith(".json") }?.sorted() ?: emptyList()
+        coroutineScope {
+            paths.map { path ->
+                async {
+                    runCatching {
+                        val text = context.assets.open("tutorial/$path").bufferedReader().use { it.readText() }
+                        val dto = json.decodeFromString<PhaseDto>(text)
+                        dto.toDomain()
+                    }.getOrElse { e ->
+                        android.util.Log.w("ContentLoader", "Failed to load phase $path", e)
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull().sortedBy { it.order }
         }
     }
 
@@ -47,18 +54,23 @@ class ContentLoader @Inject constructor(
     }
 
     suspend fun loadGodotDocSources(): List<GodotDocSource> = withContext(Dispatchers.IO) {
-        val paths = context.assets.list("godot_docs")?.filter { it.endsWith(".md") } ?: emptyList()
-        paths.map { path ->
-            val className = path.removeSuffix(".md")
-            val markdown = context.assets.open("godot_docs/$path").bufferedReader().use { it.readText() }
-            GodotDocSource(className, markdown)
+        val paths = context.assets.list("godot_docs")?.filter { it.endsWith(".md") }?.sorted() ?: emptyList()
+        paths.mapNotNull { path ->
+            runCatching {
+                val className = path.removeSuffix(".md")
+                val markdown = context.assets.open("godot_docs/$path").bufferedReader().use { it.readText() }
+                GodotDocSource(className, markdown)
+            }.getOrElse { e ->
+                android.util.Log.w("ContentLoader", "Failed to load Godot doc $path", e)
+                null
+            }
         }
     }
 
     suspend fun loadContentVersion(): String = withContext(Dispatchers.IO) {
         runCatching {
             context.assets.open("content_version.txt").bufferedReader().use { it.readText().trim() }
-        }.getOrElse { "0.0.0-unknown" }
+        }.getOrElse { "4.0.0" }
     }
 }
 
@@ -133,6 +145,7 @@ private fun DebugChallengeDto.toDomain(phaseId: String): DebugChallenge = DebugC
     fixedCode = fixedCode,
     explanation = explanation,
     buggyLineNumber = buggyLineNumber,
+    buggyLineNumbers = buggyLineNumbers,
     hint = hint
 )
 

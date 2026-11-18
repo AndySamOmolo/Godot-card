@@ -9,4 +9,5 @@ interface LearnerProfileRepository {
     suspend fun setTrack(track: LearnerTrack)
     suspend fun isOnboarded(): Boolean
     suspend fun markOnboarded()
+    suspend fun clearProfile()
 }

@@ -2,6 +2,7 @@ package com.kadicompanion.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kadicompanion.data.content.ContentLoader
 import com.kadicompanion.data.local.datastore.AccentPreset
 import com.kadicompanion.data.local.datastore.BottomBarStyle
 import com.kadicompanion.data.local.datastore.CardStyle
@@ -21,8 +22,11 @@ import com.kadicompanion.data.local.datastore.TopBarStyle
 import com.kadicompanion.data.local.datastore.UiDensity
 import com.kadicompanion.data.local.datastore.UiPreferences
 import com.kadicompanion.domain.model.LearnerTrack
+import com.kadicompanion.domain.repository.AssessmentRepository
 import com.kadicompanion.domain.repository.LearnerProfileRepository
+import com.kadicompanion.domain.repository.ProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -33,7 +37,7 @@ import javax.inject.Inject
 data class SettingsUiState(
     val uiPrefs: UiPreferences = UiPreferences(),
     val track: LearnerTrack? = null,
-    val contentVersion: String = "2.4.0"
+    val contentVersion: String = "4.0.0"
 ) {
     val theme: ThemePref get() = uiPrefs.theme
     val dynamicColor: Boolean get() = uiPrefs.dynamicColor
@@ -45,18 +49,30 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val prefs: PreferencesRepository,
-    private val learnerProfile: LearnerProfileRepository
+    private val learnerProfile: LearnerProfileRepository,
+    private val progressRepository: ProgressRepository,
+    private val assessmentRepository: AssessmentRepository,
+    private val contentLoader: ContentLoader
 ) : ViewModel() {
+
+    private val _bundledVersion = MutableStateFlow("4.0.0")
+
+    init {
+        viewModelScope.launch {
+            _bundledVersion.value = contentLoader.loadContentVersion()
+        }
+    }
 
     val uiState: StateFlow<SettingsUiState> = combine(
         prefs.observeUiPreferences(),
         prefs.observeContentVersion(),
-        learnerProfile.observeTrack()
-    ) { uiPrefs, version, track ->
+        learnerProfile.observeTrack(),
+        _bundledVersion
+    ) { uiPrefs, version, track, bundled ->
         SettingsUiState(
             uiPrefs = uiPrefs,
             track = track,
-            contentVersion = version ?: "2.4.0"
+            contentVersion = version ?: bundled
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
@@ -105,5 +121,10 @@ class SettingsViewModel @Inject constructor(
     fun setCustomGreeting(greeting: String) = viewModelScope.launch { prefs.setCustomGreeting(greeting) }
     fun setCustomSubtitle(subtitle: String) = viewModelScope.launch { prefs.setCustomSubtitle(subtitle) }
     fun resetAllUiToDefault() = viewModelScope.launch { prefs.resetUiPreferencesToDefault() }
+    fun resetAllLearningProgress() = viewModelScope.launch {
+        progressRepository.clearAllProgress()
+        progressRepository.clearAllBookmarks()
+        assessmentRepository.clearAllAttempts()
+    }
     fun setTrack(track: LearnerTrack) = viewModelScope.launch { learnerProfile.setTrack(track) }
 }

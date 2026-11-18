@@ -51,7 +51,9 @@ fun buildCustomizableTypography(
 ): Typography {
     val s = fontScale.coerceIn(0.80f, 1.35f)
     val lh = lineSpacingPreset.multiplier
-    val family = when (fontFamilyPreset) {
+    val family = if (dyslexiaFont) {
+        FontFamily.SansSerif
+    } else when (fontFamilyPreset) {
         FontFamilyPreset.SANS_SERIF,
         FontFamilyPreset.SANS_MEDIUM,
         FontFamilyPreset.SANS_COMPACT,
@@ -86,9 +88,10 @@ fun buildCustomizableTypography(
 
     fun TextStyle.scaleStyle(isBody: Boolean = false, isHeading: Boolean = false): TextStyle {
         val scaledSize = (fontSize.value * s).sp
-        val baseLh = lineHeight.value * s * (if (isBody) lh else 1.0f)
+        val dysLhBoost = if (dyslexiaFont && isBody) 1.15f else 1.0f
+        val baseLh = lineHeight.value * s * (if (isBody) lh else 1.0f) * dysLhBoost
         val baseTrack = if (letterSpacing.isSp) letterSpacing.value else 0f
-        val dysTrack = if (dyslexiaFont && isBody) 0.45f else 0f
+        val dysTrack = if (dyslexiaFont) 0.55f else 0f
         return copy(
             fontFamily = family,
             fontWeight = when {

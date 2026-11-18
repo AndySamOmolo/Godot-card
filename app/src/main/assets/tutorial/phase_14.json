@@ -1,0 +1,505 @@
+{
+  "id": "phase_14_cs_algorithms_structures",
+  "order": 14,
+  "title": "Computer Science & Algorithms in GDScript: Big-O, Stacks, Queues, Trees & A*",
+  "summary": "Master universal computer science fundamentals directly inside Godot 4.3: Big-O time/space complexity, Value vs. Reference memory semantics, Stacks (Undo/Redo), Queues (Turn/Action Buffers), Recursion, Binary Search, and A* Grid Pathfinding (`AStarGrid2D`).",
+  "estimatedMinutes": 70,
+  "concepts": [
+    "Array",
+    "Dictionary",
+    "RefCounted",
+    "AStarGrid2D",
+    "Callable"
+  ],
+  "programmingConcepts": [
+    "Big-O Complexity",
+    "Value vs Reference Semantics",
+    "Stacks (LIFO) & Queues (FIFO)",
+    "Recursion & Binary Search",
+    "Graph & A* Pathfinding"
+  ],
+  "isSkippableForTrack": [],
+  "verifiedAgainstGodotVersion": "4.3",
+  "projectFiles": [
+    "res://scripts/cs_algorithms.gd",
+    "res://scripts/undo_history.gd"
+  ],
+  "sceneTreeBlueprint": "Table (Node2D) -> MoveHistory (RefCounted) + AStarGrid2D",
+  "learningObjectives": [
+    "Compare O(1) Dictionary hash lookups against O(n) Array scans and O(n^2) nested loops in 60 FPS game loops",
+    "Distinguish value types (int, float, Vector2, Color) from reference types (Array, Dictionary, Object) and clone safely with .duplicate(true)",
+    "Implement LIFO Stacks for Undo/Redo history and FIFO Queues for buffered combat/card animations",
+    "Write recursive tree traversals, O(log n) binary search (`bsearch`), custom comparators (`sort_custom`), and 2D A* pathfinding (`AStarGrid2D`)"
+  ],
+  "tangibleGoal": "Add instant O(1) card index lookups, an Undo/Redo move stack for Practice Mode, custom hand sorting by Suit & Rank, and A* grid pathfinding!",
+  "lessons": [
+    {
+      "id": "l_14_01_big_o_complexity",
+      "order": 1,
+      "title": "Big-O Complexity in 60 FPS Games (`O(1)` vs `O(n)` vs `O(n²)`)",
+      "targetFile": "res://scripts/cs_algorithms.gd",
+      "tangibleOutcome": "Replace an `O(n)` linear scan with an `O(1)` hash-table `Dictionary` lookup and benchmark frame budget savings!",
+      "beyondKadi": "At 60 FPS, your entire frame budget is **16.67 milliseconds**. If 200 enemies each scan 200 enemies every frame (`O(n²)` = 40,000 checks/frame), your frame rate tanks; indexing positions in a `Dictionary` by grid cell (`Vector2i`) drops neighborhood queries to `O(1)`!",
+      "transferChallenge": "**Solo Transfer Challenge**: Build a spatial grid index `var grid_index: Dictionary = {}` that maps `Vector2i(pos / 64.0)` to an `Array` of entities in that cell for instant `O(1)` neighbor lookup.",
+      "sceneTree": "Table (Node2D)\n└── CardLookupCache (Dictionary[String, CardData])",
+      "editorSteps": [
+        "Open `res://scripts/cs_algorithms.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Big-O Time & Space Complexity in Game Loops\n\n> [!TIP]\n> **Why Big-O Matters in Games:** At 60 FPS, `_process(delta)` runs 60 times every second. Understanding **Big-O notation** tells you how your code scales when 10 cards become 10,000 bullets or tiles.\n\n| Complexity | Name | GDScript Operation | Cost for `n = 1,000` |\n| :--- | :--- | :--- | :--- |\n| **`O(1)`** | Constant Time | `dict[key]`, `arr[i]`, `arr.pop_back()` | **1 operation** (Instant) |\n| **`O(log n)`** | Logarithmic | `sorted_arr.bsearch(val)` | **~10 operations** |\n| **`O(n)`** | Linear Time | `card in arr`, `arr.find(x)`, `arr.pop_front()` | **1,000 operations** |\n| **`O(n log n)`** | Log-Linear | `arr.sort()`, `arr.sort_custom(...)` | **~10,000 operations** |\n| **`O(n²)`** | Quadratic | Nested `for a in arr: for b in arr:` | **1,000,000 operations** (Frame drop!) |\n\n> [!WARNING]\n> **`pop_back()` vs `pop_front()` on `Array`**: Removing the last element with `deck.pop_back()` is **`O(1)`** because no other elements move. Removing the first element with `deck.pop_front()` is **`O(n)`** because Godot must shift every remaining element left by 1 index!",
+      "codeSnippets": [
+        {
+          "id": "snip_14_01_bigo",
+          "language": "gdscript",
+          "code": "# O(1) Dictionary Hash Lookup vs O(n) Linear Array Scan:\nvar card_registry: Dictionary = {} # Key: String (\"7♥\") -> Value: CardData\n\nfunc build_index(deck: Array[CardData]) -> void:\n    card_registry.clear()\n    for c in deck:\n        card_registry[c.display_name] = c\n\nfunc find_card_fast(code: String) -> CardData:\n    # O(1) constant-time hash lookup:\n    return card_registry.get(code, null)",
+          "caption": "Indexing `CardData` in a `Dictionary` turns `O(n)` searches into `O(1)` hash lookups."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `has_card_fast(lookup: Dictionary, card_id: String) -> bool` that checks if `card_id` exists in `lookup` in `O(1)` time using `.has(card_id)`.",
+        "hint": "Use `return lookup.has(card_id)`.",
+        "starterCode": "func has_card_fast(lookup: Dictionary, card_id: String) -> bool:\n\t",
+        "requiredTokens": [
+          "func",
+          "has_card_fast",
+          "Dictionary",
+          "return",
+          "lookup.has"
+        ],
+        "expectedOutput": "Returns true in O(1) constant time if card_id is a key in lookup.",
+        "solutionCode": "func has_card_fast(lookup: Dictionary, card_id: String) -> bool:\n\treturn lookup.has(card_id)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_14_01_1",
+          "prompt": "Why did we use `deck.pop_back()` instead of `deck.pop_front()` to draw cards from our 54-card Kadi deck in Phase 2?",
+          "choices": [
+            "`pop_back()` is `O(1)` constant time, whereas `pop_front()` is `O(n)` because every remaining element in the Array must shift left by one index",
+            "`pop_front()` deletes the entire Array",
+            "`pop_back()` automatically shuffles the deck",
+            "`pop_front()` only works on Dictionaries"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "In a contiguous dynamic array, removing the last item is `O(1)`, while removing index `0` requires shifting `n - 1` elements in memory (`O(n)`).",
+          "concept": "Big-O Array Complexity"
+        },
+        {
+          "id": "q_14_01_2",
+          "prompt": "What is the time complexity of looking up a key in a GDScript `Dictionary` (`dict.get(key)`)?",
+          "choices": [
+            "`O(1)` average time via hash table lookup",
+            "`O(n)` linear scan",
+            "`O(n²)` quadratic time",
+            "`O(2^n)` exponential time"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "A `Dictionary` hashes the key to jump directly to its bucket in `O(1)` average time.",
+          "concept": "Hash Table Complexity"
+        },
+        {
+          "id": "q_14_01_3",
+          "prompt": "At 60 frames per second (FPS), how many milliseconds of total CPU/GPU time do you have per frame before the game stutters?",
+          "choices": [
+            "Approximately `16.67 ms` (`1000 ms / 60`)",
+            "`100 ms`",
+            "`1,000 ms`",
+            "`60 ms`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`1 second / 60 frames = 0.01667 seconds = 16.67 milliseconds` per frame.",
+          "concept": "Frame Budget"
+        }
+      ]
+    },
+    {
+      "id": "l_14_02_value_vs_reference_memory",
+      "order": 2,
+      "title": "Memory Model: Value vs. Reference Semantics, Shallow vs. Deep Copy & `RefCounted`",
+      "targetFile": "res://scripts/cs_algorithms.gd",
+      "tangibleOutcome": "Prevent shared-array mutation bugs when simulating AI moves by cloning nested state with `.duplicate(true)`!",
+      "beyondKadi": "In tactical games (Chess, Into the Breach, Slay the Spire), AI lookahead simulates future board states. If the AI mutates `GameState.hands` directly without `.duplicate(true)`, it corrupts the live game board!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `simulate_damage_preview(stats: Dictionary, bonus: int) -> Dictionary` that clones `stats` with `stats.duplicate(true)`, adds `bonus` to `\"atk\"` on the copy, and returns the copy without mutating the caller's dictionary.",
+      "sceneTree": "RefCounted (Auto-freed when ref count == 0)\n└── Node (Manual lifecycle via SceneTree & queue_free())",
+      "editorSteps": [
+        "Open `res://scripts/cs_algorithms.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Value Types vs. Reference Types & Memory Management\n\nIn GDScript 2.0, variables behave in one of two ways when assigned (`var b = a`) or passed to a function:\n\n| Category | GDScript Types | Assignment Behavior (`var b = a`) |\n| :--- | :--- | :--- |\n| **Value Types** (Copied by Value) | `int`, `float`, `bool`, `String`, `Vector2`, `Vector3`, `Rect2`, `Transform2D`, `Transform3D`, `Color`, `Basis` | `b` gets an **independent copy**. Modifying `b` never changes `a`. |\n| **Reference Types** (Shared Reference) | `Array`, `Dictionary`, `Object`, `RefCounted`, `Resource`, `Node` | `b` points to the **exact same object in memory**. Mutating `b.append(...)` mutates `a`! |\n\n## Shallow Copy (`.duplicate(false)`) vs. Deep Copy (`.duplicate(true)`)\n- `hands.duplicate(false)` copies only the outer array; `hands[0]` still points to the same inner player hand array!\n- `hands.duplicate(true)` recursively clones all nested arrays and dictionaries.\n\n## How Godot Frees Memory (`RefCounted` vs. `Node`)\n- **`RefCounted` & `Resource`** (`CardData`, `RuleValidator`): Automatically freed the instant the last reference variable goes out of scope (Reference Counting).\n- **`Node`** (`CardScene`, `Table`): Owned by the `SceneTree`; must be freed explicitly via `queue_free()` (deferred cleanly to the end of the frame).",
+      "codeSnippets": [
+        {
+          "id": "snip_14_02_memory",
+          "language": "gdscript",
+          "code": "# Safe AI Lookahead State Cloning without Mutating Live GameState:\nstatic func preview_hand_after_play(hand: Array[CardData], played: Array[CardData]) -> Array[CardData]:\n    # Clone the array so erasing cards does NOT mutate GameState.hands!\n    var simulated_hand: Array[CardData] = hand.duplicate()\n    for c in played:\n        simulated_hand.erase(c)\n    return simulated_hand",
+          "caption": "Using `.duplicate()` prevents accidental aliasing bugs when previewing moves."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `clone_nested_hands(hands: Array) -> Array` that returns a deep copy of `hands` using `hands.duplicate(true)`.",
+        "hint": "Call `return hands.duplicate(true)`.",
+        "starterCode": "func clone_nested_hands(hands: Array) -> Array:\n\t",
+        "requiredTokens": [
+          "func",
+          "clone_nested_hands",
+          "return",
+          "hands.duplicate(true)"
+        ],
+        "expectedOutput": "Returns a deep copy of the 2D hands array.",
+        "solutionCode": "func clone_nested_hands(hands: Array) -> Array:\n\treturn hands.duplicate(true)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_14_02_1",
+          "prompt": "If `var a: Vector2 = Vector2(10, 20)` and you run `var b: Vector2 = a` followed by `b.x = 99`, what is `a.x`?",
+          "choices": [
+            "`10` — because `Vector2` is a Value Type in GDScript and is copied by value on assignment",
+            "`99` — because all variables are pointers",
+            "`0`",
+            "It throws a runtime error"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Math structs (`Vector2`, `Vector3`, `Rect2`, `Color`, `Transform2D`, `Basis`) are value types in GDScript.",
+          "concept": "Value vs Reference Types"
+        },
+        {
+          "id": "q_14_02_2",
+          "prompt": "Why does `var copy = GameState.hands.duplicate(false)` still allow mutations to `copy[0].append(card)` to affect `GameState.hands[0]`?",
+          "choices": [
+            "Because `duplicate(false)` performs a shallow copy of the outer array, so the inner sub-arrays (`hands[0]..hands[3]`) are still shared references; use `duplicate(true)` for a deep copy",
+            "Because `duplicate()` does nothing in Godot 4.3",
+            "Because `Array` is immutable",
+            "Because `append()` modifies global constants"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Passing `true` to `duplicate(true)` recursively clones nested arrays and dictionaries.",
+          "concept": "Shallow vs Deep Copy"
+        },
+        {
+          "id": "q_14_02_3",
+          "prompt": "Why do you never need to call `queue_free()` on a `CardData` (`extends Resource`) or `RuleValidator` (`extends RefCounted`) instance?",
+          "choices": [
+            "Because `Resource` and `RefCounted` inherit automatic reference counting and free themselves as soon as zero variables reference them",
+            "Because `RefCounted` objects live forever in RAM",
+            "Because `queue_free()` only works on `int` variables",
+            "Because `CardData` is stored on the GPU"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`RefCounted` tracks reference counts automatically, whereas `Node` inherits `Object` directly and is managed by the `SceneTree` via `queue_free()`.",
+          "concept": "RefCounted Lifecycle"
+        }
+      ]
+    },
+    {
+      "id": "l_14_03_stacks_and_queues",
+      "order": 3,
+      "title": "Stacks (LIFO Undo/Redo) & Queues (FIFO Action Buffers)",
+      "targetFile": "res://scripts/undo_history.gd",
+      "tangibleOutcome": "Build a LIFO Stack for Undo/Redo move history (`push_back` / `pop_back`) and a FIFO Action Queue for sequential card animations!",
+      "beyondKadi": "Every puzzle game (Baba Is You, Patrick's Parabox), strategy game (Into the Breach), and level editor uses a **LIFO Stack** for Undo/Redo, and every card battler (Slay the Spire, Hearthstone) uses a **FIFO Queue** to play out triggered card effects one by one!",
+      "transferChallenge": "**Solo Transfer Challenge**: Create an `AnimationQueue` class that enqueues `Callable` steps and plays the next step only when the current `Tween` finishes.",
+      "sceneTree": "MoveHistory\n├── undo_stack: Array[Dictionary] (LIFO)\n└── redo_stack: Array[Dictionary] (LIFO)",
+      "editorSteps": [
+        "Open `res://scripts/undo_history.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Stacks (LIFO) & Queues (FIFO) in Game Architecture\n\n## 1. Stack — Last-In, First-Out (`LIFO`)\nThink of a physical **discard pile** of playing cards: the last card placed on top (`push_back`) is the first card taken off (`pop_back`). Both operations are **`O(1)`**!\n- **Game Uses**: Undo/Redo history, UI screen navigation back-stacks, state-machine pushdown automata (pausing gameplay to push an Inventory state, then popping back).\n\n## 2. Queue — First-In, First-Out (`FIFO`)\nThink of a matchmaking line or buffered combat actions: the first action added is the first action executed.\n- **Game Uses**: Turn order queues, sequential card-effect resolution queues, dialogue line queues, input buffering.",
+      "codeSnippets": [
+        {
+          "id": "snip_14_03_stack",
+          "language": "gdscript",
+          "code": "# LIFO Undo / Redo Stack for Kadi Practice Mode:\nclass_name UndoHistory\nextends RefCounted\n\nvar undo_stack: Array[Dictionary] = []\nvar redo_stack: Array[Dictionary] = []\n\nfunc record_snapshot(snapshot: Dictionary) -> void:\n    undo_stack.push_back(snapshot.duplicate(true))\n    redo_stack.clear() # New branch invalidates redo history!\n\nfunc pop_undo(current_state: Dictionary) -> Dictionary:\n    if undo_stack.is_empty():\n        return current_state\n    redo_stack.push_back(current_state.duplicate(true))\n    return undo_stack.pop_back()",
+          "caption": "A LIFO Stack (`push_back` + `pop_back`) powers `O(1)` Undo/Redo in strategy and puzzle games."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `push_and_pop_lifo(stack: Array[int], new_val: int) -> int` that pushes `new_val` onto the back of `stack` with `stack.push_back(new_val)` and then returns `stack.pop_back()`.",
+        "hint": "Call `stack.push_back(new_val)` followed by `return stack.pop_back()`.",
+        "starterCode": "func push_and_pop_lifo(stack: Array[int], new_val: int) -> int:\n\t",
+        "requiredTokens": [
+          "func",
+          "push_and_pop_lifo",
+          "push_back",
+          "return",
+          "pop_back"
+        ],
+        "expectedOutput": "Pushes new_val and pops it in LIFO order.",
+        "solutionCode": "func push_and_pop_lifo(stack: Array[int], new_val: int) -> int:\n\tstack.push_back(new_val)\n\treturn stack.pop_back()"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_14_03_1",
+          "prompt": "Which data structure principle describes Kadi's `discard_pile` (where the most recently played card sits on top and is inspected first)?",
+          "choices": [
+            "LIFO Stack (Last-In, First-Out)",
+            "FIFO Queue (First-In, First-Out)",
+            "Binary Search Tree",
+            "Adjacency Matrix"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Appending to the top (`push_back`) and reading/removing the top card (`back()` / `pop_back()`) is a classic Last-In, First-Out (LIFO) Stack.",
+          "concept": "LIFO Stack"
+        },
+        {
+          "id": "q_14_03_2",
+          "prompt": "When a player performs a brand-new move after undoing two turns, what must happen to the `redo_stack`?",
+          "choices": [
+            "`redo_stack.clear()` must be called because the new move creates a new timeline branch",
+            "`redo_stack` should be shuffled",
+            "`redo_stack` should be merged into `undo_stack`",
+            "Nothing"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "In standard Undo/Redo architecture, recording a new action clears any previously undone future states in `redo_stack`.",
+          "concept": "Undo/Redo Stack Invariant"
+        },
+        {
+          "id": "q_14_03_3",
+          "prompt": "Which structure is best for buffering a sequence of 5 triggered card animations so they play on screen in the exact order they were triggered?",
+          "choices": [
+            "A FIFO Queue (First-In, First-Out)",
+            "A LIFO Stack",
+            "A random hash set",
+            "A `ColorRect`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "A FIFO Queue processes events in chronological order (first triggered -> first animated).",
+          "concept": "FIFO Action Queue"
+        }
+      ]
+    },
+    {
+      "id": "l_14_04_sorting_binary_search",
+      "order": 4,
+      "title": "Custom Sorting (`sort_custom`) & `O(log n)` Binary Search (`bsearch`)",
+      "targetFile": "res://scripts/cs_algorithms.gd",
+      "tangibleOutcome": "Add a 'Sort Hand' button that sorts Player 0's cards cleanly by Suit and Rank using `Array.sort_custom()`, and query sorted leaderboards in `O(log n)` with `bsearch()`!",
+      "beyondKadi": "Every card game (Kadi, Balatro, Solitaire), RPG inventory (sort by Rarity, Power, Weight), and high-score leaderboard relies on `sort_custom()` comparator functions and binary search.",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `sort_enemies_by_threat(enemies: Array[Dictionary]) -> void` using `sort_custom` so enemies with lower `\"distance\"` come first, breaking ties by higher `\"attack\"`.",
+      "sceneTree": "PlayerHandContainer\n└── Sorted by Suit (♥ ♦ ♣ ♠) then Rank (2..A)",
+      "editorSteps": [
+        "Open `res://scripts/cs_algorithms.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Sorting Comparators (`sort_custom`) & Binary Search (`bsearch`)\n\n## 1. Custom Sorting with `Array.sort_custom(callable)`\nBy default, `Array.sort()` only knows how to compare numbers or strings. To sort custom `CardData` objects (e.g., group by Suit first, then order by Rank ascending), pass a two-argument comparator function `func(a, b) -> bool` that returns `true` when `a` should appear **strictly before** `b`:\n\n```gdscript\nhand.sort_custom(func(a: CardData, b: CardData) -> bool:\n    if a.suit != b.suit:\n        return int(a.suit) < int(b.suit)\n    return a.rank < b.rank\n)\n```\n\n> [!WARNING]\n> **Strict Weak Ordering Rule**: Your comparator MUST return `false` when `a` and `b` are equal (`<` or `>`, never `<=` or `>=`), or the sorting algorithm will assert!",
+      "codeSnippets": [
+        {
+          "id": "snip_14_04_sort",
+          "language": "gdscript",
+          "code": "# Sorting Player 0's Kadi Hand by Suit then Rank:\nstatic func sort_hand(hand: Array[CardData]) -> void:\n    hand.sort_custom(func(a: CardData, b: CardData) -> bool:\n        if a.suit != b.suit:\n            return int(a.suit) < int(b.suit)\n        return a.rank < b.rank\n    )\n\n# O(log n) Binary Search on a Sorted XP Threshold Table:\nconst LEVEL_XP: Array[int] = [0, 100, 250, 500, 1000, 2000, 4000]\n\nstatic func get_level_for_xp(xp: int) -> int:\n    return LEVEL_XP.bsearch(xp, false)",
+          "caption": "`sort_custom` orders complex objects in `O(n log n)`, and `bsearch` finds insertion indices in `O(log n)`."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a function `sort_scores_desc(scores: Array[int]) -> void` that sorts `scores` in descending order (highest first) using `scores.sort_custom(func(a: int, b: int) -> bool: return a > b)`.",
+        "hint": "Use `scores.sort_custom(func(a: int, b: int) -> bool: return a > b)`.",
+        "starterCode": "func sort_scores_desc(scores: Array[int]) -> void:\n\t",
+        "requiredTokens": [
+          "func",
+          "sort_scores_desc",
+          "sort_custom",
+          "return",
+          ">"
+        ],
+        "expectedOutput": "Sorts scores in descending order using a strict comparator.",
+        "solutionCode": "func sort_scores_desc(scores: Array[int]) -> void:\n\tscores.sort_custom(func(a: int, b: int) -> bool: return a > b)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_14_04_1",
+          "prompt": "Why must a `sort_custom(func(a, b))` comparator use strict inequality (`a.rank < b.rank`) instead of `a.rank <= b.rank`?",
+          "choices": [
+            "Because strict weak ordering requires `comp(x, x)` to be `false`; returning `true` for equal elements causes unstable sorting or assertion errors in Godot 4.3",
+            "Because `<=` is not a valid operator in GDScript",
+            "Because `<` sorts in descending order",
+            "Because `<=` converts ints to strings"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Godot's comparator validation checks that an element is never reported as strictly less than itself.",
+          "concept": "Strict Weak Ordering"
+        },
+        {
+          "id": "q_14_04_2",
+          "prompt": "What prerequisite must an `Array` satisfy before calling `arr.bsearch(value)`?",
+          "choices": [
+            "The array must already be sorted in ascending order",
+            "The array must contain only `Node2D` references",
+            "The array must have an odd number of elements",
+            "The array must be shuffled first"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Binary search (`O(log n)`) repeatedly halves the search interval and only works on sorted arrays.",
+          "concept": "Binary Search Prerequisite"
+        },
+        {
+          "id": "q_14_04_3",
+          "prompt": "How many comparisons does `bsearch()` need at most to find an item in a sorted array of `1,024` elements?",
+          "choices": [
+            "About `10` comparisons (`log2(1024) = 10`)",
+            "`1,024` comparisons",
+            "`512` comparisons",
+            "`1,048,576` comparisons"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Each comparison cuts the remaining candidates in half (`2^10 = 1024`).",
+          "concept": "O(log n) Scaling"
+        }
+      ]
+    },
+    {
+      "id": "l_14_05_recursion_trees_astar",
+      "order": 5,
+      "title": "Recursion, Tree Traversal & A* Grid Pathfinding (`AStarGrid2D`)",
+      "targetFile": "res://scripts/cs_algorithms.gd",
+      "tangibleOutcome": "Traverse arbitrary SceneTree hierarchies recursively and compute shortest obstacle-avoiding grid paths with `AStarGrid2D`!",
+      "beyondKadi": "Godot's entire architecture is a **Tree** (`SceneTree`). Recursive DFS/BFS traversals let you inspect or serialize any sub-tree, while `AStarGrid2D` powers turn-based tactics (Fire Emblem, Into the Breach), tower defense mazes, and dungeon crawlers!",
+      "transferChallenge": "**Solo Transfer Challenge**: Write `find_all_nodes_of_type(root: Node, type_name: String) -> Array[Node]` that recursively collects every descendant matching `root.is_class(type_name)`.",
+      "sceneTree": "TacticalGrid (Node2D)\n└── AStarGrid2D (RefCounted grid solver)",
+      "editorSteps": [
+        "Open `res://scripts/cs_algorithms.gd` in the Godot 4.3 Script Editor (or create it under `res://scripts/`).",
+        "Type or paste the reference implementation below and press **Ctrl+S** to save.",
+        "Run the scene with **F5** (or **F6** for current scene) and inspect the Output console to verify the behavior."
+      ],
+      "verificationSteps": [
+        "Confirm zero parser or static typing warnings appear in the Godot Script Editor gutter.",
+        "Verify the expected output in the bottom **Output** dock."
+      ],
+      "troubleshootingTips": [
+        "**Static type warning**: Always annotate parameter types (`param: int`) and return types (`-> bool`) so GDScript 2.0 catches mismatches at edit time.",
+        "**Null instance error**: Ensure nodes are inside the SceneTree (`is_node_ready()`) before accessing `@onready` children."
+      ],
+      "keyTakeaways": [
+        "Clean computer science fundamentals make every game genre faster, safer, and easier to debug.",
+        "Static typing in GDScript 2.0 (`var x: int = 0`, `Array[CardData]`) provides both editor autocomplete and VM bytecode speedups.",
+        "Decoupled data structures can be unit-tested with `assert()` without launching heavy scenes."
+      ],
+      "bodyMarkdown": "# Recursion, Trees & A* Pathfinding (`AStarGrid2D`)\n\n## 1. Every Recursive Function Needs Two Parts\n1. **Base Case**: The stopping condition that returns immediately without recursing (preventing a stack overflow).\n2. **Recursive Step**: Calling the function on a smaller sub-problem (such as each child `for child in node.get_children():`).\n\n## 2. Built-in A* Pathfinding with `[[AStarGrid2D]]`\nInstead of coding priority queues from scratch, Godot 4.3 provides `AStarGrid2D` (`extends RefCounted`):\n1. Set `astar.region = Rect2i(0, 0, width, height)` and `astar.cell_size = Vector2(64, 64)`.\n2. Call `astar.update()`.\n3. Mark walls with `astar.set_point_solid(Vector2i(x, y), true)`.\n4. Call `astar.get_id_path(start_cell, goal_cell)` to get the shortest `Array[Vector2i]` path!",
+      "codeSnippets": [
+        {
+          "id": "snip_14_05_astar",
+          "language": "gdscript",
+          "code": "# 1. Recursive SceneTree Counter (Base Case + Recursive Step):\nstatic func count_subtree_nodes(node: Node) -> int:\n    if node == null:\n        return 0\n    var total: int = 1\n    for child in node.get_children():\n        total += count_subtree_nodes(child)\n    return total\n\n# 2. Shortest Grid Path with Godot 4.3 AStarGrid2D:\nstatic func compute_shortest_grid_path(start: Vector2i, goal: Vector2i, walls: Array[Vector2i]) -> Array[Vector2i]:\n    var astar := AStarGrid2D.new()\n    astar.region = Rect2i(0, 0, 10, 10)\n    astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER\n    astar.update()\n    for w in walls:\n        astar.set_point_solid(w, true)\n    return astar.get_id_path(start, goal)",
+          "caption": "Recursive tree traversal and `AStarGrid2D` shortest-path solver."
+        }
+      ],
+      "practicePrompt": {
+        "instructions": "Write a recursive function `factorial(n: int) -> int` that returns `1` when `n <= 1` (base case) and returns `n * factorial(n - 1)` otherwise.",
+        "hint": "Check `if n <= 1: return 1` and then `return n * factorial(n - 1)`.",
+        "starterCode": "func factorial(n: int) -> int:\n\t",
+        "requiredTokens": [
+          "func",
+          "factorial",
+          "if",
+          "return",
+          "factorial(n - 1)"
+        ],
+        "expectedOutput": "Computes n! recursively with a safe base case.",
+        "solutionCode": "func factorial(n: int) -> int:\n\tif n <= 1:\n\t\treturn 1\n\treturn n * factorial(n - 1)"
+      },
+      "quizQuestions": [
+        {
+          "id": "q_14_05_1",
+          "prompt": "What happens if a recursive function is missing its **base case**?",
+          "choices": [
+            "It calls itself infinitely until the call stack overflows (Stack Overflow crash)",
+            "Godot automatically converts it into a `Tween`",
+            "It returns `0` immediately",
+            "It runs on the GPU"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Every recursive call allocates a new stack frame; without a base case to stop recursion, the call stack exhausts its limit.",
+          "concept": "Recursion Base Case"
+        },
+        {
+          "id": "q_14_05_2",
+          "prompt": "In `AStarGrid2D`, which method must you call after changing `region`, `cell_size`, or `diagonal_mode` before querying paths or setting solid cells?",
+          "choices": [
+            "`astar.update()`",
+            "`astar.move_and_slide()`",
+            "`astar.queue_free()`",
+            "`astar.shuffle()`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`AStarGrid2D.update()` allocates the internal grid points for the configured `region`.",
+          "concept": "AStarGrid2D.update"
+        },
+        {
+          "id": "q_14_05_3",
+          "prompt": "How does the A* (`A-Star`) algorithm find the shortest path faster than an uninformed Breadth-First Search (BFS)?",
+          "choices": [
+            "It prioritizes nodes with the lowest `f(n) = g(n) + h(n)`, combining exact cost from start (`g`) with a heuristic estimate to the goal (`h`)",
+            "It ignores all walls",
+            "It checks only random tiles",
+            "It sorts tiles alphabetically"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Adding an admissible heuristic `h(n)` (like Manhattan or Euclidean distance) guides the search directly toward the goal.",
+          "concept": "A* Heuristic f(n) = g(n) + h(n)"
+        }
+      ]
+    }
+  ],
+  "debugChallenge": {
+    "id": "dbg_14_shallow_copy_mutation",
+    "brokenCode": "func simulate_ai_discard(all_hands: Array, seat: int, card: CardData) -> int:\n\t# Clone hands to test how many cards seat would have left:\n\tvar sim_hands: Array = all_hands.duplicate(false)\n\tsim_hands[seat].erase(card)\n\treturn sim_hands[seat].size()",
+    "bugDescription": "When the AI runs `simulate_ai_discard()` to preview a move, the card is permanently deleted from the real `GameState.hands[seat]` even if the AI decides not to play it! Tap the buggy line.",
+    "fixedCode": "func simulate_ai_discard(all_hands: Array, seat: int, card: CardData) -> int:\n\t# FIX: Pass true to duplicate(true) so inner hand sub-arrays are deep-copied!\n\tvar sim_hands: Array = all_hands.duplicate(true)\n\tsim_hands[seat].erase(card)\n\treturn sim_hands[seat].size()",
+    "explanation": "`all_hands` is a 2D array (`Array` of `Array`s). Calling `duplicate(false)` performs a shallow copy of the outer array only, so `sim_hands[seat]` still references the live player hand array! Passing `duplicate(true)` deep-copies all nested sub-arrays.",
+    "buggyLineNumber": 3,
+    "hint": "Look at the boolean argument passed to `all_hands.duplicate(...)` on the nested 2D array."
+  }
+}

@@ -1,8 +1,8 @@
-# Kadi Companion App (v3.0.0) — Solo Game Architect, Complete Godot 4.3 Mastery & Playable Kadi Edition
+# Kadi Companion App (v4.0.0) — Solo Game Architect, Complete Godot 4.3 Mastery & Playable Kadi Edition
 
 An offline-first Android companion app (Kotlin + Jetpack Compose + Material 3 + Room + Hilt) that teaches programming and **Godot 4.3** game development step by step by building the Kenyan card game **Kadi** — and equips you to **improve Kadi or build a brand-new game in Godot 4.3 completely on your own without needing tutorials!**
 
-## What's New in v3.0.0 (Solo Game Developer Mastery Edition)
+## What's New in v4.0.0 (Solo Game Developer Mastery Edition)
 
 1. **14-Phase Curriculum (53 Deep Lessons) — From First Card to Solo Game Creation**:
    - **Phases 00–11 (Complete Kadi Game)**: Visual GDScript Playground, Tangible Quickstart (`card_scene.tscn` & `table.tscn`), 54-Card `GameState` Engine, `TurnManager` & AI Opponents, `RuleValidator`, Penalty Stacking (`+2, +3, +5`), Question+Answer Chains (`Q`/`8`), Jump (`J`) & Kickback (`K`), Ace Suit Declarations, *"Niko Kadi!"* 5-Clause Win Detection, Automated `assert()` Self-Tests, Tweens, Audio & Exporting.
@@ -18,7 +18,7 @@ An offline-first Android companion app (Kotlin + Jetpack Compose + Material 3 + 
      - `l_13_04_solo_mastery_docs`: Solo Developer Mastery (`F1` Offline Docs, Finite State Machines & Live **Remote Scene Tree** Debugging)
 
 2. **Cross-Genre Transfer & Solo Builder Challenges in Every Single Lesson**:
-   - Every lesson across all 14 phases now includes:
+   - Every lesson across all 19 phases now includes:
      - **🌍 Beyond Kadi: Cross-Genre Game Dev** — shows how the exact concept in that lesson is used in **2D Platformers, Top-Down RPGs, Space Shooters, Deckbuilders, and Puzzle Games**.
      - **🚀 Solo Builder Challenge (No Hand-Holding)** — a concrete independent feature prompt with a completion tracker so you practice building without step-by-step instructions.
 

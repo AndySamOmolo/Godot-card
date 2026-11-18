@@ -505,7 +505,7 @@ private fun TimelinePhaseRow(
                     )
                     if (targetFilesCount > 0) {
                         Pill(
-                            text = "$targetFilesCount files",
+                            text = if (targetFilesCount == 1) "1 file" else "$targetFilesCount files",
                             color = MaterialTheme.colorScheme.secondary,
                             icon = Icons.Outlined.Description
                         )

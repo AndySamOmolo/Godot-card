@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.kadicompanion.data.local.db.entity.GodotDocEntity
 import com.kadicompanion.data.local.db.entity.GodotDocFtsEntity
 import kotlinx.coroutines.flow.Flow
@@ -27,6 +28,17 @@ interface GodotDocDao {
 
     @Query("DELETE FROM doc_cache_fts")
     suspend fun clearFts()
+
+    @Transaction
+    suspend fun replaceAllDocs(
+        items: List<GodotDocEntity>,
+        ftsItems: List<GodotDocFtsEntity>
+    ) {
+        clearFts()
+        clearAll()
+        insertAll(items)
+        insertFts(ftsItems)
+    }
 
     @Query("SELECT doc_cache.className FROM doc_cache_fts JOIN doc_cache ON doc_cache_fts.className = doc_cache.className WHERE doc_cache_fts MATCH :query ORDER BY doc_cache.className")
     suspend fun search(query: String): List<String>

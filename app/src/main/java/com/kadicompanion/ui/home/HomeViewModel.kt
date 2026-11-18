@@ -15,7 +15,9 @@ import com.kadicompanion.domain.usecase.GetReviewQueueUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -103,7 +105,7 @@ class HomeViewModel @Inject constructor(
             reviewQueue = review,
             track = track
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
     // Direct setters so the user can customize the Home Top Hero Card right from the Home screen
     fun setShowHomeHeroCard(show: Boolean) = viewModelScope.launch { prefs.setShowHomeHeroCard(show) }
@@ -117,4 +119,5 @@ class HomeViewModel @Inject constructor(
     fun setCustomHeroSubtitle(subtitle: String) = viewModelScope.launch { prefs.setCustomHeroSubtitle(subtitle) }
     fun setCustomHeroPrimaryBtn(label: String) = viewModelScope.launch { prefs.setCustomHeroPrimaryBtn(label) }
     fun setCustomHeroSecondaryBtn(label: String) = viewModelScope.launch { prefs.setCustomHeroSecondaryBtn(label) }
+    fun resetHomeHeroCardToDefault() = viewModelScope.launch { prefs.resetHomeHeroCardToDefault() }
 }

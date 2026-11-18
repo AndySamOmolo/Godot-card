@@ -9,9 +9,13 @@ import com.kadicompanion.data.local.db.entity.GodotDocFtsEntity
 import com.kadicompanion.domain.model.GodotDocEntry
 import com.kadicompanion.domain.repository.DocsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -29,17 +33,29 @@ class DocsRepositoryImpl @Inject constructor(
 ) : DocsRepository {
 
     private val reindexMutex = Mutex()
-    private var reindexed = false
+    @Volatile private var reindexed = false
+    private val _cachedEntries = MutableStateFlow<List<GodotDocEntry>?>(null)
 
     override fun observeAll(): Flow<List<GodotDocEntry>> =
-        godotDocDao.observeAll().map { rows ->
-            rows.mapNotNull { row ->
-                runCatching { json.decodeFromString<GodotDocEntry>(row.json) }.getOrNull()
-            }.sortedBy { it.className }
-        }
+        godotDocDao.observeAll()
+            .onStart { reindexIfNeeded() }
+            .map { rows ->
+                val cached = _cachedEntries.value
+                if (cached != null && cached.size == rows.size && rows.isNotEmpty()) {
+                    cached
+                } else {
+                    rows.mapNotNull { row ->
+                        runCatching { json.decodeFromString<GodotDocEntry>(row.json) }.getOrNull()
+                    }.sortedBy { it.className }.also { decoded ->
+                        if (decoded.isNotEmpty()) _cachedEntries.value = decoded
+                    }
+                }
+            }
+            .flowOn(Dispatchers.Default)
 
     override suspend fun get(className: String): GodotDocEntry? = withContext(Dispatchers.IO) {
         reindexIfNeeded()
+        _cachedEntries.value?.firstOrNull { it.className.equals(className, ignoreCase = true) }?.let { return@withContext it }
         val row = godotDocDao.get(className) ?: return@withContext null
         runCatching { json.decodeFromString<GodotDocEntry>(row.json) }.getOrNull()
     }
@@ -47,9 +63,12 @@ class DocsRepositoryImpl @Inject constructor(
     override suspend fun search(query: String): List<String> = withContext(Dispatchers.IO) {
         reindexIfNeeded()
         if (query.isBlank()) return@withContext emptyList()
-        val sanitized = query.trim().replace("\"", "").replace("'", "")
-        if (sanitized.isEmpty()) return@withContext emptyList()
-        val ftsQuery = "\"$sanitized\"*"
+        val tokens = query.trim()
+            .split(Regex("\\s+"))
+            .map { it.replace(Regex("[^A-Za-z0-9_@]"), "") }
+            .filter { it.isNotEmpty() }
+        if (tokens.isEmpty()) return@withContext emptyList()
+        val ftsQuery = tokens.joinToString(" ") { "\"$it\"*" }
         runCatching { godotDocDao.search(ftsQuery) }.getOrDefault(emptyList())
     }
 
@@ -59,13 +78,15 @@ class DocsRepositoryImpl @Inject constructor(
             if (reindexed) return
             val bundled = contentLoader.loadContentVersion()
             val storedVersion = prefs.observeContentVersion().first()
-            if (storedVersion == bundled) {
+            val existingCount = _cachedEntries.value?.size ?: 0
+            if (storedVersion == bundled && existingCount > 0) {
                 reindexed = true
                 return
             }
             val sources = contentLoader.loadGodotDocSources()
+            if (sources.isEmpty()) return
             val defaultVerified = bundled.substringBefore('-').ifBlank { "4.3" }
-            val entries = sources.map { src -> GodotDocParser.parse(src, defaultVerified) }
+            val entries = sources.map { src -> GodotDocParser.parse(src, defaultVerified) }.sortedBy { it.className }
             val entities = entries.map { entry ->
                 GodotDocEntity(
                     className = entry.className,
@@ -82,12 +103,12 @@ class DocsRepositoryImpl @Inject constructor(
                 }
                 GodotDocFtsEntity(entry.className, searchable)
             }
-            godotDocDao.clearFts()
-            godotDocDao.clearAll()
-            godotDocDao.insertAll(entities)
-            godotDocDao.insertFts(ftsEntities)
-            prefs.setContentVersion(bundled)
-            reindexed = true
+            withContext(NonCancellable) {
+                godotDocDao.replaceAllDocs(entities, ftsEntities)
+                _cachedEntries.value = entries
+                prefs.setContentVersion(bundled)
+                reindexed = true
+            }
         }
     }
 }

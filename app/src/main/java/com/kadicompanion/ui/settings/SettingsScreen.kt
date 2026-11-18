@@ -3,6 +3,9 @@ package com.kadicompanion.ui.settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -414,7 +417,7 @@ fun QuickUiCustomizerSheet(
                     Slider(
                         value = p.fontScale,
                         onValueChange = { vm.setFontScale((it * 20).roundToInt() / 20f) },
-                        valueRange = 0.85f..1.25f,
+                        valueRange = 0.80f..1.35f,
                         steps = 7,
                         modifier = Modifier.weight(1f)
                     )
@@ -429,7 +432,7 @@ fun QuickUiCustomizerSheet(
                     Slider(
                         value = p.codeFontScale,
                         onValueChange = { vm.setCodeFontScale((it * 20).roundToInt() / 20f) },
-                        valueRange = 0.85f..1.25f,
+                        valueRange = 0.80f..1.35f,
                         steps = 7,
                         modifier = Modifier.weight(1f)
                     )
@@ -805,7 +808,7 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
         Slider(
             value = p.fontScale,
             onValueChange = { vm.setFontScale((it * 20).roundToInt() / 20f) },
-            valueRange = 0.85f..1.25f,
+            valueRange = 0.80f..1.35f,
             steps = 7
         )
         Row(
@@ -840,7 +843,7 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
         Slider(
             value = p.codeFontScale,
             onValueChange = { vm.setCodeFontScale((it * 20).roundToInt() / 20f) },
-            valueRange = 0.85f..1.25f,
+            valueRange = 0.80f..1.35f,
             steps = 7
         )
     }
@@ -1141,7 +1144,7 @@ private fun LayoutAndCardsSection(state: SettingsUiState, vm: SettingsViewModel)
         Slider(
             value = p.cornerRadiusDp.toFloat(),
             onValueChange = { vm.setCornerRadiusDp(it.roundToInt()) },
-            valueRange = 0f..28f,
+            valueRange = 0f..32f,
             steps = 6
         )
         Row(
@@ -1333,7 +1336,7 @@ private fun ToggleRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
@@ -1378,7 +1381,7 @@ private fun ChoiceRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            RadioButton(selected = selected, onClick = onClick)
+            RadioButton(selected = selected, onClick = null)
         }
     }
 }

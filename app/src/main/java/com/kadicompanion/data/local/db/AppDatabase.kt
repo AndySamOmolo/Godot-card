@@ -26,7 +26,7 @@ import com.kadicompanion.data.local.db.entity.QuizAttemptEntity
         DebugChallengeAttemptEntity::class,
         LearnerProfileEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

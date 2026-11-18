@@ -100,6 +100,32 @@
           "correctChoiceIndex": 0,
           "explanation": "Node composition lets you snap reusable behaviors (`HealthComponent`, `HitboxComponent`) onto any entity in any game genre without code duplication.",
           "concept": "Component Composition"
+        },
+        {
+          "id": "q_13_01_2",
+          "prompt": "What is the fastest way to escape 'Tutorial Hell' when adding a new mechanic you haven't built before?",
+          "choices": [
+            "Decompose the mechanic into State (data), Trigger (input/signal/timer), Rule check, and Visual feedback—then look up the target node class with F1 / Reference Desk",
+            "Search for a 4-hour video tutorial and copy the code line by line",
+            "Rewrite the entire game engine from scratch",
+            "Put all code into a single 3,000-line script"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Breaking any feature into Data + Trigger + Rule + Feedback lets you build original mechanics using official class docs instead of copying videos.",
+          "concept": "4-Step Mechanic Decomposition"
+        },
+        {
+          "id": "q_13_01_3",
+          "prompt": "In the 5-Pillar Solo Game Architecture framework, which Godot 4.3 building block corresponds to `CardData` when you build an RPG or Tower Defense game?",
+          "choices": [
+            "A custom `Resource` subclass (`ItemData`, `TowerStats`, `EnemyStats`) with `@export` properties",
+            "A `Camera2D` node",
+            "A `ColorRect` node",
+            "An `AudioStreamPlayer` node"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Custom `Resource` subclasses cleanly separate static item/unit data from visual scenes and rule logic in every genre.",
+          "concept": "Data-Driven Resources"
         }
       ]
     },
@@ -166,6 +192,32 @@
           "correctChoiceIndex": 0,
           "explanation": "In Godot 4, `velocity` is expressed in pixels per second, and `move_and_slide()` applies the `delta` step automatically during collision resolution.",
           "concept": "CharacterBody2D & delta"
+        },
+        {
+          "id": "q_13_02_2",
+          "prompt": "What does 'Coyote Time' do in a 2D Action Platformer?",
+          "choices": [
+            "Grants a brief grace window (e.g. `0.10s–0.12s`) after walking off a ledge during which pressing Jump still triggers a valid jump",
+            "Doubles enemy movement speed at night",
+            "Automatically aims projectiles at the nearest enemy",
+            "Locks the camera to the tile grid"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Tracking a short `coyote_timer` after leaving `is_on_floor()` prevents frustrating missed jumps at platform edges.",
+          "concept": "Coyote Time"
+        },
+        {
+          "id": "q_13_02_3",
+          "prompt": "Why should `CharacterBody2D.motion_mode` be set to `MOTION_MODE_FLOATING` in a Top-Down RPG (like Zelda or Vampire Survivors) instead of `MOTION_MODE_GROUNDED`?",
+          "choices": [
+            "Because `MOTION_MODE_GROUNDED` treats walls as floors/slopes with gravity, whereas `MOTION_MODE_FLOATING` treats all collisions as top-down obstacles without floor/ceiling concepts",
+            "Because `MOTION_MODE_FLOATING` disables all collisions",
+            "Because `Input.get_vector()` only works in `MOTION_MODE_FLOATING`",
+            "To make sprites render in 3D"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "`MOTION_MODE_FLOATING` is designed for top-down and space games where there is no downward gravity floor.",
+          "concept": "CharacterBody2D Motion Modes"
         }
       ]
     },
@@ -231,6 +283,32 @@
           "correctChoiceIndex": 0,
           "explanation": "`Area2D` detects overlapping physics bodies (`body_entered`) and other areas (`area_entered`) without acting as a solid wall.",
           "concept": "Area2D vs Physics Bodies"
+        },
+        {
+          "id": "q_13_03_2",
+          "prompt": "In a decoupled Hitbox / Hurtbox architecture, why do we use two separate `Area2D` scenes (`Hitbox` for dealing damage and `Hurtbox` for receiving damage)?",
+          "choices": [
+            "So an attack's active strike zone (`Hitbox`) and a character's vulnerable body (`Hurtbox`) can have independent sizes, collision layers, and active frames",
+            "Because Godot allows only one `CollisionShape2D` per project",
+            "Because `CharacterBody2D` cannot detect `Area2D`",
+            "To reduce texture memory"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Separating Hitbox (dealer) and Hurtbox (receiver) lets you toggle weapon hitboxes during attack animations without disabling the character's body hurtbox.",
+          "concept": "Hitbox & Hurtbox Decoupling"
+        },
+        {
+          "id": "q_13_03_3",
+          "prompt": "Why is an `enum State { IDLE, PATROL, CHASE, ATTACK, HURT }` + `match state:` block superior to 6 nested booleans (`is_running`, `is_attacking`, `is_hurt`, ...)?",
+          "choices": [
+            "An `enum` guarantees mutual exclusion (the actor is in exactly ONE well-defined state at a time), eliminating impossible boolean combinations",
+            "Enums run on the GPU",
+            "Booleans cannot be exported to the Inspector",
+            "`match` statements automatically animate sprites"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "A Finite State Machine (`enum State` + `transition_to()`) prevents contradictory states like attacking while stunned and dead simultaneously.",
+          "concept": "Finite State Machines"
         }
       ]
     },
@@ -298,13 +376,39 @@
           "correctChoiceIndex": 0,
           "explanation": "Switching the Scene dock from **Local** to **Remote** while the game is running shows the live SceneTree in memory, including every node spawned by `.instantiate()`.",
           "concept": "Remote Scene Tree Debugging"
+        },
+        {
+          "id": "q_13_04_2",
+          "prompt": "When you encounter an unfamiliar Godot 4.3 class (such as `RayCast2D` or `AnimationTree`), which 3 sections of its documentation tell you 90% of how to use it?",
+          "choices": [
+            "Inherits chain, Properties (Inspector state), and Methods/Signals (actions & events)",
+            "Engine C++ source files, compiler flags, and license header",
+            "Font imports, export presets, and audio buses",
+            "Only the class title"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Every Godot class doc is structured around what it inherits, its configurable Properties, its callable Methods, and the Signals it emits.",
+          "concept": "Reading API Documentation"
+        },
+        {
+          "id": "q_13_04_3",
+          "prompt": "What is the 'Greybox First' rule when starting a brand-new solo game prototype?",
+          "choices": [
+            "Build and playtest the core 30-second gameplay loop using simple `ColorRect`/`Panel`/placeholder shapes first, and only add final art once the mechanic feels fun",
+            "Spend 3 weeks drawing final pixel art before writing any code",
+            "Use only grey colours in the final shipped game",
+            "Disable all lighting in `WorldEnvironment`"
+          ],
+          "correctChoiceIndex": 0,
+          "explanation": "Greyboxing validates whether movement, rules, and pacing are fun in hours rather than weeks, just like Kadi's `CardBg` + `Label` fallback cards.",
+          "concept": "Greybox Prototyping"
         }
       ]
     }
   ],
   "debugChallenge": {
     "id": "dbg_13_missing_delta_physics",
-    "brokenCode": "extends Area2D\n@export var bullet_speed: float = 600.0\n\nfunc _physics_process(delta: float) -> void:\n\t# BUG: Bullet teleports 600 pixels per frame (36,000 px/sec at 60 FPS)!\n\tposition += Vector2.RIGHT.rotated(rotation) * bullet_speed",
+    "brokenCode": "extends Area2D\n@export var bullet_speed: float = 600.0\n\nfunc _physics_process(delta: float) -> void:\n\t# Advance projectile forward along its heading:\n\tposition += Vector2.RIGHT.rotated(rotation) * bullet_speed",
     "bugDescription": "You spawned an `Area2D` laser bullet with `bullet_speed = 600.0`, expecting it to travel 600 pixels per second across the screen. Instead, it teleports off-screen in a single blink (`36,000` pixels per second)! Tap the buggy line.",
     "fixedCode": "extends Area2D\n@export var bullet_speed: float = 600.0\n\nfunc _physics_process(delta: float) -> void:\n\t# FIX: Multiply manual position changes by delta (elapsed frame time in seconds)!\n\tposition += Vector2.RIGHT.rotated(rotation) * bullet_speed * delta",
     "explanation": "When manually updating `position` inside `_process(delta)` or `_physics_process(delta)` (unlike `CharacterBody2D.move_and_slide()`, which applies `delta` internally), you must multiply speed (pixels/second) by `delta` (seconds/frame) so the object moves `600 * (1/60) = 10` pixels per frame!",

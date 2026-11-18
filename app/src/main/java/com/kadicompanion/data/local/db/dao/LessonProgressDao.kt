@@ -26,4 +26,7 @@ interface LessonProgressDao {
 
     @Query("UPDATE lesson_progress SET lastOpenedAt = :now WHERE lessonId = :lessonId")
     suspend fun touchOpened(lessonId: String, now: Long)
+
+    @Query("DELETE FROM lesson_progress")
+    suspend fun deleteAll()
 }

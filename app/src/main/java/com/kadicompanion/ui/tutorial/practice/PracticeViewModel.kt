@@ -1,5 +1,6 @@
 package com.kadicompanion.ui.tutorial.practice
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kadicompanion.domain.model.Lesson
@@ -16,6 +17,8 @@ data class PracticeUiState(
     val lesson: Lesson? = null,
     val nextLessonId: String? = null,
     val userCode: String = "",
+    val guidedDraft: String = "",
+    val soloDraft: String = "# SOLO MODE: Write your GDScript solution from scratch!\n# (Try solving without starter scaffolding to build solo muscle memory)\n\n",
     val soloMode: Boolean = false,
     val hintShown: Boolean = false,
     val solutionShown: Boolean = false,
@@ -32,29 +35,41 @@ class PracticeViewModel @Inject constructor(
     savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
-    private val lessonId: String = checkNotNull(savedStateHandle["lessonId"])
+    private val lessonId: String = Uri.decode(checkNotNull(savedStateHandle["lessonId"]))
     private val _ui = MutableStateFlow(PracticeUiState())
     val uiState: StateFlow<PracticeUiState> = _ui.asStateFlow()
 
+    companion object {
+        private val STRING_LITERAL_REGEX = Regex("\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'")
+        private val SINGLE_EQ_REGEX = Regex("(?<![=!<>])=(?!=)")
+        private val SOLUTION_TOKEN_REGEX = Regex("[A-Za-z_][A-Za-z0-9_]*|==|!=|>=|<=|\\+=|\\*=|->")
+    }
+
     init {
         viewModelScope.launch {
-            val lesson = tutorialRepository.getLesson(lessonId)
-            val next = tutorialRepository.getNextLesson(lessonId)
-                ?: lesson?.let { tutorialRepository.getFirstLessonOfNextPhase(it.phaseId) }
+            val lesson = runCatching { tutorialRepository.getLesson(lessonId) }.getOrNull()
+            val next = runCatching {
+                tutorialRepository.getNextLesson(lessonId)
+                    ?: lesson?.let { tutorialRepository.getFirstLessonOfNextPhase(it.phaseId) }
+            }.getOrNull()
             val starter = lesson?.practicePrompt?.starterCode
                 ?: "# Write your GDScript solution below:\n"
             _ui.value = PracticeUiState(
                 lesson = lesson,
                 nextLessonId = next?.id,
                 userCode = starter,
+                guidedDraft = starter,
                 isLoading = false
             )
         }
     }
 
     fun updateUserCode(newCode: String) {
-        _ui.value = _ui.value.copy(
+        val cur = _ui.value
+        _ui.value = cur.copy(
             userCode = newCode,
+            guidedDraft = if (!cur.soloMode) newCode else cur.guidedDraft,
+            soloDraft = if (cur.soloMode) newCode else cur.soloDraft,
             checkPassed = null,
             checkFeedback = null,
             syntaxWarnings = emptyList()
@@ -62,15 +77,12 @@ class PracticeViewModel @Inject constructor(
     }
 
     fun toggleSoloMode() {
-        val nextSolo = !_ui.value.soloMode
-        val starter = if (nextSolo) {
-            "# SOLO MODE: Write your GDScript solution from scratch!\n# (Try solving without starter scaffolding to build solo muscle memory)\n\n"
-        } else {
-            _ui.value.lesson?.practicePrompt?.starterCode ?: "# Write your GDScript solution below:\n"
-        }
-        _ui.value = _ui.value.copy(
+        val cur = _ui.value
+        val nextSolo = !cur.soloMode
+        val nextCode = if (nextSolo) cur.soloDraft else cur.guidedDraft
+        _ui.value = cur.copy(
             soloMode = nextSolo,
-            userCode = starter,
+            userCode = nextCode,
             checkPassed = null,
             checkFeedback = null,
             syntaxWarnings = emptyList()
@@ -88,13 +100,16 @@ class PracticeViewModel @Inject constructor(
     }
 
     fun resetCode() {
-        val starter = if (_ui.value.soloMode) {
+        val cur = _ui.value
+        val starter = if (cur.soloMode) {
             "# SOLO MODE: Write your GDScript solution from scratch!\n\n"
         } else {
-            _ui.value.lesson?.practicePrompt?.starterCode ?: "# Write your GDScript solution below:\n"
+            cur.lesson?.practicePrompt?.starterCode ?: "# Write your GDScript solution below:\n"
         }
-        _ui.value = _ui.value.copy(
+        _ui.value = cur.copy(
             userCode = starter,
+            guidedDraft = if (!cur.soloMode) starter else cur.guidedDraft,
+            soloDraft = if (cur.soloMode) starter else cur.soloDraft,
             checkPassed = null,
             checkFeedback = null,
             syntaxWarnings = emptyList()
@@ -104,20 +119,25 @@ class PracticeViewModel @Inject constructor(
     fun checkCode() {
         val s = _ui.value
         val prompt = s.lesson?.practicePrompt ?: return
-        val nonCommentLines = s.userCode
-            .lines()
-            .filterNot { it.trim().startsWith("#") }
+        val allLines = s.userCode.lines()
+        val nonCommentLines = allLines.filterNot { it.trim().startsWith("#") }
         val codeTrimmed = nonCommentLines.joinToString("\n").trim()
 
-        if (codeTrimmed.isBlank()) {
+        val starterNonComment = prompt.starterCode.orEmpty()
+            .lines()
+            .filterNot { it.trim().startsWith("#") }
+            .joinToString("\n")
+            .trim()
+
+        if (codeTrimmed.isBlank() || (!s.soloMode && starterNonComment.isNotEmpty() && codeTrimmed == starterNonComment)) {
             _ui.value = s.copy(
                 checkPassed = false,
-                checkFeedback = "Your editor only has comments right now. Type your GDScript attempt below the comment line and tap Check My Code!"
+                checkFeedback = "Complete the GDScript task below the starter comments before tapping Check My Code!"
             )
             return
         }
 
-        val warnings = runGDScriptSyntaxDiagnostics(nonCommentLines)
+        val warnings = runGDScriptSyntaxDiagnostics(allLines)
 
         val tokensToCheck = if (prompt.requiredTokens.isNotEmpty()) {
             prompt.requiredTokens
@@ -125,8 +145,12 @@ class PracticeViewModel @Inject constructor(
             extractKeyTokensFromSolution(prompt.solutionCode.orEmpty())
         }
 
-        val missing = tokensToCheck.filter { token ->
-            !codeTrimmed.contains(token)
+        val normalizedUser = normalizeWhitespace(codeTrimmed)
+        val missing = tokensToCheck.filter { tokenSpec ->
+            val alternatives = tokenSpec.split("|").map { it.trim() }.filter { it.isNotEmpty() }
+            alternatives.none { alt ->
+                codeTrimmed.contains(alt) || normalizedUser.contains(normalizeWhitespace(alt))
+            }
         }
 
         if (missing.isEmpty() && warnings.isEmpty()) {
@@ -153,18 +177,22 @@ class PracticeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Lightweight GDScript 4.3 structural linter so learners get authentic compiler-style feedback
-     * (missing colons on block headers, unbalanced parentheses/brackets, `=` vs `==` inside `if`).
-     */
-    private fun runGDScriptSyntaxDiagnostics(lines: List<String>): List<String> {
+    private fun normalizeWhitespace(code: String): String =
+        code.replace(Regex("\\s*([=!<>+\\-*/,:()])\\s*"), "$1")
+
+    internal fun runGDScriptSyntaxDiagnostics(allLines: List<String>): List<String> {
         val issues = mutableListOf<String>()
         var openParens = 0
         var openBrackets = 0
         var openBraces = 0
 
-        lines.forEachIndexed { idx, rawLine ->
-            val stripped = rawLine.substringBefore("#").trim()
+        allLines.forEachIndexed { idx, rawLine ->
+            val trimmedRaw = rawLine.trim()
+            if (trimmedRaw.isEmpty() || trimmedRaw.startsWith("#")) return@forEachIndexed
+
+            // Replace string literals with "" first so '#' or '=' or '()' inside quotes never trigger false positives
+            val withoutStrings = rawLine.replace(STRING_LITERAL_REGEX, "\"\"")
+            val stripped = withoutStrings.substringBefore("#").trim()
             if (stripped.isEmpty()) return@forEachIndexed
 
             openParens += stripped.count { it == '(' } - stripped.count { it == ')' }
@@ -173,6 +201,7 @@ class PracticeViewModel @Inject constructor(
 
             val isBlockHeader = stripped.startsWith("func ") ||
                 stripped.startsWith("static func ") ||
+                stripped.startsWith("class ") ||
                 stripped.startsWith("if ") ||
                 stripped.startsWith("elif ") ||
                 stripped == "else" ||
@@ -186,7 +215,7 @@ class PracticeViewModel @Inject constructor(
             }
 
             if ((stripped.startsWith("if ") || stripped.startsWith("elif ")) &&
-                Regex("(?<![=!<>])=(?!=)").containsMatchIn(stripped)
+                SINGLE_EQ_REGEX.containsMatchIn(stripped)
             ) {
                 issues += "Line ${idx + 1}: Inside `if`/`elif`, use `==` for comparison instead of single `=` assignment."
             }
@@ -208,8 +237,7 @@ class PracticeViewModel @Inject constructor(
         val nonComment = solution.lines()
             .filterNot { it.trim().startsWith("#") }
             .joinToString(" ")
-        val regex = Regex("[A-Za-z_][A-Za-z0-9_]*|==|!=|>=|<=|\\+=|\\*=|->")
-        return regex.findAll(nonComment)
+        return SOLUTION_TOKEN_REGEX.findAll(nonComment)
             .map { it.value }
             .filter { it.length >= 2 }
             .distinct()
