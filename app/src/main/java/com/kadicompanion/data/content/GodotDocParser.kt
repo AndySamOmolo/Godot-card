@@ -91,6 +91,12 @@ object GodotDocParser {
     }
 
     private fun splitSignature(sig: String): Pair<String, String?> {
+        val methodMatch = signatureRegex.find(sig)
+        if (sig.contains('(') && methodMatch != null) {
+            val retType = methodMatch.groupValues[1]
+            val name = methodMatch.groupValues[2]
+            return name to retType.takeIf { it.isNotBlank() }
+        }
         val colonIdx = sig.indexOf(':')
         return if (colonIdx != -1) {
             sig.substring(0, colonIdx).trim() to sig.substring(colonIdx + 1).trim().ifBlank { null }

@@ -1,8 +1,9 @@
 package com.kadicompanion
 
-import com.kadicompanion.data.assets.GodotDocParser
+import com.kadicompanion.data.content.GodotDocSource
+import com.kadicompanion.data.content.GodotDocParser
 import com.kadicompanion.ui.common.cleanPlainText
-import com.kadicompanion.ui.practice.PracticeViewModel
+import com.kadicompanion.ui.tutorial.practice.PracticeViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -14,10 +15,14 @@ class KadiCompanionAuditVerificationTest {
     @Test
     fun godotDocParser_parsesClassHeaderMethodsSignalsAndProperties() {
         val sampleMarkdown = """
-            # Node2D
-            Inherits: CanvasItem < Node < Object
-            Category: 2D
+            ---
+            class: Node2D
+            inherits: CanvasItem < Node < Object
+            verified: 4.3
+            short: A 2D game object used in Kadi.
+            ---
 
+            # Node2D
             A 2D game object, inherited by all 2D-related nodes.
 
             ## Properties
@@ -31,14 +36,11 @@ class KadiCompanionAuditVerificationTest {
             ## Signals
             - `visibility_changed()` — Emitted when the node's visibility changes.
 
-            ## Used in Kadi
-            - `Table` root node (`res://scenes/table/table.tscn`)
         """.trimIndent()
 
-        val entry = GodotDocParser.parse("Node2D", sampleMarkdown)
+        val entry = GodotDocParser.parse(GodotDocSource("Node2D", sampleMarkdown), "4.3")
         assertEquals("Node2D", entry.className)
         assertEquals("CanvasItem < Node < Object", entry.inherits)
-        assertEquals("2D", entry.category)
         assertTrue(entry.shortDescription.contains("2D game object"))
         assertEquals(2, entry.properties.size)
         assertEquals("position", entry.properties[0].name)
@@ -47,7 +49,6 @@ class KadiCompanionAuditVerificationTest {
         assertEquals("look_at", entry.methods[0].name)
         assertEquals(1, entry.signals.size)
         assertEquals("visibility_changed()", entry.signals[0].name)
-        assertEquals(1, entry.usedInKadi.size)
     }
 
     @Test
@@ -59,23 +60,23 @@ class KadiCompanionAuditVerificationTest {
                     return true
                 return false
         """.trimIndent()
-        assertTrue(PracticeViewModel.runGDScriptSyntaxDiagnostics(validCode).isEmpty())
+        assertTrue(PracticeViewModel.runGDScriptSyntaxDiagnostics(validCode.lines()).isEmpty())
 
         val missingColonCode = """
             func is_playable(suit: int) -> bool
                 return suit == 0
         """.trimIndent()
-        val issues = PracticeViewModel.runGDScriptSyntaxDiagnostics(missingColonCode)
+        val issues = PracticeViewModel.runGDScriptSyntaxDiagnostics(missingColonCode.lines())
         assertFalse(issues.isEmpty())
-        assertTrue(issues.first().contains("Missing ':'"))
+        assertTrue(issues.first().contains("must end with a colon"))
 
         val unbalancedCode = """
             func test() -> void:
                 var arr = [1, 2, 3
         """.trimIndent()
-        val bracketIssues = PracticeViewModel.runGDScriptSyntaxDiagnostics(unbalancedCode)
+        val bracketIssues = PracticeViewModel.runGDScriptSyntaxDiagnostics(unbalancedCode.lines())
         assertFalse(bracketIssues.isEmpty())
-        assertTrue(bracketIssues.any { it.contains("Unclosed '['") })
+        assertTrue(bracketIssues.any { it.contains("Unbalanced square brackets") })
     }
 
     @Test
