@@ -22,7 +22,9 @@ object GodotDocParser {
         val sections = parseSections(body)
         val properties = sections["Properties"]?.let { parseMembers(it, propertiesSection = true) } ?: emptyList()
         val methods = sections["Methods"]?.let { parseMembers(it, propertiesSection = false) } ?: emptyList()
-        val signals = sections["Signals"]?.let { parseMembers(it, propertiesSection = false) } ?: emptyList()
+        val signals = sections["Signals"]?.let {
+            parseMembers(it, propertiesSection = false, preserveSignature = true)
+        } ?: emptyList()
         val description = sections["Description"]?.trim() ?: body.trim()
 
         return GodotDocEntry(
@@ -69,7 +71,11 @@ object GodotDocParser {
         return out
     }
 
-    private fun parseMembers(sectionText: String, propertiesSection: Boolean): List<DocMember> {
+    private fun parseMembers(
+        sectionText: String,
+        propertiesSection: Boolean,
+        preserveSignature: Boolean = false
+    ): List<DocMember> {
         return sectionText.lineSequence()
             .filter { it.trimStart().startsWith("- ") }
             .mapNotNull { line ->
@@ -95,7 +101,8 @@ object GodotDocParser {
                         else -> rest
                     }
                 }
-                val (name, type) = splitSignature(signature)
+                val (parsedName, type) = splitSignature(signature)
+                val name = if (preserveSignature) signature else parsedName
                 DocMember(name = name, type = restType ?: type, description = description)
             }
             .toList()
