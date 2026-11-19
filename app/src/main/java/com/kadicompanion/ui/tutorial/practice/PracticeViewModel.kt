@@ -43,6 +43,58 @@ class PracticeViewModel @Inject constructor(
         private val STRING_LITERAL_REGEX = Regex("\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'")
         private val SINGLE_EQ_REGEX = Regex("(?<![=!<>])=(?!=)")
         private val SOLUTION_TOKEN_REGEX = Regex("[A-Za-z_][A-Za-z0-9_]*|==|!=|>=|<=|\\+=|\\*=|->")
+
+        internal fun runGDScriptSyntaxDiagnostics(allLines: List<String>): List<String> {
+            val issues = mutableListOf<String>()
+            var openParens = 0
+            var openBrackets = 0
+            var openBraces = 0
+
+            allLines.forEachIndexed { idx, rawLine ->
+                val trimmedRaw = rawLine.trim()
+                if (trimmedRaw.isEmpty() || trimmedRaw.startsWith("#")) return@forEachIndexed
+
+                val withoutStrings = rawLine.replace(STRING_LITERAL_REGEX, "\"\"")
+                val stripped = withoutStrings.substringBefore("#").trim()
+                if (stripped.isEmpty()) return@forEachIndexed
+
+                openParens += stripped.count { it == '(' } - stripped.count { it == ')' }
+                openBrackets += stripped.count { it == '[' } - stripped.count { it == ']' }
+                openBraces += stripped.count { it == '{' } - stripped.count { it == '}' }
+
+                val isBlockHeader = stripped.startsWith("func ") ||
+                    stripped.startsWith("static func ") ||
+                    stripped.startsWith("class ") ||
+                    stripped.startsWith("if ") ||
+                    stripped.startsWith("elif ") ||
+                    stripped == "else" ||
+                    stripped.startsWith("for ") ||
+                    stripped.startsWith("while ") ||
+                    stripped.startsWith("match ")
+
+                if (isBlockHeader && !stripped.endsWith(":") && openParens <= 0) {
+                    val keyword = stripped.substringBefore(" ")
+                    issues += "Line ${idx + 1}: GDScript `$keyword` header must end with a colon (`:`) — e.g. `$stripped:`."
+                }
+
+                if ((stripped.startsWith("if ") || stripped.startsWith("elif ")) &&
+                    SINGLE_EQ_REGEX.containsMatchIn(stripped)
+                ) {
+                    issues += "Line ${idx + 1}: Inside `if`/`elif`, use `==` for comparison instead of single `=` assignment."
+                }
+            }
+
+            if (openParens != 0) {
+                issues += "Unbalanced parentheses `(` `)` across your script — check that every `(` has a matching `)`."
+            }
+            if (openBrackets != 0) {
+                issues += "Unbalanced square brackets `[` `]` — check your Array indexing or literals."
+            }
+            if (openBraces != 0) {
+                issues += "Unbalanced curly braces `{` `}` — check your Dictionary or enum literals."
+            }
+            return issues
+        }
     }
 
     init {
@@ -181,56 +233,7 @@ class PracticeViewModel @Inject constructor(
         code.replace(Regex("\\s*([=!<>+\\-*/,:()])\\s*"), "$1")
 
     internal fun runGDScriptSyntaxDiagnostics(allLines: List<String>): List<String> {
-        val issues = mutableListOf<String>()
-        var openParens = 0
-        var openBrackets = 0
-        var openBraces = 0
-
-        allLines.forEachIndexed { idx, rawLine ->
-            val trimmedRaw = rawLine.trim()
-            if (trimmedRaw.isEmpty() || trimmedRaw.startsWith("#")) return@forEachIndexed
-
-            // Replace string literals with "" first so '#' or '=' or '()' inside quotes never trigger false positives
-            val withoutStrings = rawLine.replace(STRING_LITERAL_REGEX, "\"\"")
-            val stripped = withoutStrings.substringBefore("#").trim()
-            if (stripped.isEmpty()) return@forEachIndexed
-
-            openParens += stripped.count { it == '(' } - stripped.count { it == ')' }
-            openBrackets += stripped.count { it == '[' } - stripped.count { it == ']' }
-            openBraces += stripped.count { it == '{' } - stripped.count { it == '}' }
-
-            val isBlockHeader = stripped.startsWith("func ") ||
-                stripped.startsWith("static func ") ||
-                stripped.startsWith("class ") ||
-                stripped.startsWith("if ") ||
-                stripped.startsWith("elif ") ||
-                stripped == "else" ||
-                stripped.startsWith("for ") ||
-                stripped.startsWith("while ") ||
-                stripped.startsWith("match ")
-
-            if (isBlockHeader && !stripped.endsWith(":") && openParens <= 0) {
-                val keyword = stripped.substringBefore(" ")
-                issues += "Line ${idx + 1}: GDScript `$keyword` header must end with a colon (`:`) — e.g. `$stripped:`."
-            }
-
-            if ((stripped.startsWith("if ") || stripped.startsWith("elif ")) &&
-                SINGLE_EQ_REGEX.containsMatchIn(stripped)
-            ) {
-                issues += "Line ${idx + 1}: Inside `if`/`elif`, use `==` for comparison instead of single `=` assignment."
-            }
-        }
-
-        if (openParens != 0) {
-            issues += "Unbalanced parentheses `(` `)` across your script — check that every `(` has a matching `)`."
-        }
-        if (openBrackets != 0) {
-            issues += "Unbalanced square brackets `[` `]` — check your Array indexing or literals."
-        }
-        if (openBraces != 0) {
-            issues += "Unbalanced curly braces `{` `}` — check your Dictionary or enum literals."
-        }
-        return issues
+        return runGDScriptSyntaxDiagnostics(allLines)
     }
 
     private fun extractKeyTokensFromSolution(solution: String): List<String> {
