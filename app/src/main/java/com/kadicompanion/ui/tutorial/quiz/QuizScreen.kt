@@ -125,8 +125,8 @@ fun QuizScreen(
                             fadeIn(tween(duration)) togetherWith fadeOut(tween(duration))
                         },
                         label = "quizTransition"
-                    ) { _ ->
-                        val q = state.current!!
+                    ) { targetIndex ->
+                        val q = state.questions[targetIndex]
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -135,7 +135,7 @@ fun QuizScreen(
                             verticalArrangement = Arrangement.spacedBy(vGap)
                         ) {
                             LinearProgressIndicator(
-                                progress = { (state.currentIndex + 1).toFloat() / state.questions.size },
+                                progress = { (targetIndex + 1).toFloat() / state.questions.size },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(6.dp)
