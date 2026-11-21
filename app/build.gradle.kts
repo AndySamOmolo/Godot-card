@@ -14,8 +14,8 @@ android {
         applicationId = "com.kadicompanion"
         minSdk = 24
         targetSdk = 34
-        versionCode = 7
-        versionName = "4.1.0"
+        versionCode = 8
+        versionName = "4.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -30,8 +30,8 @@ android {
             isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
