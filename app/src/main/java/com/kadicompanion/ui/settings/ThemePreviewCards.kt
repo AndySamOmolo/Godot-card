@@ -64,8 +64,7 @@ fun StudioThemeBundleGallery(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .height(IntrinsicSize.Max),
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 10.dp)
     ) {
         StudioThemeBundle.entries.forEach { bundle ->
