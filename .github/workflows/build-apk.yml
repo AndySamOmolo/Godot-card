@@ -75,7 +75,13 @@ jobs:
           PY
 
       - name: Run Unit Tests, Lint & Assemble Debug/Release APKs
-        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
+        run: |
+          GRADLE_TASKS=":app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease"
+          if ! ./gradlew $GRADLE_TASKS --no-daemon --stacktrace; then
+            echo "::warning::Initial Gradle run failed; retrying once with --refresh-dependencies in case of transient Maven/Plugin Portal hiccup..."
+            sleep 5
+            ./gradlew $GRADLE_TASKS --no-daemon --refresh-dependencies --stacktrace
+          fi
 
       - name: Sign & Verify Release APK
         env:
