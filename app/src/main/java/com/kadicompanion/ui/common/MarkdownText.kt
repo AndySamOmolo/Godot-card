@@ -45,13 +45,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
 import com.kadicompanion.data.local.datastore.InlineCodeStyle
 import com.kadicompanion.data.local.datastore.TableDisplayMode
 import com.kadicompanion.domain.model.CodeSnippet
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalUiPreferences
-import com.kadicompanion.ui.theme.isDarkScheme
+import com.kadicompanion.ui.theme.kadiColors
 
 private const val TERM_TAG = "term"
 
@@ -62,7 +62,7 @@ private const val TERM_TAG = "term"
 private val WIKI_ALIAS_CLEAN_REGEX = Regex("\\[\\[([^\\]|]+)\\|([^\\]]+)\\]\\]")
 private val WIKI_SIMPLE_CLEAN_REGEX = Regex("\\[\\[([^\\]]+)\\]\\]")
 private val MD_LINK_CLEAN_REGEX = Regex("\\[([^\\]]+)\\]\\([^)]+\\)")
-private val NUMBERED_ITEM_REGEX = NUMBERED_ITEM_REGEX
+private val NUMBERED_ITEM_REGEX = Regex("^\\s*\\d+[.)]\\s+")
 
 fun cleanPlainText(raw: String): String {
     if (raw.isEmpty()) return raw
@@ -93,8 +93,8 @@ fun RichInlineText(
 ) {
     val uiPrefs = LocalUiPreferences.current
     val linkColor = MaterialTheme.colorScheme.primary
-    val codeBg = if (isDarkScheme()) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f)
-    val codeFg = MaterialTheme.colorScheme.primary
+    val codeBg = MaterialTheme.kadiColors.inlineCodeBg
+    val codeFg = MaterialTheme.kadiColors.inlineCodeFg
 
     val annotated = remember(text, linkColor, color, codeBg, codeFg, uiPrefs.inlineCodeStyle, uiPrefs.codeFontScale) {
         renderInline(
@@ -145,8 +145,8 @@ fun MarkdownText(
     val uiPrefs = LocalUiPreferences.current
     val linkColor = MaterialTheme.colorScheme.primary
     val textColor = MaterialTheme.colorScheme.onBackground
-    val codeBg = if (isDarkScheme()) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f)
-    val codeFg = MaterialTheme.colorScheme.primary
+    val codeBg = MaterialTheme.kadiColors.inlineCodeBg
+    val codeFg = MaterialTheme.kadiColors.inlineCodeFg
 
     Column(modifier = modifier.fillMaxWidth()) {
         val blocks = remember(markdown) { MarkdownParser.parse(markdown) }
@@ -329,13 +329,16 @@ private fun MarkdownTableView(
                         .background(scheme.surfaceContainerHighest.copy(alpha = 0.55f))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = if (useStackedCards) "MOBILE CARD VIEW (${rows.size} ROWS)" else "TABLE VIEW · SWIPE HORIZONTALLY",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         color = scheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                     Surface(
                         shape = MaterialTheme.shapes.extraSmall,
@@ -358,7 +361,9 @@ private fun MarkdownTableView(
                                 text = if (useStackedCards) "Grid View" else "Mobile Cards",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = scheme.primary,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -635,7 +640,7 @@ private object MarkdownParser {
                 NUMBERED_ITEM_REGEX.containsMatchIn(line) -> {
                     val items = mutableListOf<String>()
                     while (i < lines.size && NUMBERED_ITEM_REGEX.containsMatchIn(lines[i])) {
-                        items += lines[i].trimStart().substringAfter(". ").trim()
+                        items += NUMBERED_ITEM_REGEX.replace(lines[i].trimStart(), "").trim()
                         i++
                     }
                     blocks += MarkdownBlock.NumberedList(items)
@@ -740,19 +745,20 @@ private fun AnnotatedString.Builder.appendInlineRecursive(
         when {
             m.groups[1] != null -> {
                 val rawCode = m.groupValues[1].trim()
+                val subtleBg = codeBg.copy(alpha = (codeBg.alpha * 0.65f).coerceAtMost(0.55f))
                 val codeSpan = when (inlineCodeStyle) {
                     InlineCodeStyle.PILL_HIGHLIGHT -> SpanStyle(
                         fontFamily = CodeFontFamily,
-                        background = codeBg,
+                        background = subtleBg,
                         color = codeFg,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = (13.5f * codeFontScale).sp
+                        fontWeight = FontWeight.Medium,
+                        fontSize = (0.88f * codeFontScale).em
                     )
                     InlineCodeStyle.COLORED_TEXT -> SpanStyle(
                         fontFamily = CodeFontFamily,
                         color = codeFg,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = (13.5f * codeFontScale).sp
+                        fontWeight = FontWeight.Medium,
+                        fontSize = (0.88f * codeFontScale).em
                     )
                     InlineCodeStyle.PLAIN_BOLD -> SpanStyle(
                         color = textColor,
@@ -761,7 +767,7 @@ private fun AnnotatedString.Builder.appendInlineRecursive(
                 }
                 withStyle(codeSpan) {
                     if (inlineCodeStyle == InlineCodeStyle.PILL_HIGHLIGHT) {
-                        append(" $rawCode ")
+                        append(" $rawCode ")
                     } else {
                         append(rawCode)
                     }

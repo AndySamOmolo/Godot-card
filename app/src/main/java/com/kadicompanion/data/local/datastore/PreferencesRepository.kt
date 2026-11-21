@@ -2,18 +2,18 @@ package com.kadicompanion.data.local.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.catch
 import com.kadicompanion.domain.model.LearnerTrack
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,6 +24,12 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
 )
 
 enum class ThemePref { DARK, AMOLED, LIGHT, SYSTEM }
+
+enum class ContrastLevel(val label: String, val subtitle: String) {
+    STANDARD("Standard", "Balanced studio contrast (WCAG AA)"),
+    MEDIUM("Medium", "Crisper borders & deeper accents"),
+    HIGH("High Contrast", "Maximum legibility & borders (WCAG AAA)")
+}
 
 enum class AccentPreset(val label: String, val description: String) {
     GODOT_SAPPHIRE("Godot Sapphire", "Sky blue #38BDF8 & emerald mint"),
@@ -62,7 +68,8 @@ enum class CodeThemePreset(val label: String, val description: String) {
     DRACULA_NEON("Dracula Neon", "Deep purple-slate with electric cyan, pink & lime"),
     MONOKAI_PRO("Monokai Pro", "Warm charcoal with vibrant magenta, yellow & orange"),
     NORD_FROST("Nord Arctic", "Cool glacier blue, frost cyan & snow white"),
-    HIGH_CONTRAST("High Contrast", "Pure black/white canvas with maximum token contrast")
+    HIGH_CONTRAST("High Contrast", "Pure black/white canvas with maximum token contrast"),
+    AUTO_MATCH("Auto-Match Theme", "Pairs syntax colors with your active theme & accent")
 }
 
 enum class LineSpacingPreset(val label: String, val multiplier: Float) {
@@ -137,9 +144,109 @@ enum class TableDisplayMode(val label: String, val description: String) {
     HORIZONTAL_SCROLL("Classic Table", "Traditional horizontally scrollable grid")
 }
 
+enum class SearchBarSizePreset(val label: String, val heightDp: Int) {
+    COMPACT("Compact", 40),
+    STANDARD("Standard", 44),
+    COMFORTABLE("Comfortable", 50)
+}
+
+enum class AnimationSpeedPreset(val label: String, val durationMs: Int) {
+    SNAPPY("Snappy", 150),
+    SMOOTH("Smooth", 260),
+    RELAXED("Relaxed", 400),
+    OFF("Instant", 0)
+}
+
+enum class ChipStylePreset(val label: String) {
+    PILL("Pill"),
+    ROUNDED("Rounded"),
+    OUTLINED("Outlined"),
+    TONAL("Soft Tonal")
+}
+
+enum class KadiFeltPreset(val label: String, val subtitle: String) {
+    CLASSIC_EMERALD("Classic Emerald", "Rich casino green felt"),
+    MIDNIGHT_NAVY("Midnight Navy", "Deep slate-indigo tabletop"),
+    ROYAL_VELVET("Royal Velvet", "Plum & amethyst tournament felt"),
+    OBSIDIAN_GOLD("Obsidian Gold", "Stealth charcoal with warm trim"),
+    MATCH_THEME("Match App Theme", "Syncs felt with your active accent")
+}
+
+enum class StudioThemeBundle(val label: String, val subtitle: String) {
+    GODOT_PRO("Godot Pro", "Dark · Sapphire · Elevated · Emerald Felt"),
+    AMOLED_STEALTH("AMOLED Stealth", "AMOLED · Cyber Violet · Outlined · Obsidian Gold"),
+    DAYLIGHT_PAPER("Daylight Paper", "Light · Emerald · Flat · GitHub Studio"),
+    NAIROBI_ROYAL("Nairobi Royal", "Dark · Nairobi Gold · Glass · Royal Velvet"),
+    HIGH_CONTRAST_FOCUS("High Contrast Focus", "AMOLED · Monochrome · AAA · Match Theme");
+
+    val theme: ThemePref
+        get() = when (this) {
+            GODOT_PRO -> ThemePref.DARK
+            AMOLED_STEALTH -> ThemePref.AMOLED
+            DAYLIGHT_PAPER -> ThemePref.LIGHT
+            NAIROBI_ROYAL -> ThemePref.DARK
+            HIGH_CONTRAST_FOCUS -> ThemePref.AMOLED
+        }
+
+    val accentPreset: AccentPreset
+        get() = when (this) {
+            GODOT_PRO -> AccentPreset.GODOT_SAPPHIRE
+            AMOLED_STEALTH -> AccentPreset.CYBER_VIOLET
+            DAYLIGHT_PAPER -> AccentPreset.EMERALD_FELT
+            NAIROBI_ROYAL -> AccentPreset.NAIROBI_GOLD
+            HIGH_CONTRAST_FOCUS -> AccentPreset.MONOCHROME_SLATE
+        }
+
+    val contrastLevel: ContrastLevel
+        get() = when (this) {
+            GODOT_PRO -> ContrastLevel.STANDARD
+            AMOLED_STEALTH -> ContrastLevel.MEDIUM
+            DAYLIGHT_PAPER -> ContrastLevel.STANDARD
+            NAIROBI_ROYAL -> ContrastLevel.STANDARD
+            HIGH_CONTRAST_FOCUS -> ContrastLevel.HIGH
+        }
+
+    val cardStyle: CardStyle
+        get() = when (this) {
+            GODOT_PRO -> CardStyle.ELEVATED_SHADOW
+            AMOLED_STEALTH -> CardStyle.OUTLINED_MINIMAL
+            DAYLIGHT_PAPER -> CardStyle.FLAT_BORDER
+            NAIROBI_ROYAL -> CardStyle.SUBTLE_GLASS
+            HIGH_CONTRAST_FOCUS -> CardStyle.OUTLINED_MINIMAL
+        }
+
+    val codeThemePreset: CodeThemePreset
+        get() = when (this) {
+            GODOT_PRO -> CodeThemePreset.GODOT_EDITOR
+            AMOLED_STEALTH -> CodeThemePreset.DRACULA_NEON
+            DAYLIGHT_PAPER -> CodeThemePreset.GITHUB_STUDIO
+            NAIROBI_ROYAL -> CodeThemePreset.MONOKAI_PRO
+            HIGH_CONTRAST_FOCUS -> CodeThemePreset.HIGH_CONTRAST
+        }
+
+    val kadiFeltPreset: KadiFeltPreset
+        get() = when (this) {
+            GODOT_PRO -> KadiFeltPreset.CLASSIC_EMERALD
+            AMOLED_STEALTH -> KadiFeltPreset.OBSIDIAN_GOLD
+            DAYLIGHT_PAPER -> KadiFeltPreset.CLASSIC_EMERALD
+            NAIROBI_ROYAL -> KadiFeltPreset.ROYAL_VELVET
+            HIGH_CONTRAST_FOCUS -> KadiFeltPreset.MATCH_THEME
+        }
+
+    fun matches(prefs: UiPreferences): Boolean =
+        prefs.theme == theme &&
+            prefs.accentPreset == accentPreset &&
+            prefs.contrastLevel == contrastLevel &&
+            prefs.cardStyle == cardStyle &&
+            prefs.codeThemePreset == codeThemePreset &&
+            prefs.kadiFeltPreset == kadiFeltPreset &&
+            !prefs.dynamicColor
+}
+
 data class UiPreferences(
     val theme: ThemePref = ThemePref.DARK,
     val accentPreset: AccentPreset = AccentPreset.GODOT_SAPPHIRE,
+    val contrastLevel: ContrastLevel = ContrastLevel.STANDARD,
     val dynamicColor: Boolean = false,
     val reduceMotion: Boolean = false,
     val dyslexiaFont: Boolean = false,
@@ -182,7 +289,14 @@ data class UiPreferences(
     val showDailyTip: Boolean = true,
     val showReviewQueue: Boolean = true,
     val customGreeting: String = "",
-    val customSubtitle: String = ""
+    val customSubtitle: String = "",
+    // Granular UI Studio Controls
+    val searchBarSize: SearchBarSizePreset = SearchBarSizePreset.COMPACT,
+    val animationSpeed: AnimationSpeedPreset = AnimationSpeedPreset.SMOOTH,
+    val chipStyle: ChipStylePreset = ChipStylePreset.PILL,
+    val kadiFeltPreset: KadiFeltPreset = KadiFeltPreset.CLASSIC_EMERALD,
+    val showBottomBarLabels: Boolean = true,
+    val showProgressBadges: Boolean = true
 )
 
 @Singleton
@@ -201,6 +315,7 @@ class PreferencesRepository @Inject constructor(
         UiPreferences(
             theme = prefs[KEY_THEME]?.let { runCatching { ThemePref.valueOf(it) }.getOrNull() } ?: ThemePref.DARK,
             accentPreset = prefs[KEY_ACCENT]?.let { runCatching { AccentPreset.valueOf(it) }.getOrNull() } ?: AccentPreset.GODOT_SAPPHIRE,
+            contrastLevel = prefs[KEY_CONTRAST_LEVEL]?.let { runCatching { ContrastLevel.valueOf(it) }.getOrNull() } ?: ContrastLevel.STANDARD,
             dynamicColor = prefs[KEY_DYNAMIC_COLOR] ?: false,
             reduceMotion = prefs[KEY_REDUCE_MOTION] ?: false,
             dyslexiaFont = prefs[KEY_DYSLEXIA_FONT] ?: false,
@@ -242,13 +357,20 @@ class PreferencesRepository @Inject constructor(
             showDailyTip = prefs[KEY_SHOW_DAILY_TIP] ?: true,
             showReviewQueue = prefs[KEY_SHOW_REVIEW_QUEUE] ?: true,
             customGreeting = prefs[KEY_CUSTOM_GREETING] ?: "",
-            customSubtitle = prefs[KEY_CUSTOM_SUBTITLE] ?: ""
+            customSubtitle = prefs[KEY_CUSTOM_SUBTITLE] ?: "",
+            searchBarSize = prefs[KEY_SEARCH_BAR_SIZE]?.let { runCatching { SearchBarSizePreset.valueOf(it) }.getOrNull() } ?: SearchBarSizePreset.COMPACT,
+            animationSpeed = prefs[KEY_ANIMATION_SPEED]?.let { runCatching { AnimationSpeedPreset.valueOf(it) }.getOrNull() } ?: AnimationSpeedPreset.SMOOTH,
+            chipStyle = prefs[KEY_CHIP_STYLE]?.let { runCatching { ChipStylePreset.valueOf(it) }.getOrNull() } ?: ChipStylePreset.PILL,
+            kadiFeltPreset = prefs[KEY_KADI_FELT_PRESET]?.let { runCatching { KadiFeltPreset.valueOf(it) }.getOrNull() } ?: KadiFeltPreset.CLASSIC_EMERALD,
+            showBottomBarLabels = prefs[KEY_SHOW_BOTTOM_BAR_LABELS] ?: true,
+            showProgressBadges = prefs[KEY_SHOW_PROGRESS_BADGES] ?: true
         )
     }
 
     fun observeTheme(): Flow<ThemePref> = observeUiPreferences().map { it.theme }
     suspend fun setTheme(theme: ThemePref) { context.dataStore.edit { it[KEY_THEME] = theme.name } }
     suspend fun setAccentPreset(preset: AccentPreset) { context.dataStore.edit { it[KEY_ACCENT] = preset.name } }
+    suspend fun setContrastLevel(level: ContrastLevel) { context.dataStore.edit { it[KEY_CONTRAST_LEVEL] = level.name } }
     fun observeDynamicColor(): Flow<Boolean> = observeUiPreferences().map { it.dynamicColor }
     suspend fun setDynamicColor(enabled: Boolean) { context.dataStore.edit { it[KEY_DYNAMIC_COLOR] = enabled } }
     fun observeReduceMotion(): Flow<Boolean> = observeUiPreferences().map { it.reduceMotion }
@@ -299,6 +421,26 @@ class PreferencesRepository @Inject constructor(
     suspend fun setCustomGreeting(greeting: String) { context.dataStore.edit { it[KEY_CUSTOM_GREETING] = greeting.take(120) } }
     suspend fun setCustomSubtitle(subtitle: String) { context.dataStore.edit { it[KEY_CUSTOM_SUBTITLE] = subtitle.take(160) } }
 
+    // Granular UI Studio Setters
+    suspend fun setSearchBarSize(preset: SearchBarSizePreset) { context.dataStore.edit { it[KEY_SEARCH_BAR_SIZE] = preset.name } }
+    suspend fun setAnimationSpeed(preset: AnimationSpeedPreset) { context.dataStore.edit { it[KEY_ANIMATION_SPEED] = preset.name } }
+    suspend fun setChipStyle(preset: ChipStylePreset) { context.dataStore.edit { it[KEY_CHIP_STYLE] = preset.name } }
+    suspend fun setKadiFeltPreset(preset: KadiFeltPreset) { context.dataStore.edit { it[KEY_KADI_FELT_PRESET] = preset.name } }
+    suspend fun setShowBottomBarLabels(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_BOTTOM_BAR_LABELS] = show } }
+    suspend fun setShowProgressBadges(show: Boolean) { context.dataStore.edit { it[KEY_SHOW_PROGRESS_BADGES] = show } }
+
+    suspend fun applyStudioBundle(bundle: StudioThemeBundle) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_THEME] = bundle.theme.name
+            prefs[KEY_ACCENT] = bundle.accentPreset.name
+            prefs[KEY_CONTRAST_LEVEL] = bundle.contrastLevel.name
+            prefs[KEY_CARD_STYLE] = bundle.cardStyle.name
+            prefs[KEY_CODE_THEME] = bundle.codeThemePreset.name
+            prefs[KEY_KADI_FELT_PRESET] = bundle.kadiFeltPreset.name
+            prefs[KEY_DYNAMIC_COLOR] = false
+        }
+    }
+
     suspend fun resetUiPreferencesToDefault() {
         context.dataStore.edit { prefs ->
             val version = prefs[KEY_CONTENT_VERSION]
@@ -306,8 +448,16 @@ class PreferencesRepository @Inject constructor(
             prefs.clear()
             if (version != null) prefs[KEY_CONTENT_VERSION] = version
             if (track != null) prefs[KEY_TRACK] = track
+            prefs[KEY_SEARCH_BAR_SIZE] = SearchBarSizePreset.COMPACT.name
+            prefs[KEY_ANIMATION_SPEED] = AnimationSpeedPreset.SMOOTH.name
+            prefs[KEY_CHIP_STYLE] = ChipStylePreset.PILL.name
+            prefs[KEY_KADI_FELT_PRESET] = KadiFeltPreset.CLASSIC_EMERALD.name
+            prefs[KEY_SHOW_BOTTOM_BAR_LABELS] = true
+            prefs[KEY_SHOW_PROGRESS_BADGES] = true
         }
     }
+
+    suspend fun resetUiPreferences() = resetUiPreferencesToDefault()
 
     fun observeContentVersion(): Flow<String?> = safeData.map { it[KEY_CONTENT_VERSION] }
     suspend fun setContentVersion(version: String) { context.dataStore.edit { it[KEY_CONTENT_VERSION] = version } }
@@ -337,6 +487,7 @@ class PreferencesRepository @Inject constructor(
     companion object {
         private val KEY_THEME = stringPreferencesKey("theme")
         private val KEY_ACCENT = stringPreferencesKey("accent_preset")
+        private val KEY_CONTRAST_LEVEL = stringPreferencesKey("contrast_level")
         private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         private val KEY_REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
         private val KEY_DYSLEXIA_FONT = booleanPreferencesKey("dyslexia_font")
@@ -379,6 +530,12 @@ class PreferencesRepository @Inject constructor(
         private val KEY_SHOW_REVIEW_QUEUE = booleanPreferencesKey("show_review_queue")
         private val KEY_CUSTOM_GREETING = stringPreferencesKey("custom_greeting")
         private val KEY_CUSTOM_SUBTITLE = stringPreferencesKey("custom_subtitle")
+        private val KEY_SEARCH_BAR_SIZE = stringPreferencesKey("search_bar_size")
+        private val KEY_ANIMATION_SPEED = stringPreferencesKey("animation_speed")
+        private val KEY_CHIP_STYLE = stringPreferencesKey("chip_style")
+        private val KEY_KADI_FELT_PRESET = stringPreferencesKey("kadi_felt_preset")
+        private val KEY_SHOW_BOTTOM_BAR_LABELS = booleanPreferencesKey("show_bottom_bar_labels")
+        private val KEY_SHOW_PROGRESS_BADGES = booleanPreferencesKey("show_progress_badges")
         private val KEY_CONTENT_VERSION = stringPreferencesKey("content_version")
         private val KEY_TRACK = stringPreferencesKey("track")
     }

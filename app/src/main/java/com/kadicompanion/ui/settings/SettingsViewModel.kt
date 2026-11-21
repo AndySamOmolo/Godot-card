@@ -4,18 +4,24 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kadicompanion.data.content.ContentLoader
 import com.kadicompanion.data.local.datastore.AccentPreset
+import com.kadicompanion.data.local.datastore.AnimationSpeedPreset
 import com.kadicompanion.data.local.datastore.BottomBarStyle
 import com.kadicompanion.data.local.datastore.CardStyle
+import com.kadicompanion.data.local.datastore.ChipStylePreset
 import com.kadicompanion.data.local.datastore.CodeThemePreset
+import com.kadicompanion.data.local.datastore.ContrastLevel
 import com.kadicompanion.data.local.datastore.FontFamilyPreset
 import com.kadicompanion.data.local.datastore.HeadingWeightPreset
 import com.kadicompanion.data.local.datastore.HeroStyle
 import com.kadicompanion.data.local.datastore.HomeHeroLayout
 import com.kadicompanion.data.local.datastore.HomeHeroPalette
 import com.kadicompanion.data.local.datastore.InlineCodeStyle
+import com.kadicompanion.data.local.datastore.KadiFeltPreset
 import com.kadicompanion.data.local.datastore.LessonLayoutMode
 import com.kadicompanion.data.local.datastore.LineSpacingPreset
 import com.kadicompanion.data.local.datastore.PreferencesRepository
+import com.kadicompanion.data.local.datastore.SearchBarSizePreset
+import com.kadicompanion.data.local.datastore.StudioThemeBundle
 import com.kadicompanion.data.local.datastore.TableDisplayMode
 import com.kadicompanion.data.local.datastore.ThemePref
 import com.kadicompanion.data.local.datastore.TopBarStyle
@@ -78,6 +84,7 @@ class SettingsViewModel @Inject constructor(
 
     fun setTheme(theme: ThemePref) = viewModelScope.launch { prefs.setTheme(theme) }
     fun setAccentPreset(preset: AccentPreset) = viewModelScope.launch { prefs.setAccentPreset(preset) }
+    fun setContrastLevel(level: ContrastLevel) = viewModelScope.launch { prefs.setContrastLevel(level) }
     fun setDynamicColor(v: Boolean) = viewModelScope.launch { prefs.setDynamicColor(v) }
     fun setReduceMotion(v: Boolean) = viewModelScope.launch { prefs.setReduceMotion(v) }
     fun setDyslexiaFont(v: Boolean) = viewModelScope.launch { prefs.setDyslexiaFont(v) }
@@ -120,6 +127,13 @@ class SettingsViewModel @Inject constructor(
     fun setShowReviewQueue(show: Boolean) = viewModelScope.launch { prefs.setShowReviewQueue(show) }
     fun setCustomGreeting(greeting: String) = viewModelScope.launch { prefs.setCustomGreeting(greeting) }
     fun setCustomSubtitle(subtitle: String) = viewModelScope.launch { prefs.setCustomSubtitle(subtitle) }
+    fun setSearchBarSize(preset: SearchBarSizePreset) = viewModelScope.launch { prefs.setSearchBarSize(preset) }
+    fun setAnimationSpeed(preset: AnimationSpeedPreset) = viewModelScope.launch { prefs.setAnimationSpeed(preset) }
+    fun setChipStyle(preset: ChipStylePreset) = viewModelScope.launch { prefs.setChipStyle(preset) }
+    fun setKadiFeltPreset(preset: KadiFeltPreset) = viewModelScope.launch { prefs.setKadiFeltPreset(preset) }
+    fun setShowBottomBarLabels(show: Boolean) = viewModelScope.launch { prefs.setShowBottomBarLabels(show) }
+    fun setShowProgressBadges(show: Boolean) = viewModelScope.launch { prefs.setShowProgressBadges(show) }
+    fun applyStudioBundle(bundle: StudioThemeBundle) = viewModelScope.launch { prefs.applyStudioBundle(bundle) }
     fun resetAllUiToDefault() = viewModelScope.launch { prefs.resetUiPreferencesToDefault() }
     fun resetAllLearningProgress() = viewModelScope.launch {
         progressRepository.clearAllProgress()

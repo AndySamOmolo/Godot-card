@@ -65,6 +65,7 @@ import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
 import com.kadicompanion.ui.theme.successColor
+import com.kadicompanion.ui.theme.kadiColors
 
 @Composable
 fun PhaseDetailScreen(
@@ -187,27 +188,33 @@ private fun ModuleHeaderCard(
     HeroPanel {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(6.dp),
-                color = Color(0xFF38BDF8).copy(alpha = 0.22f),
-                border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.45f))
-            ) {
-                Text(
-                    text = "MODULE ${order.toString().padStart(2, '0')}",
-                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF7DD3FC),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                )
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.kadiColors.info.copy(alpha = 0.22f),
+                    border = BorderStroke(1.dp, MaterialTheme.kadiColors.info.copy(alpha = 0.45f))
+                ) {
+                    Text(
+                        text = "MODULE ${order.toString().padStart(2, '0')}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.kadiColors.onHeroPrimary,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
             }
             Text(
-                text = "$completed of $total lessons (${(fraction * 100).toInt()}%)",
+                text = "$completed/$total · ${(fraction * 100).toInt()}%",
                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                 fontWeight = FontWeight.Bold,
-                color = heroSub
+                color = heroSub,
+                maxLines = 1,
+                softWrap = false
             )
         }
         Text(
@@ -224,8 +231,8 @@ private fun ModuleHeaderCard(
         tangibleGoal?.let { goal ->
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color(0xFF34D399).copy(alpha = 0.16f),
-                border = BorderStroke(1.dp, Color(0xFF34D399).copy(alpha = 0.45f))
+                color = MaterialTheme.kadiColors.success.copy(alpha = 0.18f),
+                border = BorderStroke(1.dp, MaterialTheme.kadiColors.success.copy(alpha = 0.45f))
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
@@ -235,7 +242,7 @@ private fun ModuleHeaderCard(
                     Icon(
                         imageVector = Icons.Outlined.AutoAwesome,
                         contentDescription = null,
-                        tint = Color(0xFF6EE7B7),
+                        tint = MaterialTheme.kadiColors.success,
                         modifier = Modifier.size(16.dp).padding(top = 1.dp)
                     )
                     RichInlineText(
@@ -254,7 +261,7 @@ private fun ModuleHeaderCard(
                 .padding(top = 4.dp)
                 .height(6.dp)
                 .clip(RoundedCornerShape(50)),
-            color = Color(0xFF38BDF8),
+            color = MaterialTheme.colorScheme.primary,
             trackColor = heroWhite.copy(alpha = 0.18f),
             strokeCap = StrokeCap.Round
         )
@@ -263,8 +270,8 @@ private fun ModuleHeaderCard(
                 onClick = onStartOrContinue,
                 shape = MaterialTheme.shapes.small,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF0F172A)
+                    containerColor = MaterialTheme.kadiColors.heroCtaContainer,
+                    contentColor = MaterialTheme.kadiColors.onHeroCta
                 ),
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(44.dp)
             ) {
@@ -332,7 +339,7 @@ private fun SyllabusLessonRow(
                     Icon(
                         imageVector = Icons.Filled.Check,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = MaterialTheme.kadiColors.onSuccess,
                         modifier = Modifier.size(18.dp)
                     )
                 } else {

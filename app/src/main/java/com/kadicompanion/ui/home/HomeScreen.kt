@@ -8,9 +8,11 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -96,6 +98,9 @@ import com.kadicompanion.ui.theme.LocalOpenQuickCustomizer
 import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.brandGradient
 import com.kadicompanion.ui.theme.successColor
+import com.kadicompanion.ui.theme.kadiColors
+import com.kadicompanion.ui.theme.heroPaletteGradient
+import com.kadicompanion.ui.theme.heroPaletteSwatchColor
 
 private val DAILY_PRO_TIPS = listOf(
     "Using **downloaded card PNGs**? Put them in `res://assets/cards/` and use `TextureRect` (`Expand Mode = Ignore Size`, `Stretch Mode = Keep Aspect Centered`) so any downloaded deck scales cleanly!",
@@ -166,11 +171,14 @@ fun HomeScreen(
                         .clickable { showHeroCustomizer = true }
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Row(
+                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -183,7 +191,9 @@ fun HomeScreen(
                             Text(
                                 text = "Top Mission Card is hidden",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         Pill(
@@ -197,25 +207,27 @@ fun HomeScreen(
 
             if (uiPrefs.showHomeStats && uiPrefs.homeHeroLayout != HomeHeroLayout.STATS_COMBINED) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Max),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StatTile(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         value = "${state.overallCompleted}/${state.overallTotal}",
                         label = "Lessons",
                         accent = successColor(),
                         icon = Icons.Outlined.CheckCircle
                     )
                     StatTile(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         value = "${(state.overallFraction * 100).toInt()}%",
                         label = "Mastery",
                         accent = MaterialTheme.colorScheme.primary,
                         icon = Icons.AutoMirrored.Outlined.TrendingUp
                     )
                     StatTile(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         value = "${state.reviewQueue.size}",
                         label = "Reviews",
                         accent = MaterialTheme.colorScheme.tertiary,
@@ -226,11 +238,13 @@ fun HomeScreen(
 
             if (uiPrefs.showHomeQuickLaunch) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Max),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     BentoActionTile(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         eyebrow = "LIVE TABLE & ASSETS",
                         title = "Play Kadi & Solo Studio",
                         subtitle = "Live table, New Game Architect & 6 Kadi upgrades",
@@ -239,7 +253,7 @@ fun HomeScreen(
                         onClick = onOpenBlueprint
                     )
                     BentoActionTile(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         eyebrow = "CURRICULUM",
                         title = "14-Phase Roadmap",
                         subtitle = "${state.overallCompleted} of ${state.overallTotal} lessons done",
@@ -265,6 +279,7 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(IntrinsicSize.Max)
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -499,48 +514,27 @@ private fun ActiveMissionHero(
     val displayPrimaryBtn = uiPrefs.customHeroPrimaryBtn.trim().ifEmpty { defaultPrimaryBtn }
     val displaySecondaryBtn = uiPrefs.customHeroSecondaryBtn.trim().ifEmpty { defaultSecondaryBtn }
 
-    val heroAccent = when (palette) {
-        HomeHeroPalette.FOLLOW_ACCENT -> MaterialTheme.colorScheme.primary
-        HomeHeroPalette.GODOT_SAPPHIRE -> Color(0xFF38BDF8)
-        HomeHeroPalette.EMERALD_TABLE -> Color(0xFF34D399)
-        HomeHeroPalette.NAIROBI_GOLD -> Color(0xFFFBBF24)
-        HomeHeroPalette.CYBER_PURPLE -> Color(0xFFC084FC)
-        HomeHeroPalette.CRIMSON_ROYAL -> Color(0xFFFB7185)
-        HomeHeroPalette.OBSIDIAN_DARK -> Color(0xFF94A3B8)
-        HomeHeroPalette.SURFACE_CARD -> MaterialTheme.colorScheme.primary
+    val ext = MaterialTheme.kadiColors
+    val heroAccent = if (palette == HomeHeroPalette.FOLLOW_ACCENT || palette == HomeHeroPalette.SURFACE_CARD) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        heroPaletteSwatchColor(palette, uiPrefs.accentPreset)
     }
 
-    val heroBrush = when (palette) {
-        HomeHeroPalette.FOLLOW_ACCENT -> brandGradient()
-        HomeHeroPalette.GODOT_SAPPHIRE -> Brush.linearGradient(
-            listOf(Color(0xFF0A1628), Color(0xFF0F2D59), Color(0xFF0369A1))
-        )
-        HomeHeroPalette.EMERALD_TABLE -> Brush.linearGradient(
-            listOf(Color(0xFF052018), Color(0xFF064E3B), Color(0xFF047857))
-        )
-        HomeHeroPalette.NAIROBI_GOLD -> Brush.linearGradient(
-            listOf(Color(0xFF231404), Color(0xFF78350F), Color(0xFFB45309))
-        )
-        HomeHeroPalette.CYBER_PURPLE -> Brush.linearGradient(
-            listOf(Color(0xFF180C2E), Color(0xFF4C1D95), Color(0xFF6D28D9))
-        )
-        HomeHeroPalette.CRIMSON_ROYAL -> Brush.linearGradient(
-            listOf(Color(0xFF280811), Color(0xFF881337), Color(0xFFBE123C))
-        )
-        HomeHeroPalette.OBSIDIAN_DARK -> Brush.linearGradient(
-            listOf(Color(0xFF090D16), Color(0xFF111827), Color(0xFF1E293B))
-        )
-        HomeHeroPalette.SURFACE_CARD -> Brush.linearGradient(
+    val heroBrush = if (isSurfaceMode) {
+        Brush.linearGradient(
             listOf(
                 MaterialTheme.colorScheme.surfaceContainerHigh,
                 MaterialTheme.colorScheme.surfaceContainer
             )
         )
+    } else {
+        Brush.linearGradient(heroPaletteGradient(palette, ext))
     }
 
-    val titleColor = if (isSurfaceMode) MaterialTheme.colorScheme.onSurface else Color(0xFFF8FAFC)
-    val subColor = if (isSurfaceMode) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFFE2E8F0)
-    val mutedColor = if (isSurfaceMode) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFFCBD5E1)
+    val titleColor = if (isSurfaceMode) MaterialTheme.colorScheme.onSurface else ext.onHeroPrimary
+    val subColor = if (isSurfaceMode) MaterialTheme.colorScheme.onSurfaceVariant else ext.onHeroSecondary
+    val mutedColor = if (isSurfaceMode) MaterialTheme.colorScheme.onSurfaceVariant else ext.onHeroMuted
     val borderColor = if (isSurfaceMode) {
         MaterialTheme.colorScheme.outlineVariant
     } else {
@@ -579,24 +573,29 @@ private fun ActiveMissionHero(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (uiPrefs.showHeroBadge) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = heroAccent.copy(alpha = 0.20f),
-                            border = BorderStroke(1.dp, heroAccent.copy(alpha = 0.45f))
-                        ) {
-                            Text(
-                                text = displayBadge.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSurfaceMode) heroAccent else Color(0xFFF8FAFC),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (uiPrefs.showHeroBadge) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = heroAccent.copy(alpha = 0.20f),
+                                border = BorderStroke(1.dp, heroAccent.copy(alpha = 0.45f))
+                            ) {
+                                Text(
+                                    text = displayBadge.uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSurfaceMode) heroAccent else ext.onHeroPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
                         }
-                    } else {
-                        Spacer(Modifier.width(1.dp))
                     }
 
                     // Inline Customize Top Card button right on the Hero Card
@@ -621,7 +620,9 @@ private fun ActiveMissionHero(
                                 text = "Edit Card",
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                 fontWeight = FontWeight.SemiBold,
-                                color = titleColor
+                                color = titleColor,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -661,19 +662,24 @@ private fun ActiveMissionHero(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "$overallCompleted / $overallTotal lessons complete",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                        color = subColor
+                        color = subColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = "${(overallFraction * 100).toInt()}%",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         fontWeight = FontWeight.Bold,
-                        color = heroAccent
+                        color = heroAccent,
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
                 LinearProgressIndicator(
@@ -691,25 +697,27 @@ private fun ActiveMissionHero(
 
         if (layout == HomeHeroLayout.STATS_COMBINED) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 HeroMiniStatPill(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     label = "Lessons",
                     value = "$overallCompleted/$overallTotal",
                     textColor = titleColor,
                     subColor = mutedColor
                 )
                 HeroMiniStatPill(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     label = "Mastery",
                     value = "${(overallFraction * 100).toInt()}%",
                     textColor = titleColor,
                     subColor = mutedColor
                 )
                 HeroMiniStatPill(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     label = "Reviews",
                     value = "$reviewsDueCount",
                     textColor = titleColor,
@@ -727,8 +735,8 @@ private fun ActiveMissionHero(
                 onClick = onContinue,
                 shape = MaterialTheme.shapes.small,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSurfaceMode) MaterialTheme.colorScheme.primary else Color.White,
-                    contentColor = if (isSurfaceMode) MaterialTheme.colorScheme.onPrimary else Color(0xFF0F172A)
+                    containerColor = if (isSurfaceMode) MaterialTheme.colorScheme.primary else ext.heroCtaContainer,
+                    contentColor = if (isSurfaceMode) MaterialTheme.colorScheme.onPrimary else ext.onHeroCta
                 ),
                 modifier = Modifier.weight(1.3f).height(40.dp)
             ) {
@@ -785,8 +793,11 @@ private fun HeroMiniStatPill(
         border = BorderStroke(1.dp, textColor.copy(alpha = 0.18f))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = value,
@@ -830,9 +841,10 @@ private fun HomeHeroCustomizerSheet(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -861,9 +873,14 @@ private fun HomeHeroCustomizerSheet(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Show Top Hero Card on Home", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "Show Top Hero Card on Home",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
                 Switch(checked = p.showHomeHeroCard, onCheckedChange = vm::setShowHomeHeroCard)
             }
 
@@ -908,7 +925,7 @@ private fun HomeHeroCustomizerSheet(
             ) {
                 HomeHeroPalette.entries.forEach { palette ->
                     val selected = p.homeHeroPalette == palette
-                    val swatch = heroPaletteSwatch(palette)
+                    val swatch = heroPaletteSwatchColor(palette, p.accentPreset)
                     Surface(
                         shape = MaterialTheme.shapes.small,
                         color = if (selected) swatch.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainer,
@@ -946,25 +963,25 @@ private fun HomeHeroCustomizerSheet(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Show Top Status Badge", style = MaterialTheme.typography.bodySmall)
+                Text("Show Top Status Badge", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 Switch(checked = p.showHeroBadge, onCheckedChange = vm::setShowHeroBadge)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Show Progress Ring (in Ring Layout)", style = MaterialTheme.typography.bodySmall)
+                Text("Show Progress Ring (in Ring Layout)", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 Switch(checked = p.showHeroProgressRing, onCheckedChange = vm::setShowHeroProgressRing)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Show Secondary Button (Curriculum)", style = MaterialTheme.typography.bodySmall)
+                Text("Show Secondary Button (Curriculum)", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 Switch(checked = p.showHeroSecondaryBtn, onCheckedChange = vm::setShowHeroSecondaryBtn)
             }
 
@@ -1050,17 +1067,6 @@ private fun HomeHeroCustomizerSheet(
     }
 }
 
-internal fun heroPaletteSwatch(palette: HomeHeroPalette): Color = when (palette) {
-    HomeHeroPalette.FOLLOW_ACCENT -> Color(0xFF38BDF8)
-    HomeHeroPalette.GODOT_SAPPHIRE -> Color(0xFF0284C7)
-    HomeHeroPalette.EMERALD_TABLE -> Color(0xFF10B981)
-    HomeHeroPalette.NAIROBI_GOLD -> Color(0xFFF59E0B)
-    HomeHeroPalette.CYBER_PURPLE -> Color(0xFF8B5CF6)
-    HomeHeroPalette.CRIMSON_ROYAL -> Color(0xFFF43F5E)
-    HomeHeroPalette.OBSIDIAN_DARK -> Color(0xFF64748B)
-    HomeHeroPalette.SURFACE_CARD -> Color(0xFF94A3B8)
-}
-
 @Composable
 private fun BentoActionTile(
     eyebrow: String,
@@ -1080,8 +1086,10 @@ private fun BentoActionTile(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1110,7 +1118,9 @@ private fun BentoActionTile(
                     text = eyebrow,
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 10.sp),
                     color = accent,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = title,
@@ -1143,7 +1153,8 @@ private fun PhaseMiniTile(mini: HomePhaseMini, onClick: () -> Unit) {
     }
     Surface(
         modifier = Modifier
-            .width(152.dp)
+            .width(156.dp)
+            .fillMaxHeight()
             .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
@@ -1151,30 +1162,38 @@ private fun PhaseMiniTile(mini: HomePhaseMini, onClick: () -> Unit) {
         border = BorderStroke(1.dp, if (isDone || isStarted) accent.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier.padding(11.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(11.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterVertically)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = (if (isDone) successColor() else MaterialTheme.colorScheme.primary).copy(alpha = 0.14f)
-                ) {
-                    Text(
-                        text = "P${mini.order.toString().padStart(2, '0')}",
-                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                        fontWeight = FontWeight.Bold,
-                        color = if (isDone) successColor() else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = (if (isDone) successColor() else MaterialTheme.colorScheme.primary).copy(alpha = 0.14f)
+                    ) {
+                        Text(
+                            text = "P${mini.order.toString().padStart(2, '0')}",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDone) successColor() else MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            softWrap = false,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
                 Text(
                     text = "${mini.completed}/${mini.total}",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
             Text(

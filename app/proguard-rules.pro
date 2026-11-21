@@ -8,11 +8,12 @@
 -keepclasseswithmembers class com.kadicompanion.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+-keep,includedescriptorclasses class com.kadicompanion.**$$serializer { *; }
 
 # Room entities & FTS tables
 -keep class * extends androidx.room.RoomDatabase
--keep @androidx.room.Entity class *
--keep @androidx.room.Fts4 class *
+-keep @androidx.room.Entity class * { <fields>; <init>(...); }
+-keep @androidx.room.Fts4 class * { <fields>; <init>(...); }
 -dontwarn androidx.room.paging.**
 
 # Hilt

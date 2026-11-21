@@ -1,9 +1,5 @@
 package com.kadicompanion.ui.docs.doclist
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,9 +7,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,25 +22,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.DataObject
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Translate
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -65,6 +59,7 @@ import com.kadicompanion.ui.common.CodeBlock
 import com.kadicompanion.ui.common.EmptyState
 import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.KadiCard
+import com.kadicompanion.ui.common.KadiSearchBar
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
@@ -74,7 +69,6 @@ import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.glossary.GlossaryListScreen
 import com.kadicompanion.ui.theme.CodeFontFamily
-import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.glassBorderColor
 
 private val UI_CLASSES = setOf(
@@ -161,6 +155,7 @@ private fun DocsSegmentedTabs(selected: Int, onSelect: (Int) -> Unit, modifier: 
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Max)
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .border(BorderStroke(1.dp, glassBorderColor()), MaterialTheme.shapes.medium)
@@ -172,21 +167,21 @@ private fun DocsSegmentedTabs(selected: Int, onSelect: (Int) -> Unit, modifier: 
             icon = Icons.Outlined.DataObject,
             active = selected == 0,
             onClick = { onSelect(0) },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f).fillMaxHeight()
         )
         SegmentButton(
             label = "Cookbook",
             icon = Icons.Outlined.Code,
             active = selected == 1,
             onClick = { onSelect(1) },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f).fillMaxHeight()
         )
         SegmentButton(
             label = "Glossary",
             icon = Icons.Outlined.Translate,
             active = selected == 2,
             onClick = { onSelect(2) },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f).fillMaxHeight()
         )
     }
 }
@@ -258,7 +253,7 @@ private fun ClassesTab(state: DocsListUiState, onQueryChange: (String) -> Unit, 
     }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SearchPill(
+        KadiSearchBar(
             query = state.query,
             onQueryChange = onQueryChange,
             placeholder = stringResource(R.string.search_docs_placeholder),
@@ -989,6 +984,7 @@ private val COOKBOOK_RECIPES = listOf(
     )
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun GDScriptCookbookTab(
     onDocClick: (String) -> Unit,
@@ -1011,7 +1007,7 @@ private fun GDScriptCookbookTab(
     }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SearchPill(
+        KadiSearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
             placeholder = "Search 30 recipes (e.g. jump, drag, save, nav, 3d, rpc, pool)...",
@@ -1071,24 +1067,22 @@ private fun GDScriptCookbookTab(
                 }
                 items(filtered, key = { it.id }) { recipe ->
                     KadiCard(accent = MaterialTheme.colorScheme.primary) {
-                        Row(
+                        FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Pill(
                                 text = recipe.category,
                                 color = MaterialTheme.colorScheme.secondary,
                                 icon = Icons.Outlined.AutoAwesome
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                recipe.relatedClasses.take(3).forEach { cls ->
-                                    Pill(
-                                        text = cls,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        onClick = { onDocClick(cls) }
-                                    )
-                                }
+                            recipe.relatedClasses.take(3).forEach { cls ->
+                                Pill(
+                                    text = cls,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    onClick = { onDocClick(cls) }
+                                )
                             }
                         }
                         Text(
@@ -1166,59 +1160,4 @@ private fun ClassRow(entry: GodotDocEntry, onClick: () -> Unit) {
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchPill(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier
-) {
-    val duration = if (LocalReduceMotion.current) 0 else 150
-    val container = MaterialTheme.colorScheme.surfaceContainerHigh
-    TextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
-        placeholder = {
-            Text(
-                text = placeholder,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-        },
-        leadingIcon = {
-            Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        },
-        trailingIcon = {
-            AnimatedVisibility(
-                visible = query.isNotEmpty(),
-                enter = fadeIn(tween(duration)),
-                exit = fadeOut(tween(duration))
-            ) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        Icons.Outlined.Close,
-                        contentDescription = "Clear search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(50),
-        textStyle = MaterialTheme.typography.bodyMedium,
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = container,
-            unfocusedContainerColor = container,
-            disabledContainerColor = container,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            cursorColor = MaterialTheme.colorScheme.primary
-        )
-    )
 }

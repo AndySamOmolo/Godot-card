@@ -1,6 +1,9 @@
 package com.kadicompanion.ui.common
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,8 +27,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,22 +44,29 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kadicompanion.data.local.datastore.CardStyle
+import com.kadicompanion.data.local.datastore.ChipStylePreset
 import com.kadicompanion.data.local.datastore.HeroStyle
 import com.kadicompanion.data.local.datastore.TopBarStyle
 import com.kadicompanion.data.local.datastore.UiDensity
@@ -60,6 +75,7 @@ import com.kadicompanion.ui.theme.LocalOpenQuickCustomizer
 import com.kadicompanion.ui.theme.LocalUiPreferences
 import com.kadicompanion.ui.theme.brandGradient
 import com.kadicompanion.ui.theme.isDarkScheme
+import com.kadicompanion.ui.theme.kadiColors
 
 const val SPADE = "\u2660"
 const val HEART = "\u2665"
@@ -163,9 +179,7 @@ fun KadiTopBar(
                     Text(
                         text = cleanSub.uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = CodeFontFamily,
-                            fontSize = 9.5.sp,
-                            lineHeight = 11.sp
+                            fontFamily = CodeFontFamily
                         ),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
@@ -178,7 +192,7 @@ fun KadiTopBar(
                     text = cleanTitle,
                     style = when (topStyle) {
                         TopBarStyle.ULTRA_SLIM -> MaterialTheme.typography.titleSmall
-                        TopBarStyle.COMPACT -> MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp)
+                        TopBarStyle.COMPACT -> MaterialTheme.typography.titleSmall
                         TopBarStyle.STANDARD -> MaterialTheme.typography.titleMedium
                     },
                     color = MaterialTheme.colorScheme.onBackground,
@@ -243,7 +257,7 @@ fun HeroPanel(
     }
     val borderColor = when (uiPrefs.heroStyle) {
         HeroStyle.SURFACE_FLAT -> MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-        else -> Color.White.copy(alpha = 0.16f)
+        else -> MaterialTheme.kadiColors.heroBorder
     }
 
     val base = modifier
@@ -271,23 +285,27 @@ fun SectionHeader(
     Row(
         modifier = modifier.fillMaxWidth().padding(top = 2.dp, bottom = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             if (eyebrow != null) {
                 Text(
                     text = cleanPlainText(eyebrow).uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 10.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.7.sp
+                    letterSpacing = 0.7.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Text(
                 text = cleanPlainText(title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
         trailing?.invoke()
@@ -405,8 +423,9 @@ fun StatTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight()
                 .padding(horizontal = if (compact) 10.dp else 12.dp, vertical = if (compact) 8.dp else 10.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -460,11 +479,26 @@ fun Pill(
     } else {
         modifier
     }
+    val chipStyle = LocalUiPreferences.current.chipStyle
+    val pillShape = when (chipStyle) {
+        ChipStylePreset.PILL -> RoundedCornerShape(50)
+        ChipStylePreset.ROUNDED, ChipStylePreset.OUTLINED, ChipStylePreset.TONAL -> MaterialTheme.shapes.extraSmall
+    }
+    val pillBg = when (chipStyle) {
+        ChipStylePreset.OUTLINED -> Color.Transparent
+        ChipStylePreset.TONAL -> if (filled) color.copy(alpha = 0.18f) else color.copy(alpha = 0.08f)
+        ChipStylePreset.PILL, ChipStylePreset.ROUNDED -> if (filled) color.copy(alpha = 0.13f) else Color.Transparent
+    }
+    val pillBorder = when (chipStyle) {
+        ChipStylePreset.TONAL -> BorderStroke(0.75.dp, color.copy(alpha = 0.18f))
+        ChipStylePreset.OUTLINED -> BorderStroke(1.dp, color.copy(alpha = 0.45f))
+        ChipStylePreset.PILL, ChipStylePreset.ROUNDED -> BorderStroke(1.dp, color.copy(alpha = 0.30f))
+    }
     Surface(
         modifier = clickableModifier,
-        shape = MaterialTheme.shapes.extraSmall,
-        color = if (filled) color.copy(alpha = 0.13f) else Color.Transparent,
-        border = BorderStroke(1.dp, color.copy(alpha = 0.30f))
+        shape = pillShape,
+        color = pillBg,
+        border = pillBorder
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
@@ -480,6 +514,7 @@ fun Pill(
                 color = color,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
+                softWrap = false,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -545,6 +580,97 @@ fun LoadingSkeleton(lines: Int = 5, modifier: Modifier = Modifier) {
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
             )
+        }
+    }
+}
+
+/**
+ * Sleek, compact unified search bar (40dp default height) built with Surface + BasicTextField,
+ * focus-aware accent border, single-line ImeAction.Search input, and animated clear button.
+ */
+@Composable
+fun KadiSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    heightDp: Dp = LocalUiPreferences.current.searchBarSize.heightDp.dp
+) {
+    var focused by remember { mutableStateOf(false) }
+    val reduceMotion = LocalReduceMotion.current
+    val fadeMs = if (reduceMotion) 0 else 140
+    val borderColor = if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+    val iconTint = if (focused || query.isNotEmpty()) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(heightDp),
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(if (focused) 1.25.dp else 1.dp, borderColor)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 11.dp, end = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(16.dp)
+            )
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (query.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focused = it.isFocused }
+                )
+            }
+            AnimatedVisibility(
+                visible = query.isNotEmpty(),
+                enter = fadeIn(tween(fadeMs)),
+                exit = fadeOut(tween(fadeMs))
+            ) {
+                IconButton(
+                    onClick = { onQueryChange("") },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = "Clear search",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+            }
         }
     }
 }

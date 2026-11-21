@@ -12,10 +12,10 @@ android {
 
     defaultConfig {
         applicationId = "com.kadicompanion"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 34
-        versionCode = 6
-        versionName = "4.0.0"
+        versionCode = 7
+        versionName = "4.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -9,14 +9,18 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-apk:
-    name: Validate Assets, Run Tests & Assemble APKs
+    name: Validate Assets, Run Tests, Sign & Publish APK
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -73,82 +77,92 @@ jobs:
       - name: Run Unit Tests, Lint & Assemble Debug/Release APKs
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 
-      - name: Sign Release APK
+      - name: Sign & Verify Release APK
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           UNSIGNED_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
-          SIGNED_APK="app/build/outputs/apk/release/kadi-companion-release-signed.apk"
-          DEBUG_APK="app/build/outputs/apk/debug/app-debug.apk"
+          SIGNED_APK="app/build/outputs/apk/release/kadi-companion-release.apk"
           trap 'rm -f /tmp/*.jks /tmp/app-release-aligned.apk' EXIT
 
-          if [ -f "$UNSIGNED_APK" ]; then
-            if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
-              echo "Signing release APK with repository secret keystore..."
-              echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/release.jks
-              KS_PATH="/tmp/release.jks"
-              KS_PASS="$KEYSTORE_PASSWORD"
-              K_ALIAS="$KEY_ALIAS"
-              K_PASS="$KEY_PASSWORD"
-            elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-              echo "::error::Release tag push requires KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD secrets."
-              exit 1
-            else
-              echo "Non-release branch build — generating one-time ephemeral keystore with random password..."
-              KS_PASS="$(openssl rand -hex 32)"
-              K_ALIAS="kadi_ci_ephemeral"
-              K_PASS="$KS_PASS"
-              keytool -genkeypair -v                 -keystore /tmp/ci-release.jks                 -alias "$K_ALIAS"                 -keyalg RSA -keysize 3072 -validity 1                 -storepass "$KS_PASS" -keypass "$K_PASS"                 -dname "CN=Kadi Companion CI, OU=Dev, O=Kadi, L=Nairobi, S=Nairobi, C=KE"
-              KS_PATH="/tmp/ci-release.jks"
-            fi
-
-            SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-            BUILD_TOOLS_DIR=$(ls -d "$SDK_ROOT"/build-tools/* | sort -V | tail -n 1)
-            "$BUILD_TOOLS_DIR/zipalign" -v -p 4 "$UNSIGNED_APK" /tmp/app-release-aligned.apk
-            "$BUILD_TOOLS_DIR/apksigner" sign               --ks "$KS_PATH"               --ks-pass "pass:$KS_PASS"               --key-pass "pass:$K_PASS"               --ks-key-alias "$K_ALIAS"               --out "$SIGNED_APK"               /tmp/app-release-aligned.apk
-            "$BUILD_TOOLS_DIR/apksigner" verify "$SIGNED_APK"
+          if [ ! -f "$UNSIGNED_APK" ]; then
+            echo "::error::Unsigned release APK not found at $UNSIGNED_APK"
+            exit 1
           fi
+
+          if [ -n "${KEYSTORE_BASE64:-}" ] && [ -n "${KEYSTORE_PASSWORD:-}" ] && [ -n "${KEY_ALIAS:-}" ] && [ -n "${KEY_PASSWORD:-}" ]; then
+            echo "Signing release APK with repository secret keystore..."
+            echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/release.jks
+            KS_PATH="/tmp/release.jks"
+            KS_PASS="$KEYSTORE_PASSWORD"
+            K_ALIAS="$KEY_ALIAS"
+            K_PASS="$KEY_PASSWORD"
+          else
+            echo "Repository signing secrets not configured — generating fallback release keystore (27+ year validity)."
+            echo "Tip: Configure KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD repository secrets to enable seamless in-place updates across builds."
+            KS_PASS="$(openssl rand -hex 32)"
+            K_ALIAS="kadi_release_fallback"
+            K_PASS="$KS_PASS"
+            keytool -genkeypair -v \
+              -keystore /tmp/ci-release.jks \
+              -alias "$K_ALIAS" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$KS_PASS" -keypass "$K_PASS" \
+              -dname "CN=Kadi Companion Release, OU=Mobile, O=Kadi, L=Nairobi, S=Nairobi, C=KE"
+            KS_PATH="/tmp/ci-release.jks"
+          fi
+
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          BUILD_TOOLS_DIR="$SDK_ROOT/build-tools/34.0.0"
+
+          "$BUILD_TOOLS_DIR/zipalign" -f -v -p 4 "$UNSIGNED_APK" /tmp/app-release-aligned.apk
+          "$BUILD_TOOLS_DIR/apksigner" sign \
+            --ks "$KS_PATH" \
+            --ks-pass "pass:$KS_PASS" \
+            --key-pass "pass:$K_PASS" \
+            --ks-key-alias "$K_ALIAS" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "$SIGNED_APK" \
+            /tmp/app-release-aligned.apk
+
+          "$BUILD_TOOLS_DIR/zipalign" -c -v 4 "$SIGNED_APK"
+          "$BUILD_TOOLS_DIR/apksigner" verify --verbose --print-certs "$SIGNED_APK"
+          "$BUILD_TOOLS_DIR/aapt2" dump badging "$SIGNED_APK" | head -n 20
 
           mkdir -p dist-apks
-          cp "$DEBUG_APK" dist-apks/kadi-companion-debug.apk
-          if [ -f "$SIGNED_APK" ]; then
-            cp "$SIGNED_APK" dist-apks/kadi-companion-release-signed.apk
-          fi
+          cp "$SIGNED_APK" dist-apks/kadi-companion-release.apk
           ls -lh dist-apks/
 
-      - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: kadi-companion-debug-apk
-          path: dist-apks/kadi-companion-debug.apk
-          retention-days: 30
-
-      - name: Upload Signed Release APK Artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: kadi-companion-release-signed-apk
-          path: dist-apks/kadi-companion-release-signed.apk
-          retention-days: 30
-
-  publish-release:
-    name: Publish Signed Release APK on Tag Push (v*)
-    needs: build-apk
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download Signed Release APK Artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.2.1
-        with:
-          name: kadi-companion-release-signed-apk
-          path: dist-apks
-
-      - name: Publish GitHub Release via GitHub CLI
+      - name: Publish Rolling GitHub Release (latest)
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}"             dist-apks/kadi-companion-release-signed.apk             --generate-notes
+          set -euo pipefail
+          APK_PATH="dist-apks/kadi-companion-release.apk"
+          APK_SHA256=$(sha256sum "$APK_PATH" | awk '{print $1}')
+          BUILD_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          gh release delete latest --yes --cleanup-tag || true
+
+          gh release create latest "$APK_PATH" \
+            --target "${{ github.sha }}" \
+            --latest \
+            --title "Kadi Companion — Latest Release APK" \
+            --notes "$(cat <<EOF
+          Rolling release build of **Kadi Companion** (\`kadi-companion-release.apk\`).
+
+          - **Commit:** \`${{ github.sha }}\` (\`${SHORT_SHA}\`)
+          - **Built:** ${BUILD_DATE}
+          - **SHA-256:** \`${APK_SHA256}\`
+
+          Download \`kadi-companion-release.apk\` directly from the assets below to install on Android 7.0+ (API 24+).
+          EOF
+          )"

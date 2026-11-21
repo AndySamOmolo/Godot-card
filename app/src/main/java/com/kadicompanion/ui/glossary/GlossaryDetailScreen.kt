@@ -212,6 +212,8 @@ fun GlossaryDetailScreen(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier.weight(1f)
                                         )
                                         Pill(text = "API Doc", color = MaterialTheme.colorScheme.secondary)

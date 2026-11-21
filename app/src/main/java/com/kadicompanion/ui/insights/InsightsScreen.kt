@@ -5,7 +5,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -87,26 +89,31 @@ fun InsightsScreen(onBack: () -> Unit, vm: InsightsViewModel = hiltViewModel()) 
                         totalQuestions = state.totalQuestions
                     )
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         StatTile(
                             value = "${state.totalQuestions}",
                             label = stringResource(R.string.insights_attempted),
                             accent = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                             icon = Icons.Outlined.Quiz
                         )
                         StatTile(
                             value = "${(state.accuracyFraction * 100).toInt()}%",
                             label = stringResource(R.string.insights_accuracy),
                             accent = successColor(),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                             icon = Icons.AutoMirrored.Outlined.TrendingUp
                         )
                         StatTile(
                             value = "${state.debugTotal}",
                             label = stringResource(R.string.insights_debug),
                             accent = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                             icon = Icons.Outlined.BugReport
                         )
                     }
@@ -218,7 +225,7 @@ private fun AccuracyHero(fraction: Float, totalQuestions: Int) {
                 strokeWidth = 8.dp,
                 textColor = heroText,
                 trackColor = heroText.copy(alpha = 0.18f),
-                activeColor = Color(0xFF38BDF8)
+                activeColor = MaterialTheme.colorScheme.primary
             )
         }
     }

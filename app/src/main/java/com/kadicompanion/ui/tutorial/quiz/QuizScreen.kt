@@ -11,11 +11,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -125,8 +128,8 @@ fun QuizScreen(
                             fadeIn(tween(duration)) togetherWith fadeOut(tween(duration))
                         },
                         label = "quizTransition"
-                    ) { _ ->
-                        val q = state.current!!
+                    ) { targetIndex ->
+                        val q = state.questions[targetIndex]
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -135,7 +138,7 @@ fun QuizScreen(
                             verticalArrangement = Arrangement.spacedBy(vGap)
                         ) {
                             LinearProgressIndicator(
-                                progress = { (state.currentIndex + 1).toFloat() / state.questions.size },
+                                progress = { (targetIndex + 1).toFloat() / state.questions.size },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(6.dp)
@@ -197,29 +200,31 @@ fun QuizScreen(
                                     )
                                 }
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     if (!correct && state.canRetry) {
                                         OutlinedButton(
                                             onClick = vm::retry,
-                                            modifier = Modifier.weight(1f).height(46.dp),
+                                            modifier = Modifier.weight(1f).heightIn(min = 46.dp).fillMaxHeight(),
                                             shape = MaterialTheme.shapes.small
-                                        ) { Text("Try Again", fontWeight = FontWeight.SemiBold) }
+                                        ) { Text("Try Again", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false) }
                                         Button(
                                             onClick = vm::next,
-                                            modifier = Modifier.weight(1f).height(46.dp),
+                                            modifier = Modifier.weight(1f).heightIn(min = 46.dp).fillMaxHeight(),
                                             shape = MaterialTheme.shapes.small
-                                        ) { Text(if (state.isLast) "Finish" else "Next", fontWeight = FontWeight.Bold) }
+                                        ) { Text(if (state.isLast) "Finish" else "Next", fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false) }
                                     } else {
                                         Button(
                                             onClick = vm::next,
-                                            modifier = Modifier.fillMaxWidth().height(46.dp),
+                                            modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                                             shape = MaterialTheme.shapes.small
                                         ) {
                                             Text(
                                                 if (state.isLast) "See Results" else "Next Question",
-                                                fontWeight = FontWeight.Bold
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                softWrap = false
                                             )
                                         }
                                     }
@@ -289,28 +294,28 @@ private fun QuizCelebration(
                     }
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     if (correctCount < totalCount) {
                         OutlinedButton(
                             onClick = onRetake,
-                            modifier = Modifier.weight(1f).height(46.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 46.dp).fillMaxHeight(),
                             shape = MaterialTheme.shapes.small
                         ) {
                             Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Retake", fontWeight = FontWeight.SemiBold)
+                            Text("Retake", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                         }
                     }
                     FilledTonalButton(
                         onClick = onComplete,
-                        modifier = Modifier.weight(1.2f).height(46.dp),
+                        modifier = Modifier.weight(1.2f).heightIn(min = 46.dp).fillMaxHeight(),
                         shape = MaterialTheme.shapes.small
                     ) {
                         Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Back to Lesson", fontWeight = FontWeight.Bold)
+                        Text("Back to Lesson", fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                     }
                 }
             }

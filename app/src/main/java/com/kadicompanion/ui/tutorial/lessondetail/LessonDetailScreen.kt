@@ -19,12 +19,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -113,8 +116,10 @@ import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
+import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.LocalUiPreferences
-import com.kadicompanion.ui.theme.SyntaxColors
+import com.kadicompanion.ui.theme.codePalette
+import com.kadicompanion.ui.theme.kadiColors
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 import kotlinx.coroutines.delay
@@ -328,6 +333,7 @@ fun LessonDetailScreen(
 /**
  * Tangible Milestone & Interactive Godot Card Preview widget at the top of each lesson!
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TangibleMilestoneStudioCard(
     lesson: Lesson,
@@ -348,11 +354,12 @@ private fun TangibleMilestoneStudioCard(
             Triple("A$SPADE", SPADE, "Wild Ace · Declares Next Suit")
         )
     }
+    val reduceMotion = LocalReduceMotion.current
     val currentSample = sampleCards[sampleCardIndex % sampleCards.size]
     val isRedSuit = currentSample.second == HEART || currentSample.second == DIAMOND
     val liftDp by animateDpAsState(
         targetValue = if (cardLifted) (-12).dp else 0.dp,
-        animationSpec = tween(durationMillis = 150),
+        animationSpec = tween(durationMillis = if (reduceMotion) 0 else 150),
         label = "lessonCardPreviewLift"
     )
 
@@ -390,6 +397,7 @@ private fun TangibleMilestoneStudioCard(
                     )
                 }
             }
+            Spacer(Modifier.width(8.dp))
             Pill(
                 text = if (showInteractivePreview) "Hide Preview" else "Try Live Card",
                 color = MaterialTheme.colorScheme.primary,
@@ -405,11 +413,12 @@ private fun TangibleMilestoneStudioCard(
             onTermClick = onTermClick
         )
 
+        val ext = MaterialTheme.kadiColors
         AnimatedVisibility(visible = showInteractivePreview) {
             Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = Color(0xFF0E231C),
-                border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
+                shape = MaterialTheme.shapes.small,
+                color = ext.feltStart,
+                border = BorderStroke(1.dp, ext.feltBorder.copy(alpha = 0.55f)),
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
             ) {
                 Column(
@@ -417,7 +426,7 @@ private fun TangibleMilestoneStudioCard(
                         .fillMaxWidth()
                         .background(
                             Brush.verticalGradient(
-                                listOf(Color(0xFF081812), Color(0xFF0E291F))
+                                listOf(ext.feltStart, ext.feltEnd)
                             )
                         )
                         .padding(12.dp),
@@ -432,11 +441,15 @@ private fun TangibleMilestoneStudioCard(
                             text = "INTERACTIVE CARD PREVIEW (TAP CARD!)",
                             style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6EE7B7)
+                            color = ext.success,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
                         )
+                        Spacer(Modifier.width(8.dp))
                         Pill(
                             text = "Play Full Table",
-                            color = Color(0xFF38BDF8),
+                            color = ext.info,
                             icon = Icons.Outlined.SportsEsports,
                             onClick = onOpenBlueprint
                         )
@@ -452,16 +465,16 @@ private fun TangibleMilestoneStudioCard(
                                 .offset(y = liftDp)
                                 .size(width = 76.dp, height = 108.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (cardLifted) Color(0xFFFEFCE8) else Color(0xFFF8FAFC))
+                                .background(if (cardLifted) ext.cardStockSelected else ext.cardStock)
                                 .border(
                                     width = if (cardLifted) 2.5.dp else 1.2.dp,
-                                    color = if (cardLifted) Color(0xFFFACC15) else Color(0xFFCBD5E1),
+                                    color = if (cardLifted) ext.cardBorderSelected else ext.cardBorder,
                                     shape = RoundedCornerShape(10.dp)
                                 )
                                 .clickable { cardLifted = !cardLifted }
                                 .padding(7.dp)
                         ) {
-                            val suitCol = if (isRedSuit) Color(0xFFE11D48) else Color(0xFF0F172A)
+                            val suitCol = if (isRedSuit) ext.cardSuitRed else ext.cardSuitBlack
                             Column(
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.SpaceBetween
@@ -484,7 +497,9 @@ private fun TangibleMilestoneStudioCard(
                                     text = if (cardLifted) "LIFTED" else "TAP ME",
                                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 9.sp),
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF475569),
+                                    color = ext.cardSuitBlack.copy(alpha = 0.65f),
+                                    maxLines = 1,
+                                    softWrap = false,
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -499,22 +514,25 @@ private fun TangibleMilestoneStudioCard(
                                 text = currentSample.third,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = ext.onHeroPrimary
                             )
                             Text(
                                 text = "is_selected = $cardLifted\nposition.y = ${if (cardLifted) "-14.0" else "0.0"}\ncard_clicked.emit(self)",
                                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                                color = Color(0xFFA7F3D0)
+                                color = ext.onHeroSecondary
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Pill(
                                     text = if (cardLifted) "Drop (0px)" else "Lift (-14px)",
-                                    color = Color(0xFFFACC15),
+                                    color = ext.warning,
                                     onClick = { cardLifted = !cardLifted }
                                 )
                                 Pill(
                                     text = "Next Card",
-                                    color = Color(0xFF6EE7B7),
+                                    color = ext.success,
                                     onClick = { sampleCardIndex += 1 }
                                 )
                             }
@@ -563,6 +581,7 @@ private fun BeyondKadiTransferCard(
                     )
                 }
             }
+            Spacer(Modifier.width(8.dp))
             Pill(
                 text = "New Game Architect",
                 color = MaterialTheme.colorScheme.primary,
@@ -614,6 +633,7 @@ private fun SoloTransferChallengeCard(
                     )
                 }
             }
+            Spacer(Modifier.width(8.dp))
             Pill(
                 text = if (challengeCompleted) "Built Solo ✓" else "Mark Done",
                 color = accent,
@@ -733,6 +753,7 @@ private fun StudioSegmentedTabs(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Max)
                 .padding(2.dp),
             horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
@@ -741,6 +762,7 @@ private fun StudioSegmentedTabs(
                 Surface(
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxHeight()
                         .clip(MaterialTheme.shapes.extraSmall)
                         .selectable(selected = selected, role = Role.Tab, onClick = { onSelectTab(idx) }),
                     shape = MaterialTheme.shapes.extraSmall,
@@ -764,6 +786,7 @@ private fun StudioSegmentedTabs(
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                             color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
+                            softWrap = false,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -1201,7 +1224,7 @@ private fun LabLaunchCard(
 private fun SceneTreeBlueprintCard(sceneTree: String) {
     val isDark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
-    val bg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
+    val bg = MaterialTheme.codePalette.background
     val accent = MaterialTheme.colorScheme.secondary
 
     Surface(
@@ -1338,7 +1361,7 @@ private fun EditorChecklistStudioCard(
                             Icon(
                                 Icons.Outlined.Check,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = MaterialTheme.kadiColors.onSuccess,
                                 modifier = Modifier.size(14.dp)
                             )
                         } else {
@@ -1521,6 +1544,7 @@ private fun StudioLessonBottomBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(IntrinsicSize.Max)
                     .padding(horizontal = hPad, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -1529,7 +1553,7 @@ private fun StudioLessonBottomBar(
                     FilledTonalButton(
                         onClick = { onNavigateLesson(previousLessonId) },
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.weight(0.85f).height(38.dp)
+                        modifier = Modifier.weight(0.85f).heightIn(min = 38.dp).fillMaxHeight()
                     ) {
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowBack,
@@ -1537,13 +1561,13 @@ private fun StudioLessonBottomBar(
                             modifier = Modifier.size(15.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Prev", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text("Prev", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                     }
                 }
                 Button(
                     onClick = onMarkComplete,
                     shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.weight(1.4f).height(38.dp)
+                    modifier = Modifier.weight(1.4f).heightIn(min = 38.dp).fillMaxHeight()
                 ) {
                     Icon(
                         Icons.Outlined.CheckCircle,
@@ -1561,6 +1585,7 @@ private fun StudioLessonBottomBar(
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
+                        softWrap = false,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -1568,9 +1593,9 @@ private fun StudioLessonBottomBar(
                     FilledTonalButton(
                         onClick = { onNavigateLesson(nextLessonId) },
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.weight(0.85f).height(38.dp)
+                        modifier = Modifier.weight(0.85f).heightIn(min = 38.dp).fillMaxHeight()
                     ) {
-                        Text("Next", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text("Next", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                         Spacer(Modifier.width(4.dp))
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowForward,

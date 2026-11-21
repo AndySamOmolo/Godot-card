@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +44,8 @@ import com.kadicompanion.ui.theme.LocalUiPreferences
 @Composable
 fun KadiBottomBar(
     navController: NavHostController,
-    destinations: List<TopLevelDestination> = TopLevelDestination.entries
+    destinations: List<TopLevelDestination> = TopLevelDestination.entries,
+    showLabels: Boolean = LocalUiPreferences.current.showBottomBarLabels
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -61,7 +61,7 @@ fun KadiBottomBar(
             ) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(22.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     shadowElevation = 6.dp
@@ -79,7 +79,7 @@ fun KadiBottomBar(
                             StudioNavTab(
                                 destination = dest,
                                 selected = selected,
-                                showLabel = true,
+                                showLabel = showLabels,
                                 onClick = {
                                     navController.navigate(dest.route) {
                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -95,7 +95,7 @@ fun KadiBottomBar(
             }
         }
         else -> {
-            val showLabel = style != BottomBarStyle.COMPACT_ICONS
+            val showLabel = showLabels && style != BottomBarStyle.COMPACT_ICONS
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface,
@@ -147,7 +147,8 @@ private fun StudioNavTab(
     modifier: Modifier = Modifier
 ) {
     val reduceMotion = LocalReduceMotion.current
-    val spec = tween<Color>(durationMillis = if (reduceMotion) 0 else 180)
+    val animMs = LocalUiPreferences.current.animationSpeed.durationMs
+    val spec = tween<Color>(durationMillis = if (reduceMotion || animMs <= 0) 0 else (animMs * 0.7f).toInt().coerceAtLeast(80))
     val contentColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = spec,
@@ -181,6 +182,7 @@ private fun StudioNavTab(
                 color = contentColor,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1,
+                softWrap = false,
                 overflow = TextOverflow.Ellipsis
             )
         }

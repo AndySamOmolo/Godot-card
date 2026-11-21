@@ -25,6 +25,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +43,7 @@ import com.kadicompanion.domain.model.Bookmark
 import com.kadicompanion.ui.common.EmptyState
 import com.kadicompanion.ui.common.IconBubble
 import com.kadicompanion.ui.common.KadiCard
+import com.kadicompanion.ui.common.KadiSearchBar
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.Pill
@@ -57,6 +61,7 @@ fun BookmarksScreen(
     vm: BookmarksViewModel = hiltViewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val hPad = studioScreenPadding()
     val vGap = studioCardSpacing()
 
@@ -88,50 +93,88 @@ fun BookmarksScreen(
                     icon = Icons.Outlined.Bookmark
                 )
                 else -> {
-                    val grouped = state.bookmarks.groupBy { kindOf(it) }
-                    LazyColumn(
+                    val filteredBookmarks = if (searchQuery.isBlank()) {
+                        state.bookmarks
+                    } else {
+                        state.bookmarks.filter { bookmark ->
+                            val title = bookmark.glossaryTerm
+                                ?: bookmark.docClassName
+                                ?: bookmark.lessonId?.let { state.lessonTitles[it] ?: it }
+                                ?: state.phaseTitles[bookmark.phaseId]
+                                ?: bookmark.phaseId
+                            val sub = if (bookmark.lessonId != null) {
+                                state.phaseTitles[bookmark.phaseId]
+                            } else {
+                                bookmark.note
+                            }
+                            title.contains(searchQuery, ignoreCase = true) ||
+                                (sub?.contains(searchQuery, ignoreCase = true) == true) ||
+                                kindOf(bookmark).label.contains(searchQuery, ignoreCase = true)
+                        }
+                    }
+                    val grouped = filteredBookmarks.groupBy { kindOf(it) }
+                    Column(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = hPad, end = hPad, top = 4.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(vGap)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        BookmarkKind.entries.forEach { kind ->
-                            val rows = grouped[kind].orEmpty()
-                            if (rows.isNotEmpty()) {
-                                item(key = "header-${kind.name}") {
-                                    SectionHeader(
-                                        title = kind.groupTitle,
-                                        modifier = Modifier.padding(top = 10.dp, bottom = 2.dp),
-                                        eyebrow = "BOOKMARKED",
-                                        trailing = { Pill(text = "${rows.size}", color = accentFor(kind)) }
-                                    )
-                                }
-                                items(rows, key = { it.id }) { bookmark ->
-                                    val displayTitle = bookmark.glossaryTerm
-                                        ?: bookmark.docClassName
-                                        ?: bookmark.lessonId?.let { state.lessonTitles[it] ?: it }
-                                        ?: state.phaseTitles[bookmark.phaseId]
-                                        ?: bookmark.phaseId
-                                    val subtitle = if (bookmark.lessonId != null) {
-                                        state.phaseTitles[bookmark.phaseId]
-                                    } else {
-                                        bookmark.note
-                                    }
-                                    BookmarkRow(
-                                        displayTitle = cleanPlainText(displayTitle),
-                                        subtitle = subtitle?.let(::cleanPlainText),
-                                        kind = kind,
-                                        accent = accentFor(kind),
-                                        onClick = {
-                                            when {
-                                                bookmark.lessonId != null -> onLessonClick(bookmark.lessonId)
-                                                bookmark.glossaryTerm != null -> onGlossaryClick(bookmark.glossaryTerm)
-                                                bookmark.docClassName != null -> onDocClick(bookmark.docClassName)
-                                                bookmark.phaseId in state.phaseTitles -> onPhaseClick(bookmark.phaseId)
-                                                else -> onDocClick(bookmark.phaseId)
+                        KadiSearchBar(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            placeholder = "Filter saved lessons, docs, or terms…",
+                            modifier = Modifier.padding(start = hPad, end = hPad, top = 10.dp)
+                        )
+                        if (filteredBookmarks.isEmpty()) {
+                            EmptyState(
+                                title = "No matching bookmarks",
+                                message = "Try clearing your search query.",
+                                icon = Icons.Outlined.Bookmark
+                            )
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(start = hPad, end = hPad, top = 2.dp, bottom = 24.dp),
+                                verticalArrangement = Arrangement.spacedBy(vGap)
+                            ) {
+                                BookmarkKind.entries.forEach { kind ->
+                                    val rows = grouped[kind].orEmpty()
+                                    if (rows.isNotEmpty()) {
+                                        item(key = "header-${kind.name}") {
+                                            SectionHeader(
+                                                title = kind.groupTitle,
+                                                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+                                                eyebrow = "BOOKMARKED",
+                                                trailing = { Pill(text = "${rows.size}", color = accentFor(kind)) }
+                                            )
+                                        }
+                                        items(rows, key = { it.id }) { bookmark ->
+                                            val displayTitle = bookmark.glossaryTerm
+                                                ?: bookmark.docClassName
+                                                ?: bookmark.lessonId?.let { state.lessonTitles[it] ?: it }
+                                                ?: state.phaseTitles[bookmark.phaseId]
+                                                ?: bookmark.phaseId
+                                            val subtitle = if (bookmark.lessonId != null) {
+                                                state.phaseTitles[bookmark.phaseId]
+                                            } else {
+                                                bookmark.note
                                             }
-                                        },
-                                        onRemove = { vm.remove(bookmark.id) }
-                                    )
+                                            BookmarkRow(
+                                                displayTitle = cleanPlainText(displayTitle),
+                                                subtitle = subtitle?.let(::cleanPlainText),
+                                                kind = kind,
+                                                accent = accentFor(kind),
+                                                onClick = {
+                                                    when {
+                                                        bookmark.lessonId != null -> onLessonClick(bookmark.lessonId)
+                                                        bookmark.glossaryTerm != null -> onGlossaryClick(bookmark.glossaryTerm)
+                                                        bookmark.docClassName != null -> onDocClick(bookmark.docClassName)
+                                                        bookmark.phaseId in state.phaseTitles -> onPhaseClick(bookmark.phaseId)
+                                                        else -> onDocClick(bookmark.phaseId)
+                                                    }
+                                                },
+                                                onRemove = { vm.remove(bookmark.id) }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

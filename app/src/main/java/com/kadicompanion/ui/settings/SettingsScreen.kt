@@ -89,17 +89,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadicompanion.R
 import com.kadicompanion.data.local.datastore.AccentPreset
+import com.kadicompanion.data.local.datastore.AnimationSpeedPreset
 import com.kadicompanion.data.local.datastore.BottomBarStyle
 import com.kadicompanion.data.local.datastore.CardStyle
+import com.kadicompanion.data.local.datastore.ChipStylePreset
 import com.kadicompanion.data.local.datastore.CodeThemePreset
+import com.kadicompanion.data.local.datastore.ContrastLevel
 import com.kadicompanion.data.local.datastore.FontFamilyPreset
 import com.kadicompanion.data.local.datastore.HeadingWeightPreset
 import com.kadicompanion.data.local.datastore.HeroStyle
 import com.kadicompanion.data.local.datastore.HomeHeroLayout
 import com.kadicompanion.data.local.datastore.HomeHeroPalette
 import com.kadicompanion.data.local.datastore.InlineCodeStyle
+import com.kadicompanion.data.local.datastore.KadiFeltPreset
 import com.kadicompanion.data.local.datastore.LessonLayoutMode
 import com.kadicompanion.data.local.datastore.LineSpacingPreset
+import com.kadicompanion.data.local.datastore.SearchBarSizePreset
 import com.kadicompanion.data.local.datastore.TableDisplayMode
 import com.kadicompanion.data.local.datastore.ThemePref
 import com.kadicompanion.data.local.datastore.TopBarStyle
@@ -115,9 +120,12 @@ import com.kadicompanion.ui.common.RichInlineText
 import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
-import com.kadicompanion.ui.home.heroPaletteSwatch
+import com.kadicompanion.ui.theme.accentSwatchColor
+import com.kadicompanion.ui.theme.heroPaletteSwatchColor
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalUiPreferences
+import com.kadicompanion.ui.theme.ThemeEngine
+import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 import kotlin.math.roundToInt
 
@@ -144,7 +152,7 @@ fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) 
                     ) {
                         Icon(Icons.Outlined.RestartAlt, contentDescription = "Reset UI", modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Reset", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Text("Reset", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                     }
                 }
             )
@@ -181,6 +189,8 @@ fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewModel()) 
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                             color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            softWrap = false,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
@@ -237,24 +247,29 @@ fun QuickUiCustomizerSheet(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     IconBubble(icon = Icons.Outlined.Tune, size = 34.dp)
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "LIVE UI STUDIO",
                             style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                             color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = "Customize Anything Live",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -264,6 +279,14 @@ fun QuickUiCustomizerSheet(
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // 0. One-Tap Studio Presets
+            QuickGroupTitle("One-Tap Studio Presets")
+            StudioThemeBundleGallery(
+                uiPrefs = p,
+                onApplyBundle = vm::applyStudioBundle,
+                compact = true
+            )
 
             // 1. Top Navbar Size
             QuickGroupTitle("Top Navbar Size")
@@ -299,7 +322,7 @@ fun QuickUiCustomizerSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 HomeHeroPalette.entries.forEach { hPal ->
-                    val swatch = heroPaletteSwatch(hPal)
+                    val swatch = heroPaletteSwatchColor(hPal, p.accentPreset)
                     val selected = p.homeHeroPalette == hPal
                     Surface(
                         shape = MaterialTheme.shapes.small,
@@ -317,7 +340,9 @@ fun QuickUiCustomizerSheet(
                                 text = hPal.label,
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) swatch else MaterialTheme.colorScheme.onSurface
+                                color = if (selected) swatch else MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -348,7 +373,7 @@ fun QuickUiCustomizerSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 AccentPreset.entries.forEach { preset ->
-                    val swatch = presetSwatchColor(preset)
+                    val swatch = accentSwatchColor(preset)
                     val selected = p.accentPreset == preset
                     Surface(
                         shape = MaterialTheme.shapes.small,
@@ -371,12 +396,23 @@ fun QuickUiCustomizerSheet(
                                 text = preset.label,
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) swatch else MaterialTheme.colorScheme.onSurface
+                                color = if (selected) swatch else MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
                 }
             }
+
+            // 3b. Contrast Level
+            QuickGroupTitle("Contrast Level (WCAG AA / AAA)")
+            ContrastLevelSelector(
+                selectedLevel = p.contrastLevel,
+                themePref = p.theme,
+                accentPreset = p.accentPreset,
+                onSelectLevel = vm::setContrastLevel
+            )
 
             // 4. 10 Font Families & 5 Heading Weights
             QuickGroupTitle("Font Family (10 Typefaces) & Heading Weight")
@@ -528,6 +564,88 @@ fun QuickUiCustomizerSheet(
                 }
             }
 
+            QuickGroupTitle("Kadi Table Felt")
+            val quickIsDark = isDarkScheme()
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                KadiFeltPreset.entries.forEach { feltPreset ->
+                    val feltTokens = ThemeEngine.resolveFeltTokens(feltPreset, MaterialTheme.colorScheme, quickIsDark)
+                    val selected = p.kadiFeltPreset == feltPreset
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = if (selected) feltTokens.feltBorder.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainer,
+                        border = BorderStroke(
+                            if (selected) 1.5.dp else 1.dp,
+                            if (selected) feltTokens.feltBorder else MaterialTheme.colorScheme.outlineVariant
+                        ),
+                        modifier = Modifier.clickable { vm.setKadiFeltPreset(feltPreset) }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(feltTokens.feltStart)
+                            )
+                            Text(
+                                text = feltPreset.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) feltTokens.feltBorder else MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
+                    }
+                }
+            }
+
+            QuickGroupTitle("Search Bar Size & Chip Style")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SearchBarSizePreset.entries.forEach { sbSize ->
+                    QuickOptionChip(
+                        label = "${sbSize.label} (${sbSize.heightDp}dp)",
+                        selected = p.searchBarSize == sbSize,
+                        onClick = { vm.setSearchBarSize(sbSize) }
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ChipStylePreset.entries.forEach { cStyle ->
+                    QuickOptionChip(
+                        label = cStyle.label,
+                        selected = p.chipStyle == cStyle,
+                        onClick = { vm.setChipStyle(cStyle) }
+                    )
+                }
+            }
+
+            QuickGroupTitle("Animation Speed")
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AnimationSpeedPreset.entries.forEach { speed ->
+                    QuickOptionChip(
+                        label = speed.label,
+                        selected = p.animationSpeed == speed,
+                        onClick = { vm.setAnimationSpeed(speed) }
+                    )
+                }
+            }
+
             QuickGroupTitle("Bottom Navigation Bar")
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -555,7 +673,7 @@ fun QuickUiCustomizerSheet(
                 ) {
                     Icon(Icons.Outlined.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Reset Defaults", fontWeight = FontWeight.SemiBold)
+                    Text("Reset Defaults", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                 }
                 Button(
                     onClick = {
@@ -567,7 +685,7 @@ fun QuickUiCustomizerSheet(
                 ) {
                     Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("All UI Options", fontWeight = FontWeight.Bold)
+                    Text("All UI Options", fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -606,19 +724,11 @@ internal fun QuickOptionChip(
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             color = if (selected) primary else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier.padding(horizontal = 11.dp, vertical = 7.dp)
         )
     }
-}
-
-internal fun presetSwatchColor(preset: AccentPreset): Color = when (preset) {
-    AccentPreset.GODOT_SAPPHIRE -> Color(0xFF38BDF8)
-    AccentPreset.NAIROBI_GOLD -> Color(0xFFFBBF24)
-    AccentPreset.EMERALD_FELT -> Color(0xFF34D399)
-    AccentPreset.CYBER_VIOLET -> Color(0xFFC084FC)
-    AccentPreset.CRIMSON_ACE -> Color(0xFFFB7185)
-    AccentPreset.SUNSET_ORANGE -> Color(0xFFFB923C)
-    AccentPreset.MONOCHROME_SLATE -> Color(0xFF94A3B8)
 }
 
 @Composable
@@ -628,24 +738,29 @@ private fun LiveUiPreviewCard() {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 IconBubble(icon = Icons.Outlined.AutoAwesome, tint = MaterialTheme.colorScheme.primary, size = 32.dp)
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "LIVE UI PREVIEW",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "${p.fontFamilyPreset.label} · ${p.codeThemePreset.label}",
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -663,52 +778,51 @@ private fun LiveUiPreviewCard() {
 private fun ThemeAndColorSection(state: SettingsUiState, vm: SettingsViewModel) {
     val p = state.uiPrefs
 
+    SectionHeader(title = "One-Tap Studio Presets", eyebrow = "COMPLETE LOOK & FEEL")
+    StudioThemeBundleGallery(
+        uiPrefs = p,
+        onApplyBundle = vm::applyStudioBundle
+    )
+
     SectionHeader(title = stringResource(R.string.settings_theme), eyebrow = "THEME MODE")
+    ThemeModeGallery(
+        selectedTheme = p.theme,
+        accentPreset = p.accentPreset,
+        contrastLevel = p.contrastLevel,
+        onSelectTheme = vm::setTheme
+    )
+
+    SectionHeader(title = "Contrast & Legibility", eyebrow = "WCAG AA / AAA")
     KadiCard {
-        ChoiceRow(
-            icon = Icons.Outlined.DarkMode,
-            title = "Studio Dark",
-            description = "Deep carbon-slate (#0B0F17) for comfortable coding.",
-            selected = p.theme == ThemePref.DARK,
-            onClick = { vm.setTheme(ThemePref.DARK) }
+        ContrastLevelSelector(
+            selectedLevel = p.contrastLevel,
+            themePref = p.theme,
+            accentPreset = p.accentPreset,
+            onSelectLevel = vm::setContrastLevel
         )
-        ChoiceRow(
-            icon = Icons.Outlined.Contrast,
-            title = "Pitch Black (AMOLED)",
-            description = "True #000000 background for OLED phone battery & contrast.",
-            selected = p.theme == ThemePref.AMOLED,
-            onClick = { vm.setTheme(ThemePref.AMOLED) }
-        )
-        ChoiceRow(
-            icon = Icons.Outlined.LightMode,
-            title = "Studio Light",
-            description = "Crisp alabaster & white surfaces for bright daylight.",
-            selected = p.theme == ThemePref.LIGHT,
-            onClick = { vm.setTheme(ThemePref.LIGHT) }
-        )
-        ChoiceRow(
-            icon = Icons.Outlined.PhoneAndroid,
-            title = stringResource(R.string.settings_theme_system),
-            description = "Automatically switch with your phone's system setting.",
-            selected = p.theme == ThemePref.SYSTEM,
-            onClick = { vm.setTheme(ThemePref.SYSTEM) }
+        Text(
+            text = p.contrastLevel.subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
     SectionHeader(title = "Accent Color Palettes", eyebrow = "7 STUDIO PRESETS")
-    KadiCard {
-        AccentPreset.entries.forEach { preset ->
-            val swatch = presetSwatchColor(preset)
-            ChoiceRow(
-                icon = Icons.Outlined.Palette,
-                iconTint = swatch,
-                title = preset.label,
-                description = preset.description,
-                selected = p.accentPreset == preset,
-                onClick = { vm.setAccentPreset(preset) }
-            )
-        }
-    }
+    AccentPaletteGallery(
+        selectedPreset = p.accentPreset,
+        themePref = p.theme,
+        contrastLevel = p.contrastLevel,
+        onSelectPreset = vm::setAccentPreset
+    )
+
+    SectionHeader(title = "Kadi Table Felt", eyebrow = "5 TABLETOP SURFACES")
+    KadiFeltGallery(
+        selectedPreset = p.kadiFeltPreset,
+        themePref = p.theme,
+        accentPreset = p.accentPreset,
+        contrastLevel = p.contrastLevel,
+        onSelectPreset = vm::setKadiFeltPreset
+    )
 
     SectionHeader(title = "Wallpaper & Motion", eyebrow = "SYSTEM EFFECTS")
     KadiCard {
@@ -794,11 +908,15 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 IconBubble(icon = Icons.Outlined.FormatSize, size = 34.dp)
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("UI & Lesson Text Size", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text("Scale headings, paragraphs, and cards", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -829,11 +947,15 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 IconBubble(icon = Icons.Outlined.Code, tint = MaterialTheme.colorScheme.secondary, size = 34.dp)
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("GDScript Code Font Size", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text("Scale code blocks, scene trees, and inline code", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -848,7 +970,7 @@ private fun TextAndCodeSection(state: SettingsUiState, vm: SettingsViewModel) {
         )
     }
 
-    SectionHeader(title = "GDScript Code Syntax Theme", eyebrow = "6 IDE PALETTES")
+    SectionHeader(title = "GDScript Code Syntax Theme", eyebrow = "7 IDE PALETTES")
     KadiCard {
         CodeBlock(
             snippet = CodeSnippet(
@@ -938,7 +1060,7 @@ private fun HomeTopCardSection(state: SettingsUiState, vm: SettingsViewModel) {
     SectionHeader(title = "Top Hero Card Color Palette", eyebrow = "8 CARD PALETTES")
     KadiCard {
         HomeHeroPalette.entries.forEach { palette ->
-            val swatch = heroPaletteSwatch(palette)
+            val swatch = heroPaletteSwatchColor(palette, p.accentPreset)
             ChoiceRow(
                 icon = Icons.Outlined.Palette,
                 iconTint = swatch,
@@ -1110,6 +1232,30 @@ private fun LayoutAndCardsSection(state: SettingsUiState, vm: SettingsViewModel)
                 onClick = { vm.setBottomBarStyle(bStyle) }
             )
         }
+
+        ToggleRow(
+            icon = Icons.Outlined.TextFields,
+            title = "Show Bottom Bar Labels",
+            description = "Display tab labels underneath navigation icons in the bottom bar.",
+            checked = p.showBottomBarLabels,
+            onCheckedChange = vm::setShowBottomBarLabels
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Text("Search Bar Size", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SearchBarSizePreset.entries.forEach { sbSize ->
+                QuickOptionChip(
+                    label = "${sbSize.label} (${sbSize.heightDp}dp)",
+                    selected = p.searchBarSize == sbSize,
+                    onClick = { vm.setSearchBarSize(sbSize) }
+                )
+            }
+        }
     }
 
     SectionHeader(title = "Phone Screen Density", eyebrow = "ERGONOMICS & PADDING")
@@ -1130,11 +1276,15 @@ private fun LayoutAndCardsSection(state: SettingsUiState, vm: SettingsViewModel)
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 IconBubble(icon = Icons.Outlined.RoundedCorner, size = 34.dp)
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("Corner Roundness", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text("Adjust card, button, and banner corner radius", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -1165,11 +1315,15 @@ private fun LayoutAndCardsSection(state: SettingsUiState, vm: SettingsViewModel)
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 IconBubble(icon = Icons.Outlined.BorderStyle, tint = MaterialTheme.colorScheme.secondary, size = 34.dp)
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("Card Border Thickness", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text("0dp borderless up to 2.5dp bold studio outlines", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -1201,6 +1355,50 @@ private fun LayoutAndCardsSection(state: SettingsUiState, vm: SettingsViewModel)
             description = "Display the 3dp colored top highlight bar on accented cards.",
             checked = p.showCardAccentBar,
             onCheckedChange = vm::setShowCardAccentBar
+        )
+    }
+
+    SectionHeader(title = "Chips, Badges & Motion", eyebrow = "INTERACTIVE CONTROLS")
+    KadiCard {
+        Text("Chip & Filter Pill Style", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ChipStylePreset.entries.forEach { cStyle ->
+                QuickOptionChip(
+                    label = cStyle.label,
+                    selected = p.chipStyle == cStyle,
+                    onClick = { vm.setChipStyle(cStyle) }
+                )
+            }
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        Text("Theme & UI Animation Speed", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AnimationSpeedPreset.entries.forEach { speed ->
+                val suffix = if (speed.durationMs > 0) " (${speed.durationMs}ms)" else ""
+                QuickOptionChip(
+                    label = "${speed.label}$suffix",
+                    selected = p.animationSpeed == speed,
+                    onClick = { vm.setAnimationSpeed(speed) }
+                )
+            }
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        ToggleRow(
+            icon = Icons.Outlined.AutoAwesome,
+            title = "Show Progress Badges",
+            description = "Display completion counts and progress pills on phase and lesson cards.",
+            checked = p.showProgressBadges,
+            onCheckedChange = vm::setShowProgressBadges
         )
     }
 

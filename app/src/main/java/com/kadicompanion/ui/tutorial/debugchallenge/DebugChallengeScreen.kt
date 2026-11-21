@@ -11,8 +11,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -82,6 +84,7 @@ import com.kadicompanion.ui.theme.heroTextSecondary
 import com.kadicompanion.ui.theme.heroTextTertiary
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
+import com.kadicompanion.ui.theme.kadiColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -149,28 +152,36 @@ fun DebugChallengeScreen(onBack: () -> Unit, onComplete: () -> Unit, vm: DebugCh
 
                         if (!state.fixShown) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 if (!ch.hint.isNullOrBlank()) {
                                     OutlinedButton(
                                         onClick = vm::toggleHint,
                                         shape = MaterialTheme.shapes.medium,
-                                        modifier = Modifier.weight(1f).height(50.dp)
+                                        modifier = Modifier.weight(1f).heightIn(min = 50.dp).fillMaxHeight()
                                     ) {
                                         Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(18.dp))
                                         Spacer(Modifier.width(6.dp))
-                                        Text(if (state.hintShown) "Hide Hint" else "Show Hint")
+                                        Text(
+                                            text = if (state.hintShown) "Hide Hint" else "Show Hint",
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
                                     }
                                 }
                                 OutlinedButton(
                                     onClick = vm::revealFix,
                                     shape = MaterialTheme.shapes.medium,
-                                    modifier = Modifier.weight(1f).height(50.dp)
+                                    modifier = Modifier.weight(1f).heightIn(min = 50.dp).fillMaxHeight()
                                 ) {
                                     Icon(Icons.Outlined.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
-                                    Text(stringResource(R.string.action_reveal_fix))
+                                    Text(
+                                        text = stringResource(R.string.action_reveal_fix),
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
                                 }
                             }
 
@@ -337,7 +348,7 @@ private fun BugHero(symptom: String) {
     val heroTextMuted = heroTextTertiary()
     HeroPanel(
         gradient = Brush.linearGradient(
-            colors = listOf(Color(0xFF450A0A), Color(0xFF7F1D1D), Color(0xFF991B1B))
+            colors = listOf(MaterialTheme.kadiColors.bugHeroGradientStart, MaterialTheme.kadiColors.bugHeroGradientMid, MaterialTheme.kadiColors.bugHeroGradientEnd)
         )
     ) {
         Row(

@@ -19,6 +19,15 @@ val DisplayHero = TextStyle(
     letterSpacing = (-1.5).sp
 )
 
+fun scaledDisplayHero(fontScale: Float = 1.0f): TextStyle {
+    val s = fontScale.coerceIn(0.80f, 1.35f)
+    return DisplayHero.copy(
+        fontSize = (DisplayHero.fontSize.value * s).sp,
+        lineHeight = (DisplayHero.lineHeight.value * s).sp,
+        letterSpacing = (DisplayHero.letterSpacing.value * s).sp
+    )
+}
+
 private val ProseLineHeight = LineHeightStyle(
     alignment = LineHeightStyle.Alignment.Center,
     trim = LineHeightStyle.Trim.None

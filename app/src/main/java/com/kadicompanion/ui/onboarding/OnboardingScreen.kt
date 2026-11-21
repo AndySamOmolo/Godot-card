@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -70,6 +71,7 @@ import com.kadicompanion.ui.theme.brandGradient
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
 import com.kadicompanion.ui.theme.heroTextTertiary
+import com.kadicompanion.ui.theme.kadiColors
 
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit, vm: OnboardingViewModel = hiltViewModel()) {
@@ -205,8 +207,8 @@ private fun StudioOnboardingHero() {
         ) {
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color(0xFF38BDF8).copy(alpha = 0.22f),
-                border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.45f))
+                color = MaterialTheme.kadiColors.info.copy(alpha = 0.22f),
+                border = BorderStroke(1.dp, MaterialTheme.kadiColors.info.copy(alpha = 0.45f))
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -216,14 +218,16 @@ private fun StudioOnboardingHero() {
                     Icon(
                         Icons.Outlined.Terminal,
                         contentDescription = null,
-                        tint = Color(0xFF7DD3FC),
+                        tint = MaterialTheme.kadiColors.onHeroPrimary,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
                         text = "GODOT 4.3 · GDSCRIPT STUDIO",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF7DD3FC)
+                        color = MaterialTheme.kadiColors.onHeroPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

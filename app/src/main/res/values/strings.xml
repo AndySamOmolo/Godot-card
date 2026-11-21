@@ -14,6 +14,7 @@
     <string name="action_unbookmark">Remove bookmark</string>
     <string name="action_settings">Settings</string>
     <string name="action_insights">My Stats</string>
+    <string name="action_mark_complete">Mark complete</string>
 
     <string name="home_greeting">Karibu</string>
     <string name="home_review_card_title">Quick Review</string>
@@ -46,6 +47,8 @@
     <string name="empty_docs_search">No classes match that query.</string>
     <string name="empty_glossary_search">No glossary terms match that query.</string>
     <string name="empty_insights">Take a few quizzes to see your strengths and review queue.</string>
+    <string name="empty_search">No matches found.</string>
+    <string name="content_unavailable">Lesson content unavailable</string>
 
     <string name="search_docs_placeholder">Search Godot classes, methods, or signals…</string>
     <string name="search_glossary_placeholder">Search glossary…</string>

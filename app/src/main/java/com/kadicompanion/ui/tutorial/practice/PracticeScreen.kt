@@ -14,11 +14,14 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -62,6 +65,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -83,7 +87,7 @@ import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
 import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.LocalUiPreferences
-import com.kadicompanion.ui.theme.SyntaxColors
+import com.kadicompanion.ui.theme.codePalette
 import com.kadicompanion.ui.theme.isDarkScheme
 import com.kadicompanion.ui.theme.successColor
 
@@ -228,27 +232,27 @@ fun PracticeScreen(
                         )
 
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Button(
                                 onClick = vm::checkCode,
                                 shape = MaterialTheme.shapes.medium,
-                                modifier = Modifier.weight(1.3f).height(50.dp)
+                                modifier = Modifier.weight(1.3f).heightIn(min = 50.dp).fillMaxHeight()
                             ) {
                                 Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text("Check My Code", fontWeight = FontWeight.Bold)
+                                Text("Check My Code", fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                             }
                             if (!state.solutionShown && prompt.solutionCode != null) {
                                 FilledTonalButton(
                                     onClick = vm::revealSolution,
                                     shape = MaterialTheme.shapes.medium,
-                                    modifier = Modifier.weight(1f).height(50.dp)
+                                    modifier = Modifier.weight(1f).heightIn(min = 50.dp).fillMaxHeight()
                                 ) {
                                     Icon(Icons.Outlined.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(Modifier.width(6.dp))
-                                    Text("Solution", fontWeight = FontWeight.SemiBold)
+                                    Text("Solution", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                                 }
                             }
                         }
@@ -339,8 +343,9 @@ private fun InteractiveEditorPanel(
 ) {
     val dark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
-    val panel = if (dark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
-    val quiet = if (dark) SyntaxColors.darkComment else SyntaxColors.lightComment
+    val activeCodePalette = MaterialTheme.codePalette
+    val panel = activeCodePalette.background
+    val quiet = activeCodePalette.comment
     val shape = MaterialTheme.shapes.medium
 
     Column(
@@ -353,7 +358,7 @@ private fun InteractiveEditorPanel(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(if (dark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.04f))
+                .background(activeCodePalette.headerBackground)
                 .padding(horizontal = 14.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -370,6 +375,8 @@ private fun InteractiveEditorPanel(
                 fontFamily = CodeFontFamily,
                 fontWeight = FontWeight.Bold,
                 color = quiet,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
             IconButton(onClick = onReset, modifier = Modifier.size(40.dp)) {
@@ -401,6 +408,8 @@ private fun InteractiveEditorPanel(
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        softWrap = false,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
                     )
                 }
@@ -461,7 +470,7 @@ private fun SolutionPanel(code: String) {
                 .border(BorderStroke(1.dp, success.copy(alpha = 0.35f)), MaterialTheme.shapes.medium)
                 .padding(10.dp)
         ) {
-            CodeBlock(snippet = CodeSnippet(id = "sol", code = code, caption = "Copy this into your Godot script and press **F5** to test!"))
+            CodeBlock(snippet = CodeSnippet(id = "sol", code = code, caption = "Copy this into your Godot script and press F5 to test!"))
         }
     }
 }

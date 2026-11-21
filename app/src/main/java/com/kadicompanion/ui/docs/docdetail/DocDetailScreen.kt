@@ -21,10 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.UnfoldLess
 import androidx.compose.material.icons.outlined.UnfoldMore
 import androidx.compose.material3.HorizontalDivider
@@ -34,8 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +51,7 @@ import com.kadicompanion.domain.model.DocMember
 import com.kadicompanion.domain.model.GodotDocEntry
 import com.kadicompanion.ui.common.EmptyState
 import com.kadicompanion.ui.common.KadiCard
+import com.kadicompanion.ui.common.KadiSearchBar
 import com.kadicompanion.ui.common.KadiTopBar
 import com.kadicompanion.ui.common.LoadingSkeleton
 import com.kadicompanion.ui.common.MarkdownText
@@ -221,50 +219,11 @@ private fun DocDetailContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val container = MaterialTheme.colorScheme.surfaceContainerHigh
-                TextField(
-                    value = memberQuery,
-                    onValueChange = { memberQuery = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = {
-                        Text(
-                            text = "Filter properties, methods & signals...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Outlined.Search,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    },
-                    trailingIcon = {
-                        if (memberQuery.isNotEmpty()) {
-                            IconButton(onClick = { memberQuery = "" }) {
-                                Icon(
-                                    Icons.Outlined.Close,
-                                    contentDescription = "Clear filter",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(50),
-                    textStyle = MaterialTheme.typography.bodySmall,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = container,
-                        unfocusedContainerColor = container,
-                        disabledContainerColor = container,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
-                    )
+                KadiSearchBar(
+                    query = memberQuery,
+                    onQueryChange = { memberQuery = it },
+                    placeholder = "Filter properties, methods & signals...",
+                    modifier = Modifier.weight(1f)
                 )
 
                 Pill(
@@ -338,9 +297,10 @@ private fun CollapsibleSection(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -348,7 +308,10 @@ private fun CollapsibleSection(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 Pill(text = "$count", color = badgeColor)
             }
@@ -385,7 +348,8 @@ private fun CollapsibleSection(
                                 text = m.name + (m.type?.let { ": $it" } ?: ""),
                                 style = MaterialTheme.typography.bodyMedium.copy(fontFamily = CodeFontFamily),
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                         if (m.description.isNotBlank()) {

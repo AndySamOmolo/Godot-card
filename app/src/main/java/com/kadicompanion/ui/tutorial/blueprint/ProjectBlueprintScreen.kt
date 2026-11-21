@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -68,8 +72,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kadicompanion.domain.model.CodeSnippet
@@ -90,8 +98,10 @@ import com.kadicompanion.ui.common.SectionHeader
 import com.kadicompanion.ui.common.studioCardSpacing
 import com.kadicompanion.ui.common.studioScreenPadding
 import com.kadicompanion.ui.theme.CodeFontFamily
+import com.kadicompanion.ui.theme.LocalReduceMotion
 import com.kadicompanion.ui.theme.LocalUiPreferences
-import com.kadicompanion.ui.theme.SyntaxColors
+import com.kadicompanion.ui.theme.codePalette
+import com.kadicompanion.ui.theme.kadiColors
 import com.kadicompanion.ui.theme.heroTextPrimary
 import com.kadicompanion.ui.theme.heroTextSecondary
 import com.kadicompanion.ui.theme.heroTextTertiary
@@ -171,6 +181,8 @@ fun ProjectBlueprintScreen(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                             color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            softWrap = false,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
@@ -584,7 +596,7 @@ private fun NewGameArchitectTab(onNavigateToPhase: (String) -> Unit) {
     val genre = GENRE_BLUEPRINTS.firstOrNull { it.id == selectedGenreId } ?: GENRE_BLUEPRINTS.first()
     val isDark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
-    val codeBg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
+    val codeBg = MaterialTheme.codePalette.background
 
     HeroPanel {
         Row(
@@ -592,18 +604,25 @@ private fun NewGameArchitectTab(onNavigateToPhase: (String) -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(18.dp))
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, tint = MaterialTheme.kadiColors.info, modifier = Modifier.size(18.dp))
                 Text(
                     text = "SOLO GAME ARCHITECT · ESCAPE TUTORIAL HELL",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF38BDF8)
+                    color = MaterialTheme.kadiColors.info,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+            Spacer(Modifier.width(8.dp))
             Pill(
                 text = "Phase 13 & 17",
-                color = Color(0xFF34D399),
+                color = MaterialTheme.kadiColors.success,
                 onClick = {
                     val targetPhase = if (selectedGenreId == 5) "phase_17_3d_godot_foundations" else "phase_13_new_games_solo"
                     onNavigateToPhase(targetPhase)
@@ -616,10 +635,9 @@ private fun NewGameArchitectTab(onNavigateToPhase: (String) -> Unit) {
             fontWeight = FontWeight.Bold,
             color = heroTextPrimary()
         )
-        Text(
+        HeroRichText(
             text = "Every game in Godot 4.3 is built from the exact same 5 building blocks you mastered in Kadi: **Data Resources**, **Template Scenes (`PackedScene`)**, **Autoload State**, **Signals**, and **Rule/Physics Validators**. Pick any of the 6 genres below (including **3D Spatial Tabletop**) to see how your Kadi skills translate directly into a brand-new game!",
-            style = MaterialTheme.typography.bodySmall,
-            color = heroTextSecondary()
+            style = MaterialTheme.typography.bodySmall
         )
     }
 
@@ -1051,7 +1069,7 @@ private val KADI_UPGRADES = listOf(
     ),
     KadiUpgradeBlueprint(
         id = 7,
-        title = "Upgrade 8: Bilingual English / Swahili Localization (`TranslationServer` & `tr()`)",
+        title = "Upgrade 8: Bilingual English / Swahili Localization (TranslationServer & tr())",
         badge = "LOCALIZATION (I18N)",
         goal = "Switch the entire Kadi table HUD dynamically between English (`en`) and Kiswahili (`sw`) at runtime using `TranslationServer.set_locale()` and `tr()` keys!",
         classesToLookUp = listOf("TranslationServer", "Object", "Label", "OptionButton"),
@@ -1089,18 +1107,25 @@ private fun UpgradeKadiLabTab(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.Build, contentDescription = null, tint = Color(0xFFFBBF24), modifier = Modifier.size(18.dp))
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Outlined.Build, contentDescription = null, tint = MaterialTheme.kadiColors.warning, modifier = Modifier.size(18.dp))
                 Text(
                     text = "UPGRADE KADI LAB · SELF-GUIDED EXPANSIONS",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFBBF24)
+                    color = MaterialTheme.kadiColors.warning,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+            Spacer(Modifier.width(8.dp))
             Pill(
                 text = "Open Phase 12",
-                color = Color(0xFF38BDF8),
+                color = MaterialTheme.kadiColors.info,
                 onClick = { onNavigateToPhase("phase_12_expand_kadi") }
             )
         }
@@ -1110,10 +1135,9 @@ private fun UpgradeKadiLabTab(
             fontWeight = FontWeight.Bold,
             color = heroTextPrimary()
         )
-        Text(
+        HeroRichText(
             text = "Ready to improve Kadi without watching a tutorial? Pick a feature upgrade below, read the **No-Spoiler Architecture Spec**, tap any Godot 4.3 class pill to open its Reference Desk documentation, and code it yourself—then tap **Reveal Reference Implementation** to compare!",
-            style = MaterialTheme.typography.bodySmall,
-            color = heroTextSecondary()
+            style = MaterialTheme.typography.bodySmall
         )
     }
 
@@ -1200,8 +1224,11 @@ private fun UpgradeKadiLabTab(
             Icon(Icons.Outlined.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
             Text(
-                text = if (showSolution) "Hide Reference Implementation" else "Reveal Reference Implementation (Compare Your Code)",
-                fontWeight = FontWeight.Bold
+                text = if (showSolution) "Hide Reference Implementation" else "Reveal Reference Implementation",
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
@@ -1269,11 +1296,12 @@ private data class LiveKadiCard(
 
     val roleBadge: String
         get() = when {
-            isPenalty -> "+$penaltyValue Penalty"
+            rank == 15 -> "Wild"
+            isPenalty -> "+$penaltyValue"
             isQuestion -> "Question"
             rank == 11 -> "Jump"
-            rank == 13 -> "Kickback"
-            rank == 14 -> "Wild Ace"
+            rank == 13 -> "Skip"
+            rank == 14 -> "Ace"
             else -> "Answer"
         }
 }
@@ -1304,7 +1332,7 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
     var nextCardId by rememberSaveable(matchSeed) { mutableIntStateOf(10) }
 
     var feedbackBanner by rememberSaveable(matchSeed) {
-        mutableStateOf("Karibu Kadi! Tap cards in your hand below to lift them (-14px), then tap Play Selected!")
+        mutableStateOf("Karibu Kadi! Tap cards in your hand below to lift them, then tap Play Selected.")
     }
     var gdscriptTrace by rememberSaveable(matchSeed) {
         mutableStateOf(
@@ -1356,21 +1384,51 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.SportsEsports, contentDescription = null, tint = Color(0xFF34D399), modifier = Modifier.size(18.dp))
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Outlined.SportsEsports, contentDescription = null, tint = MaterialTheme.kadiColors.success, modifier = Modifier.size(18.dp))
                 Text(
                     text = "TANGIBLE PREVIEW · PLAYABLE KADI TABLE",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF34D399)
+                    color = MaterialTheme.kadiColors.success,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            Pill(
-                text = "Reset Table",
-                color = Color(0xFF38BDF8),
-                icon = Icons.Outlined.Refresh,
-                onClick = { matchSeed += 1 }
-            )
+            Spacer(Modifier.width(10.dp))
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.kadiColors.info.copy(alpha = 0.18f),
+                border = BorderStroke(1.dp, MaterialTheme.kadiColors.info.copy(alpha = 0.45f)),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .clickable { matchSeed += 1 }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Refresh,
+                        contentDescription = "Reset table",
+                        tint = MaterialTheme.kadiColors.info,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Text(
+                        text = "Reset",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.kadiColors.info,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            }
         }
         Text(
             text = "Experience What You're Building Right Now!",
@@ -1378,147 +1436,195 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
             fontWeight = FontWeight.Bold,
             color = heroTextPrimary()
         )
-        Text(
+        HeroRichText(
             text = "This interactive tabletop runs the exact Godot 4.3 scene layout (`Table.tscn` + `CardScene.tscn`) and `RuleValidator` logic you build in Phase 1 & Phase 2. Tap cards below to lift them `-14px`, stage Question+Answer combos (`Q♥ + 7♥`), and watch the live GDScript trace!",
-            style = MaterialTheme.typography.bodySmall,
-            color = heroTextSecondary()
+            style = MaterialTheme.typography.bodySmall
         )
     }
 
+    val ext = MaterialTheme.kadiColors
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = Color(0xFF0E231C),
-        border = BorderStroke(1.5.dp, Color(0xFF10B981).copy(alpha = 0.55f))
+        color = ext.feltStart,
+        border = BorderStroke(1.5.dp, ext.feltBorder.copy(alpha = 0.65f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color(0xFF081812), Color(0xFF0E291F), Color(0xFF091D16))
+                        listOf(ext.feltStart, ext.feltEnd, ext.feltStart)
                     )
                 )
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color.Black.copy(alpha = 0.38f),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f))
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.42f),
+                border = BorderStroke(1.dp, ext.heroBorder)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "HUD/StatusLabel · ${if (directionCw) "↻ CW" else "↺ CCW"} · Deck: $deckCount",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6EE7B7)
+                        TableHudStatPill(
+                            text = if (directionCw) "↻ CW" else "↺ CCW",
+                            accent = ext.success,
+                            modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            text = "AI Opponent: $aiCardCount cards",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFDE047)
+                        TableHudStatPill(
+                            text = "Deck · $deckCount",
+                            accent = ext.info,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TableHudStatPill(
+                            text = "AI · $aiCardCount",
+                            accent = ext.warning,
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (penaltyStack > 0) {
-                            Pill(text = "Penalty Stack: +$penaltyStack", color = Color(0xFFF87171))
-                        }
-                        if (declaredSuit != -1) {
-                            Pill(text = "Demanded Suit: ${suitNames[declaredSuit]}", color = Color(0xFF38BDF8))
-                        }
-                        if (announcedNikoKadi) {
-                            Pill(text = "📢 NIKO KADI ANNOUNCED!", color = Color(0xFFFBBF24))
+                    if (penaltyStack > 0 || declaredSuit != -1 || announcedNikoKadi) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            if (penaltyStack > 0) {
+                                Pill(text = "Penalty +$penaltyStack", color = MaterialTheme.colorScheme.error)
+                            }
+                            if (declaredSuit != -1) {
+                                Pill(text = "Suit: ${suitNames[declaredSuit]}", color = ext.info)
+                            }
+                            if (announcedNikoKadi) {
+                                Pill(text = "📢 NIKO KADI!", color = ext.warning)
+                            }
                         }
                     }
                     Text(
                         text = feedbackBanner,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFF8FAFC),
+                        style = MaterialTheme.typography.bodySmall.copy(lineHeight = 18.sp),
+                        color = ext.onHeroPrimary,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "Draw Pile",
-                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                        color = Color(0xFFA7F3D0)
+                        text = "DRAW PILE",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = CodeFontFamily,
+                            fontSize = 10.sp,
+                            letterSpacing = 0.8.sp
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        color = ext.onHeroSecondary,
+                        maxLines = 1,
+                        softWrap = false
                     )
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color(0xFF1E3A8A),
-                        border = BorderStroke(1.5.dp, Color(0xFF60A5FA)),
-                        modifier = Modifier.size(width = 74.dp, height = 104.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize().padding(6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                    Box(modifier = Modifier.size(width = 82.dp, height = 116.dp)) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = ext.heroGradientStart.copy(alpha = 0.85f),
+                            border = BorderStroke(1.dp, ext.info.copy(alpha = 0.35f)),
+                            modifier = Modifier
+                                .offset(x = 4.dp, y = 4.dp)
+                                .size(width = 78.dp, height = 112.dp)
+                        ) {}
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = ext.heroGradientMid.copy(alpha = 0.92f),
+                            border = BorderStroke(1.dp, ext.info.copy(alpha = 0.55f)),
+                            modifier = Modifier
+                                .offset(x = 2.dp, y = 2.dp)
+                                .size(width = 78.dp, height = 112.dp)
+                        ) {}
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = ext.heroGradientMid,
+                            border = BorderStroke(1.5.dp, ext.info),
+                            modifier = Modifier.size(width = 78.dp, height = 112.dp)
                         ) {
-                            Text(
-                                text = "KADI",
-                                style = MaterialTheme.typography.labelMedium.copy(fontFamily = CodeFontFamily),
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFF93C5FD)
-                            )
-                            Text(
-                                text = "$deckCount",
-                                style = MaterialTheme.typography.titleMedium.copy(fontFamily = CodeFontFamily),
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "KADI",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = CodeFontFamily,
+                                        letterSpacing = 1.2.sp
+                                    ),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = ext.onHeroSecondary,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = "$deckCount",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = CodeFontFamily),
+                                    fontWeight = FontWeight.Bold,
+                                    color = ext.onHeroPrimary,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
                         }
                     }
                 }
 
-                Spacer(Modifier.width(24.dp))
-
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "DiscardSlot (Top Card)",
-                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                        color = Color(0xFFFDE047)
+                        text = "DISCARD PILE",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = CodeFontFamily,
+                            fontSize = 10.sp,
+                            letterSpacing = 0.8.sp
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        color = ext.warning,
+                        maxLines = 1,
+                        softWrap = false
                     )
-                    VisualGodotCardWidget(
-                        card = topCard,
-                        isSelected = false,
-                        orderBadge = null,
-                        onClick = null
-                    )
+                    Box(
+                        modifier = Modifier.size(width = 82.dp, height = 116.dp),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        VisualGodotCardWidget(
+                            card = topCard,
+                            isSelected = false,
+                            orderBadge = null,
+                            onClick = null
+                        )
+                    }
                 }
             }
 
             if (awaitingSuitChoice) {
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFF1E293B),
-                    border = BorderStroke(1.5.dp, Color(0xFF38BDF8))
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    border = BorderStroke(1.5.dp, ext.info)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -1528,12 +1634,12 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                             text = "DeclareSuitDialog.tscn · ACE PLAYED! PICK NEXT SUIT:",
                             style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF38BDF8)
+                            color = ext.info
                         )
                         val suitEntries = suitNames.entries.toList()
                         for (rowPairs in suitEntries.chunked(2)) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 rowPairs.forEach { (suitIdx, suitLabel) ->
@@ -1544,15 +1650,16 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                                             gdscriptTrace = "DeclareSuitDialog.suit_declared.emit($suitIdx)\nGameState.declared_suit = $suitIdx # Demanded $suitLabel"
                                             triggerAiTurnResponse("You declared $suitLabel", skippedAi = false)
                                         },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Text(
                                             text = suitLabel,
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
-                                            maxLines = 1
+                                            maxLines = 1,
+                                            softWrap = false
                                         )
                                     }
                                 }
@@ -1567,13 +1674,13 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color(0xFF94A3B8))
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                         ) {
                             Text(
                                 text = "Any Suit (No Demand)",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFE2E8F0)
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -1587,16 +1694,33 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "PlayerHandContainer (HBoxContainer) — Tap cards to stage:",
+                        text = "Your Hand · Tap cards to stage",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA7F3D0)
+                        color = ext.onHeroSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-                    Text(
-                        text = "${stagedIds.size} staged",
-                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
-                        color = Color(0xFFFDE047)
-                    )
+                    Spacer(Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = if (stagedIds.isNotEmpty()) ext.warning.copy(alpha = 0.20f) else ext.heroBorder.copy(alpha = 0.25f),
+                        border = BorderStroke(
+                            1.dp,
+                            if (stagedIds.isNotEmpty()) ext.warning.copy(alpha = 0.55f) else ext.heroBorder
+                        )
+                    ) {
+                        Text(
+                            text = "${stagedIds.size} staged",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
+                            fontWeight = FontWeight.Bold,
+                            color = if (stagedIds.isNotEmpty()) ext.warning else ext.onHeroSecondary,
+                            maxLines = 1,
+                            softWrap = false,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
                 }
 
                 Row(
@@ -1631,11 +1755,14 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                 }
             }
 
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                 Button(
                     onClick = {
                         val stagedCards = stagedIds.mapNotNull { id -> playerHand.firstOrNull { it.id == id } }
@@ -1709,18 +1836,21 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                     },
                     enabled = stagedIds.isNotEmpty() && !awaitingSuitChoice && !matchWon,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF10B981),
-                        contentColor = Color(0xFF042F2E)
+                        containerColor = ext.success,
+                        contentColor = ext.onSuccess
                     ),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.weight(1.2f)
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp).fillMaxHeight()
                 ) {
                     Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = "Play Selected (${stagedIds.size})",
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
 
@@ -1747,13 +1877,17 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                     },
                     enabled = !awaitingSuitChoice && !matchWon,
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.weight(1f)
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp).fillMaxHeight()
                 ) {
                     Text(
                         text = if (penaltyStack > 0) "Accept +$penaltyStack" else "Draw Card",
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false
                     )
+                }
                 }
 
                 OutlinedButton(
@@ -1764,16 +1898,19 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                             "niko_label.text = \"📢 You announced: NIKO KADI!\""
                     },
                     enabled = !awaitingSuitChoice && !matchWon && !announcedNikoKadi,
-                    border = BorderStroke(1.dp, Color(0xFFFBBF24)),
-                    shape = RoundedCornerShape(8.dp)
+                    border = BorderStroke(1.dp, ext.warning),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp)
                 ) {
-                    Icon(Icons.Outlined.Campaign, contentDescription = null, tint = Color(0xFFFBBF24), modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.Outlined.Campaign, contentDescription = null, tint = ext.warning, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
                         text = "Niko Kadi!",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFBBF24)
+                        color = ext.warning,
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
             }
@@ -1786,14 +1923,20 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 IconBubble(icon = Icons.Outlined.Bolt, tint = MaterialTheme.colorScheme.secondary, size = 32.dp)
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "LIVE GODOT 4.3 EXECUTION TRACE",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "Exact GDScript Functions Triggered by Your Action",
@@ -1802,6 +1945,7 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
                     )
                 }
             }
+            Spacer(Modifier.width(8.dp))
             Pill(
                 text = "Build Phase 1",
                 color = MaterialTheme.colorScheme.primary,
@@ -1820,86 +1964,240 @@ private fun PlayableKadiMiniTableTab(onNavigateToPhase: (String) -> Unit) {
 }
 
 @Composable
+private fun TableHudStatPill(
+    text: String,
+    accent: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(50),
+        color = accent.copy(alpha = 0.16f),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.40f))
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 11.sp),
+            fontWeight = FontWeight.Bold,
+            color = accent,
+            maxLines = 1,
+            softWrap = false,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun HeroRichText(
+    text: String,
+    style: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier = Modifier
+) {
+    val primary = heroTextPrimary()
+    val secondary = heroTextSecondary()
+    val codeBg = Color.White.copy(alpha = 0.16f)
+    val annotated = remember(text, primary, secondary) {
+        buildAnnotatedString {
+            var i = 0
+            val len = text.length
+            while (i < len) {
+                when {
+                    text.startsWith("**", i) -> {
+                        val end = text.indexOf("**", i + 2)
+                        if (end != -1) {
+                            val inner = text.substring(i + 2, end)
+                            var j = 0
+                            while (j < inner.length) {
+                                if (inner[j] == '`') {
+                                    val cEnd = inner.indexOf('`', j + 1)
+                                    if (cEnd != -1) {
+                                        withStyle(
+                                            SpanStyle(
+                                                fontFamily = CodeFontFamily,
+                                                fontWeight = FontWeight.Bold,
+                                                color = primary,
+                                                background = codeBg
+                                            )
+                                        ) {
+                                            append(" ")
+                                            append(inner.substring(j + 1, cEnd))
+                                            append(" ")
+                                        }
+                                        j = cEnd + 1
+                                        continue
+                                    }
+                                }
+                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = primary)) {
+                                    append(inner[j])
+                                }
+                                j++
+                            }
+                            i = end + 2
+                        } else {
+                            append(text[i])
+                            i++
+                        }
+                    }
+                    text[i] == '`' -> {
+                        val end = text.indexOf('`', i + 1)
+                        if (end != -1) {
+                            withStyle(
+                                SpanStyle(
+                                    fontFamily = CodeFontFamily,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = primary,
+                                    background = codeBg
+                                )
+                            ) {
+                                append(" ")
+                                append(text.substring(i + 1, end))
+                                append(" ")
+                            }
+                            i = end + 1
+                        } else {
+                            append(text[i])
+                            i++
+                        }
+                    }
+                    else -> {
+                        append(text[i])
+                        i++
+                    }
+                }
+            }
+        }
+    }
+    Text(
+        text = annotated,
+        style = style,
+        color = secondary,
+        modifier = modifier
+    )
+}
+
+@Composable
 private fun VisualGodotCardWidget(
     card: LiveKadiCard,
     isSelected: Boolean,
     orderBadge: String?,
     onClick: (() -> Unit)?
 ) {
+    val reduceMotion = LocalReduceMotion.current
     val liftDp by animateDpAsState(
-        targetValue = if (isSelected) (-14).dp else 0.dp,
-        animationSpec = tween(durationMillis = 150),
+        targetValue = if (isSelected) (-12).dp else 0.dp,
+        animationSpec = tween(durationMillis = if (reduceMotion) 0 else 160),
         label = "cardLift"
     )
-    val suitColor = if (card.isRed) Color(0xFFE11D48) else Color(0xFF0F172A)
-    val borderColor = if (isSelected) Color(0xFFFACC15) else Color(0xFFCBD5E1)
-    val bgColor = if (isSelected) Color(0xFFFEFCE8) else Color(0xFFF8FAFC)
+    val ext = MaterialTheme.kadiColors
+    val suitColor = if (card.isRed) ext.cardSuitRed else ext.cardSuitBlack
+    val borderColor = if (isSelected) ext.cardBorderSelected else ext.cardBorder
+    val bgColor = if (isSelected) ext.cardStockSelected else ext.cardStock
+    val badgeTint = when {
+        card.isPenalty -> ext.cardSuitRed
+        card.isQuestion -> MaterialTheme.colorScheme.primary
+        card.rank == 14 -> ext.warning
+        else -> ext.cardSuitBlack.copy(alpha = 0.72f)
+    }
 
     Box(
         modifier = Modifier
             .offset(y = liftDp)
             .width(78.dp)
             .height(112.dp)
+            .let { mod ->
+                if (isSelected) {
+                    mod.border(
+                        width = 3.dp,
+                        color = ext.cardBorderSelected.copy(alpha = 0.35f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                } else {
+                    mod
+                }
+            }
             .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
             .border(
-                width = if (isSelected) 2.5.dp else 1.2.dp,
+                width = if (isSelected) 2.2.dp else 1.2.dp,
                 color = borderColor,
                 shape = RoundedCornerShape(10.dp)
             )
             .let { mod -> if (onClick != null) mod.clickable(onClick = onClick) else mod }
-            .padding(7.dp)
+            .padding(6.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        // Top-left rank & suit corner
+        Text(
+            text = card.displayName,
+            style = MaterialTheme.typography.labelMedium.copy(fontFamily = CodeFontFamily),
+            fontWeight = FontWeight.ExtraBold,
+            color = suitColor,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.align(Alignment.TopStart)
+        )
+
+        // Top-right staging order badge
+        if (orderBadge != null) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = ext.warning,
+                modifier = Modifier.align(Alignment.TopEnd)
             ) {
                 Text(
-                    text = card.displayName,
-                    style = MaterialTheme.typography.labelLarge.copy(fontFamily = CodeFontFamily),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = suitColor
+                    text = orderBadge,
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 10.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = ext.onWarning,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
                 )
-                if (orderBadge != null) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = Color(0xFFF59E0B)
-                    ) {
-                        Text(
-                            text = orderBadge,
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 10.sp),
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A),
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                        )
-                    }
-                }
             }
+        }
 
+        // Center suit & crisp non-clipping role pill
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
             Text(
                 text = card.suitSymbol,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp),
                 fontWeight = FontWeight.Bold,
                 color = suitColor,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Text(
-                text = card.roleBadge,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF475569),
                 maxLines = 1,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                softWrap = false
             )
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = badgeTint.copy(alpha = 0.12f)
+            ) {
+                Text(
+                    text = card.roleBadge,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = badgeTint,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                )
+            }
         }
+
+        // Subtle bottom-right rank & suit corner
+        Text(
+            text = card.displayName,
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily, fontSize = 9.sp),
+            fontWeight = FontWeight.Bold,
+            color = suitColor.copy(alpha = 0.58f),
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.align(Alignment.BottomEnd)
+        )
     }
 }
 
@@ -2278,7 +2576,7 @@ private val PROJECT_FILES = listOf(
 private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
     val isDark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
-    val codeBg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
+    val codeBg = MaterialTheme.codePalette.background
 
     HeroPanel {
         Text(
@@ -2292,10 +2590,9 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
             style = MaterialTheme.typography.headlineSmall,
             color = heroTextPrimary()
         )
-        Text(
+        HeroRichText(
             text = "You build the visual scenes (`card_scene.tscn` & `table.tscn`) first in Phase 1 so your game is immediately tangible, wire the 54-card deck (`GameState`) in Phase 2, add full Kadi rules in Phases 3–11, and master solo expansions, general CS, 2D/3D engines, and production architecture in Phases 12–18.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = heroTextSecondary()
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 
@@ -2392,7 +2689,7 @@ private fun ProjectMapTab(onNavigateToPhase: (String) -> Unit) {
 private fun SceneAndSignalsTab() {
     val isDark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
-    val codeBg = if (isDark) SyntaxColors.darkBackground else SyntaxColors.lightBackground
+    val codeBg = MaterialTheme.codePalette.background
 
     KadiCard(accent = MaterialTheme.colorScheme.primary) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -2669,6 +2966,8 @@ private fun ChipSelectorRow(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium,
                     color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }

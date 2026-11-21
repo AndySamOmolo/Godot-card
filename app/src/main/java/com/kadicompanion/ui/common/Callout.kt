@@ -29,10 +29,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.kadicompanion.ui.theme.CalloutColors
 import com.kadicompanion.ui.theme.CodeFontFamily
-import com.kadicompanion.ui.theme.isDarkScheme
+import com.kadicompanion.ui.theme.kadiColors
 
 enum class CalloutType { WHY, MISTAKE, GODOT, KADI, TIP }
 
@@ -56,46 +56,46 @@ fun Callout(
     modifier: Modifier = Modifier,
     onTermClick: ((String) -> Unit)? = null
 ) {
-    val dark = isDarkScheme()
+    val ext = MaterialTheme.kadiColors
     val scheme = MaterialTheme.colorScheme
     val style = when (type) {
         CalloutType.WHY -> CalloutStyle(
-            background = if (dark) CalloutColors.whyBackgroundDark else CalloutColors.whyBackgroundLight,
-            border = if (dark) CalloutColors.whyBorderDark else CalloutColors.whyBorderLight,
-            accent = if (dark) CalloutColors.whyIconDark else CalloutColors.whyIconLight,
-            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            background = ext.calloutWhyBg,
+            border = ext.calloutWhyAccent,
+            accent = ext.calloutWhyAccent,
+            body = ext.calloutBody,
             title = "ARCHITECTURAL WHY",
             icon = Icons.Outlined.Lightbulb
         )
         CalloutType.MISTAKE -> CalloutStyle(
-            background = if (dark) CalloutColors.mistakeBackgroundDark else CalloutColors.mistakeBackgroundLight,
-            border = if (dark) CalloutColors.mistakeBorderDark else CalloutColors.mistakeBorderLight,
-            accent = if (dark) CalloutColors.mistakeIconDark else CalloutColors.mistakeIconLight,
-            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            background = ext.calloutMistakeBg,
+            border = ext.calloutMistakeAccent,
+            accent = ext.calloutMistakeAccent,
+            body = ext.calloutBody,
             title = "COMMON PITFALL",
             icon = Icons.Outlined.WarningAmber
         )
         CalloutType.GODOT -> CalloutStyle(
-            background = scheme.primary.copy(alpha = if (dark) 0.10f else 0.07f),
-            border = scheme.primary.copy(alpha = 0.40f),
+            background = scheme.primary.copy(alpha = if (ext.isDark) 0.11f else 0.08f),
+            border = scheme.primary.copy(alpha = 0.45f),
             accent = scheme.primary,
-            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            body = ext.calloutBody,
             title = "GODOT 4.3 EDITOR",
             icon = Icons.Outlined.Build
         )
         CalloutType.KADI -> CalloutStyle(
-            background = scheme.secondary.copy(alpha = if (dark) 0.10f else 0.07f),
-            border = scheme.secondary.copy(alpha = 0.40f),
+            background = scheme.secondary.copy(alpha = if (ext.isDark) 0.11f else 0.08f),
+            border = scheme.secondary.copy(alpha = 0.45f),
             accent = scheme.secondary,
-            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            body = ext.calloutBody,
             title = "KADI TABLE RULE",
             icon = Icons.Outlined.Style
         )
         CalloutType.TIP -> CalloutStyle(
-            background = scheme.tertiary.copy(alpha = if (dark) 0.10f else 0.07f),
-            border = scheme.tertiary.copy(alpha = 0.40f),
-            accent = scheme.tertiary,
-            body = if (dark) CalloutColors.bodyDark else CalloutColors.bodyLight,
+            background = ext.warning.copy(alpha = if (ext.isDark) 0.11f else 0.08f),
+            border = ext.warning.copy(alpha = 0.45f),
+            accent = ext.warning,
+            body = ext.calloutBody,
             title = "PRO WORKFLOW TIP",
             icon = Icons.Outlined.Bolt
         )
@@ -123,7 +123,9 @@ fun Callout(
                     text = style.title,
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = CodeFontFamily),
                     fontWeight = FontWeight.Bold,
-                    color = style.accent
+                    color = style.accent,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             RichInlineText(

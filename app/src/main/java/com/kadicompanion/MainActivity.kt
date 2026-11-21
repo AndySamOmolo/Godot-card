@@ -59,6 +59,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             val rootVm: RootViewModel = hiltViewModel()
             val state by rootVm.uiState.collectAsStateWithLifecycle()
@@ -69,6 +70,7 @@ class MainActivity : ComponentActivity() {
 
             DisposableEffect(effectiveDark) {
                 val transparent = Color.Transparent.toArgb()
+                val navDarkScrim = android.graphics.Color.argb(0x80, 0x1B, 0x1B, 0x1B)
                 enableEdgeToEdge(
                     statusBarStyle = if (effectiveDark) {
                         SystemBarStyle.dark(transparent)
@@ -78,7 +80,7 @@ class MainActivity : ComponentActivity() {
                     navigationBarStyle = if (effectiveDark) {
                         SystemBarStyle.dark(transparent)
                     } else {
-                        SystemBarStyle.light(transparent, transparent)
+                        SystemBarStyle.light(transparent, navDarkScrim)
                     }
                 )
                 onDispose {}
