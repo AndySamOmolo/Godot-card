@@ -341,7 +341,6 @@ private fun InteractiveEditorPanel(
     onInsertToken: (String) -> Unit,
     onReset: () -> Unit
 ) {
-    val dark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
     val activeCodePalette = MaterialTheme.codePalette
     val panel = activeCodePalette.background

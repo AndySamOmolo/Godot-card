@@ -289,7 +289,7 @@ private fun TappableBrokenCodePanel(
         Column(
             modifier = scrollMod.padding(vertical = 10.dp)
         ) {
-            lines.forEachIndexed { idx, lineText ->
+            lines.forEachIndexed { idx, _ ->
                 val lineNum = idx + 1
                 val isSelected = selectedLine == lineNum
                 val isBuggy = lineNum == targetBuggyLine
@@ -342,7 +342,6 @@ private fun TappableBrokenCodePanel(
 
 @Composable
 private fun BugHero(symptom: String) {
-    val scheme = MaterialTheme.colorScheme
     val heroText = heroTextPrimary()
     val heroTextSub = heroTextSecondary()
     val heroTextMuted = heroTextTertiary()

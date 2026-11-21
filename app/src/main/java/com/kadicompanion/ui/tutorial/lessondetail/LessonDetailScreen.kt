@@ -1222,7 +1222,6 @@ private fun LabLaunchCard(
 
 @Composable
 private fun SceneTreeBlueprintCard(sceneTree: String) {
-    val isDark = isDarkScheme()
     val uiPrefs = LocalUiPreferences.current
     val bg = MaterialTheme.codePalette.background
     val accent = MaterialTheme.colorScheme.secondary

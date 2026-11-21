@@ -185,7 +185,7 @@ fun resolveCodePalette(
             function = Color(0xFFD2A8FF),
             plain = Color(0xFFE6EDF3)
         ) else CodePalette(
-            background = Color(0xFFFFFFFF),
+            background = Color(0xFFFBFCFD),
             headerBackground = Color(0xFFF3F6FA),
             border = Color(0xFFD0D7DE),
             lineNumber = Color(0xFF57606A),
